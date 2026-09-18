@@ -1,0 +1,15 @@
+# Everything in the repository is line-feed, whoever commits it and whichever
+# platform checks it out. The Windows and Linux CI legs then build from identical
+# bytes, and the generated files (which the generator writes with LF and compares
+# byte for byte) do not depend on the checkout.
+* text=auto eol=lf
+
+# Binary artefacts that may end up next to a build, or a copied real DLL for
+# export comparison: never touched.
+*.dll binary
+*.lib binary
+*.exp binary
+*.exe binary
+*.pdb binary
+*.png binary
+*.ico binary

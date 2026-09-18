@@ -1,0 +1,68 @@
+{
+  "note_lines": [
+    "A worked example: two games, two profiles. Match rules pick a profile from the",
+    "executable name, so two games running at once each get their own identity, stats",
+    "and achievements.",
+    "",
+    "'scripted' is for the calls that decide whether a game believes Steam is present.",
+    "Everything the harness can derive from state (identity, language, app id, stats,",
+    "achievements) is answered without being listed here.",
+    "",
+    "No ownership, entitlement or licensing call appears in this file, by design."
+  ],
+  "profiles": {
+    "default": {
+      "app_id": 480,
+      "steam_id": 76561198000000001,
+      "persona_name": "DebugPlayer",
+      "language": "english",
+      "ui_language": "english",
+      "install_path": "C:\\Program Files (x86)\\Steam",
+      "build_id": 4242,
+      "stats": {
+        "Deaths": 0,
+        "PlaytimeMinutes": 42
+      },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": false },
+        { "name": "ACH_FINISHED", "achieved": false }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_RestartAppIfNecessary": { "ret": false },
+        "SteamAPI_ISteamUser": { "ret": 4660 },
+        "SteamAPI_ISteamUtils": { "ret": 4661 },
+        "SteamAPI_ISteamUserStats": { "ret": 4662 },
+        "SteamAPI_ISteamApps": { "ret": 4663 }
+      }
+    },
+    "second_game": {
+      "app_id": 620,
+      "steam_id": 76561198000000002,
+      "persona_name": "OtherDebugPlayer",
+      "language": "french",
+      "ui_language": "french",
+      "build_id": 7,
+      "stats": {
+        "Deaths": 11
+      },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": true }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_ISteamUser": { "ret": 4660 },
+        "SteamAPI_ISteamUtils": { "ret": 4661 },
+        "SteamAPI_ISteamUserStats": { "ret": 4662 },
+        "SteamAPI_ISteamApps": { "ret": 4663 }
+      }
+    }
+  },
+  "match": [
+    { "exe_contains": "fake_game_b", "profile": "second_game" },
+    { "exe_contains": "fake_game", "profile": "default" }
+  ],
+  "default_profile": "default"
+}
