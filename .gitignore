@@ -33,6 +33,9 @@ compile_commands.json
 *.suo
 *.user
 
+# Agent scratch: transient session state written next to the checkout
+.reasonix/
+
 # Python
 __pycache__/
 *.py[cod]

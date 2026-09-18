@@ -31,6 +31,15 @@ add_library(steambridge_core STATIC
 target_include_directories(steambridge_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(steambridge_core PUBLIC cxx_std_17)
 
+# Static libraries do not get -fPIC by default, and CMake does not hand the PIC
+# flag of a shared target down to the static libraries it consumes. On ELF the
+# stub DLL therefore fails to link with "relocation R_X86_64_PC32 ... can not be
+# used when making a shared object; recompile with -fPIC" (the first offender is
+# TcpTransport's vtable, which transport_tcp.cpp emits because it holds the key
+# function). Ask for PIC here. MSVC needs none, and the flag is harmless for the
+# test executables.
+set_target_properties(steambridge_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 if(WIN32)
     # Winsock for the loopback transport.
     target_link_libraries(steambridge_core PUBLIC ws2_32)
