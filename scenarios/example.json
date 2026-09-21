@@ -1,15 +1,4 @@
 {
-  "note_lines": [
-    "A worked example: two games, two profiles. Match rules pick a profile from the",
-    "executable name, so two games running at once each get their own identity, stats",
-    "and achievements.",
-    "",
-    "'scripted' is for the calls that decide whether a game believes Steam is present.",
-    "Everything the harness can derive from state (identity, language, app id, stats,",
-    "achievements) is answered without being listed here.",
-    "",
-    "No ownership, entitlement or licensing call appears in this file, by design."
-  ],
   "profiles": {
     "default": {
       "app_id": 480,

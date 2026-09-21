@@ -32,7 +32,6 @@ public:
 
     Kind kind() const noexcept { return _kind; }
     bool is_null() const noexcept { return _kind == Kind::null_value; }
-    bool is_bool() const noexcept { return _kind == Kind::boolean; }
     bool is_number() const noexcept { return _kind == Kind::number; }
     bool is_string() const noexcept { return _kind == Kind::string; }
     bool is_array() const noexcept { return _kind == Kind::array; }
@@ -55,7 +54,6 @@ public:
     // Object helpers.
     Json& set(std::string key, Json value);
     const Json* find(std::string_view key) const noexcept;
-    bool has(std::string_view key) const noexcept { return find(key) != nullptr; }
 
     // Array helper.
     void push(Json value);

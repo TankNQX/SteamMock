@@ -15,8 +15,10 @@ namespace steambridge {
 //  because a game stuck in a WinAPI call is worse than a game running without
 //  the harness.
 //
-//  TCP loopback is the first implementation. Named pipes or shared memory drop
-//  in behind this interface without the client noticing.
+//  TCP loopback is the first implementation, and the client talks to this
+//  interface rather than to it - so a named-pipe, shared-memory or recording
+//  transport is a different object to construct, not a change to the client.
+//  Client's constructor is the one line that picks which.
 class Transport {
 public:
     virtual ~Transport() = default;
@@ -28,6 +30,10 @@ public:
     // Frames the request (4-byte little-endian length + UTF-8 payload) and waits
     // for the reply frame. `response` is only meaningful on a true return.
     virtual bool exchange(const std::string& request, std::string& response) = 0;
+
+    // How long one round trip may take before the client gives up on it. A
+    // transport with no notion of a timeout can leave this alone.
+    virtual void set_timeout_ms(unsigned) noexcept {}
 };
 
 class TcpTransport final : public Transport {
@@ -43,10 +49,7 @@ public:
     bool is_connected() const noexcept override;
     bool exchange(const std::string& request, std::string& response) override;
 
-    // Milliseconds to wait for a reply before giving up on the round trip, and
-    // whether the transport may call connect() itself when it is not connected.
-    void set_timeout_ms(unsigned timeout_ms) noexcept { _timeout_ms = timeout_ms; }
-    unsigned timeout_ms() const noexcept { return _timeout_ms; }
+    void set_timeout_ms(unsigned timeout_ms) noexcept override { _timeout_ms = timeout_ms; }
 
 private:
     // Held as an integer so this header stays free of winsock includes.

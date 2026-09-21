@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <string_view>
@@ -51,7 +52,10 @@ private:
     void configure() noexcept;
     bool ensure_connected() noexcept;
 
-    TcpTransport _transport;
+    // Which transport is in use is decided once, here, and every call goes
+    // through the interface - so swapping in another one is a different object
+    // to construct rather than a change to the call path.
+    std::unique_ptr<Transport> _transport;
     std::mutex* _mutex = nullptr;
 
     std::string _host;

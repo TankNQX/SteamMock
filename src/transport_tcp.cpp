@@ -1,7 +1,6 @@
 #include "bridge/transport.hpp"
 
 #include <cstdio>
-#include <cstring>
 
 #include "bridge/frame.hpp"
 #include "bridge/log.hpp"

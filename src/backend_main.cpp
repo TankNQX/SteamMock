@@ -16,9 +16,8 @@
 #include <atomic>
 #include <chrono>
 #include <csignal>
+#include <cstdint>
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <string>
 #include <thread>
 #include <utility>
@@ -49,9 +48,10 @@ using steambridge::LogLevel;
 constexpr const char* kDefaultHost = "127.0.0.1";
 constexpr std::uint16_t kDefaultPort = 50990;
 constexpr const char* kDefaultScenario = "scenarios/example.json";
-// Kept in step with DllMain's SteamBridge_Version by CI's end-to-end test, which
-// runs this build against that DLL.
-constexpr const char* kVersion = "0.1.0";
+// The version this build reports, and the one DllMain answers through
+// SteamBridge_Version: both come from the project version in CMake, so the two
+// halves cannot report different builds.
+constexpr const char* kVersion = STEAMBRIDGE_VERSION;
 constexpr const char* kProgram = "steambridge";
 
 void print_usage(std::FILE* out) {

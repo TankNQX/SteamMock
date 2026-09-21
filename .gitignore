@@ -2,7 +2,6 @@
 /build/
 /build-*/
 /cmake-build-*/
-/out/
 
 # CMake in-tree artifacts
 CMakeCache.txt
@@ -38,4 +37,3 @@ compile_commands.json
 
 # Runtime output from the harness
 *.jsonl
-/logs/

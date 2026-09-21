@@ -67,10 +67,10 @@ Client& Client::instance() noexcept {
     return *client;
 }
 
-Client::Client() noexcept : _transport(), _mutex(new std::mutex()) {}
+Client::Client() noexcept : _transport(new TcpTransport()), _mutex(new std::mutex()) {}
 
 Client::~Client() {
-    _transport.close();
+    _transport->close();
     delete _mutex;
 }
 
@@ -96,16 +96,16 @@ void Client::configure() noexcept {
     }
     _port = static_cast<std::uint16_t>(parse_unsigned(environment("STEAMBRIDGE_PORT"), kDefaultPort));
     _timeout_ms = parse_unsigned(environment("STEAMBRIDGE_TIMEOUT_MS"), kDefaultTimeoutMs);
-    _transport.set_timeout_ms(_timeout_ms);
+    _transport->set_timeout_ms(_timeout_ms);
 
     log_write(LogLevel::debug, "backend target " + _host + ":" + std::to_string(_port));
 }
 
 bool Client::ensure_connected() noexcept {
-    if (_transport.is_connected()) {
+    if (_transport->is_connected()) {
         return true;
     }
-    if (!_transport.connect(_host, _port)) {
+    if (!_transport->connect(_host, _port)) {
         if (!_logged_offline) {
             log_write(LogLevel::info, "no backend listening on " + _host + ":" +
                                           std::to_string(_port) +
@@ -126,15 +126,15 @@ bool Client::ensure_connected() noexcept {
 #endif
 
     std::string response;
-    if (!_transport.exchange(hello.dump(), response)) {
-        _transport.close();
+    if (!_transport->exchange(hello.dump(), response)) {
+        _transport->close();
         return false;
     }
     Json welcome;
     const Json* session = nullptr;
     if (!Json::parse(response, welcome) || (session = welcome.find("session")) == nullptr) {
         log_write(LogLevel::warn, "the backend did not answer the handshake - ignoring it");
-        _transport.close();
+        _transport->close();
         return false;
     }
     _session_id = session->as_string();
@@ -169,9 +169,9 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         request.set("session", Json::string(_session_id));
 
         std::string response;
-        if (!_transport.exchange(request.dump(), response)) {
+        if (!_transport->exchange(request.dump(), response)) {
             log_write(LogLevel::warn, "the backend went away mid-call; using defaults again");
-            _transport.close();
+            _transport->close();
             return false;
         }
 

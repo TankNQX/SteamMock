@@ -1,7 +1,5 @@
 #include "bridge/protocol.hpp"
 
-#include <utility>
-
 namespace steambridge {
 
 bool carries_out(const Json& out) noexcept {

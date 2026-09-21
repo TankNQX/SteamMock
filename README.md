@@ -106,6 +106,10 @@ The generator validates the IDL and rewrites `src/generated/api_stub.cpp`,
 (`generated_files_are_current`) fails the build if the IDL and the generated files have drifted
 apart. `steambridge --list-api` prints the surface as the backend sees it.
 
+The seed surface's signatures are hand-written, not lifted from a real header: reconcile them
+against your own `steam_api_flat.h` (or the export table of a real `steam_api64.dll`) before
+relying on them.
+
 ## Tests
 
 ```sh
@@ -116,6 +120,7 @@ ctest --test-dir build -C Release --output-on-failure
 | --- | --- |
 | `protocol` | The C++ JSON subset and the frame header: integer fidelity, escapes, strict rejection of malformed input. |
 | `backend` | Replies, the session state machine, scenarios and match rules - and that every call the state machine answers is one the IDL actually exports. |
+| `server` | The server in process: a real port, a real connection through the stub's own transport, and the snapshots and summary a live view draws. |
 | `generated_files_are_current` | The generated files match `gen/steam_api.idl.json`. |
 | `end_to_end` | The real thing: the backend started as a subprocess, a game loading the real DLL, both sides checked, and the command line itself. |
 

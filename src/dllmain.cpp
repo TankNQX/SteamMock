@@ -37,7 +37,8 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
 // ---------------------------------------------------------------------------
 
 STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamBridge_Version(void) {
-    return "0.1.0";
+    // The same CMake project version the backend prints, so they cannot drift.
+    return STEAMBRIDGE_VERSION;
 }
 
 // Empty until the handshake has succeeded. The pointer stays valid for the life

@@ -2,9 +2,9 @@
 #  SteamApiBridge CI
 # ----------------------------------------------------------------------------
 #  The stub is a Windows DLL and the end-to-end test loads it as one, so Windows
-#  is where the full suite runs: the protocol test, the backend test, the
-#  end-to-end test with the real DLL, and the check that the generated files
-#  still match gen/steam_api.idl.json. Linux builds the same code and runs
+#  is where the full suite runs: the protocol test, the backend test, the server
+#  test, the end-to-end test with the real DLL, and the check that the generated
+#  files still match gen/steam_api.idl.json. Linux builds the same code and runs
 #  everything but the end-to-end test, which is where a portability mistake in
 #  the JSON, framing or server code shows up.
 # ============================================================================

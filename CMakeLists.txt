@@ -83,6 +83,10 @@ set_target_properties(${STEAMBRIDGE_STUB_NAME} PROPERTIES
     OUTPUT_NAME "${STEAMBRIDGE_STUB_NAME}"
     DEBUG_POSTFIX "d"
 )
+# One version, from the project() call at the top, so the DLL's
+# SteamBridge_Version and the backend's --version cannot report different builds.
+target_compile_definitions(${STEAMBRIDGE_STUB_NAME} PRIVATE
+    STEAMBRIDGE_VERSION="${PROJECT_VERSION}")
 # The exported names come straight from the generated .def, which CMake hands to
 # the linker as a source: no decoration on x64, and the same undecorated names on
 # Win32 that the real steam_api.dll uses.
@@ -93,6 +97,7 @@ set_target_properties(${STEAMBRIDGE_STUB_NAME} PROPERTIES
 add_executable(steambridge src/backend_main.cpp)
 target_link_libraries(steambridge PRIVATE steambridge_backend)
 set_target_properties(steambridge PROPERTIES OUTPUT_NAME "steambridge")
+target_compile_definitions(steambridge PRIVATE STEAMBRIDGE_VERSION="${PROJECT_VERSION}")
 
 add_executable(steambridge_codegen src/codegen_main.cpp src/idl.cpp)
 target_link_libraries(steambridge_codegen PRIVATE steambridge_core)
@@ -117,6 +122,12 @@ if(STEAMBRIDGE_BUILD_TESTS)
     target_compile_definitions(test_backend PRIVATE
         STEAMBRIDGE_SCENARIO_PATH="${CMAKE_CURRENT_SOURCE_DIR}/scenarios/example.json")
     add_test(NAME backend COMMAND test_backend)
+
+    # The server itself: a real port, a real connection through the stub's own
+    # transport, and the snapshots and summary a live view would draw.
+    add_executable(test_server tests/test_server.cpp)
+    target_link_libraries(test_server PRIVATE steambridge_backend)
+    add_test(NAME server COMMAND test_server)
 
     # Generated files are committed, so this fails if the IDL was edited without
     # regenerating them. Run from the checkout, which is where the default --idl
@@ -158,7 +169,7 @@ set(STEAMBRIDGE_TARGETS
     steambridge_codegen
 )
 if(STEAMBRIDGE_BUILD_TESTS)
-    list(APPEND STEAMBRIDGE_TARGETS test_protocol test_backend)
+    list(APPEND STEAMBRIDGE_TARGETS test_protocol test_backend test_server)
     if(WIN32)
         list(APPEND STEAMBRIDGE_TARGETS fake_game test_end_to_end)
     endif()
