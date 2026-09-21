@@ -1,13 +1,121 @@
 # SteamApiBridge
 
-A local debugging harness for the Steamworks flat API.
+[![CI](https://github.com/TankNQX/SteamApiBridge/actions/workflows/ci.yml/badge.svg)](https://github.com/TankNQX/SteamApiBridge/actions/workflows/ci.yml)
 
-The stub DLL is shaped like `steam_api64.dll`: it exports the same flat API names, and instead of
-talking to Valve it forwards every call it sees over loopback TCP to a backend that decides the
-answer. That way a game's Steam integration can be developed and debugged **locally**, with
-scripted and inspectable responses, and only run against real Steam once the logic is settled.
+**A Steam your game can talk to, without Steam.**
 
-Both halves are C++, built by one CMake project, and share one implementation of the wire format.
+This stands in for `steam_api64.dll`. Your game loads it exactly like the real one, its Steam calls
+are answered on your machine instead of Valve's, and a small JSON file decides what it hears: who
+the player is, what their stats say, which achievements are unlocked.
+
+The game needs no changes - same DLL name, same exported functions, no arguments, no code - so a
+Steam integration can be worked on offline, in CI, or at 2am, and pointed at real Steam only once
+the logic is settled.
+
+![The live view](docs/images/live-view.png)
+
+*The live view: calls arriving, what answered each one, how long it took, and the state the game is
+being told.*
+
+## What you get
+
+**Your game doesn't notice.** Drop the built `steam_api64.dll` beside the executable and it shadows
+the real one. What it exports is generated from an IDL file, so the surface can cover whatever a
+game imports.
+
+**You decide what it's told.** A scenario matches a game to a profile - app id, Steam id, persona,
+language, stats, achievements - and can script individual calls.
+
+**Nothing is answered by accident.** A call the scenario has no opinion about falls through to the
+game's own default, exactly as if Steam were not running. A game can never be handed a success
+nobody asked for, and the transcript always says what happened and why.
+
+**You can watch it happen.** The live view shows the calls as they arrive, and a game that has
+exited stays visible with the state it was left with.
+
+## Getting started
+
+Needs Windows and an MSVC-style compiler - `cl.exe` or `clang-cl`.
+
+```sh
+# 1. Build. Produces build/Release/steam_api64.dll and build/Release/steambridge
+cmake -S . -B build -A x64
+cmake --build build --config Release
+
+# 2. Start the backend. It prints the address it bound.
+build/Release/steambridge --scenario scenarios/example.json
+
+# 3. Run a game with the built DLL beside it, where it shadows the real steam_api64.dll.
+#    Nothing else to configure - the game is not changed in any way.
+```
+
+To smoke test without a game of your own, the repo ships one:
+
+```bat
+set STEAMBRIDGE_STUB=build\Release\steam_api64.dll
+build\Release\fake_game.exe
+```
+
+### What the stub reads from the environment
+
+This is why a game needs no arguments:
+
+| Variable | What it does |
+| --- | --- |
+| `STEAMBRIDGE_HOST`, `STEAMBRIDGE_PORT` | Where the backend is. Default `127.0.0.1:50990`. |
+| `STEAMBRIDGE_OFF` | Set to `1` to bypass the bridge: every call answers as if Steam is absent. |
+| `STEAMBRIDGE_TIMEOUT_MS` | How long a call waits for the backend. Default `2000`. |
+| `STEAMBRIDGE_LOG` | A file to append the stub's own log to. |
+| `STEAMBRIDGE_LOG_LEVEL` | `error`, `warning`, `info` (default) or `debug`. |
+
+If no backend is listening, the stub says so once and every call takes its Steam-absent value. A
+game still boots, and a backend started later is picked up on the next call.
+
+### The backend's command line
+
+| Option | What it does |
+| --- | --- |
+| `--host`, `--port` | Where to listen. `--port 0` picks a free one. |
+| `--scenario FILE` | What each game is told (default `scenarios/example.json`). |
+| `--transcript FILE` | Append every call, as JSON lines, to this file. |
+| `--log-level LEVEL` | `error`, `warning`, `info` or `debug`. |
+| `--list-api` | Print the calls the stub exports, then exit. |
+| `--show-profiles` | Print the scenario's games and match rules, then exit. |
+
+## Who answers a call, and why
+
+Three rungs, first one that speaks wins. The transcript records which one it was:
+
+1. **The scenario**, for the calls it scripts - `SteamAPI_Init` and friends, the policy calls where
+   a scenario has to state its intent.
+2. **The session's state** - identity, language, app id, stats and achievements, as the game
+   changes them.
+3. **Nobody.** The call is reported *unanswered*, and the stub returns what it would have returned
+   with Steam absent.
+
+That third rung is the point. A harness that guesses is worse than one that says "I don't know",
+and a game that boots here boots anywhere.
+
+## The live view
+
+A window on the backend, for when a transcript is not enough:
+
+```sh
+cmake -S . -B build -A x64 -DSTEAMBRIDGE_BUILD_GUI=ON
+cmake --build build --config Release
+build/Release/steambridge_gui --scenario scenarios/example.json
+```
+
+It is **off by default**, because it is the only part of this project that needs other people's code
+(the GLFW and Dear ImGui submodules). `--start` makes it serve straight away, which is also how it
+can be driven from a script.
+
+It reads snapshots of the server rather than driving it, so a slow frame cannot stall a game and the
+window cannot invent an answer. What it does *not* do yet is change anything - editing stats,
+unlocking an achievement or scripting a call from the window is the next step, and the "Game state"
+panel is reserved for it.
+
+## How the two halves fit together
 
 ```
    game.exe                        stub DLL (this repo)              backend (this repo)
@@ -23,174 +131,44 @@ Both halves are C++, built by one CMake project, and share one implementation of
                                          └───────────────────────────────┘
 ```
 
-The backend is where the interesting decisions live: a scenario file decides what a given game is
-told, and the session keeps per-game state (identity, stats, achievements) so several games can run
-side by side, each with its own profile.
-
-## Quick start
-
-```sh
-# 1. Build everything (produces build/steam_api64.dll and build/steambridge)
-cmake -S . -B build -A x64            # or: -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Release
-
-# 2. Start the backend. It prints the address it bound.
-build/Release/steambridge --scenario scenarios/example.json --transcript run.jsonl
-
-# 3. Run a game with the stub beside it (or point the harness's own test game at it)
-build/Release/fake_game.exe          # with STEAMBRIDGE_STUB set to the built DLL
-```
-
-To use it with a real game: put `steam_api64.dll` (this build) next to the game's executable, where
-it shadows the real one, and point the backend at a scenario for that game. `STEAMBRIDGE_PORT`,
-`STEAMBRIDGE_HOST`, `STEAMBRIDGE_OFF`, `STEAMBRIDGE_TIMEOUT_MS`, `STEAMBRIDGE_LOG` and
-`STEAMBRIDGE_LOG_LEVEL` are read from the environment by the stub, so the game needs no changes and
-no arguments.
-
-If no backend is listening, the stub logs it once and every call falls back to the value a game
-would see with Steam not running - a game still boots, and a backend started later is picked up on
-the next call.
-
-The backend's command line is the same set of choices:
-
-| Option | What it does |
-| --- | --- |
-| `--host`, `--port` | Where to listen. `--port 0` picks a free one. |
-| `--scenario FILE` | What each game is told (default `scenarios/example.json`). |
-| `--transcript FILE` | Append every call, as JSON lines, to this file. |
-| `--log-level LEVEL` | `error`, `warning`, `info` or `debug`. |
-| `--list-api` | Print the calls the stub exports, then exit. |
-| `--show-profiles` | Print the scenario's games and match rules, then exit. |
-
-## What the backend answers
-
-Resolution order, first one that speaks wins (the transcript records which):
-
-1. a `scripted` entry for that call in the game's profile - the policy calls, `SteamAPI_Init` and
-   friends, where a scenario has to say what it wants;
-2. the session state machine - identity, language, app id, stats, achievements;
-3. nobody: the call is reported **unanswered**, and the stub uses its own default.
-
-That last case is the point. An unanswered call behaves exactly as it would with Steam absent, so a
-game cannot be handed a success nobody asked for, and the transcript always says what happened and
-why.
-
-There used to be a third rung between those two - an arbitrary Python callable passed to the
-server - and it is the one thing that did not survive the move to C++. A scenario that says what it
-means is easier to hand to someone else than a lambda buried in a script, and the same structures
-are what a live view would edit while a game is running.
-
-## The live view
-
-There is a window on the backend, for when watching a transcript is not enough:
-
-```sh
-cmake -S . -B build -A x64 -DSTEAMBRIDGE_BUILD_GUI=ON
-cmake --build build --config Release
-build/Release/steambridge_gui --scenario scenarios/example.json
-```
-
-It is **off by default**, because it is the only part of this project that needs other people's code
-(the GLFW and Dear ImGui submodules) and the stub and the backend are useful without it.
-`steambridge_gui --start --port 50990` comes up serving without a click, which is also how it can be
-driven from a script.
-
-It drives the same `Server` the console does and only ever reads snapshots, so a slow frame cannot
-stall a game and the window cannot invent an answer. It shows the games attached - a game that has
-gone stays visible, greyed, with the state it was left with - every call with what resolved it and
-how long it took, the log as the server writes it, and the selected game's identity, stats and
-achievements.
-
-What it does not do yet is change anything. Editing a game's stats, unlocking an achievement, or
-scripting a call from the window is the next step; the "Game state" panel is reserved for it.
-
-## Layout
-
-| Path | What lives there |
-| --- | --- |
-| `gen/steam_api.idl.json` | The API surface the stub exports. **The one file to edit to add a call.** |
-| `src/idl.cpp`, `src/codegen_main.cpp` | `steambridge_codegen` turns the IDL into the trampolines, the `.def` and the surface table. |
-| `src/generated/` | Generated and committed - the build needs nothing to regenerate them. `--check` fails if stale. |
-| `include/bridge/`, `src/` | Protocol, JSON, transport, client, the DLL entry point. |
-| `src/session.cpp`, `src/scenario.cpp` | The backend's decisions: per-game state, and the scenario that overrides it. |
-| `src/server.cpp`, `src/backend_main.cpp` | The loopback server, and the console front end for it. |
-| `scenarios/` | Example scenario: two games, two profiles. |
-| `tests/` | C++ unit tests, `fake_game`, and the end-to-end test. |
-| `docs/` | Architecture and protocol notes. |
-
-## Adding a call
-
-```sh
-# edit gen/steam_api.idl.json, then:
-build/Release/steambridge_codegen
-```
-
-The generator validates the IDL and rewrites `src/generated/api_stub.cpp`,
-`src/generated/steam_api_exports.def` and `src/generated/api_surface.cpp`. A test
-(`generated_files_are_current`) fails the build if the IDL and the generated files have drifted
-apart. `steambridge --list-api` prints the surface as the backend sees it.
-
-The seed surface's signatures are hand-written, not lifted from a real header: reconcile them
-against your own `steam_api_flat.h` (or the export table of a real `steam_api64.dll`) before
-relying on them.
-
-## Tests
-
-```sh
-ctest --test-dir build -C Release --output-on-failure
-```
-
-| Test | Covers |
-| --- | --- |
-| `protocol` | The C++ JSON subset and the frame header: integer fidelity, escapes, strict rejection of malformed input. |
-| `backend` | Replies, the session state machine, scenarios and match rules - and that every call the state machine answers is one the IDL actually exports. |
-| `server` | The server in process: a real port, a real connection through the stub's own transport, and the snapshots and summary a live view draws. |
-| `generated_files_are_current` | The generated files match `gen/steam_api.idl.json`. |
-| `end_to_end` | The real thing: the backend started as a subprocess, a game loading the real DLL, both sides checked, and the command line itself. |
-
-CI builds every one of them with MSVC, and with clang-cl on the same ABI. Clang is there for the
-warnings MSVC has no equivalent of - a constant nobody uses, a name that shadows a member - which
-is how two real bugs were caught rather than shipped.
-
-CI also runs `tools/check-format.ps1`, so the hand-written files stay `clang-format` clean
-(see `.clang-format`). The files under `src/generated/` are **out of scope on purpose**: a test
-byte-compares them against what `steambridge_codegen` writes, so an editor's format-on-save would
-break the build. Leave that setting off for those paths, or run the checker to find out.
+Both halves are C++ in one CMake project and share one definition of the wire format, so the two
+ends cannot drift apart. `docs/architecture.md` and `docs/protocol.md` have the details.
 
 ## Status
 
-Working now: the loopback bridge, the server, the session state machine, scenarios with per-game
-profiles, out-parameters, the transcript, offline fallback, and the generator.
+Working today: the loopback bridge, the backend and its session state machine, scenarios with
+per-game profiles, out-parameters, the transcript, offline fallback, the API generator, and the live
+view (read-only so far).
 
-Next, roughly in order of value:
+Worth doing next, roughly in order of value:
 
-1. **A live view.** `Server` in `include/bridge/server.hpp` is front-end free and hands out
-   snapshots of its sessions and its call history, so a window on top of it can show what a game is
-   asking, edit a profile's stats and achievements while it runs, and script a call on the spot -
-   the "arbitrary logic" the Python hook used to provide, without a rebuild.
+1. **Let the live view change things.** Edit a profile's stats and achievements while a game runs,
+   and script a call on the spot - the "arbitrary logic" a scenario file cannot express.
 2. **Callback injection.** Games expect `RunCallbacks` to deliver `UserStatsReceived`, and worse.
-   The stub records registrations today; the backend should be able to push an event, which needs
-   the SDK's callback payload structs. This also means a reader thread in the stub.
-3. **The full export surface**, generated from your `steam_api_flat.h` - the seed here is 28 calls
-   with hand-written signatures, and every one of them should be reconciled against the real header
+   The stub records registrations today; pushing an event needs the SDK's callback payload structs,
+   and a reader thread in the stub.
+3. **The whole export surface**, generated from your own `steam_api_flat.h`. The seed here is 28
+   calls with hand-written signatures, and every one should be reconciled against the real header
    before being relied on.
-4. **Record / replay**: a passthrough mode where the stub forwards to a real `steam_api64.dll`,
-   records both directions, and the backend replays that recording later. This is the feature that
-   makes "debug locally, then test against Steam" pay for itself, and the `Transport` interface is
-   already the seam for it.
-5. **Struct and buffer parameters.** The type table covers scalars, strings and out-parameters
-   today; fixed-size structs and `char*` buffers need dedicated kinds.
+4. **Record and replay.** A pass-through mode that forwards to a real `steam_api64.dll`, records
+   both directions, and replays the recording later. The `Transport` interface is already the seam.
+5. **Struct and buffer parameters.** The type table covers scalars, strings and out-parameters;
+   fixed-size structs and `char*` buffers need dedicated kinds.
 
 ## What this is not
 
-* **Not a runtime for games you do not own.** It forwards the API surface and reports what a
-  scenario tells it to report. Nothing here answers an ownership, entitlement or licensing question,
-  and the defaults are the "Steam is not running" values.
+* **Not a runtime for games you do not own.** It reports what a scenario tells it to report. Nothing
+  here answers an ownership, entitlement or licensing question, and the defaults are the "Steam is
+  not running" values.
 * **Not shippable.** A substitute `steam_api64.dll` is a development tool; the Steamworks agreement
   does not allow redistributing one with a game. Keep it in your dev and test runs.
-* **Not a Steam emulator.** It has no idea what a Steam ID means, it does not talk to Valve, and it
-  stops at the API boundary: anything that needs the real service - matchmaking, friends, cloud -
-  has to be scripted per call.
+* **Not a Steam emulator.** It does not talk to Valve and stops at the API boundary: anything that
+  needs the real service - matchmaking, friends, cloud - has to be scripted per call.
+
+## Contributing
+
+`docs/development.md` covers the source layout, what each test covers, what CI checks, and how to
+add a call to the API surface.
 
 ## License
 
