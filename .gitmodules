@@ -1,24 +1,6 @@
-[submodule "external/nlohmann_json"]
-	path = external/nlohmann_json
-	url = https://github.com/nlohmann/json
-[submodule "external/asio"]
-	path = external/asio
-	url = https://github.com/chriskohlhoff/asio
-[submodule "external/googletest"]
-	path = external/googletest
-	url = https://github.com/google/googletest
 [submodule "external/glfw"]
 	path = external/glfw
 	url = https://github.com/glfw/glfw
 [submodule "external/imgui"]
 	path = external/imgui
 	url = https://github.com/ocornut/imgui
-[submodule "external/CLI11"]
-	path = external/CLI11
-	url = https://github.com/CLIUtils/CLI11
-[submodule "external/spdlog"]
-	path = external/spdlog
-	url = https://github.com/gabime/spdlog
-[submodule "external/reproc"]
-	path = external/reproc
-	url = https://github.com/DaanDeMeyer/reproc
