@@ -12,6 +12,9 @@
 #
 #  MSVC is the compiler the harness ships with; clang-cl is a second pair of eyes
 #  on the same ABI, and it is worth the job because it reports what /W4 cannot.
+#
+#  The live view lives in its own job because it is the one target that needs the
+#  submodules - so the other jobs stay fast and dependency-free.
 # ============================================================================
 
 name: CI
@@ -104,3 +107,23 @@ jobs:
       - name: Check
         shell: pwsh
         run: pwsh -File tools/check-format.ps1
+
+  # The only target that needs the submodules, so only this job checks them out.
+  gui:
+    name: gui / msvc / x64
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+          -DSTEAMBRIDGE_BUILD_GUI=ON -DSTEAMBRIDGE_WERROR=ON
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure

@@ -104,6 +104,13 @@ public:
     // Snapshots, for a console, a test or a live view.
     std::vector<SessionSnapshot> sessions() const;
     std::vector<CallRecord> records() const;
+
+    // ...and the same history in pieces. A view that redraws has to ask sixty
+    // times a second, and copying every record each time would get slower with
+    // every call a game makes, so it keeps a cursor and takes only what is new.
+    std::size_t record_count() const;
+    std::vector<CallRecord> records_since(std::size_t index) const;
+
     std::size_t call_count() const;
     std::size_t unanswered_count() const;
 

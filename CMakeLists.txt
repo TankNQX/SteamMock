@@ -104,6 +104,58 @@ add_executable(steambridge_codegen src/codegen_main.cpp src/idl.cpp)
 target_link_libraries(steambridge_codegen PRIVATE steambridge_core)
 
 # ---------------------------------------------------------------------------
+#  The live view - optional, and the only part that uses other people's code.
+# ---------------------------------------------------------------------------
+#  The backend with a window on it: which games are attached, what they are
+#  asking, what they were told. It drives the same Server the console does and
+#  only ever reads snapshots, so there is one set of decisions behind both.
+#
+#  Off by default, because it is the one thing here that needs the GLFW and
+#  Dear ImGui submodules - and the stub and the backend are useful without it.
+option(STEAMBRIDGE_BUILD_GUI "Build the live view (needs the GLFW and Dear ImGui submodules)" OFF)
+
+if(STEAMBRIDGE_BUILD_GUI)
+    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/imgui.cpp OR
+       NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/glfw/CMakeLists.txt)
+        message(FATAL_ERROR
+            "the live view needs its submodules: git submodule update --init --recursive. "
+            "Configure with -DSTEAMBRIDGE_BUILD_GUI=OFF to build the stub and backend alone.")
+    endif()
+
+    # Dear ImGui ships sources rather than a build, so it gets one here. SYSTEM,
+    # so its headers are not held to this project's warning level.
+    add_library(imgui STATIC
+        external/imgui/imgui.cpp
+        external/imgui/imgui_draw.cpp
+        external/imgui/imgui_tables.cpp
+        external/imgui/imgui_widgets.cpp
+        external/imgui/backends/imgui_impl_glfw.cpp
+        external/imgui/backends/imgui_impl_opengl3.cpp
+    )
+    target_include_directories(imgui SYSTEM PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/backends
+    )
+    # The GLFW backend needs GLFW's headers to compile; the application is what
+    # links the library. SYSTEM again, so glfw3.h is not held to /W4 either.
+    target_include_directories(imgui SYSTEM PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/glfw/include)
+
+    # GLFW's own build, minus the parts that only matter to GLFW's developers.
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+    add_subdirectory(external/glfw EXCLUDE_FROM_ALL)
+
+    add_executable(steambridge_gui src/gui_main.cpp)
+    target_link_libraries(steambridge_gui PRIVATE steambridge_backend imgui glfw opengl32)
+    target_include_directories(steambridge_gui SYSTEM PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/glfw/include)
+    target_compile_definitions(steambridge_gui PRIVATE STEAMBRIDGE_VERSION="${PROJECT_VERSION}")
+endif()
+
+# ---------------------------------------------------------------------------
 #  Tests
 # ---------------------------------------------------------------------------
 if(STEAMBRIDGE_BUILD_TESTS)
@@ -172,6 +224,9 @@ set(STEAMBRIDGE_TARGETS
 )
 if(STEAMBRIDGE_BUILD_TESTS)
     list(APPEND STEAMBRIDGE_TARGETS test_protocol test_backend test_server fake_game test_end_to_end)
+endif()
+if(STEAMBRIDGE_BUILD_GUI)
+    list(APPEND STEAMBRIDGE_TARGETS steambridge_gui)
 endif()
 
 foreach(_target ${STEAMBRIDGE_TARGETS})

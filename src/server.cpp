@@ -376,6 +376,24 @@ std::vector<CallRecord> Server::records() const {
     return _records;
 }
 
+std::size_t Server::record_count() const {
+    std::lock_guard<std::mutex> lock(_mutex);
+    return _records.size();
+}
+
+std::vector<CallRecord> Server::records_since(std::size_t index) const {
+    std::lock_guard<std::mutex> lock(_mutex);
+    std::vector<CallRecord> tail;
+    if (index >= _records.size()) {
+        return tail;
+    }
+    tail.reserve(_records.size() - index);
+    for (std::size_t position = index; position < _records.size(); ++position) {
+        tail.push_back(_records[position]);
+    }
+    return tail;
+}
+
 std::size_t Server::call_count() const {
     std::lock_guard<std::mutex> lock(_mutex);
     return _total_calls;

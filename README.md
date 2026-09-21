@@ -80,6 +80,30 @@ server - and it is the one thing that did not survive the move to C++. A scenari
 means is easier to hand to someone else than a lambda buried in a script, and the same structures
 are what a live view would edit while a game is running.
 
+## The live view
+
+There is a window on the backend, for when watching a transcript is not enough:
+
+```sh
+cmake -S . -B build -A x64 -DSTEAMBRIDGE_BUILD_GUI=ON
+cmake --build build --config Release
+build/Release/steambridge_gui --scenario scenarios/example.json
+```
+
+It is **off by default**, because it is the only part of this project that needs other people's code
+(the GLFW and Dear ImGui submodules) and the stub and the backend are useful without it.
+`steambridge_gui --start --port 50990` comes up serving without a click, which is also how it can be
+driven from a script.
+
+It drives the same `Server` the console does and only ever reads snapshots, so a slow frame cannot
+stall a game and the window cannot invent an answer. It shows the games attached - a game that has
+gone stays visible, greyed, with the state it was left with - every call with what resolved it and
+how long it took, the log as the server writes it, and the selected game's identity, stats and
+achievements.
+
+What it does not do yet is change anything. Editing a game's stats, unlocking an achievement, or
+scripting a call from the window is the next step; the "Game state" panel is reserved for it.
+
 ## Layout
 
 | Path | What lives there |

@@ -43,7 +43,10 @@ try {
         exit 2
     }
 
-    $files = @(git ls-files '*.cpp' '*.hpp' '*.h') |
+    # Cached and untracked both, so a brand-new file is checked before it is
+    # ever staged - otherwise the gate has a blind spot exactly when a file is
+    # most likely to be badly formatted.
+    $files = @(git ls-files --cached --others --exclude-standard '*.cpp' '*.hpp' '*.h') |
         Where-Object { $_ -notlike 'external/*' -and $_ -notlike 'src/generated/*' }
 
     $dirty = @()
