@@ -180,10 +180,19 @@ foreach(_target ${STEAMBRIDGE_TARGETS})
     # harness reads a handful of variables at startup.
     target_compile_definitions(${_target} PRIVATE _CRT_SECURE_NO_WARNINGS)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        # /W4 is only roughly -Wall -Wextra, and -Wshadow is separate from both,
-        # so name them: this leg should see exactly what the removed Linux leg
-        # saw, and nothing less.
-        target_compile_options(${_target} PRIVATE -Wall -Wextra -Wshadow -Wpedantic)
+        # Name the diagnostics instead of importing a GNU flag group. Under
+        # -fms-compatibility -Wall/-Wextra/-Wpedantic pull in the C++98
+        # compatibility family, which is a flood of noise on any C++11 code -
+        # and it fired even without them, so it is off explicitly.
+        #
+        # Neither suppression can hide a real problem here: the project is
+        # Windows-only (so include-path case cannot matter) and C++17 (so C++98
+        # compatibility is not a goal).
+        target_compile_options(${_target} PRIVATE
+            -Wshadow                    # a name that shadows another
+            -Wunused-const-variable     # a constant nobody reads: how kTypeCount was caught
+            -Wno-c++98-compat
+            -Wno-nonportable-system-include-path)
     else()
         target_compile_options(${_target} PRIVATE /permissive-)
     endif()
