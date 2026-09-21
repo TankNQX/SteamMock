@@ -135,7 +135,8 @@ int main(int argc, char** argv) {
 
     const std::vector<std::pair<std::string, std::string>> outputs = {
         {join_path(root, "src/generated/api_stub.cpp"), steambridge::render_api_stub(idl)},
-        {join_path(root, "src/generated/steam_api_exports.def"), steambridge::render_exports_def(idl)},
+        {join_path(root, "src/generated/steam_api_exports.def"),
+         steambridge::render_exports_def(idl)},
         {join_path(root, "src/generated/api_surface.cpp"), steambridge::render_api_surface(idl)},
     };
 

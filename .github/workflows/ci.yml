@@ -94,3 +94,13 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure
+
+  format:
+    name: clang-format
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check
+        shell: pwsh
+        run: pwsh -File tools/check-format.ps1

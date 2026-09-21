@@ -39,9 +39,7 @@ public:
 
     // Tolerant on purpose: a hand-written scenario may spell a boolean as 1 or 0,
     // and reading that as "false" would be a silently wrong answer.
-    bool as_bool() const noexcept {
-        return _kind == Kind::boolean ? _bool : (as_int64() != 0);
-    }
+    bool as_bool() const noexcept { return _kind == Kind::boolean ? _bool : (as_int64() != 0); }
     double as_double() const noexcept { return _number; }
     std::int64_t as_int64() const noexcept;
     std::uint64_t as_uint64() const noexcept;
@@ -64,12 +62,12 @@ public:
 private:
     Kind _kind = Kind::null_value;
     bool _bool = false;
-    bool _integral = false;   // numbers: keep integers exact, never via a double round trip
+    bool _integral = false;  // numbers: keep integers exact, never via a double round trip
     std::int64_t _integer = 0;
     double _number = 0.0;
     std::string _string;
-    std::vector<Json> _items;                                // array items
-    std::vector<std::pair<std::string, Json>> _members;      // object members, insertion order
+    std::vector<Json> _items;                            // array items
+    std::vector<std::pair<std::string, Json>> _members;  // object members, insertion order
 };
 
 }  // namespace steambridge

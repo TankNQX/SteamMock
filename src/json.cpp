@@ -150,7 +150,7 @@ private:
     }
 
     bool parse_object(Json& out, int depth) {
-        ++_position;   // '{'
+        ++_position;  // '{'
         out = Json::object();
         skip_whitespace();
         if (consume('}')) {
@@ -181,7 +181,7 @@ private:
     }
 
     bool parse_array(Json& out, int depth) {
-        ++_position;   // '['
+        ++_position;  // '['
         out = Json::array();
         skip_whitespace();
         if (consume(']')) {
@@ -241,7 +241,8 @@ private:
                         std::uint32_t low = 0;
                         if (consume('\\') && consume('u') && parse_hex4(low) && low >= 0xDC00u &&
                             low <= 0xDFFFu) {
-                            code_point = 0x10000u + ((code_point - 0xD800u) << 10) + (low - 0xDC00u);
+                            code_point =
+                                0x10000u + ((code_point - 0xD800u) << 10) + (low - 0xDC00u);
                         } else {
                             _position = save;
                             code_point = 0xFFFDu;
@@ -255,7 +256,7 @@ private:
                 default: return false;
             }
         }
-        return false;   // unterminated
+        return false;  // unterminated
     }
 
     bool parse_hex4(std::uint32_t& out) {
@@ -446,8 +447,7 @@ std::int64_t Json::as_int64() const noexcept {
 }
 
 std::uint64_t Json::as_uint64() const noexcept {
-    return _integral ? static_cast<std::uint64_t>(_integer)
-                     : static_cast<std::uint64_t>(_number);
+    return _integral ? static_cast<std::uint64_t>(_integer) : static_cast<std::uint64_t>(_number);
 }
 
 Json& Json::set(std::string key, Json value) {
@@ -470,9 +470,7 @@ const Json* Json::find(std::string_view key) const noexcept {
     return nullptr;
 }
 
-void Json::push(Json value) {
-    _items.push_back(std::move(value));
-}
+void Json::push(Json value) { _items.push_back(std::move(value)); }
 
 std::string Json::dump() const {
     std::string out;

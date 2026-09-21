@@ -11,7 +11,7 @@
 #include "bridge/protocol.hpp"
 
 #ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
 #endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -31,9 +31,7 @@ void ensure_winsock_started() noexcept {
     }
 }
 
-socket_t as_socket(std::uintptr_t value) noexcept {
-    return static_cast<socket_t>(value);
-}
+socket_t as_socket(std::uintptr_t value) noexcept { return static_cast<socket_t>(value); }
 
 void close_socket(socket_t handle) noexcept {
     if (handle == kInvalidSocket) {
@@ -85,7 +83,8 @@ bool send_frame(socket_t handle, const std::string& payload) noexcept {
     }
     char header[4] = {};
     write_frame_length(header, static_cast<std::uint32_t>(payload.size()));
-    return send_all(handle, header, sizeof(header)) && send_all(handle, payload.data(), payload.size());
+    return send_all(handle, header, sizeof(header)) &&
+           send_all(handle, payload.data(), payload.size());
 }
 
 // Reads exactly one frame. False means the peer went away, or sent something
@@ -134,13 +133,15 @@ std::int64_t unix_milliseconds_now() noexcept {
 // is a random prefix plus a counter rather than a UUID.
 std::string make_session_id() {
     static std::atomic<std::uint64_t> counter{0};
-    static const std::uint64_t seed = static_cast<std::uint64_t>(
-        std::chrono::steady_clock::now().time_since_epoch().count()) ^
+    static const std::uint64_t seed =
+        static_cast<std::uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count()) ^
         static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(&counter));
-    std::uint64_t value = (seed ^ (counter.fetch_add(1) + 0x9E3779B97F4A7C15ull)) * 0xBF58476D1CE4E5B9ull;
+    std::uint64_t value =
+        (seed ^ (counter.fetch_add(1) + 0x9E3779B97F4A7C15ull)) * 0xBF58476D1CE4E5B9ull;
     value ^= value >> 27;
     char buffer[16] = {};
-    std::snprintf(buffer, sizeof(buffer), "%012llx", static_cast<unsigned long long>(value & 0xFFFFFFFFFFFFull));
+    std::snprintf(buffer, sizeof(buffer), "%012llx",
+                  static_cast<unsigned long long>(value & 0xFFFFFFFFFFFFull));
     return std::string(buffer);
 }
 
@@ -169,7 +170,8 @@ void stderr_log_sink(LogLevel level, const std::string& message) {
     std::tm parts{};
     localtime_s(&parts, &now);
     char stamp[16] = {};
-    std::snprintf(stamp, sizeof(stamp), "%02d:%02d:%02d", parts.tm_hour, parts.tm_min, parts.tm_sec);
+    std::snprintf(stamp, sizeof(stamp), "%02d:%02d:%02d", parts.tm_hour, parts.tm_min,
+                  parts.tm_sec);
     std::fprintf(stderr, "%s %-7s %s\n", stamp, level_name(level), message.c_str());
     std::fflush(stderr);
 }
@@ -207,9 +209,7 @@ Server::Server(Dispatcher dispatcher, ServerOptions options)
     }
 }
 
-Server::~Server() {
-    stop();
-}
+Server::~Server() { stop(); }
 
 void Server::log(LogLevel level, const std::string& message) const {
     if (!_options.log || level > _options.log_level) {
@@ -282,9 +282,8 @@ bool Server::start(std::string& error) {
     }
 
     _listener = static_cast<std::uintptr_t>(listener);
-    _accept_thread = std::thread([this, listener] {
-        accept_loop(static_cast<std::uintptr_t>(listener));
-    });
+    _accept_thread =
+        std::thread([this, listener] { accept_loop(static_cast<std::uintptr_t>(listener)); });
 
     log(LogLevel::info, "listening on " + _options.host + ":" + std::to_string(_port));
     return true;
@@ -294,7 +293,7 @@ void Server::stop() {
     {
         std::lock_guard<std::mutex> lock(_mutex);
         if (_stopping && _listener == kNoSocket) {
-            return;   // already stopped
+            return;  // already stopped
         }
         _stopping = true;
     }
@@ -333,9 +332,7 @@ void Server::stop() {
     }
 }
 
-std::uint16_t Server::port() const noexcept {
-    return _port;
-}
+std::uint16_t Server::port() const noexcept { return _port; }
 
 std::string Server::summary() const {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -388,7 +385,7 @@ void Server::accept_loop(std::uintptr_t listener) {
     for (;;) {
         const socket_t client = ::accept(socket, nullptr, nullptr);
         if (client == kInvalidSocket) {
-            return;   // the listener was closed: we are stopping
+            return;  // the listener was closed: we are stopping
         }
 
         {
@@ -445,7 +442,7 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
     if (send_frame(socket, make_welcome(session_id, session->profile().name).dump())) {
         for (;;) {
             if (!recv_frame(socket, payload)) {
-                break;   // the normal way a game leaves
+                break;  // the normal way a game leaves
             }
             Json message;
             if (!Json::parse(payload, message) || !message.is_object()) {
@@ -509,10 +506,12 @@ std::string Server::handle_call(Session& session, const Json& message) {
         session.note_call();
     }
     const double elapsed_ms =
-        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
+            .count();
 
     CallRecord record;
-    record.session = session.id();    record.seq = seq;
+    record.session = session.id();
+    record.seq = seq;
     record.call = name;
     record.args = args;
     record.answered = answer.answered;

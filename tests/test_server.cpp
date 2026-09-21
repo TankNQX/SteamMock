@@ -41,8 +41,7 @@ void check(const char* what, bool ok) {
 
 // The server serves each connection on its own thread, so what it has been told
 // arrives a moment after the socket says it did.
-template <typename Predicate>
-bool wait_until(Predicate ready, double seconds) {
+template <typename Predicate> bool wait_until(Predicate ready, double seconds) {
     const auto deadline = std::chrono::steady_clock::now() +
                           std::chrono::milliseconds(static_cast<long long>(seconds * 1000.0));
     for (;;) {
@@ -92,9 +91,8 @@ bool exchange(steambridge::TcpTransport& client, const Json& message, Json& repl
 
 // One scripted call, one answered from state, one nobody has an opinion about,
 // so every "via" the transcript records shows up at least once.
-const char* kScenario =
-    "{\"profiles\":{\"default\":{\"app_id\":480,\"stats\":{\"Deaths\":3},"
-    "\"scripted\":{\"SteamAPI_Init\":{\"ret\":true}}}}}";
+const char* kScenario = "{\"profiles\":{\"default\":{\"app_id\":480,\"stats\":{\"Deaths\":3},"
+                        "\"scripted\":{\"SteamAPI_Init\":{\"ret\":true}}}}}";
 
 void test_what_the_server_saw() {
     std::printf("[:] a real connection, and what the server says about it\n");
@@ -106,8 +104,8 @@ void test_what_the_server_saw() {
     }
 
     steambridge::ServerOptions options;
-    options.port = 0;   // let the OS pick, so the test can run beside anything else
-    options.log_level = steambridge::LogLevel::error;   // keep the test output clean
+    options.port = 0;  // let the OS pick, so the test can run beside anything else
+    options.log_level = steambridge::LogLevel::error;  // keep the test output clean
     steambridge::Server server(steambridge::Dispatcher(scenario), options);
 
     std::string error;
@@ -165,12 +163,12 @@ void test_what_the_server_saw() {
     check("the server catches up with the game",
           wait_until([&server] { return server.call_count() == 3u; }, 5.0));
     check("the server notices the game leaving", wait_until(
-                                                    [&server] {
-                                                        const auto sessions = server.sessions();
-                                                        return sessions.size() == 1u &&
-                                                               !sessions[0].connected;
-                                                    },
-                                                    5.0));
+                                                     [&server] {
+                                                         const auto sessions = server.sessions();
+                                                         return sessions.size() == 1u &&
+                                                                !sessions[0].connected;
+                                                     },
+                                                     5.0));
 
     check("every call was counted", server.call_count() == 3u);
     check("the declined one is counted as unanswered", server.unanswered_count() == 1u);
@@ -179,8 +177,7 @@ void test_what_the_server_saw() {
     check("every call is in the history", records.size() == 3u);
     if (records.size() == 3u) {
         check("the history keeps the order the game called in",
-              records[0].call == "SteamAPI_Init" &&
-                  records[1].call == "SteamAPI_GetHSteamUser" &&
+              records[0].call == "SteamAPI_Init" && records[1].call == "SteamAPI_GetHSteamUser" &&
                   records[2].call == "SteamAPI_Shutdown");
         check("a record names its session", records[0].session == session_id);
         check("a record echoes the sequence it answered", records[1].seq == 2);

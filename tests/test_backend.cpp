@@ -27,7 +27,7 @@
 #include "bridge/surface.hpp"
 
 #ifndef STEAMBRIDGE_SCENARIO_PATH
-#  error "STEAMBRIDGE_SCENARIO_PATH must name the example scenario"
+#    error "STEAMBRIDGE_SCENARIO_PATH must name the example scenario"
 #endif
 
 namespace {
@@ -67,9 +67,7 @@ std::int64_t out_int(const Answer& answer, const char* key) {
     return value != nullptr ? value->as_int64() : 0;
 }
 
-bool has_out(const Answer& answer) {
-    return steambridge::carries_out(answer.out);
-}
+bool has_out(const Answer& answer) { return steambridge::carries_out(answer.out); }
 
 // The same fixture the Python tests used, so the ported expectations still mean
 // something: one game, one known stat, one locked achievement.
@@ -144,7 +142,8 @@ void test_relabelling() {
 
     const Dispatcher dispatcher;
     Session scripted_session = make_session("{\"SteamAPI_ISteamUtils_GetAppID\":{\"ret\":999}}");
-    const Answer win = dispatcher.answer(scripted_session, "SteamAPI_ISteamUtils_GetAppID", Json::object());
+    const Answer win =
+        dispatcher.answer(scripted_session, "SteamAPI_ISteamUtils_GetAppID", Json::object());
     check("a scripted call wins over the state machine", win.answered);
     check("the scripted value is the one used", win.ret.as_int64() == 999);
     check("it is labelled scripted", win.via == "scripted");
@@ -155,7 +154,8 @@ void test_relabelling() {
     check("a declined scripted call is still labelled scripted", declined.via == "scripted");
 
     Session state_session = make_session();
-    const Answer from_state = dispatcher.answer(state_session, "SteamAPI_GetHSteamUser", Json::object());
+    const Answer from_state =
+        dispatcher.answer(state_session, "SteamAPI_GetHSteamUser", Json::object());
     check("state answers are labelled state", from_state.answered && from_state.via == "state");
     check("the state answer is the documented constant", from_state.ret.as_int64() == 1);
 
@@ -194,7 +194,8 @@ void test_stats() {
     std::printf("[:] stats\n");
 
     Session session = make_session();
-    const Answer read = session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths"));
+    const Answer read =
+        session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths"));
     check("a known stat is answered", read.answered && read.ret.as_bool());
     check("a stat is read as named out parameters", out_int(read, "pnData") == 3);
 
@@ -203,7 +204,8 @@ void test_stats() {
     check("writing a stat is accepted",
           session.handle("SteamAPI_ISteamUserStats_SetStatInt32", write).ret.as_bool());
 
-    const Answer reread = session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths"));
+    const Answer reread =
+        session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths"));
     check("reading it back sees the new value", out_int(reread, "pnData") == 9);
     check("the write is remembered for a transcript",
           session.stats_written().size() == 1u && session.stats_written()[0].second == 9);
@@ -215,7 +217,8 @@ void test_stats() {
     check("a stat a game invents can be read back",
           session.handle("SteamAPI_ISteamUserStats_GetStatInt32", invented).ret.as_bool());
 
-    const Answer missing = session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("NoSuchStat"));
+    const Answer missing =
+        session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("NoSuchStat"));
     check("an unknown stat is still answered", missing.answered);
     check("an unknown stat fails, like Steam", !missing.ret.as_bool());
     check("an unknown stat leaves the caller's variable alone", !has_out(missing));
@@ -225,26 +228,30 @@ void test_achievements() {
     std::printf("[:] achievements\n");
 
     Session session = make_session();
-    const Answer locked = session.handle("SteamAPI_ISteamUserStats_GetAchievement", name_argument("ACH_BOOTED"));
+    const Answer locked =
+        session.handle("SteamAPI_ISteamUserStats_GetAchievement", name_argument("ACH_BOOTED"));
     check("an achievement can be read", locked.answered && locked.ret.as_bool());
     check("it starts locked", !out_flag(locked, "pbAchieved"));
 
     check("unlocking it is accepted",
           session.handle("SteamAPI_ISteamUserStats_SetAchievement", name_argument("ACH_BOOTED"))
               .ret.as_bool());
-    const Answer unlocked = session.handle("SteamAPI_ISteamUserStats_GetAchievement", name_argument("ACH_BOOTED"));
+    const Answer unlocked =
+        session.handle("SteamAPI_ISteamUserStats_GetAchievement", name_argument("ACH_BOOTED"));
     check("it reads back as unlocked", out_flag(unlocked, "pbAchieved"));
     check("the unlock is remembered for a transcript",
           session.achievements_set().size() == 1u && session.achievements_set()[0] == "ACH_BOOTED");
 
-    const Answer missing = session.handle("SteamAPI_ISteamUserStats_GetAchievement", name_argument("ACH_MISSING"));
+    const Answer missing =
+        session.handle("SteamAPI_ISteamUserStats_GetAchievement", name_argument("ACH_MISSING"));
     check("an unknown achievement reports failure", missing.answered && !missing.ret.as_bool());
     check("unlocking an unknown achievement reports failure",
           !session.handle("SteamAPI_ISteamUserStats_SetAchievement", name_argument("ACH_MISSING"))
                .ret.as_bool());
 
     check("the list is counted",
-          session.handle("SteamAPI_ISteamUserStats_GetNumAchievements", Json::object()).ret.as_int64() == 1);
+          session.handle("SteamAPI_ISteamUserStats_GetNumAchievements", Json::object())
+                  .ret.as_int64() == 1);
     Json first = Json::object();
     first.set("iAchievement", Json::integer(0));
     check("achievement names are indexed",
@@ -273,17 +280,17 @@ void test_scenarios() {
     std::printf("[:] scenarios and match rules\n");
 
     Json document;
-    const std::string text =
-        "{\"profiles\":{\"default\":{\"app_id\":1},\"other\":{\"app_id\":2}},"
-        "\"match\":[{\"exe_contains\":\"special\",\"profile\":\"other\"},"
-        "{\"exe_contains\":\"game\",\"profile\":\"default\"}],"
-        "\"default_profile\":\"default\"}";
+    const std::string text = "{\"profiles\":{\"default\":{\"app_id\":1},\"other\":{\"app_id\":2}},"
+                             "\"match\":[{\"exe_contains\":\"special\",\"profile\":\"other\"},"
+                             "{\"exe_contains\":\"game\",\"profile\":\"default\"}],"
+                             "\"default_profile\":\"default\"}";
     check("the scenario parses", Json::parse(text, document));
     const Dispatcher dispatcher(document);
 
     Json special = Json::object();
     special.set("exe", Json::string("my_special_game.exe"));
-    check("a match rule can pick a profile by executable", dispatcher.profile_for(special).app_id == 2);
+    check("a match rule can pick a profile by executable",
+          dispatcher.profile_for(special).app_id == 2);
 
     Json plain = Json::object();
     plain.set("exe", Json::string("game.exe"));
@@ -352,10 +359,12 @@ void test_profiles_are_per_session() {
     write.set("nData", Json::integer(77));
     one.handle("SteamAPI_ISteamUserStats_SetStatInt32", write);
 
-    check("the game that wrote sees its own value",
-          one.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths")).ret.as_bool());
+    check(
+        "the game that wrote sees its own value",
+        one.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths")).ret.as_bool());
     check("the other game is not handed that value",
-          !two.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths")).ret.as_bool());
+          !two.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths"))
+               .ret.as_bool());
 }
 
 void test_surface_matches_the_idl() {
@@ -413,8 +422,8 @@ void test_numbers() {
 
     // Exactness: the writer only shortens when the text still denotes the very
     // same double, which is what the C library reading it back proves.
-    for (const double value : {0.164, 1500.0, 0.1, 1.0 / 3.0, -2.5, 3.141592653589793, 1e-300,
-                               1e300}) {
+    for (const double value :
+         {0.164, 1500.0, 0.1, 1.0 / 3.0, -2.5, 3.141592653589793, 1e-300, 1e300}) {
         const std::string text = steambridge::Json::real(value).dump();
         if (std::strtod(text.c_str(), nullptr) != value) {
             std::printf("        %s is not the same double as the value written\n", text.c_str());
@@ -431,7 +440,8 @@ void test_numbers() {
     Json back;
     for (const double value : {0.5, -2.5, 1500.0, 0.0}) {
         check("a binary-exact double is read back unchanged",
-              Json::parse(steambridge::Json::real(value).dump(), back) && back.as_double() == value);
+              Json::parse(steambridge::Json::real(value).dump(), back) &&
+                  back.as_double() == value);
     }
     check("a fraction is read back to within a rounding step",
           Json::parse(steambridge::Json::real(0.164).dump(), back) &&

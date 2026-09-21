@@ -27,7 +27,8 @@ struct TypeInfo {
 };
 
 constexpr TypeInfo kTypes[] = {
-    {"bool", "bool", "arg_bool", "false", "steambridge::reply_bool(reply)", "static_cast<bool>(value->as_bool())"},
+    {"bool", "bool", "arg_bool", "false", "steambridge::reply_bool(reply)",
+     "static_cast<bool>(value->as_bool())"},
     {"int32", "std::int32_t", "arg_int", "0",
      "static_cast<std::int32_t>(steambridge::reply_int(reply))",
      "static_cast<std::int32_t>(value->as_int64())"},
@@ -35,7 +36,8 @@ constexpr TypeInfo kTypes[] = {
      "static_cast<std::uint32_t>(steambridge::reply_uint(reply))",
      "static_cast<std::uint32_t>(value->as_uint64())"},
     {"int64", "std::int64_t", "arg_int", "0", "steambridge::reply_int(reply)", "value->as_int64()"},
-    {"uint64", "std::uint64_t", "arg_uint", "0", "steambridge::reply_uint(reply)", "value->as_uint64()"},
+    {"uint64", "std::uint64_t", "arg_uint", "0", "steambridge::reply_uint(reply)",
+     "value->as_uint64()"},
     {"float", "float", "arg_real", "0.0f", "static_cast<float>(steambridge::reply_real(reply))",
      "static_cast<float>(value->as_double())"},
     {"double", "double", "arg_real", "0.0", "steambridge::reply_real(reply)", "value->as_double()"},
@@ -125,8 +127,8 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
     const bool returns_void = call.returns == "void";
 
     if (!returns_void) {
-        out.push_back(std::string("    ") + find_type(call.returns)->cpp + " result = " +
-                      find_type(call.returns)->return_default + ";");
+        out.push_back(std::string("    ") + find_type(call.returns)->cpp +
+                      " result = " + find_type(call.returns)->return_default + ";");
     }
     out.push_back("    try {");
     out.push_back("        steambridge::Json args = steambridge::Json::object();");
@@ -175,8 +177,8 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
             out.push_back("            }");
         }
         if (!returns_void) {
-            out.push_back("            result = " + std::string(find_type(call.returns)->reply_expr) +
-                          ";");
+            out.push_back(
+                "            result = " + std::string(find_type(call.returns)->reply_expr) + ";");
         }
         out.push_back("        }");
     }
@@ -188,8 +190,8 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
     }
 }
 
-std::vector<std::string> generated_header(const Idl& idl, const char* regenerate,
-                                          const char* open, const char* close) {
+std::vector<std::string> generated_header(const Idl& idl, const char* regenerate, const char* open,
+                                          const char* close) {
     return {open,
             kGeneratedNote,
             "//",
@@ -218,7 +220,8 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
     }
 
     Idl parsed;
-    if (const Json* surface = document.find("surface"); surface != nullptr && surface->is_string()) {
+    if (const Json* surface = document.find("surface");
+        surface != nullptr && surface->is_string()) {
         parsed._surface = surface->as_string();
     }
     if (const Json* revision = document.find("revision");
@@ -276,10 +279,11 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                 const Json* param_type = entry_param.find("type");
                 if (param_type == nullptr || !param_type->is_string() ||
                     find_type(param_type->as_string()) == nullptr) {
-                    error = call.name + "." + param.name + ": unknown type '" +
-                            (param_type != nullptr && param_type->is_string() ? param_type->as_string()
-                                                                             : std::string()) +
-                            "'";
+                    error =
+                        call.name + "." + param.name + ": unknown type '" +
+                        (param_type != nullptr && param_type->is_string() ? param_type->as_string()
+                                                                          : std::string()) +
+                        "'";
                     return false;
                 }
                 param.type = param_type->as_string();
@@ -294,7 +298,8 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                 }
                 param.out = direction == "out";
                 if (param.out && (param.type == "cstring" || param.type == "opaque_ptr")) {
-                    error = call.name + "." + param.name + ": out parameters of type '" + param.type +
+                    error = call.name + "." + param.name + ": out parameters of type '" +
+                            param.type +
                             "' need a length or an owned buffer - add a dedicated kind when you "
                             "need one";
                     return false;
@@ -339,7 +344,8 @@ bool Idl::load_file(const std::string& path, Idl& out, std::string& error) {
 
 std::string render_api_stub(const Idl& idl) {
     std::vector<std::string> out = generated_header(
-        idl, kRegenerate, "// ============================================================================",
+        idl, kRegenerate,
+        "// ============================================================================",
         "// ============================================================================");
     out.push_back("");
     out.push_back("#include \"bridge/call.hpp\"");
@@ -392,7 +398,8 @@ std::string render_exports_def(const Idl& idl) {
 std::string render_api_surface(const Idl& idl) {
     const std::vector<IdlCall>& calls = idl.calls();
     std::vector<std::string> out = generated_header(
-        idl, kRegenerate, "// ============================================================================",
+        idl, kRegenerate,
+        "// ============================================================================",
         "// ============================================================================");
     out.push_back("");
     out.push_back("#include \"bridge/surface.hpp\"");
@@ -423,9 +430,8 @@ std::string render_api_surface(const Idl& idl) {
     } else {
         for (const IdlCall& call : calls) {
             out.push_back("    {\"" + call.name + "\", \"" + call.returns + "\", " +
-                          (call.params.empty() ? "nullptr"
-                                               : "kParams_" + call.name) +
-                          ", " + std::to_string(call.params.size()) + "},");
+                          (call.params.empty() ? "nullptr" : "kParams_" + call.name) + ", " +
+                          std::to_string(call.params.size()) + "},");
         }
     }
     out.push_back("};");
@@ -434,8 +440,8 @@ std::string render_api_surface(const Idl& idl) {
     out.push_back("");
     out.push_back("const char* api_surface_name() noexcept { return " +
                   cpp_string_literal(idl.surface()) + "; }");
-    out.push_back("int api_surface_revision() noexcept { return " +
-                  std::to_string(idl.revision()) + "; }");
+    out.push_back("int api_surface_revision() noexcept { return " + std::to_string(idl.revision()) +
+                  "; }");
     out.push_back("const SurfaceCall* api_surface_calls(std::size_t& count) noexcept {");
     out.push_back("    count = " + std::to_string(calls.size()) + ";");
     out.push_back("    return kCalls;");

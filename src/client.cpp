@@ -7,7 +7,7 @@
 #include "bridge/protocol.hpp"
 
 #ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
 
@@ -88,7 +88,8 @@ void Client::configure() noexcept {
     if (_host.empty()) {
         _host = "127.0.0.1";
     }
-    _port = static_cast<std::uint16_t>(parse_unsigned(environment("STEAMBRIDGE_PORT"), kDefaultPort));
+    _port =
+        static_cast<std::uint16_t>(parse_unsigned(environment("STEAMBRIDGE_PORT"), kDefaultPort));
     _timeout_ms = parse_unsigned(environment("STEAMBRIDGE_TIMEOUT_MS"), kDefaultTimeoutMs);
     _transport->set_timeout_ms(_timeout_ms);
 

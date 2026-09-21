@@ -91,10 +91,12 @@ void Dispatcher::configure(const Json& scenario) {
         return;
     }
 
-    if (const Json* profiles = scenario.find("profiles"); profiles != nullptr && profiles->is_object()) {
+    if (const Json* profiles = scenario.find("profiles");
+        profiles != nullptr && profiles->is_object()) {
         for (const auto& member : profiles->members()) {
             if (member.second.is_object()) {
-                _profiles.emplace_back(member.first, Profile::from_json(member.first, member.second));
+                _profiles.emplace_back(member.first,
+                                       Profile::from_json(member.first, member.second));
             }
         }
     }
@@ -102,8 +104,8 @@ void Dispatcher::configure(const Json& scenario) {
         _profiles.emplace_back("default", Profile{});
     }
 
-    if (const Json* default_profile = scenario.find("default_profile"); default_profile != nullptr &&
-                                                                       default_profile->is_string()) {
+    if (const Json* default_profile = scenario.find("default_profile");
+        default_profile != nullptr && default_profile->is_string()) {
         _default_profile = default_profile->as_string();
     }
 
@@ -113,7 +115,8 @@ void Dispatcher::configure(const Json& scenario) {
                 continue;
             }
             MatchRule rule;
-            if (const Json* value = entry.find("exe_contains"); value != nullptr && value->is_string()) {
+            if (const Json* value = entry.find("exe_contains");
+                value != nullptr && value->is_string()) {
                 rule.has_exe_contains = true;
                 rule.exe_contains = value->as_string();
             }
@@ -169,7 +172,8 @@ Profile Dispatcher::profile_for(const Json& hello) const {
     }
 
     for (const MatchRule& rule : _match) {
-        if (rule.has_exe_contains && exe.find(lower_ascii(rule.exe_contains)) == std::string::npos) {
+        if (rule.has_exe_contains &&
+            exe.find(lower_ascii(rule.exe_contains)) == std::string::npos) {
             continue;
         }
         if (rule.has_exe && lower_ascii(rule.exe) != exe) {

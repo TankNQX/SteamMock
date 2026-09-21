@@ -36,8 +36,7 @@ using achievement_name_fn = const char* (*)(void*, std::uint32_t);
 using session_fn = const char* (*)();
 using stats_fn = unsigned long (*)(unsigned long*);
 
-template <typename Fn>
-Fn resolve(HMODULE module, const char* name) {
+template <typename Fn> Fn resolve(HMODULE module, const char* name) {
     const FARPROC address = GetProcAddress(module, name);
     if (address == nullptr) {
         std::printf("missing export: %s\n", name);
@@ -61,7 +60,8 @@ int main() {
 
     HMODULE stub = LoadLibraryA(stub_path);
     if (stub == nullptr) {
-        std::printf("cannot load the stub: error %lu\n", static_cast<unsigned long>(GetLastError()));
+        std::printf("cannot load the stub: error %lu\n",
+                    static_cast<unsigned long>(GetLastError()));
         return 2;
     }
 
@@ -76,15 +76,21 @@ int main() {
     const auto isteam_utils = resolve<interface_fn>(stub, "SteamAPI_ISteamUtils");
     const auto isteam_user_stats = resolve<interface_fn>(stub, "SteamAPI_ISteamUserStats");
     const auto get_steam_id = resolve<steam_id_fn>(stub, "SteamAPI_ISteamUser_GetSteamID");
-    const auto get_persona = resolve<cstring_self_fn>(stub, "SteamAPI_ISteamFriends_GetPersonaName");
+    const auto get_persona =
+        resolve<cstring_self_fn>(stub, "SteamAPI_ISteamFriends_GetPersonaName");
     const auto get_app_id = resolve<app_id_fn>(stub, "SteamAPI_ISteamUtils_GetAppID");
-    const auto get_language = resolve<cstring_self_fn>(stub, "SteamAPI_ISteamUtils_GetCurrentGameLanguage");
+    const auto get_language =
+        resolve<cstring_self_fn>(stub, "SteamAPI_ISteamUtils_GetCurrentGameLanguage");
     const auto get_stat = resolve<stat_get_fn>(stub, "SteamAPI_ISteamUserStats_GetStatInt32");
     const auto set_stat = resolve<stat_set_fn>(stub, "SteamAPI_ISteamUserStats_SetStatInt32");
-    const auto get_achievement = resolve<achievement_get_fn>(stub, "SteamAPI_ISteamUserStats_GetAchievement");
-    const auto set_achievement = resolve<achievement_set_fn>(stub, "SteamAPI_ISteamUserStats_SetAchievement");
-    const auto num_achievements = resolve<count_fn>(stub, "SteamAPI_ISteamUserStats_GetNumAchievements");
-    const auto achievement_name = resolve<achievement_name_fn>(stub, "SteamAPI_ISteamUserStats_GetAchievementName");
+    const auto get_achievement =
+        resolve<achievement_get_fn>(stub, "SteamAPI_ISteamUserStats_GetAchievement");
+    const auto set_achievement =
+        resolve<achievement_set_fn>(stub, "SteamAPI_ISteamUserStats_SetAchievement");
+    const auto num_achievements =
+        resolve<count_fn>(stub, "SteamAPI_ISteamUserStats_GetNumAchievements");
+    const auto achievement_name =
+        resolve<achievement_name_fn>(stub, "SteamAPI_ISteamUserStats_GetAchievementName");
     const auto store_stats = resolve<bool_self_fn>(stub, "SteamAPI_ISteamUserStats_StoreStats");
     const auto session_id = resolve<session_fn>(stub, "SteamBridge_SessionId");
     const auto bridge_stats = resolve<stats_fn>(stub, "SteamBridge_Stats");
@@ -108,7 +114,8 @@ int main() {
     void* const user = isteam_user();
     void* const utils = isteam_utils();
     void* const user_stats = isteam_user_stats();
-    std::printf("interfaces=%s\n", (user != nullptr && utils != nullptr && user_stats != nullptr) ? "true" : "false");
+    std::printf("interfaces=%s\n",
+                (user != nullptr && utils != nullptr && user_stats != nullptr) ? "true" : "false");
 
     // --- identity ----------------------------------------------------------
     std::printf("steam_id=%llu\n", static_cast<unsigned long long>(get_steam_id(user)));

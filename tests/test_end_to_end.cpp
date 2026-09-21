@@ -281,8 +281,8 @@ int main(int argc, char** argv) {
     check("the session handshake completed", value_of(values, "session_set") == "true");
     check("the install path came back as text", value_of(values, "install_path_set") == "true");
     check("the interface getters returned tokens", value_of(values, "interfaces") == "true");
-    check("the steam id came from the profile",
-          value_of(values, "steam_id") == "76561198000000001", value_of(values, "steam_id"));
+    check("the steam id came from the profile", value_of(values, "steam_id") == "76561198000000001",
+          value_of(values, "steam_id"));
     check("the persona name came from the profile", value_of(values, "persona") == "DebugPlayer",
           value_of(values, "persona"));
     check("the app id came from the profile", value_of(values, "app_id") == "480",
@@ -303,7 +303,8 @@ int main(int argc, char** argv) {
     check("an unknown stat reports failure", value_of(values, "stat.NoSuchStat.found") == "false");
     check("an unknown stat leaves the caller's variable alone",
           value_of(values, "stat.NoSuchStat.value_untouched") == "true");
-    check("an achievement can be read", value_of(values, "achievement.ACH_BOOTED.value") == "false");
+    check("an achievement can be read",
+          value_of(values, "achievement.ACH_BOOTED.value") == "false");
     check("unlocking an achievement reported success",
           value_of(values, "achievement.ACH_BOOTED.unlocked") == "true");
     check("it reads back as unlocked", value_of(values, "achievement.ACH_BOOTED.after") == "true");
@@ -333,7 +334,8 @@ int main(int argc, char** argv) {
     // last calls happen after it asked for the count.
     check("the backend saw at least every call the stub had counted",
           static_cast<int>(records.size()) >= forwarded,
-          std::to_string(records.size()) + " recorded, " + std::to_string(forwarded) + " forwarded");
+          std::to_string(records.size()) + " recorded, " + std::to_string(forwarded) +
+              " forwarded");
     check("the stub reported the two calls nobody answered", value_of(values, "unhandled") == "2",
           value_of(values, "unhandled"));
     check("the last thing the game did was shut down",
@@ -387,8 +389,7 @@ int main(int argc, char** argv) {
         check("--list-api exits cleanly", exit == 0, "exit " + std::to_string(exit));
         check("--list-api names the surface", text.find("surface 'seed'") != std::string::npos);
         check("--list-api prints a call", text.find("SteamAPI_Init()") != std::string::npos);
-        check("--list-api marks an out parameter",
-              text.find("int32* pnData") != std::string::npos);
+        check("--list-api marks an out parameter", text.find("int32* pnData") != std::string::npos);
     } else {
         check("--list-api can be started", false, error);
     }
@@ -401,7 +402,8 @@ int main(int argc, char** argv) {
         check("--show-profiles exits cleanly", exit == 0, "exit " + std::to_string(exit));
         check("--show-profiles names the games",
               text.find("profile 'second_game'") != std::string::npos);
-        check("--show-profiles prints a match rule", text.find("exe_contains") != std::string::npos);
+        check("--show-profiles prints a match rule",
+              text.find("exe_contains") != std::string::npos);
     } else {
         check("--show-profiles can be started", false, error);
     }

@@ -6,7 +6,7 @@
 #include "bridge/log.hpp"
 
 #ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
 #endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -28,13 +28,9 @@ void ensure_winsock_started() noexcept {
     }
 }
 
-socket_t as_socket(std::uintptr_t value) noexcept {
-    return static_cast<socket_t>(value);
-}
+socket_t as_socket(std::uintptr_t value) noexcept { return static_cast<socket_t>(value); }
 
-bool is_open(std::uintptr_t value) noexcept {
-    return value != kClosed;
-}
+bool is_open(std::uintptr_t value) noexcept { return value != kClosed; }
 
 void close_socket(std::uintptr_t value) noexcept {
     if (!is_open(value)) {
@@ -83,9 +79,7 @@ void apply_timeout(std::uintptr_t value, unsigned timeout_ms) noexcept {
                      sizeof(milliseconds));
 }
 
-std::uint32_t read_length(const char header[4]) noexcept {
-    return read_frame_length(header);
-}
+std::uint32_t read_length(const char header[4]) noexcept { return read_frame_length(header); }
 
 void write_length(char header[4], std::uint32_t length) noexcept {
     write_frame_length(header, length);
@@ -97,18 +91,14 @@ TcpTransport::TcpTransport() noexcept : _socket(kClosed), _timeout_ms(2000u) {
     ensure_winsock_started();
 }
 
-TcpTransport::~TcpTransport() {
-    close();
-}
+TcpTransport::~TcpTransport() { close(); }
 
 void TcpTransport::close() noexcept {
     close_socket(_socket);
     _socket = kClosed;
 }
 
-bool TcpTransport::is_connected() const noexcept {
-    return is_open(_socket);
-}
+bool TcpTransport::is_connected() const noexcept { return is_open(_socket); }
 
 bool TcpTransport::connect(std::string_view host, std::uint16_t port) {
     close();

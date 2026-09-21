@@ -41,7 +41,7 @@ struct MatchRule {
     std::string exe;
     bool has_pid = false;
     std::int64_t pid = 0;
-    std::string profile;   // empty means "the default profile"
+    std::string profile;  // empty means "the default profile"
 
     std::string describe() const;
 };

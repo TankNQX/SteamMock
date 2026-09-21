@@ -79,9 +79,8 @@ public:
 
         std::string mutable_command = command_line;
         PROCESS_INFORMATION process{};
-        const BOOL started =
-            CreateProcessA(nullptr, mutable_command.data(), nullptr, nullptr, TRUE,
-                           CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process);
+        const BOOL started = CreateProcessA(nullptr, mutable_command.data(), nullptr, nullptr, TRUE,
+                                            CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process);
         CloseHandle(write_end);
         if (!started) {
             error = "cannot start " + command_line;

@@ -17,10 +17,8 @@ namespace {
 
 std::int64_t to_int64(const Json& value, std::int64_t fallback) noexcept {
     switch (value.kind()) {
-        case Json::Kind::number:
-            return value.as_int64();
-        case Json::Kind::boolean:
-            return value.as_bool() ? 1 : 0;
+        case Json::Kind::number: return value.as_int64();
+        case Json::Kind::boolean: return value.as_bool() ? 1 : 0;
         case Json::Kind::string: {
             const std::string& text = value.as_string();
             std::size_t index = 0;
@@ -52,22 +50,19 @@ std::int64_t to_int64(const Json& value, std::int64_t fallback) noexcept {
             }
             return negative ? -magnitude : magnitude;
         }
-        default:
-            return fallback;
+        default: return fallback;
     }
 }
 
 std::string to_text(const Json& value, const std::string& fallback) {
     switch (value.kind()) {
-        case Json::Kind::string:
-            return value.as_string();
+        case Json::Kind::string: return value.as_string();
         case Json::Kind::number:
             // Only an integral number has a text form Python's str() would agree
             // with; anything else is more likely a mistake than a name.
             return value.as_int64() == value.as_double() ? std::to_string(value.as_int64())
-                                                        : fallback;
-        default:
-            return fallback;
+                                                         : fallback;
+        default: return fallback;
     }
 }
 
@@ -113,9 +108,7 @@ Answer from_state_out(Json ret, Json out) {
 // caller's variable alone, which is what the stub's "no out-parameter" rule
 // already does for us.
 
-Answer h_const_one(Session&, const Json&) {
-    return from_state(Json::integer(1));
-}
+Answer h_const_one(Session&, const Json&) { return from_state(Json::integer(1)); }
 
 Answer h_install_path(Session& session, const Json&) {
     return from_state(Json::string(session.profile().install_path));
@@ -158,9 +151,7 @@ Answer h_build_id(Session& session, const Json&) {
     return from_state(Json::integer(session.profile().build_id));
 }
 
-Answer h_true(Session&, const Json&) {
-    return from_state(Json::boolean(true));
-}
+Answer h_true(Session&, const Json&) { return from_state(Json::boolean(true)); }
 
 Answer h_get_stat(Session& session, const Json& args) {
     const std::int64_t* value = session.profile().find_stat(string_member(args, "pchName"));
@@ -191,8 +182,9 @@ Answer h_get_achievement(Session& session, const Json& args) {
         return from_state(Json::boolean(false));
     }
     Json out = Json::object();
-    out.set("pbAchieved",
-            Json::boolean(session.profile().achievements[static_cast<std::size_t>(index)].achieved));
+    out.set(
+        "pbAchieved",
+        Json::boolean(session.profile().achievements[static_cast<std::size_t>(index)].achieved));
     return from_state_out(Json::boolean(true), std::move(out));
 }
 
@@ -208,7 +200,8 @@ Answer h_set_achievement(Session& session, const Json& args) {
 }
 
 Answer h_num_achievements(Session& session, const Json&) {
-    return from_state(Json::integer(static_cast<std::int64_t>(session.profile().achievements.size())));
+    return from_state(
+        Json::integer(static_cast<std::int64_t>(session.profile().achievements.size())));
 }
 
 Answer h_achievement_name(Session& session, const Json& args) {
@@ -217,7 +210,8 @@ Answer h_achievement_name(Session& session, const Json& args) {
     if (index < 0 || index >= static_cast<std::int64_t>(session.profile().achievements.size())) {
         return from_state(Json::string(""));
     }
-    return from_state(Json::string(session.profile().achievements[static_cast<std::size_t>(index)].name));
+    return from_state(
+        Json::string(session.profile().achievements[static_cast<std::size_t>(index)].name));
 }
 
 // Calls answered from session state. Everything absent here is either scripted
@@ -267,7 +261,8 @@ Profile Profile::from_json(const std::string& profile_name, const Json& data) {
         profile.app_id = to_int64(*value, profile.app_id);
     }
     if (const Json* value = data.find("steam_id")) {
-        profile.steam_id = static_cast<std::uint64_t>(to_int64(*value, static_cast<std::int64_t>(profile.steam_id)));
+        profile.steam_id = static_cast<std::uint64_t>(
+            to_int64(*value, static_cast<std::int64_t>(profile.steam_id)));
     }
     if (const Json* value = data.find("persona_name")) {
         profile.persona_name = to_text(*value, profile.persona_name);

@@ -2,9 +2,7 @@
 
 namespace steambridge {
 
-bool carries_out(const Json& out) noexcept {
-    return out.is_object() && !out.members().empty();
-}
+bool carries_out(const Json& out) noexcept { return out.is_object() && !out.members().empty(); }
 
 Json make_reply(std::int64_t seq, bool answered, const Json& ret, const Json& out) {
     Json message = Json::object();

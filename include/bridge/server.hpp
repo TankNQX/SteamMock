@@ -76,10 +76,10 @@ void stderr_log_sink(LogLevel level, const std::string& message);
 
 struct ServerOptions {
     std::string host = "127.0.0.1";
-    std::uint16_t port = 50990;   // 0 lets the operating system pick one
-    std::string transcript;       // empty keeps no transcript
+    std::uint16_t port = 50990;  // 0 lets the operating system pick one
+    std::string transcript;      // empty keeps no transcript
     LogLevel log_level = LogLevel::info;
-    LogFn log;                    // empty uses timestamped lines on stderr
+    LogFn log;  // empty uses timestamped lines on stderr
 };
 
 class Server {

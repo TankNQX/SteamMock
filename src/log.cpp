@@ -86,7 +86,8 @@ void log_configure(const char* module_path) noexcept {
     }
 
     char buffer[32] = {};
-    std::snprintf(buffer, sizeof(buffer), "pid %lu", static_cast<unsigned long>(GetCurrentProcessId()));
+    std::snprintf(buffer, sizeof(buffer), "pid %lu",
+                  static_cast<unsigned long>(GetCurrentProcessId()));
     g_prefix = buffer;
     if (module_path != nullptr && module_path[0] != '\0') {
         const std::string_view path(module_path);

@@ -37,9 +37,7 @@ namespace {
 std::atomic<bool> g_interrupted{false};
 }
 
-extern "C" void steambridge_on_interrupt(int) {
-    g_interrupted.store(true);
-}
+extern "C" void steambridge_on_interrupt(int) { g_interrupted.store(true); }
 
 namespace {
 
@@ -68,7 +66,8 @@ void print_usage(std::FILE* out) {
                  "  --show-profiles      print the scenario's games and match rules, then exit\n"
                  "  --version            print the version, then exit\n"
                  "  -h, --help           print this, then exit\n",
-                 kProgram, kProgram, kDefaultHost, static_cast<unsigned>(kDefaultPort), kDefaultScenario);
+                 kProgram, kProgram, kDefaultHost, static_cast<unsigned>(kDefaultPort),
+                 kDefaultScenario);
 }
 
 enum class ParseResult { run, exit_ok, exit_error };
@@ -283,8 +282,8 @@ int serve(const Options& options) {
         }
         joined += name;
     }
-    say(LogLevel::info, "protocol v" + std::to_string(steambridge::kProtocolVersion) + ", scenario " +
-                            options.scenario + ", profiles " + joined);
+    say(LogLevel::info, "protocol v" + std::to_string(steambridge::kProtocolVersion) +
+                            ", scenario " + options.scenario + ", profiles " + joined);
     if (!options.transcript.empty()) {
         say(LogLevel::info, "transcript: " + options.transcript);
     }
@@ -314,14 +313,12 @@ int serve(const Options& options) {
 int main(int argc, char** argv) {
     Options options;
     switch (parse_args(argc, argv, options)) {
-        case ParseResult::exit_ok:
-            return 0;
+        case ParseResult::exit_ok: return 0;
         case ParseResult::exit_error:
             std::fprintf(stderr, "%s: %s\n\n", kProgram, options.error.c_str());
             print_usage(stderr);
             return 2;
-        case ParseResult::run:
-            break;
+        case ParseResult::run: break;
     }
 
     if (options.list_api) {

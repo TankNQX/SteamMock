@@ -1,0 +1,45 @@
+# ---------------------------------------------------------------------------
+#  The style this tree is written in, spelled out so it can be *checked*
+#  rather than argued about.
+# ---------------------------------------------------------------------------
+#  LLVM's rules, which the code already follows: four-space indent, braces
+#  attached, pointers bound to the type. What is added here is the handful of
+#  habits that make this codebase readable, so a formatter run neither fights
+#  the author nor quietly unpicks them.
+
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 100
+
+# `const char* name`, not `const char *name`.
+PointerAlignment: Left
+
+# `namespace x {` ... `}  // namespace x`, with the contents not indented.
+NamespaceIndentation: None
+FixNamespaceComments: true
+
+# `public:` sits at the class's own indent, not three spaces inside it.
+AccessModifierOffset: -4
+
+# Case labels are indented inside their switch, and a `#if`'s contents keep the
+# directive indented after the `#` - both are deliberate here.
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+
+# The prose here is wrapped by hand and the banner comments are part of how the
+# files read, so a formatter must never reflow them.
+ReflowComments: false
+
+# Own header, then the standard library, then the project's - kept as blocks
+# rather than merged into one sorted list.
+IncludeBlocks: Preserve
+
+# Two spaces before a trailing comment, matching `}  // namespace steambridge`.
+SpacesBeforeTrailingComments: 2
+
+# One-statement functions stay on one line, which is the tree's own idiom: the
+# terse `arg_bool`-style helpers in call.hpp, the accessors in json.hpp, and
+# `case X: return y;` arms. `All` rather than `Inline`, because `Inline` expands
+# exactly those call.hpp helpers - and they are the point.
+AllowShortFunctionsOnASingleLine: All
+AllowShortCaseLabelsOnASingleLine: true

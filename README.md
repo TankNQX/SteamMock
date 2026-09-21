@@ -128,6 +128,11 @@ CI builds every one of them with MSVC, and with clang-cl on the same ABI. Clang 
 warnings MSVC has no equivalent of - a constant nobody uses, a name that shadows a member - which
 is how two real bugs were caught rather than shipped.
 
+CI also runs `tools/check-format.ps1`, so the hand-written files stay `clang-format` clean
+(see `.clang-format`). The files under `src/generated/` are **out of scope on purpose**: a test
+byte-compares them against what `steambridge_codegen` writes, so an editor's format-on-save would
+break the build. Leave that setting off for those paths, or run the checker to find out.
+
 ## Status
 
 Working now: the loopback bridge, the server, the session state machine, scenarios with per-game

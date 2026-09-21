@@ -41,7 +41,8 @@ void test_numbers() {
           reparses(steam_id, back) && back.as_uint64() == 76561198000000001ull);
 
     steambridge::Json negative = steambridge::Json::integer(-1234567890123LL);
-    check("a negative integer survives", reparses(negative, back) && back.as_int64() == -1234567890123LL);
+    check("a negative integer survives",
+          reparses(negative, back) && back.as_int64() == -1234567890123LL);
 
     steambridge::Json zero = steambridge::Json::integer(0);
     check("zero survives", reparses(zero, back) && back.as_int64() == 0);
@@ -83,7 +84,8 @@ void test_strings() {
     steambridge::Json back;
     check("escapes survive the round trip", reparses(text, back) && back.as_string() == nasty);
     check("the dump is one line and has no raw control bytes",
-          text.dump().find('\n') == std::string::npos && text.dump().find('\x01') == std::string::npos);
+          text.dump().find('\n') == std::string::npos &&
+              text.dump().find('\x01') == std::string::npos);
 
     steambridge::Json utf8;
     // Written as explicit bytes rather than \u escapes: a narrow \u literal is
@@ -94,9 +96,8 @@ void test_strings() {
               utf8.find("s")->as_string() == "caf\xc3\xa9 \xe2\x9c\x93");
 
     steambridge::Json escaped;
-    check("a \\u escape becomes UTF-8",
-          steambridge::Json::parse("{\"s\":\"\\u00e9\"}", escaped) &&
-              escaped.find("s")->as_string() == "\xc3\xa9");
+    check("a \\u escape becomes UTF-8", steambridge::Json::parse("{\"s\":\"\\u00e9\"}", escaped) &&
+                                            escaped.find("s")->as_string() == "\xc3\xa9");
 
     steambridge::Json emoji;
     check("a surrogate pair becomes one code point",
@@ -107,9 +108,9 @@ void test_strings() {
     check("an empty string survives", reparses(empty, back) && back.as_string().empty());
 
     steambridge::Json null_string;
-    check("null is distinct from an empty string",
-          steambridge::Json::parse("null", null_string) && null_string.is_null() &&
-              !null_string.is_string());
+    check("null is distinct from an empty string", steambridge::Json::parse("null", null_string) &&
+                                                       null_string.is_null() &&
+                                                       !null_string.is_string());
 }
 
 void test_containers() {
@@ -133,7 +134,8 @@ void test_containers() {
     check("a null member stays null",
           parsed_args != nullptr && parsed_args->find("pnData")->is_null());
     check("a missing member is absent", parsed.find("nope") == nullptr);
-    check("members keep their order", object.dump().find("\"type\"") < object.dump().find("\"args\""));
+    check("members keep their order",
+          object.dump().find("\"type\"") < object.dump().find("\"args\""));
 
     object.set("seq", steambridge::Json::integer(8));
     check("setting a member twice replaces it in place",
@@ -144,9 +146,8 @@ void test_containers() {
     array.push(steambridge::Json::string("two"));
     array.push(steambridge::Json::boolean(false));
     steambridge::Json parsed_array;
-    check("an array survives",
-          reparses(array, parsed_array) && parsed_array.items().size() == 3u &&
-              parsed_array.items()[1].as_string() == "two");
+    check("an array survives", reparses(array, parsed_array) && parsed_array.items().size() == 3u &&
+                                   parsed_array.items()[1].as_string() == "two");
     check("the dump is compact", array.dump() == "[1,\"two\",false]");
 }
 
