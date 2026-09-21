@@ -2,7 +2,7 @@
 //  GENERATED FILE - do not edit by hand.
 //
 //  Source:   gen/steam_api.idl.json (surface 'seed', revision 1, 28 calls)
-//  Regenerate: python gen/generate.py
+//  Regenerate: steambridge_codegen
 // ============================================================================
 
 #include "bridge/call.hpp"

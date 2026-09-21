@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 namespace steambridge {
 namespace {
@@ -33,21 +35,50 @@ void append_escaped(std::string& out, std::string_view text) {
 }
 
 // JSON has no way to spell a non-finite number, and "0" keeps a transcript
-// readable instead of producing something the Python side cannot parse.
+// readable instead of producing something no reader can parse.
+//
+// The value is written with the fewest digits that still read back as the exact
+// same double, so a duration of 164 microseconds is "0.164" in a transcript
+// rather than "0.16400000000000001". Two shapes are tried - scientific, and a
+// plain decimal - and the shorter one wins, so a duration of one and a half
+// seconds reads as "1500" rather than "1.5e+03". Either way the text is only
+// accepted when strtod() gives the identical double back, so nothing is ever
+// rounded away.
 void append_double(std::string& out, double value) {
     if (!std::isfinite(value)) {
         out += "0";
         return;
     }
-    char buffer[64] = {};
-    std::snprintf(buffer, sizeof(buffer), "%.17g", value);
-    // A locale that writes a decimal comma would otherwise produce invalid JSON.
-    for (char* p = buffer; *p != '\0'; ++p) {
-        if (*p == ',') {
-            *p = '.';
+
+    std::string chosen;
+    for (int precision = 1; precision <= 17; ++precision) {
+        char buffer[64] = {};
+        std::snprintf(buffer, sizeof(buffer), "%.*g", precision, value);
+        if (std::strtod(buffer, nullptr) == value) {
+            chosen = buffer;
+            break;
         }
     }
-    out += buffer;
+    for (int decimals = 0; decimals <= 17; ++decimals) {
+        char buffer[64] = {};
+        std::snprintf(buffer, sizeof(buffer), "%.*f", decimals, value);
+        if (std::strtod(buffer, nullptr) == value) {
+            // A tie goes to the decimal form: "1500" reads better than "1.5e+03",
+            // and a value too large for the buffer never matches here at all.
+            if (chosen.empty() || std::strlen(buffer) <= chosen.size()) {
+                chosen = buffer;
+            }
+            break;
+        }
+    }
+
+    // A locale that writes a decimal comma would otherwise produce invalid JSON.
+    for (char& ch : chosen) {
+        if (ch == ',') {
+            ch = '.';
+        }
+    }
+    out += chosen;
 }
 
 void append_utf8(std::string& out, std::uint32_t code_point) {

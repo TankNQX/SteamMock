@@ -36,13 +36,6 @@ compile_commands.json
 # Agent scratch: transient session state written next to the checkout
 .reasonix/
 
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-.pytest_cache/
-
 # Runtime output from the harness
 *.jsonl
 /logs/

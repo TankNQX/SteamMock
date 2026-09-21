@@ -1,10 +1,9 @@
 // ============================================================================
 //  C++ unit tests: the JSON subset and the frame header.
 // ----------------------------------------------------------------------------
-//  These are the two things both ends have to agree on exactly - a mismatch in
-//  either shows up as a game hanging or a call silently going missing - so they
-//  are pinned here, on this side, and cross-checked against the Python mirror by
-//  the end-to-end test.
+//  Both ends of the bridge have to agree on these exactly - a mismatch shows up
+//  as a game hanging or a call silently going missing - so they are pinned here,
+//  and cross-checked against the server by the end-to-end test.
 //
 //  Exits non-zero if a check fails.
 // ============================================================================
@@ -183,7 +182,7 @@ void test_framing() {
     steambridge::write_frame_length(header, 0x04030201u);
     check("the length is little endian",
           header[0] == 0x01 && header[1] == 0x02 && header[2] == 0x03 && header[3] == 0x04);
-    check("the frame limit is the one Python mirrors",
+    check("the frame limit is the one the server mirrors",
           steambridge::kMaxFrameBytes == 4u * 1024u * 1024u);
 }
 

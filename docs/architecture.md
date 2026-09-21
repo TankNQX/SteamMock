@@ -7,8 +7,14 @@
 | Trampolines | `src/generated/api_stub.cpp` | One exported function per IDL entry. Marshals arguments, sends the call, reads the reply, falls back to a default. |
 | Client | `src/client.cpp` | One connection per process, the handshake, request/reply sequencing, offline behaviour, and the promise that nothing throws into the game. |
 | Transport | `src/transport_tcp.cpp` | Framed loopback TCP. Behind `bridge/transport.hpp` so named pipes or shared memory can replace it. |
-| Protocol | `include/bridge/json.hpp`, `include/bridge/frame.hpp` | The JSON subset and the 4-byte length prefix. The Python mirror is `python/steambridge/protocol.py`. |
-| Backend | `python/steambridge/` | Accepts sessions, resolves each call (scenario, hook, state), writes a transcript. |
+| Protocol | `include/bridge/frame.hpp`, `include/bridge/protocol.hpp` | The 4-byte length prefix, the version stamp, and the shape of a reply. One definition, linked by both halves. |
+| Server | `src/server.cpp` | Accepts sessions, resolves each call, writes a transcript, and hands out snapshots of what it has seen. |
+| Session | `src/session.cpp` | The per-game state machine: identity, language, app id, stats, achievements. |
+| Scenario | `src/scenario.cpp` | Which profile a connecting game gets, and which calls a scenario overrides. |
+| Generator | `src/idl.cpp`, `src/codegen_main.cpp` | Turns `gen/steam_api.idl.json` into the trampolines, the `.def` and the surface table. |
+
+Everything above is one CMake project and one toolchain. The only thing the two halves do not share
+is their entry point: the stub is a DLL that a game loads, the backend is a program a person starts.
 
 ## One call, end to end
 
@@ -19,8 +25,9 @@
 3. `Client::call` takes the round-trip lock, dials the backend if it is not connected, sends
    `{"type":"call","seq":N,...}`, and blocks for the matching reply. Loopback latency is
    microseconds; the timeout (`STEAMBRIDGE_TIMEOUT_MS`, default 2000) is a ceiling, not a target.
-4. The backend resolves the call - scripted, hook, or session state - and answers with
-   `answer: "handled"` plus `ret`/`out`, or with `answer: "default"`.
+4. `Server` hands the call to `Dispatcher::answer`, which tries the scenario, then the session, and
+   reports which of them spoke. It answers with `answer: "handled"` plus `ret`/`out`, or with
+   `answer: "default"`.
 5. On `handled`, the trampoline converts the return value to its declared type and writes any
    out-parameters back through the pointers the game passed in. On anything else - declined,
    unreachable, timed out, unparsable - it returns the default for its return type.
@@ -32,9 +39,16 @@ serialises Steam calls from different threads; for a debugging harness that is a
 a limitation, because request/reply pairing cannot get confused and the transcript stays in the order
 a game made its calls.
 
-The stub has no background thread yet. That is deliberate for now: it means no unsolicited messages
-have to be handled, and it keeps the DLL's behaviour at load time free of surprises. Callback
-injection is what will change it (see below).
+The server is the other way round: it accepts on one thread and serves each connection on its own,
+because a game per connection is the model and there are only ever a few. Everything mutable - the
+sessions, the records, the counters, the transcript - sits behind one mutex, and no lock is held
+while a frame is read or written. A front end that wants to draw the current state calls
+`sessions()` or `records()` and gets a copy, so it can never be looking at state that is being
+changed underneath it.
+
+The stub still has no background thread. That is deliberate for now: it means no unsolicited
+messages have to be handled, and it keeps the DLL's behaviour at load time free of surprises.
+Callback injection is what will change it (see below).
 
 ## Nothing in DllMain
 
@@ -57,6 +71,11 @@ interface pointer. Nothing here invents success.
 
 ## Where the next features attach
 
+* **A live view** is the reason `Server` is front-end free. It already exposes the two snapshots a
+  panel needs - the connected (and recently disconnected) sessions with their profiles and stats,
+  and the call history with what each call resolved to - so a window is a way of drawing them, not a
+  restructuring. Editing a profile's stats or scripting a call from that view is the replacement for
+  the Python hook the port removed.
 * **Callback injection** needs two things the stub does not have yet: a reader thread, because a
   callback arrives outside any call the game made, and a registry that remembers every
   `SteamAPI_RegisterCallback(callback, id)` so the backend-pushed event can be dispatched through
@@ -67,7 +86,7 @@ interface pointer. Nothing here invents success.
   transcript uses, and a `ReplayTransport` serves that file back. The backend then never has to
   invent anything for the recorded session.
 * **Struct and buffer parameters** are new IDL kinds (`kind: "buffer"`, with a length expression)
-  plus generator support. The type table is the only place that has to grow.
+  plus generator support. The type table in `src/idl.cpp` is the only place that has to grow.
 
 ## Known limitations
 
@@ -77,7 +96,10 @@ interface pointer. Nothing here invents success.
   that stores the pointer would read the next call's text.
 * Interface pointers are tokens. `SteamAPI_ISteamUser()` returns whatever the scenario says, and the
   backend sees that same number back on every later call; it cannot dereference it.
-* Floating point goes over the wire as JSON numbers, so a `float` parameter is rounded through a
-  `double`.
+* Floating point goes over the wire as JSON numbers. The writer is exact, and a reader gets the same
+  double back; the bridge's own hand-rolled parser is the loose end, keeping integers exact and
+  accumulating fractions digit by digit, so a `float` parameter is rounded through a `double`.
 * One connection per process, serialised calls, no multiplexing of several games onto one socket -
   a game per connection is simpler and matches how they run.
+* A game that disconnects keeps its session, so the run summary and the transcript stay about the
+  whole run. `SessionSnapshot::connected` is what tells a view which rows are still live.

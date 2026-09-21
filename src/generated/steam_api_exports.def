@@ -1,5 +1,5 @@
 ; GENERATED FILE - do not edit by hand.
-; Regenerate: python gen/generate.py
+; Regenerate: steambridge_codegen
 ;
 ; A .def rather than __declspec(dllexport) so the exported names are exactly the
 ; ones games import, with no decoration on x86 and no difference on x64.

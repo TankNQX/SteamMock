@@ -5,8 +5,8 @@
     "This is a hand-written starting surface, not a claim about the real headers. Names and",
     "signatures have to be reconciled against your SDK's steam_api_flat.h (or against the export",
     "table of a real steam_api64.dll) before you lean on them - and when you do, this file is the",
-    "only thing that changes: python gen/generate.py regenerates the C++ trampolines, the .def and",
-    "the Python-side surface description from it.",
+    "only thing that changes: steambridge_codegen regenerates the stub's trampolines, the export",
+    "list and the surface the backend prints with --list-api from it.",
     "Deliberately excluded: anything that answers an ownership, entitlement or licensing question.",
     "The harness forwards calls and reports defaults; it does not decide what someone owns."
   ],

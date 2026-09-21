@@ -7,9 +7,9 @@ namespace steambridge {
 // ---------------------------------------------------------------------------
 //  The wire format: a 4 byte little-endian length, then the payload.
 // ---------------------------------------------------------------------------
-//  One definition per side, on purpose. The Python mirror of this file is
-//  python/steambridge/protocol.py, and the two are exercised against each other
-//  by the end-to-end test.
+//  The stub and the backend both link this header, so the framing has one
+//  definition rather than one per side, and the messages above it live in
+//  bridge/protocol.hpp.
 
 // A frame this large means someone is confused about the format; refusing it is
 // better than allocating whatever a wrong length prefix asks for.

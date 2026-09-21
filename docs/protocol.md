@@ -12,11 +12,12 @@ prefix, so a transcript is readable and both ends can be written in an afternoon
 ```
 
 * The length counts the payload only, and never includes itself.
-* `0` and anything above 4 MiB (4 194 304, `kMaxFrameBytes` / `MAX_FRAME_BYTES`) is a protocol
-  error. Both sides refuse rather than allocate.
+* `0` and anything above 4 MiB (4 194 304, `kMaxFrameBytes`) is a protocol error. Both sides refuse
+  rather than allocate.
 * One frame is one message. A reader that sees two frames in one `read` must handle both.
-* Both ends are: `src/transport_tcp.cpp` and `python/steambridge/protocol.py`. They are checked
-  against each other by `python_end_to_end`, which is the only test that speaks both.
+* The framing and the messages have one definition, in `include/bridge/frame.hpp` and
+  `include/bridge/protocol.hpp`, which the stub and the backend both link. `end_to_end` is the test
+  that drives them against each other over a real socket.
 
 ## Messages
 
@@ -82,8 +83,13 @@ The IDL's type table, and how each one travels:
 | `opaque_ptr` | `void*` | number (the address) | `nullptr` |
 
 Whole numbers stay whole: the C++ parser keeps integers away from `double`, so a 17-digit Steam id
-arrives exactly, and the Python side uses `int`. Pointers travel as integers because the backend has
-no business following them - it can correlate them, which is what a pass-through needs.
+arrives exactly. Pointers travel as integers because the backend has no business following them - it
+can correlate them, which is what a pass-through needs.
+
+The writer is exact in both directions of that table: it emits the fewest digits that still read
+back as the identical `double`, so a transcript shows `"ms":0.164` rather than
+`"ms":0.16400000000000001`. The parser is the looser half - see the limitations in
+`docs/architecture.md`.
 
 ## Out-parameters
 

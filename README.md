@@ -3,20 +3,22 @@
 A local debugging harness for the Steamworks flat API.
 
 The stub DLL is shaped like `steam_api64.dll`: it exports the same flat API names, and instead of
-talking to Valve it forwards every call it sees over loopback TCP to a Python backend that decides
-the answer. That way a game's Steam integration can be developed and debugged **locally**, with
+talking to Valve it forwards every call it sees over loopback TCP to a backend that decides the
+answer. That way a game's Steam integration can be developed and debugged **locally**, with
 scripted and inspectable responses, and only run against real Steam once the logic is settled.
 
+Both halves are C++, built by one CMake project, and share one implementation of the wire format.
+
 ```
-   game.exe                        stub DLL (this repo)              python backend (this repo)
-   ────────                        ────────────────────              ─────────────────────────
+   game.exe                        stub DLL (this repo)              backend (this repo)
+   ────────                        ────────────────────              ───────────────────
    SteamAPI_Init()  ──import──▶   generated trampoline
    SteamAPI_ISteamUser_GetSteamID()      │
                                          │  4-byte length + JSON, 127.0.0.1:50990
                                          ▼
-                                  BridgeClient ─────────────────▶  Session + Dispatcher
+                                  BridgeClient ─────────────────▶  Server + Session
                                   (one connection per game)              │
-                                         ▲                               │  scenario / state / hook
+                                         ▲                               │  scenario / state
                                          │        {"seq":7,"answer":"handled","ret":…,"out":{…}}
                                          └───────────────────────────────┘
 ```
@@ -28,17 +30,15 @@ side by side, each with its own profile.
 ## Quick start
 
 ```sh
-# 1. Build the stub (produces build/Release/steam_api64.dll)
+# 1. Build everything (produces build/steam_api64.dll and build/steambridge)
 cmake -S . -B build -A x64            # or: -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Release
 
-# 2. Start the backend. It prints the port it bound.
-python -m steambridge --scenario python/steambridge/scenarios/example.json --transcript run.jsonl
+# 2. Start the backend. It prints the address it bound.
+build/Release/steambridge --scenario scenarios/example.json --transcript run.jsonl
 
-# 3. Run a game with the stub beside it (or point SteamApiBridge's own test game at it)
-python python/tests/test_e2e.py --stub build/Release/steam_api64.dll \
-                                --game build/Release/fake_game.exe \
-                                --scenario python/steambridge/scenarios/example.json
+# 3. Run a game with the stub beside it (or point the harness's own test game at it)
+build/Release/fake_game.exe          # with STEAMBRIDGE_STUB set to the built DLL
 ```
 
 To use it with a real game: put `steam_api64.dll` (this build) next to the game's executable, where
@@ -51,44 +51,60 @@ If no backend is listening, the stub logs it once and every call falls back to t
 would see with Steam not running - a game still boots, and a backend started later is picked up on
 the next call.
 
+The backend's command line is the same set of choices:
+
+| Option | What it does |
+| --- | --- |
+| `--host`, `--port` | Where to listen. `--port 0` picks a free one. |
+| `--scenario FILE` | What each game is told (default `scenarios/example.json`). |
+| `--transcript FILE` | Append every call, as JSON lines, to this file. |
+| `--log-level LEVEL` | `error`, `warning`, `info` or `debug`. |
+| `--list-api` | Print the calls the stub exports, then exit. |
+| `--show-profiles` | Print the scenario's games and match rules, then exit. |
+
 ## What the backend answers
 
 Resolution order, first one that speaks wins (the transcript records which):
 
 1. a `scripted` entry for that call in the game's profile - the policy calls, `SteamAPI_Init` and
    friends, where a scenario has to say what it wants;
-2. a hook, if you passed `on_call=...` to the server - arbitrary Python;
-3. the session state machine - identity, language, app id, stats, achievements;
-4. nobody: the call is reported **unanswered**, and the stub uses its own default.
+2. the session state machine - identity, language, app id, stats, achievements;
+3. nobody: the call is reported **unanswered**, and the stub uses its own default.
 
 That last case is the point. An unanswered call behaves exactly as it would with Steam absent, so a
 game cannot be handed a success nobody asked for, and the transcript always says what happened and
 why.
+
+There used to be a third rung between those two - an arbitrary Python callable passed to the
+server - and it is the one thing that did not survive the move to C++. A scenario that says what it
+means is easier to hand to someone else than a lambda buried in a script, and the same structures
+are what a live view would edit while a game is running.
 
 ## Layout
 
 | Path | What lives there |
 | --- | --- |
 | `gen/steam_api.idl.json` | The API surface the stub exports. **The one file to edit to add a call.** |
-| `gen/generate.py` | Turns the IDL into the trampolines, the `.def` and the Python surface. |
-| `src/generated/` | Generated and committed - the build needs no Python. `--check` fails if stale. |
-| `include/bridge/`, `src/` | Protocol, JSON, transport, client, DLL entry point. |
-| `python/steambridge/` | The backend: protocol, sessions, scenarios, server, CLI. |
-| `python/steambridge/scenarios/` | Example scenario: two games, two profiles. |
-| `tests/` | C++ unit tests and `fake_game`, a stand-in game that loads the stub. |
+| `src/idl.cpp`, `src/codegen_main.cpp` | `steambridge_codegen` turns the IDL into the trampolines, the `.def` and the surface table. |
+| `src/generated/` | Generated and committed - the build needs nothing to regenerate them. `--check` fails if stale. |
+| `include/bridge/`, `src/` | Protocol, JSON, transport, client, the DLL entry point. |
+| `src/session.cpp`, `src/scenario.cpp` | The backend's decisions: per-game state, and the scenario that overrides it. |
+| `src/server.cpp`, `src/backend_main.cpp` | The loopback server, and the console front end for it. |
+| `scenarios/` | Example scenario: two games, two profiles. |
+| `tests/` | C++ unit tests, `fake_game`, and the end-to-end test. |
 | `docs/` | Architecture and protocol notes. |
 
 ## Adding a call
 
 ```sh
 # edit gen/steam_api.idl.json, then:
-python gen/generate.py
+build/Release/steambridge_codegen
 ```
 
-The generator validates the IDL, writes `src/generated/api_stub.cpp` and
-`src/generated/steam_api_exports.def`, and refreshes `python/steambridge/surface.json`. A test case
+The generator validates the IDL and rewrites `src/generated/api_stub.cpp`,
+`src/generated/steam_api_exports.def` and `src/generated/api_surface.cpp`. A test
 (`generated_files_are_current`) fails the build if the IDL and the generated files have drifted
-apart. `python -m steambridge --list-api` prints the surface as the backend sees it.
+apart. `steambridge --list-api` prints the surface as the backend sees it.
 
 ## Tests
 
@@ -99,30 +115,34 @@ ctest --test-dir build -C Release --output-on-failure
 | Test | Covers |
 | --- | --- |
 | `protocol` | The C++ JSON subset and the frame header: integer fidelity, escapes, strict rejection of malformed input. |
-| `python_protocol` | The Python mirror: framing, replies, the session state machine, scenarios, match rules. |
+| `backend` | Replies, the session state machine, scenarios and match rules - and that every call the state machine answers is one the IDL actually exports. |
 | `generated_files_are_current` | The generated files match `gen/steam_api.idl.json`. |
-| `python_end_to_end` | The real thing: a game loads the real DLL, the real backend answers, both sides are checked. |
+| `end_to_end` | The real thing: the backend started as a subprocess, a game loading the real DLL, both sides checked, and the command line itself. |
 
-The end-to-end test is Windows only, because it loads the stub as a DLL.
+The end-to-end test is Windows only, because it loads the stub as a DLL in a separate process.
 
 ## Status
 
-Working now: the loopback bridge, the session state machine, scenarios with per-game profiles,
-out-parameters, the transcript, offline fallback, and the generator.
+Working now: the loopback bridge, the server, the session state machine, scenarios with per-game
+profiles, out-parameters, the transcript, offline fallback, and the generator.
 
 Next, roughly in order of value:
 
-1. **Callback injection.** Games expect `RunCallbacks` to deliver `UserStatsReceived`, and worse.
+1. **A live view.** `Server` in `include/bridge/server.hpp` is front-end free and hands out
+   snapshots of its sessions and its call history, so a window on top of it can show what a game is
+   asking, edit a profile's stats and achievements while it runs, and script a call on the spot -
+   the "arbitrary logic" the Python hook used to provide, without a rebuild.
+2. **Callback injection.** Games expect `RunCallbacks` to deliver `UserStatsReceived`, and worse.
    The stub records registrations today; the backend should be able to push an event, which needs
    the SDK's callback payload structs. This also means a reader thread in the stub.
-2. **The full export surface**, generated from your `steam_api_flat.h` - the seed here is 28 calls
+3. **The full export surface**, generated from your `steam_api_flat.h` - the seed here is 28 calls
    with hand-written signatures, and every one of them should be reconciled against the real header
    before being relied on.
-3. **Record / replay**: a passthrough mode where the stub forwards to a real `steam_api64.dll`,
+4. **Record / replay**: a passthrough mode where the stub forwards to a real `steam_api64.dll`,
    records both directions, and the backend replays that recording later. This is the feature that
    makes "debug locally, then test against Steam" pay for itself, and the `Transport` interface is
    already the seam for it.
-4. **Struct and buffer parameters.** The type table covers scalars, strings and out-parameters
+5. **Struct and buffer parameters.** The type table covers scalars, strings and out-parameters
    today; fixed-size structs and `char*` buffers need dedicated kinds.
 
 ## What this is not

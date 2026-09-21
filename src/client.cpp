@@ -4,6 +4,7 @@
 #include <string>
 
 #include "bridge/log.hpp"
+#include "bridge/protocol.hpp"
 
 #if defined(_WIN32)
 #  ifndef WIN32_LEAN_AND_MEAN
@@ -15,7 +16,6 @@
 namespace steambridge {
 namespace {
 
-constexpr int kProtocolVersion = 1;
 constexpr unsigned kDefaultPort = 50990u;
 constexpr unsigned kDefaultTimeoutMs = 2000u;
 
