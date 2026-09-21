@@ -9,15 +9,13 @@
 //  and the test loads it in a separate process, exactly like a game.
 // ============================================================================
 
-#if defined(_WIN32)
+#include <windows.h>
 
-#  include <windows.h>
-
-#  include <atomic>
-#  include <chrono>
-#  include <mutex>
-#  include <string>
-#  include <thread>
+#include <atomic>
+#include <chrono>
+#include <mutex>
+#include <string>
+#include <thread>
 
 namespace steambridge_test {
 
@@ -172,5 +170,3 @@ private:
 };
 
 }  // namespace steambridge_test
-
-#endif  // _WIN32

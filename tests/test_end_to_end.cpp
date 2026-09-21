@@ -18,29 +18,18 @@
 //  Exits non-zero if a check fails.
 // ============================================================================
 
-#if !defined(_WIN32)
+#include <windows.h>
 
-#  include <cstdio>
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+#include <map>
+#include <string>
+#include <thread>
+#include <vector>
 
-int main() {
-    std::printf("the end-to-end test is Windows only (it loads the stub as a DLL)\n");
-    return 77;
-}
-
-#else
-
-#  include <windows.h>
-
-#  include <chrono>
-#  include <cstdio>
-#  include <cstdlib>
-#  include <map>
-#  include <string>
-#  include <thread>
-#  include <vector>
-
-#  include "bridge/json.hpp"
-#  include "child_process.hpp"
+#include "bridge/json.hpp"
+#include "child_process.hpp"
 
 using steambridge_test::ChildProcess;
 using steambridge_test::quote;
@@ -433,5 +422,3 @@ int main(int argc, char** argv) {
     }
     return g_failures == 0 ? 0 : 1;
 }
-
-#endif  // _WIN32

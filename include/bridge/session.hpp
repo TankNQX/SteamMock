@@ -51,7 +51,7 @@ public:
     std::vector<Achievement> achievements;
     std::vector<std::pair<std::string, Json>> scripted;
 
-    static Profile from_json(const std::string& name, const Json& data);
+    static Profile from_json(const std::string& profile_name, const Json& data);
 
     std::int64_t* find_stat(const std::string& key) noexcept;
     const std::int64_t* find_stat(const std::string& key) const noexcept;

@@ -256,9 +256,9 @@ constexpr HandlerEntry kHandlers[] = {
 //  Profile
 // ---------------------------------------------------------------------------
 
-Profile Profile::from_json(const std::string& name, const Json& data) {
+Profile Profile::from_json(const std::string& profile_name, const Json& data) {
     Profile profile;
-    profile.name = name;
+    profile.name = profile_name;
     if (!data.is_object()) {
         return profile;
     }

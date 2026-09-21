@@ -8,10 +8,6 @@
 //  src/generated/steam_api_exports.def: the .def fixes the names regardless of
 //  the calling convention, on x86 exactly as on x64.
 
-#if defined(_WIN32) || defined(_WIN64)
-#  define STEAMBRIDGE_EXPORT extern "C" __declspec(dllexport)
-#  define STEAMBRIDGE_CALL __cdecl
-#else
-#  define STEAMBRIDGE_EXPORT extern "C" __attribute__((visibility("default")))
-#  define STEAMBRIDGE_CALL
-#endif
+// Windows only: the stub is a DLL, and a game loads it by name.
+#define STEAMBRIDGE_EXPORT extern "C" __declspec(dllexport)
+#define STEAMBRIDGE_CALL __cdecl

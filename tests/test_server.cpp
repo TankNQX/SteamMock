@@ -207,7 +207,11 @@ void test_what_the_server_saw() {
               summary.find("1 left to the stub's defaults") != std::string::npos);
 
     server.stop();
-    check("stopping twice is harmless", (server.stop(), true));
+    // The destructor stops it again, so stopping a stopped server has to be
+    // harmless - and the run summary has to survive it.
+    server.stop();
+    check("the run summary survives being stopped",
+          server.summary().find("3 call(s)") != std::string::npos);
 }
 
 }  // namespace

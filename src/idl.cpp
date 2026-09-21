@@ -1,6 +1,7 @@
 #include "bridge/idl.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdio>
 #include <string>
 #include <utility>
@@ -44,8 +45,6 @@ constexpr TypeInfo kTypes[] = {
      "steambridge::reply_cstring(reply, kEmptyString)", nullptr},
     {"opaque_ptr", "void*", "arg_pointer", "nullptr", "steambridge::reply_pointer(reply)", nullptr},
 };
-
-constexpr std::size_t kTypeCount = sizeof(kTypes) / sizeof(kTypes[0]);
 
 const TypeInfo* find_type(const std::string& name) noexcept {
     for (const TypeInfo& type : kTypes) {
@@ -212,8 +211,8 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
         error = "the IDL has to be a JSON object";
         return false;
     }
-    const Json* calls = document.find("calls");
-    if (calls == nullptr || !calls->is_array()) {
+    const Json* calls_json = document.find("calls");
+    if (calls_json == nullptr || !calls_json->is_array()) {
         error = "the IDL needs a 'calls' array";
         return false;
     }
@@ -227,7 +226,7 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
         parsed._revision = static_cast<int>(revision->as_int64());
     }
 
-    for (const Json& entry : calls->items()) {
+    for (const Json& entry : calls_json->items()) {
         if (!entry.is_object()) {
             error = "every call has to be a JSON object";
             return false;

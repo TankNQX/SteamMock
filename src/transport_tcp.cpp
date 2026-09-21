@@ -5,43 +5,27 @@
 #include "bridge/frame.hpp"
 #include "bridge/log.hpp"
 
-#if defined(_WIN32)
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#  endif
-#  include <winsock2.h>
-#  include <ws2tcpip.h>
-#else
-#  include <netdb.h>
-#  include <netinet/in.h>
-#  include <netinet/tcp.h>
-#  include <sys/socket.h>
-#  include <sys/time.h>
-#  include <unistd.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
 #endif
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 namespace steambridge {
 namespace {
 
-#if defined(_WIN32)
 using socket_t = SOCKET;
 constexpr socket_t kInvalidSocket = INVALID_SOCKET;
-#else
-using socket_t = int;
-constexpr socket_t kInvalidSocket = -1;
-#endif
 
 constexpr std::uintptr_t kClosed = static_cast<std::uintptr_t>(~0ull);
 
 void ensure_winsock_started() noexcept {
-#if defined(_WIN32)
     static bool started = false;
     if (!started) {
         WSADATA data{};
         (void)WSAStartup(MAKEWORD(2, 2), &data);
         started = true;
     }
-#endif
 }
 
 socket_t as_socket(std::uintptr_t value) noexcept {
@@ -57,11 +41,7 @@ void close_socket(std::uintptr_t value) noexcept {
         return;
     }
     const socket_t handle = as_socket(value);
-#if defined(_WIN32)
     (void)closesocket(handle);
-#else
-    (void)::close(handle);
-#endif
 }
 
 // A partially written or partially read frame would desync the stream for every
@@ -96,19 +76,11 @@ bool recv_all(socket_t handle, char* data, std::size_t size) noexcept {
 
 void apply_timeout(std::uintptr_t value, unsigned timeout_ms) noexcept {
     const socket_t handle = as_socket(value);
-#if defined(_WIN32)
     const DWORD milliseconds = timeout_ms;
     (void)setsockopt(handle, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&milliseconds),
                      sizeof(milliseconds));
     (void)setsockopt(handle, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char*>(&milliseconds),
                      sizeof(milliseconds));
-#else
-    timeval timeout{};
-    timeout.tv_sec = static_cast<long>(timeout_ms / 1000u);
-    timeout.tv_usec = static_cast<long>((timeout_ms % 1000u) * 1000u);
-    (void)setsockopt(handle, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-    (void)setsockopt(handle, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
-#endif
 }
 
 std::uint32_t read_length(const char header[4]) noexcept {

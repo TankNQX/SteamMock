@@ -6,18 +6,15 @@
 //  entry point, and a couple of our own exports that make the harness's state
 //  observable from outside (a test, or dumpbin).
 
-#if defined(_WIN32)
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#  endif
-#  include <windows.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
 #endif
+#include <windows.h>
 
 #include "bridge/client.hpp"
 #include "bridge/export.hpp"
 #include "bridge/log.hpp"
 
-#if defined(_WIN32)
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
     (void)reserved;
     if (reason == DLL_PROCESS_ATTACH) {
@@ -28,7 +25,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
     }
     return TRUE;
 }
-#endif
 
 // ---------------------------------------------------------------------------
 //  Our exports. They are not part of the Steam API, so a game never imports

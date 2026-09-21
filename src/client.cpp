@@ -6,12 +6,10 @@
 #include "bridge/log.hpp"
 #include "bridge/protocol.hpp"
 
-#if defined(_WIN32)
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#  endif
-#  include <windows.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
 #endif
+#include <windows.h>
 
 namespace steambridge {
 namespace {
@@ -25,15 +23,11 @@ std::string environment(const char* name) {
 }
 
 std::string executable_path() {
-#if defined(_WIN32)
     char buffer[MAX_PATH] = {};
     if (GetModuleFileNameA(nullptr, buffer, sizeof(buffer)) == 0) {
         return std::string();
     }
     return std::string(buffer);
-#else
-    return std::string();
-#endif
 }
 
 std::string file_name_of(const std::string& path) {
@@ -121,9 +115,7 @@ bool Client::ensure_connected() noexcept {
     hello.set("exe", Json::string(_exe_name));
     hello.set("arch", Json::string(sizeof(void*) == 8u ? "x64" : "x86"));
     hello.set("module", Json::string("steam_api stub"));
-#if defined(_WIN32)
     hello.set("pid", Json::integer(static_cast<std::int64_t>(GetCurrentProcessId())));
-#endif
 
     std::string response;
     if (!_transport->exchange(hello.dump(), response)) {

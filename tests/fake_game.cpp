@@ -10,20 +10,12 @@
 //  exported makes this program exit 3 and say which one.
 // ============================================================================
 
-#if !defined(_WIN32)
-#  include <cstdio>
-int main() {
-    std::printf("fake_game is Windows only (it loads the stub as a DLL)\n");
-    return 77;
-}
-#else
+#include <windows.h>
 
-#  include <windows.h>
-
-#  include <cstdint>
-#  include <cstdio>
-#  include <cstdlib>
-#  include <string>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
 
 namespace {
 
@@ -180,5 +172,3 @@ int main() {
     FreeLibrary(stub);
     return 0;
 }
-
-#endif  // _WIN32

@@ -1,7 +1,6 @@
-# Everything in the repository is line-feed, whoever commits it and whichever
-# platform checks it out. The Windows and Linux CI legs then build from identical
-# bytes, and the generated files (which the generator writes with LF and compares
-# byte for byte) do not depend on the checkout.
+# Everything in the repository is line-feed, whoever commits it. The generated
+# files are written with LF and compared byte for byte, so the checkout must not
+# rewrite them - which also keeps a diff free of whole-file line-ending churn.
 * text=auto eol=lf
 
 # Binary artefacts that may end up next to a build, or a copied real DLL for

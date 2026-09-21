@@ -124,7 +124,9 @@ ctest --test-dir build -C Release --output-on-failure
 | `generated_files_are_current` | The generated files match `gen/steam_api.idl.json`. |
 | `end_to_end` | The real thing: the backend started as a subprocess, a game loading the real DLL, both sides checked, and the command line itself. |
 
-The end-to-end test is Windows only, because it loads the stub as a DLL in a separate process.
+CI builds every one of them with MSVC, and with clang-cl on the same ABI. Clang is there for the
+warnings MSVC has no equivalent of - a constant nobody uses, a name that shadows a member - which
+is how two real bugs were caught rather than shipped.
 
 ## Status
 

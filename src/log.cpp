@@ -3,11 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#if defined(_WIN32)
-#  include <windows.h>
-#else
-#  include <unistd.h>
-#endif
+#include <windows.h>
 
 namespace steambridge {
 namespace {
@@ -65,15 +61,10 @@ void log_write(LogLevel level, std::string_view message) noexcept {
     }
     line.append(message.data(), message.size());
 
-#if defined(_WIN32)
     line += "\r\n";
     // Visible in a debugger without a console, which is how these runs usually
     // get inspected.
     OutputDebugStringA(line.c_str());
-#else
-    line += "\n";
-    std::fputs(line.c_str(), stderr);
-#endif
 
     if (g_file != nullptr) {
         std::fputs(line.c_str(), g_file);
@@ -94,13 +85,9 @@ void log_configure(const char* module_path) noexcept {
         }
     }
 
-#if defined(_WIN32)
     char buffer[32] = {};
     std::snprintf(buffer, sizeof(buffer), "pid %lu", static_cast<unsigned long>(GetCurrentProcessId()));
     g_prefix = buffer;
-#else
-    g_prefix = "pid " + std::to_string(static_cast<long>(getpid()));
-#endif
     if (module_path != nullptr && module_path[0] != '\0') {
         const std::string_view path(module_path);
         const std::size_t slash = path.find_last_of("\\/");

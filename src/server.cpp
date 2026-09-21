@@ -3,7 +3,6 @@
 #include <atomic>
 #include <chrono>
 #include <cstdio>
-#include <cstring>
 #include <ctime>
 #include <string>
 #include <utility>
@@ -11,41 +10,25 @@
 #include "bridge/frame.hpp"
 #include "bridge/protocol.hpp"
 
-#if defined(_WIN32)
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#  endif
-#  include <winsock2.h>
-#  include <ws2tcpip.h>
-#else
-#  include <arpa/inet.h>
-#  include <netdb.h>
-#  include <netinet/in.h>
-#  include <netinet/tcp.h>
-#  include <sys/socket.h>
-#  include <unistd.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
 #endif
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 namespace steambridge {
 namespace {
 
-#if defined(_WIN32)
 using socket_t = SOCKET;
 constexpr socket_t kInvalidSocket = INVALID_SOCKET;
-#else
-using socket_t = int;
-constexpr socket_t kInvalidSocket = -1;
-#endif
 
 void ensure_winsock_started() noexcept {
-#if defined(_WIN32)
     static bool started = false;
     if (!started) {
         WSADATA data{};
         (void)WSAStartup(MAKEWORD(2, 2), &data);
         started = true;
     }
-#endif
 }
 
 socket_t as_socket(std::uintptr_t value) noexcept {
@@ -56,25 +39,16 @@ void close_socket(socket_t handle) noexcept {
     if (handle == kInvalidSocket) {
         return;
     }
-#if defined(_WIN32)
     (void)closesocket(handle);
-#else
-    (void)::close(handle);
-#endif
 }
 
 // Half-closing wakes a thread parked in recv/accept without tearing the handle
-// out from under it, which is what makes stop() unblock cleanly on both
-// platforms.
+// out from under it, which is what makes stop() unblock cleanly.
 void shutdown_socket(socket_t handle) noexcept {
     if (handle == kInvalidSocket) {
         return;
     }
-#if defined(_WIN32)
     (void)::shutdown(handle, SD_BOTH);
-#else
-    (void)::shutdown(handle, SHUT_RDWR);
-#endif
 }
 
 bool send_all(socket_t handle, const char* data, std::size_t size) noexcept {
@@ -193,11 +167,7 @@ std::string text_member(const Json& value, const char* key) {
 void stderr_log_sink(LogLevel level, const std::string& message) {
     const std::time_t now = std::time(nullptr);
     std::tm parts{};
-#if defined(_WIN32)
     localtime_s(&parts, &now);
-#else
-    localtime_r(&now, &parts);
-#endif
     char stamp[16] = {};
     std::snprintf(stamp, sizeof(stamp), "%02d:%02d:%02d", parts.tm_hour, parts.tm_min, parts.tm_sec);
     std::fprintf(stderr, "%s %-7s %s\n", stamp, level_name(level), message.c_str());
