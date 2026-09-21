@@ -58,10 +58,12 @@ std::string to_text(const Json& value, const std::string& fallback) {
     switch (value.kind()) {
         case Json::Kind::string: return value.as_string();
         case Json::Kind::number:
-            // Only an integral number has a text form Python's str() would agree
-            // with; anything else is more likely a mistake than a name.
-            return value.as_int64() == value.as_double() ? std::to_string(value.as_int64())
-                                                         : fallback;
+            // Only an integral number has a text form worth reading as a name;
+            // anything else is more likely a mistake than a name. The cast says
+            // out loud what the comparison used to do implicitly.
+            return static_cast<double>(value.as_int64()) == value.as_double()
+                       ? std::to_string(value.as_int64())
+                       : fallback;
         default: return fallback;
     }
 }

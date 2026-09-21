@@ -49,8 +49,8 @@ private:
     Client(const Client&) = delete;
     Client& operator=(const Client&) = delete;
 
-    void configure() noexcept;
-    bool ensure_connected() noexcept;
+    void configure();
+    bool ensure_connected();
 
     // Which transport is in use is decided once, here, and every call goes
     // through the interface - so swapping in another one is a different object

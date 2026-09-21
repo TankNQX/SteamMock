@@ -16,6 +16,7 @@
 //  line endings must not depend on the platform that ran the generator.
 
 #include <cstdio>
+#include <new>
 #include <string>
 #include <utility>
 #include <vector>
@@ -76,7 +77,7 @@ void print_usage(std::FILE* out) {
 
 }  // namespace
 
-int main(int argc, char** argv) {
+int run(int argc, char** argv) {
     std::string idl_path = kDefaultIdl;
     std::string root;
     bool root_given = false;
@@ -168,4 +169,18 @@ int main(int argc, char** argv) {
         std::printf("generated files are up to date\n");
     }
     return 0;
+}
+
+// As in backend_main: an exception escaping main would terminate silently, and
+// a failed allocation is the only realistic way to get one.
+int main(int argc, char** argv) {
+    try {
+        return run(argc, argv);
+    } catch (const std::bad_alloc&) {
+        std::fprintf(stderr, "steambridge_codegen: out of memory\n");
+        return 2;
+    } catch (...) {
+        std::fprintf(stderr, "steambridge_codegen: unexpected failure\n");
+        return 2;
+    }
 }

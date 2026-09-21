@@ -1,0 +1,31 @@
+# ---------------------------------------------------------------------------
+#  What clang-tidy is asked to look for - and what it is deliberately not.
+# ---------------------------------------------------------------------------
+#  Run it against a build that exported its compile database:
+#
+#      cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang-cl \
+#            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+#      clang-tidy -p build src/*.cpp
+#
+#  Deliberately narrow. The tree is already clean under clang's
+#  -Wall -Wextra -Wshadow, so the value here is the bug-shaped checks MSVC has
+#  no equivalent of - an exception escaping a noexcept function, a constant
+#  nobody reads - and not a style opinion delegated to a tool.
+
+Checks: >
+  -*,
+  bugprone-*,
+  performance-*,
+  -bugprone-easily-swappable-parameters,
+  -performance-enum-size
+
+# The two that are off, and why:
+#
+#   bugprone-easily-swappable-parameters
+#     Flags make_reply(seq, answered, ret, out) and its neighbours. Every call
+#     site names its arguments, and the check's remedy - a parameter struct per
+#     function - would add more to read than it removes.
+#
+#   performance-enum-size
+#     Asks for a uint8_t base on small enums. This is a debugging harness; one
+#     saved byte per enum is not a constraint it has.

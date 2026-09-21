@@ -56,11 +56,20 @@ unsigned parse_unsigned(const std::string& text, unsigned fallback) noexcept {
 
 Client& Client::instance() noexcept {
     // Never destroyed on purpose: the process is ending anyway, and a leak is
-    // cheaper than a shutdown-order race inside a DLL.
+    // cheaper than a shutdown-order race inside a DLL - a static local would be
+    // destroyed under the loader lock.
+    //
+    // If this allocation fails there is nothing to fall back to: the function
+    // has to return a reference. Terminating is the only outcome available, so
+    // the suppression below records that decision rather than hiding it.
+    // NOLINTNEXTLINE(bugprone-unhandled-exception-at-new)
     static Client* client = new Client();
     return *client;
 }
 
+// Reached only from instance(), so a failed allocation here is the same
+// fatal-by-design case as the one above.
+// NOLINTNEXTLINE(bugprone-unhandled-exception-at-new)
 Client::Client() noexcept : _transport(new TcpTransport()), _mutex(new std::mutex()) {}
 
 Client::~Client() {
@@ -68,7 +77,11 @@ Client::~Client() {
     delete _mutex;
 }
 
-void Client::configure() noexcept {
+// Deliberately not noexcept: this allocates, and a failure here is worth
+// catching in call(), which answers the game with a default. A noexcept here
+// would turn that same failure into std::terminate - the opposite of what this
+// harness promises a game.
+void Client::configure() {
     if (_configured) {
         return;
     }
@@ -96,7 +109,8 @@ void Client::configure() noexcept {
     log_write(LogLevel::debug, "backend target " + _host + ":" + std::to_string(_port));
 }
 
-bool Client::ensure_connected() noexcept {
+// Not noexcept, for the same reason as configure().
+bool Client::ensure_connected() {
     if (_transport->is_connected()) {
         return true;
     }
@@ -124,8 +138,9 @@ bool Client::ensure_connected() noexcept {
         return false;
     }
     Json welcome;
-    const Json* session = nullptr;
-    if (!Json::parse(response, welcome) || (session = welcome.find("session")) == nullptr) {
+    const bool parsed = Json::parse(response, welcome);
+    const Json* session = parsed ? welcome.find("session") : nullptr;
+    if (session == nullptr) {
         log_write(LogLevel::warn, "the backend did not answer the handshake - ignoring it");
         _transport->close();
         return false;

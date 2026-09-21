@@ -18,6 +18,7 @@
 #include <csignal>
 #include <cstdint>
 #include <cstdio>
+#include <new>
 #include <string>
 #include <thread>
 #include <utility>
@@ -310,7 +311,7 @@ int serve(const Options& options) {
 
 }  // namespace
 
-int main(int argc, char** argv) {
+int run(int argc, char** argv) {
     Options options;
     switch (parse_args(argc, argv, options)) {
         case ParseResult::exit_ok: return 0;
@@ -328,4 +329,19 @@ int main(int argc, char** argv) {
         return show_profiles(options.scenario);
     }
     return serve(options);
+}
+
+// An exception escaping main terminates the process with no message at all, and
+// the only realistic source here is a failed allocation. Report it the way any
+// other failure is reported instead.
+int main(int argc, char** argv) {
+    try {
+        return run(argc, argv);
+    } catch (const std::bad_alloc&) {
+        std::fprintf(stderr, "%s: out of memory\n", kProgram);
+        return 2;
+    } catch (...) {
+        std::fprintf(stderr, "%s: unexpected failure\n", kProgram);
+        return 2;
+    }
 }

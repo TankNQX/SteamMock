@@ -47,57 +47,72 @@ bool log_enabled(LogLevel level) noexcept {
 }
 
 void log_write(LogLevel level, std::string_view message) noexcept {
-    if (!log_enabled(level)) {
-        return;
-    }
-    std::string line;
-    line.reserve(g_prefix.size() + message.size() + 40u);
-    line += "[steambridge] ";
-    line += level_name(level);
-    line += ": ";
-    if (!g_prefix.empty()) {
-        line += g_prefix;
+    // Logging must never break the program. A failure here - an allocator that
+    // cannot build the line - loses the line rather than terminating the game
+    // this DLL is loaded into, which is what the catch below is for. Without it
+    // the noexcept would mean "terminate on failure", the opposite of the
+    // promise.
+    try {
+        if (!log_enabled(level)) {
+            return;
+        }
+        std::string line;
+        line.reserve(g_prefix.size() + message.size() + 40u);
+        line += "[steambridge] ";
+        line += level_name(level);
         line += ": ";
-    }
-    line.append(message.data(), message.size());
+        if (!g_prefix.empty()) {
+            line += g_prefix;
+            line += ": ";
+        }
+        line.append(message.data(), message.size());
 
-    line += "\r\n";
-    // Visible in a debugger without a console, which is how these runs usually
-    // get inspected.
-    OutputDebugStringA(line.c_str());
+        line += "\r\n";
+        // Visible in a debugger without a console, which is how these runs
+        // usually get inspected.
+        OutputDebugStringA(line.c_str());
 
-    if (g_file != nullptr) {
-        std::fputs(line.c_str(), g_file);
-        std::fflush(g_file);
+        if (g_file != nullptr) {
+            std::fputs(line.c_str(), g_file);
+            std::fflush(g_file);
+        }
+    } catch (...) {
+        return;  // the line is lost; the process is not
     }
 }
 
 void log_configure(const char* module_path) noexcept {
-    if (g_configured) {
-        return;
-    }
-    g_configured = true;
-    g_level = parse_level(std::getenv("STEAMBRIDGE_LOG_LEVEL"));
-
-    if (const char* path = std::getenv("STEAMBRIDGE_LOG")) {
-        if (path[0] != '\0') {
-            g_file = std::fopen(path, "ab");
+    // Same promise as log_write: a logger that cannot configure itself keeps
+    // quiet rather than taking the process with it.
+    try {
+        if (g_configured) {
+            return;
         }
-    }
+        g_configured = true;
+        g_level = parse_level(std::getenv("STEAMBRIDGE_LOG_LEVEL"));
 
-    char buffer[32] = {};
-    std::snprintf(buffer, sizeof(buffer), "pid %lu",
-                  static_cast<unsigned long>(GetCurrentProcessId()));
-    g_prefix = buffer;
-    if (module_path != nullptr && module_path[0] != '\0') {
-        const std::string_view path(module_path);
-        const std::size_t slash = path.find_last_of("\\/");
-        g_prefix += " ";
-        if (slash == std::string_view::npos) {
-            g_prefix.append(path.data(), path.size());
-        } else {
-            g_prefix.append(path.data() + slash + 1u, path.size() - slash - 1u);
+        if (const char* path = std::getenv("STEAMBRIDGE_LOG")) {
+            if (path[0] != '\0') {
+                g_file = std::fopen(path, "ab");
+            }
         }
+
+        char buffer[32] = {};
+        std::snprintf(buffer, sizeof(buffer), "pid %lu",
+                      static_cast<unsigned long>(GetCurrentProcessId()));
+        g_prefix = buffer;
+        if (module_path != nullptr && module_path[0] != '\0') {
+            const std::string_view path(module_path);
+            const std::size_t slash = path.find_last_of("\\/");
+            g_prefix += " ";
+            if (slash == std::string_view::npos) {
+                g_prefix.append(path.data(), path.size());
+            } else {
+                g_prefix.append(path.data() + slash + 1u, path.size() - slash - 1u);
+            }
+        }
+    } catch (...) {
+        return;  // logging without a prefix is better than not running
     }
 }
 

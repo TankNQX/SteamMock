@@ -90,16 +90,22 @@ bool send_frame(socket_t handle, const std::string& payload) noexcept {
 // Reads exactly one frame. False means the peer went away, or sent something
 // that is not a frame - either way this connection is finished.
 bool recv_frame(socket_t handle, std::string& payload) noexcept {
-    char header[4] = {};
-    if (!recv_all(handle, header, sizeof(header))) {
+    try {
+        char header[4] = {};
+        if (!recv_all(handle, header, sizeof(header))) {
+            return false;
+        }
+        const std::uint32_t length = read_frame_length(header);
+        if (length == 0u || length > kMaxFrameBytes) {
+            return false;
+        }
+        payload.assign(length, '\0');
+        return recv_all(handle, payload.data(), length);
+    } catch (...) {
+        // A frame this process cannot hold is a frame it cannot serve, so the
+        // connection ends - which is what a false return already means.
         return false;
     }
-    const std::uint32_t length = read_frame_length(header);
-    if (length == 0u || length > kMaxFrameBytes) {
-        return false;
-    }
-    payload.assign(length, '\0');
-    return recv_all(handle, payload.data(), length);
 }
 
 std::string peer_name(socket_t handle) {
@@ -454,7 +460,11 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
                 break;
             }
             if (message_kind != "call") {
-                log(LogLevel::warn, "ignoring a '" + message_kind + "' message from " + session_id);
+                std::string ignored = "ignoring a '";
+                ignored += message_kind;
+                ignored += "' message from ";
+                ignored += session_id;
+                log(LogLevel::warn, ignored);
                 continue;
             }
             if (!send_frame(socket, handle_call(*session, message))) {
