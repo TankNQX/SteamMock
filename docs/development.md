@@ -36,20 +36,28 @@ from where it runs and what is in its environment:
 If no backend is listening, the stub says so once and every call takes its Steam-absent value. A game
 still boots, and a backend started later is picked up on the next call.
 
-Both front ends take the same options - the console backend and the live view:
+The console backend (`steambridge`):
 
 | Option | What it does |
 | --- | --- |
 | `--host`, `--port` | Where to listen. `--port 0` picks a free one; the default is the 50990 above. |
 | `--scenario FILE` | What each game is told (default `scenarios/example.json`). |
-| `--transcript FILE` | Append every call, as JSON lines, to this file. |
+| `--transcript FILE` | Append every call, as JSON lines, to this file. Each line names the `session` it came from, so two games in one transcript stay apart. |
 | `--log-level LEVEL` | `error`, `warning`, `info` or `debug`. |
 | `--list-api` | Print the calls the stub exports, then exit. |
 | `--show-profiles` | Print the scenario's games and match rules, then exit. |
+| `--help`, `--version` | Usage, or the version, then exit. |
 
-The live view adds `--start`, which serves as soon as the window opens instead of waiting for a click,
-and `-DSTEAMBRIDGE_STUB_NAME` decides what the built DLL is called - `steam_api` for a 32-bit game,
-which is what the README's walkthrough builds.
+The live view takes four of these and no more - `--host`, `--port`, `--scenario` and `--start` - and
+an argument it does not know is ignored rather than reported. It keeps its own log in the window
+instead of writing one to disk, and has no `--transcript`: for an artifact of a run, use the console
+backend. `-DSTEAMBRIDGE_STUB_NAME` decides what the built DLL is called - `steam_api` for a 32-bit
+game, which is what the README's walkthrough builds.
+
+Match rules come in three kinds, and a rule with none of them matches every game:
+`exe_contains` and `exe` compare against the **base name** the stub reports, lowercased, so two copies
+of one executable cannot be told apart that way; `pid` compares the game's process id, which is how
+two instances of the same game get different profiles.
 
 ## Tests
 

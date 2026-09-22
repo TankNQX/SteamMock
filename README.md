@@ -4,7 +4,8 @@ Watch a real game's Steam calls arrive, live, without Steam.
 
 ![The live view](docs/images/live-view.png)
 
-*The live view: the calls a game makes, what answered each one, and how long it took.*
+*Two copies of one game running at once. The view lists each as its own session: the calls it makes, what answered
+each one, how long it took, and the state that game is being told.*
 
 ## What you need
 
@@ -52,7 +53,8 @@ were left to the game's own defaults.
 
 ## What you are looking at
 
-* **Games** - each running game, the profile it was matched to, and whether it is still connected.
+* **Games** - each running game, the profile it was matched to, and whether it is still connected. Two
+  copies of one game can run at once: each gets its own session and its own row here.
 * **Calls** - every Steam call the game makes, what answered it, and how long it took. `via / ms`
   says where the answer came from: your scenario, the game's session state, or nobody.
 * **Game state** - who the game thinks it is talking to: app id, Steam id, persona, language, and the
