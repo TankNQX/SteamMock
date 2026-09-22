@@ -378,10 +378,15 @@ void test_surface_matches_the_idl() {
     }
     check("the surface has calls", count > 0u);
     check("it names the surface", std::string(steambridge::api_surface_name()) == "seed");
-    check("it is the revision the IDL says", steambridge::api_surface_revision() == 1);
+    check("it is the revision the IDL says", steambridge::api_surface_revision() == 2);
     check("a policy call is listed", names.count("SteamAPI_Init") == 1u);
     check("an out-parameter call is listed",
           names.count("SteamAPI_ISteamUserStats_GetStatInt32") == 1u);
+    // Windows resolves a game's whole import table before it runs, so a name a
+    // real game imports and the stub does not export is a game that will not
+    // start. Both of these are in Spacewar's own executable.
+    check("a GameServer call is listed", names.count("SteamGameServer_GetHSteamPipe") == 1u);
+    check("an internal helper is listed", names.count("SteamInternal_CreateInterface") == 1u);
 
     // Every call the state machine answers has to be in the surface, or the stub
     // and the backend have drifted apart.

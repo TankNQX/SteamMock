@@ -46,9 +46,14 @@ The generator validates the IDL and rewrites `src/generated/api_stub.cpp`,
 apart, so there is no way to forget this step. `steambridge --list-api` prints the surface as the
 backend sees it.
 
-The seed surface's signatures are hand-written, not lifted from a real header: reconcile them
-against your own `steam_api_flat.h` (or the export table of a real `steam_api64.dll`) before relying
-on them.
+Most of the seed surface's signatures are hand-written rather than lifted from a real header - the
+GameServer and `SteamInternal_*` entries are the exception, taken from the SDK's own declarations -
+so reconcile the rest against your own `steam_api_flat.h` (or the export table of a real
+`steam_api64.dll`) before relying on them.
+
+A game notices a missing export at load time, not at call time: Windows resolves the whole import
+table first, so one name the surface does not cover stops the game before `DllMain`. Compare the
+game's `steam_api.dll` imports against `steambridge --list-api` when a game will not start.
 
 ## What CI checks
 

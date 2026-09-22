@@ -1,6 +1,6 @@
 {
   "surface": "seed",
-  "revision": 1,
+  "revision": 2,
   "calls": [
     { "name": "SteamAPI_Init", "returns": "bool" },
     { "name": "SteamAPI_Shutdown", "returns": "void" },
@@ -59,6 +59,42 @@
       "params": [ { "name": "self", "type": "opaque_ptr" },
                   { "name": "iAchievement", "type": "uint32" } ] },
     { "name": "SteamAPI_ISteamUserStats_StoreStats", "returns": "bool",
-      "params": [ { "name": "self", "type": "opaque_ptr" } ] }
+      "params": [ { "name": "self", "type": "opaque_ptr" } ] },
+
+    { "name": "SteamGameServer_GetHSteamUser", "returns": "uint32" },
+    { "name": "SteamGameServer_GetHSteamPipe", "returns": "uint32" },
+    { "name": "SteamGameServer_RunCallbacks", "returns": "void" },
+    { "name": "SteamGameServer_Shutdown", "returns": "void" },
+    { "name": "SteamInternal_GameServer_Init", "returns": "bool",
+      "params": [ { "name": "unIP", "type": "uint32" },
+                  { "name": "usSteamPort", "type": "uint16" },
+                  { "name": "usGamePort", "type": "uint16" },
+                  { "name": "usQueryPort", "type": "uint16" },
+                  { "name": "eServerMode", "type": "int32" },
+                  { "name": "pchVersionString", "type": "cstring" } ] },
+
+    { "name": "SteamInternal_CreateInterface", "returns": "opaque_ptr",
+      "params": [ { "name": "ver", "type": "cstring" } ] },
+    { "name": "SteamInternal_ContextInit", "returns": "opaque_ptr",
+      "params": [ { "name": "pContextInitData", "type": "opaque_ptr" } ] },
+
+    { "name": "SteamAPI_RegisterCallback", "returns": "void",
+      "params": [ { "name": "pCallback", "type": "opaque_ptr" },
+                  { "name": "iCallback", "type": "int32" } ] },
+    { "name": "SteamAPI_UnregisterCallback", "returns": "void",
+      "params": [ { "name": "pCallback", "type": "opaque_ptr" } ] },
+    { "name": "SteamAPI_RegisterCallResult", "returns": "void",
+      "params": [ { "name": "pCallback", "type": "opaque_ptr" },
+                  { "name": "hAPICall", "type": "uint64" } ] },
+    { "name": "SteamAPI_UnregisterCallResult", "returns": "void",
+      "params": [ { "name": "pCallback", "type": "opaque_ptr" },
+                  { "name": "hAPICall", "type": "uint64" } ] },
+
+    { "name": "SteamAPI_WriteMiniDump", "returns": "void",
+      "params": [ { "name": "uStructuredExceptionCode", "type": "uint32" },
+                  { "name": "pvExceptionInfo", "type": "opaque_ptr" },
+                  { "name": "uBuildID", "type": "uint32" } ] },
+    { "name": "SteamAPI_SetMiniDumpComment", "returns": "void",
+      "params": [ { "name": "pchMsg", "type": "cstring" } ] }
   ]
 }

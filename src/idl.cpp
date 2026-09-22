@@ -35,6 +35,11 @@ constexpr TypeInfo kTypes[] = {
     {"uint32", "std::uint32_t", "arg_uint", "0",
      "static_cast<std::uint32_t>(steambridge::reply_uint(reply))",
      "static_cast<std::uint32_t>(value->as_uint64())"},
+    // A port number is a uint16 in the real headers and stays one here: read as
+    // a wider type it would carry whatever the caller left in the top half.
+    {"uint16", "std::uint16_t", "arg_uint", "0",
+     "static_cast<std::uint16_t>(steambridge::reply_uint(reply))",
+     "static_cast<std::uint16_t>(value->as_uint64())"},
     {"int64", "std::int64_t", "arg_int", "0", "steambridge::reply_int(reply)", "value->as_int64()"},
     {"uint64", "std::uint64_t", "arg_uint", "0", "steambridge::reply_uint(reply)",
      "value->as_uint64()"},

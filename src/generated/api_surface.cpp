@@ -1,7 +1,7 @@
 // ============================================================================
 //  GENERATED FILE - do not edit by hand.
 //
-//  Source:   gen/steam_api.idl.json (surface 'seed', revision 1, 28 calls)
+//  Source:   gen/steam_api.idl.json (surface 'seed', revision 2, 41 calls)
 //  Regenerate: steambridge_codegen
 // ============================================================================
 
@@ -82,8 +82,54 @@ const SurfaceParam kParams_SteamAPI_ISteamUtils_GetSteamUILanguage[] = {
     {"self", "opaque_ptr", false},
 };
 
+const SurfaceParam kParams_SteamAPI_RegisterCallResult[] = {
+    {"pCallback", "opaque_ptr", false},
+    {"hAPICall", "uint64", false},
+};
+
+const SurfaceParam kParams_SteamAPI_RegisterCallback[] = {
+    {"pCallback", "opaque_ptr", false},
+    {"iCallback", "int32", false},
+};
+
 const SurfaceParam kParams_SteamAPI_RestartAppIfNecessary[] = {
     {"unOwnAppID", "uint32", false},
+};
+
+const SurfaceParam kParams_SteamAPI_SetMiniDumpComment[] = {
+    {"pchMsg", "cstring", false},
+};
+
+const SurfaceParam kParams_SteamAPI_UnregisterCallResult[] = {
+    {"pCallback", "opaque_ptr", false},
+    {"hAPICall", "uint64", false},
+};
+
+const SurfaceParam kParams_SteamAPI_UnregisterCallback[] = {
+    {"pCallback", "opaque_ptr", false},
+};
+
+const SurfaceParam kParams_SteamAPI_WriteMiniDump[] = {
+    {"uStructuredExceptionCode", "uint32", false},
+    {"pvExceptionInfo", "opaque_ptr", false},
+    {"uBuildID", "uint32", false},
+};
+
+const SurfaceParam kParams_SteamInternal_ContextInit[] = {
+    {"pContextInitData", "opaque_ptr", false},
+};
+
+const SurfaceParam kParams_SteamInternal_CreateInterface[] = {
+    {"ver", "cstring", false},
+};
+
+const SurfaceParam kParams_SteamInternal_GameServer_Init[] = {
+    {"unIP", "uint32", false},
+    {"usSteamPort", "uint16", false},
+    {"usGamePort", "uint16", false},
+    {"usQueryPort", "uint16", false},
+    {"eServerMode", "int32", false},
+    {"pchVersionString", "cstring", false},
 };
 
 const SurfaceCall kCalls[] = {
@@ -112,17 +158,30 @@ const SurfaceCall kCalls[] = {
     {"SteamAPI_ISteamUtils_GetSteamUILanguage", "cstring", kParams_SteamAPI_ISteamUtils_GetSteamUILanguage, 1},
     {"SteamAPI_Init", "bool", nullptr, 0},
     {"SteamAPI_IsSteamRunning", "bool", nullptr, 0},
+    {"SteamAPI_RegisterCallResult", "void", kParams_SteamAPI_RegisterCallResult, 2},
+    {"SteamAPI_RegisterCallback", "void", kParams_SteamAPI_RegisterCallback, 2},
     {"SteamAPI_RestartAppIfNecessary", "bool", kParams_SteamAPI_RestartAppIfNecessary, 1},
     {"SteamAPI_RunCallbacks", "void", nullptr, 0},
+    {"SteamAPI_SetMiniDumpComment", "void", kParams_SteamAPI_SetMiniDumpComment, 1},
     {"SteamAPI_Shutdown", "void", nullptr, 0},
+    {"SteamAPI_UnregisterCallResult", "void", kParams_SteamAPI_UnregisterCallResult, 2},
+    {"SteamAPI_UnregisterCallback", "void", kParams_SteamAPI_UnregisterCallback, 1},
+    {"SteamAPI_WriteMiniDump", "void", kParams_SteamAPI_WriteMiniDump, 3},
+    {"SteamGameServer_GetHSteamPipe", "uint32", nullptr, 0},
+    {"SteamGameServer_GetHSteamUser", "uint32", nullptr, 0},
+    {"SteamGameServer_RunCallbacks", "void", nullptr, 0},
+    {"SteamGameServer_Shutdown", "void", nullptr, 0},
+    {"SteamInternal_ContextInit", "opaque_ptr", kParams_SteamInternal_ContextInit, 1},
+    {"SteamInternal_CreateInterface", "opaque_ptr", kParams_SteamInternal_CreateInterface, 1},
+    {"SteamInternal_GameServer_Init", "bool", kParams_SteamInternal_GameServer_Init, 6},
 };
 
 }  // namespace
 
 const char* api_surface_name() noexcept { return "seed"; }
-int api_surface_revision() noexcept { return 1; }
+int api_surface_revision() noexcept { return 2; }
 const SurfaceCall* api_surface_calls(std::size_t& count) noexcept {
-    count = 28;
+    count = 41;
     return kCalls;
 }
 

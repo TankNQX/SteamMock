@@ -1,7 +1,7 @@
 // ============================================================================
 //  GENERATED FILE - do not edit by hand.
 //
-//  Source:   gen/steam_api.idl.json (surface 'seed', revision 1, 28 calls)
+//  Source:   gen/steam_api.idl.json (surface 'seed', revision 2, 41 calls)
 //  Regenerate: steambridge_codegen
 // ============================================================================
 
@@ -456,6 +456,34 @@ STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_IsSteamRunning(void) {
     return result;
 }
 
+// SteamAPI_RegisterCallResult
+STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_RegisterCallResult(void* pCallback, std::uint64_t hAPICall) {
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("pCallback", steambridge::arg_pointer(pCallback));
+        args.set("hAPICall", steambridge::arg_uint(hAPICall));
+
+        steambridge::Json reply;
+        (void)steambridge::invoke("SteamAPI_RegisterCallResult", args, reply);
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+}
+
+// SteamAPI_RegisterCallback
+STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_RegisterCallback(void* pCallback, std::int32_t iCallback) {
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("pCallback", steambridge::arg_pointer(pCallback));
+        args.set("iCallback", steambridge::arg_int(iCallback));
+
+        steambridge::Json reply;
+        (void)steambridge::invoke("SteamAPI_RegisterCallback", args, reply);
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+}
+
 // SteamAPI_RestartAppIfNecessary
 STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_RestartAppIfNecessary(std::uint32_t unOwnAppID) {
     bool result = false;
@@ -485,6 +513,19 @@ STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_RunCallbacks(void) {
     }
 }
 
+// SteamAPI_SetMiniDumpComment
+STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_SetMiniDumpComment(const char* pchMsg) {
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("pchMsg", steambridge::arg_cstring(pchMsg));
+
+        steambridge::Json reply;
+        (void)steambridge::invoke("SteamAPI_SetMiniDumpComment", args, reply);
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+}
+
 // SteamAPI_Shutdown
 STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_Shutdown(void) {
     try {
@@ -495,4 +536,158 @@ STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_Shutdown(void) {
     } catch (...) {
         // Never let an exception cross into the game.
     }
+}
+
+// SteamAPI_UnregisterCallResult
+STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_UnregisterCallResult(void* pCallback, std::uint64_t hAPICall) {
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("pCallback", steambridge::arg_pointer(pCallback));
+        args.set("hAPICall", steambridge::arg_uint(hAPICall));
+
+        steambridge::Json reply;
+        (void)steambridge::invoke("SteamAPI_UnregisterCallResult", args, reply);
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+}
+
+// SteamAPI_UnregisterCallback
+STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_UnregisterCallback(void* pCallback) {
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("pCallback", steambridge::arg_pointer(pCallback));
+
+        steambridge::Json reply;
+        (void)steambridge::invoke("SteamAPI_UnregisterCallback", args, reply);
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+}
+
+// SteamAPI_WriteMiniDump
+STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_WriteMiniDump(std::uint32_t uStructuredExceptionCode, void* pvExceptionInfo, std::uint32_t uBuildID) {
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("uStructuredExceptionCode", steambridge::arg_uint(uStructuredExceptionCode));
+        args.set("pvExceptionInfo", steambridge::arg_pointer(pvExceptionInfo));
+        args.set("uBuildID", steambridge::arg_uint(uBuildID));
+
+        steambridge::Json reply;
+        (void)steambridge::invoke("SteamAPI_WriteMiniDump", args, reply);
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+}
+
+// SteamGameServer_GetHSteamPipe
+STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamGameServer_GetHSteamPipe(void) {
+    std::uint32_t result = 0;
+    try {
+        steambridge::Json args = steambridge::Json::object();
+
+        steambridge::Json reply;
+        if (steambridge::invoke("SteamGameServer_GetHSteamPipe", args, reply)) {
+            result = static_cast<std::uint32_t>(steambridge::reply_uint(reply));
+        }
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+    return result;
+}
+
+// SteamGameServer_GetHSteamUser
+STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamGameServer_GetHSteamUser(void) {
+    std::uint32_t result = 0;
+    try {
+        steambridge::Json args = steambridge::Json::object();
+
+        steambridge::Json reply;
+        if (steambridge::invoke("SteamGameServer_GetHSteamUser", args, reply)) {
+            result = static_cast<std::uint32_t>(steambridge::reply_uint(reply));
+        }
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+    return result;
+}
+
+// SteamGameServer_RunCallbacks
+STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamGameServer_RunCallbacks(void) {
+    try {
+        steambridge::Json args = steambridge::Json::object();
+
+        steambridge::Json reply;
+        (void)steambridge::invoke("SteamGameServer_RunCallbacks", args, reply);
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+}
+
+// SteamGameServer_Shutdown
+STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamGameServer_Shutdown(void) {
+    try {
+        steambridge::Json args = steambridge::Json::object();
+
+        steambridge::Json reply;
+        (void)steambridge::invoke("SteamGameServer_Shutdown", args, reply);
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+}
+
+// SteamInternal_ContextInit
+STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_ContextInit(void* pContextInitData) {
+    void* result = nullptr;
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("pContextInitData", steambridge::arg_pointer(pContextInitData));
+
+        steambridge::Json reply;
+        if (steambridge::invoke("SteamInternal_ContextInit", args, reply)) {
+            result = steambridge::reply_pointer(reply);
+        }
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+    return result;
+}
+
+// SteamInternal_CreateInterface
+STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_CreateInterface(const char* ver) {
+    void* result = nullptr;
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("ver", steambridge::arg_cstring(ver));
+
+        steambridge::Json reply;
+        if (steambridge::invoke("SteamInternal_CreateInterface", args, reply)) {
+            result = steambridge::reply_pointer(reply);
+        }
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+    return result;
+}
+
+// SteamInternal_GameServer_Init
+STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamInternal_GameServer_Init(std::uint32_t unIP, std::uint16_t usSteamPort, std::uint16_t usGamePort, std::uint16_t usQueryPort, std::int32_t eServerMode, const char* pchVersionString) {
+    bool result = false;
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("unIP", steambridge::arg_uint(unIP));
+        args.set("usSteamPort", steambridge::arg_uint(usSteamPort));
+        args.set("usGamePort", steambridge::arg_uint(usGamePort));
+        args.set("usQueryPort", steambridge::arg_uint(usQueryPort));
+        args.set("eServerMode", steambridge::arg_int(eServerMode));
+        args.set("pchVersionString", steambridge::arg_cstring(pchVersionString));
+
+        steambridge::Json reply;
+        if (steambridge::invoke("SteamInternal_GameServer_Init", args, reply)) {
+            result = steambridge::reply_bool(reply);
+        }
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+    return result;
 }

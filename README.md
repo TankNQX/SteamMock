@@ -147,9 +147,9 @@ Worth doing next, roughly in order of value:
 2. **Callback injection.** Games expect `RunCallbacks` to deliver `UserStatsReceived`, and worse.
    The stub records registrations today; pushing an event needs the SDK's callback payload structs,
    and a reader thread in the stub.
-3. **The whole export surface**, generated from your own `steam_api_flat.h`. The seed here is 28
-   calls with hand-written signatures, and every one should be reconciled against the real header
-   before being relied on.
+3. **The whole export surface**, generated from your own `steam_api_flat.h`. The seed here is 41
+   calls: the GameServer and `SteamInternal_*` helpers came out of the real headers, and the rest are
+   hand-written and should be reconciled the same way before being relied on.
 4. **Record and replay.** A pass-through mode that forwards to a real `steam_api64.dll`, records
    both directions, and replays the recording later. The `Transport` interface is already the seam.
 5. **Struct and buffer parameters.** The type table covers scalars, strings and out-parameters;

@@ -29,9 +29,22 @@ EXPORTS
     SteamAPI_ISteamUtils_GetSteamUILanguage
     SteamAPI_Init
     SteamAPI_IsSteamRunning
+    SteamAPI_RegisterCallResult
+    SteamAPI_RegisterCallback
     SteamAPI_RestartAppIfNecessary
     SteamAPI_RunCallbacks
+    SteamAPI_SetMiniDumpComment
     SteamAPI_Shutdown
+    SteamAPI_UnregisterCallResult
+    SteamAPI_UnregisterCallback
+    SteamAPI_WriteMiniDump
     SteamBridge_SessionId
     SteamBridge_Stats
     SteamBridge_Version
+    SteamGameServer_GetHSteamPipe
+    SteamGameServer_GetHSteamUser
+    SteamGameServer_RunCallbacks
+    SteamGameServer_Shutdown
+    SteamInternal_ContextInit
+    SteamInternal_CreateInterface
+    SteamInternal_GameServer_Init

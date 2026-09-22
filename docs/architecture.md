@@ -103,3 +103,13 @@ interface pointer. Nothing here invents success.
   a game per connection is simpler and matches how they run.
 * A game that disconnects keeps its session, so the run summary and the transcript stay about the
   whole run. `SessionSnapshot::connected` is what tells a view which rows are still live.
+* Flat entry points only, and that is a real boundary rather than a detail. A game built against a
+  recent SDK gets its interfaces by asking `SteamInternal_CreateInterface` for a version string and
+  then calling the object it hands back through its vtable - the per-interface accessors are inline
+  in the game, not imported, so none of those calls reach a trampoline. Spacewar's own
+  `SteamworksExample.exe` is one of these: with `SteamAPI_Init` scripted true the transcript ends at
+  `SteamInternal_ContextInit` declined, and the game's next call through the null pointer faults
+  (`SteamAPI_WriteMiniDump` reports `0xC0000005` on the way out). Covering that case means
+  synthesizing the interfaces - an object per interface version whose vtable slots forward into this
+  same IDL and protocol - which needs the slot order per version, from a real SDK header or out of a
+  real `steam_api.dll`.
