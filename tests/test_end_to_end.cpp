@@ -316,6 +316,49 @@ int main(int argc, char** argv) {
           value_of(values, "achievement.0"));
     check("StoreStats reported success", value_of(values, "store_stats") == "true");
 
+    // --- the same API as a recent SDK asks for it --------------------------
+    // A game built against a recent SDK has no flat imports to hook: it asks for
+    // its interfaces by version string and calls them through the vtable. These
+    // came back through objects the stub built itself, so what is checked here is
+    // that the vtable the game was handed has the slots where that SDK's headers
+    // put them - a call landing on the wrong slot is a call answered with the
+    // wrong thing, and the flat checks above cannot see it.
+    std::printf("\n[:] the vtable a recent SDK would use\n");
+    check("the stub hands out an object for a version string it knows",
+          value_of(values, "vtable.user") == "true");
+    check("and another for a second interface", value_of(values, "vtable.utils") == "true");
+    check("a version string it does not know gets null, not a wrong object",
+          value_of(values, "vtable.unknown") == "true");
+    check("a call through the vtable is answered from the profile",
+          value_of(values, "vtable.steam_id") == "76561198000000001",
+          value_of(values, "vtable.steam_id"));
+    check("the app id comes back through a vtable slot ten entries in",
+          value_of(values, "vtable.app_id") == "480", value_of(values, "vtable.app_id"));
+    check("a call nobody answers still gives the game its own default",
+          value_of(values, "vtable.h_user") == "0" &&
+              value_of(values, "vtable.logged_on") == "false",
+          value_of(values, "vtable.h_user") + " " + value_of(values, "vtable.logged_on"));
+    check("an out-parameter of a call nobody answers is left alone",
+          value_of(values, "vtable.image_size_untouched") == "true" &&
+              value_of(values, "vtable.image_size_answered") == "false");
+
+    // The other direction: a call the backend does answer, asked through the
+    // vtable, has to write its out-parameter back through the pointer the game
+    // passed - which is the half of the marshalling the checks above do not
+    // reach.
+    check("the stub hands out a third interface, by its SDK's version string",
+          value_of(values, "vtable.stats") == "true");
+    check("an answered call writes its out-parameter back through the vtable",
+          value_of(values, "vtable.achievement.found") == "true" &&
+              value_of(values, "vtable.achievement.written") == "false",
+          value_of(values, "vtable.achievement.found") + " " +
+              value_of(values, "vtable.achievement.written"));
+    check("a vtable call sees what a flat call did to the same session",
+          value_of(values, "vtable.achievement.unlocked") == "true");
+    check("a call nobody answers leaves a vtable call's out-parameter alone",
+          value_of(values, "vtable.user_achievement.answered") == "false" &&
+              value_of(values, "vtable.user_achievement.untouched") == "true");
+
     // --- what the backend recorded ----------------------------------------
     std::printf("\n[:] what the backend recorded\n");
     const int forwarded = std::atoi(value_of(values, "forwarded").c_str());
@@ -336,8 +379,12 @@ int main(int argc, char** argv) {
           static_cast<int>(records.size()) >= forwarded,
           std::to_string(records.size()) + " recorded, " + std::to_string(forwarded) +
               " forwarded");
-    check("the stub reported the two calls nobody answered", value_of(values, "unhandled") == "2",
-          value_of(values, "unhandled"));
+    // The stub counts what it forwarded and nobody answered. It is not a fixed
+    // number - it depends on how many calls the game makes that the backend has
+    // no opinion about - so this is a floor and a bound, not an equality.
+    const int unhandled = std::atoi(value_of(values, "unhandled").c_str());
+    check("the stub counted the calls nobody answered", unhandled >= 2 && unhandled <= forwarded,
+          value_of(values, "unhandled") + " of " + std::to_string(forwarded));
     check("the last thing the game did was shut down",
           !records.empty() && text_member(records.back(), "call") == "SteamAPI_Shutdown",
           records.empty() ? "no records" : text_member(records.back(), "call"));
@@ -353,14 +400,43 @@ int main(int argc, char** argv) {
     check("RunCallbacks was forwarded but left to the stub",
           value_of(sources, "SteamAPI_RunCallbacks") == "none");
 
+    // The same question asked twice, by the two routes a game can take: once as
+    // the flat import an older SDK gives it, once through the object a recent one
+    // calls. Both arrive under one name, because the backend answers calls rather
+    // than callers.
+    int steam_id_records = 0;
+    for (const steambridge::Json& record : records) {
+        if (text_member(record, "call") == "SteamAPI_ISteamUser_GetSteamID") {
+            ++steam_id_records;
+        }
+    }
+    check("a vtable call and a flat call reach the backend as the same call", steam_id_records == 2,
+          std::to_string(steam_id_records) + " recorded");
+
+    // A value class as an argument: CSteamID is eight bytes and the wire carries
+    // it as the integer it is, so the steam id the game passed by value through
+    // the vtable has to be readable in the record of the call.
+    bool value_argument_recorded = false;
+    for (const steambridge::Json& record : records) {
+        if (text_member(record, "call") != "SteamAPI_ISteamUserStats_GetUserAchievement") {
+            continue;
+        }
+        const steambridge::Json* args = record.find("args");
+        if (args != nullptr && args->find("steamIDUser") != nullptr &&
+            args->find("steamIDUser")->as_uint64() == 76561198000000001ull) {
+            value_argument_recorded = true;
+        }
+    }
+    check("a value class passed by value reaches the backend", value_argument_recorded);
+
     bool out_parameter_recorded = false;
     bool stats_write_recorded = false;
     bool every_record_names_its_session = true;
     for (const steambridge::Json& record : records) {
         const std::string call = text_member(record, "call");
         const steambridge::Json* out = record.find("out");
-        if (ends_with(call, "GetStatInt32") && out != nullptr && out->find("pnData") != nullptr &&
-            out->find("pnData")->as_int64() == 0) {
+        if (ends_with(call, "GetStatInt32") && out != nullptr && out->find("pData") != nullptr &&
+            out->find("pData")->as_int64() == 0) {
             out_parameter_recorded = true;
         }
         if (ends_with(call, "SetStatInt32")) {
@@ -389,7 +465,7 @@ int main(int argc, char** argv) {
         check("--list-api exits cleanly", exit == 0, "exit " + std::to_string(exit));
         check("--list-api names the surface", text.find("surface 'seed'") != std::string::npos);
         check("--list-api prints a call", text.find("SteamAPI_Init()") != std::string::npos);
-        check("--list-api marks an out parameter", text.find("int32* pnData") != std::string::npos);
+        check("--list-api marks an out parameter", text.find("int32* pData") != std::string::npos);
     } else {
         check("--list-api can be started", false, error);
     }

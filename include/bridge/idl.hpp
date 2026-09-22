@@ -27,6 +27,15 @@ struct IdlParam {
 struct IdlCall {
     std::string name;
     std::string returns = "void";
+    // What to do when nobody answered. Empty means "the game gets the default";
+    // "interface" means the stub can answer this one itself, by handing out the
+    // interface object for the version string it was passed - which is what makes
+    // a game built against a recent SDK reach the backend at all; "context" means
+    // it is the SDK's lazy accessor, and the stub runs the initialiser in the blob
+    // it was handed. `fallback_param` names the argument a factory takes its
+    // version string from.
+    std::string fallback;
+    std::string fallback_param;
     std::vector<IdlParam> params;
 };
 

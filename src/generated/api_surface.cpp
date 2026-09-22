@@ -1,7 +1,7 @@
 // ============================================================================
 //  GENERATED FILE - do not edit by hand.
 //
-//  Source:   gen/steam_api.idl.json (surface 'seed', revision 2, 41 calls)
+//  Source:   gen/steam_api.idl.json (surface 'seed', revision 2, 43 calls)
 //  Regenerate: steambridge_codegen
 // ============================================================================
 
@@ -36,7 +36,7 @@ const SurfaceParam kParams_SteamAPI_ISteamUserStats_GetNumAchievements[] = {
 const SurfaceParam kParams_SteamAPI_ISteamUserStats_GetStatInt32[] = {
     {"self", "opaque_ptr", false},
     {"pchName", "cstring", false},
-    {"pnData", "int32", true},
+    {"pData", "int32", true},
 };
 
 const SurfaceParam kParams_SteamAPI_ISteamUserStats_RequestCurrentStats[] = {
@@ -123,6 +123,16 @@ const SurfaceParam kParams_SteamInternal_CreateInterface[] = {
     {"ver", "cstring", false},
 };
 
+const SurfaceParam kParams_SteamInternal_FindOrCreateGameServerInterface[] = {
+    {"hSteamUser", "int32", false},
+    {"pszVersion", "cstring", false},
+};
+
+const SurfaceParam kParams_SteamInternal_FindOrCreateUserInterface[] = {
+    {"hSteamUser", "int32", false},
+    {"pszVersion", "cstring", false},
+};
+
 const SurfaceParam kParams_SteamInternal_GameServer_Init[] = {
     {"unIP", "uint32", false},
     {"usSteamPort", "uint16", false},
@@ -173,6 +183,8 @@ const SurfaceCall kCalls[] = {
     {"SteamGameServer_Shutdown", "void", nullptr, 0},
     {"SteamInternal_ContextInit", "opaque_ptr", kParams_SteamInternal_ContextInit, 1},
     {"SteamInternal_CreateInterface", "opaque_ptr", kParams_SteamInternal_CreateInterface, 1},
+    {"SteamInternal_FindOrCreateGameServerInterface", "opaque_ptr", kParams_SteamInternal_FindOrCreateGameServerInterface, 2},
+    {"SteamInternal_FindOrCreateUserInterface", "opaque_ptr", kParams_SteamInternal_FindOrCreateUserInterface, 2},
     {"SteamInternal_GameServer_Init", "bool", kParams_SteamInternal_GameServer_Init, 6},
 };
 
@@ -181,7 +193,7 @@ const SurfaceCall kCalls[] = {
 const char* api_surface_name() noexcept { return "seed"; }
 int api_surface_revision() noexcept { return 2; }
 const SurfaceCall* api_surface_calls(std::size_t& count) noexcept {
-    count = 41;
+    count = 43;
     return kCalls;
 }
 

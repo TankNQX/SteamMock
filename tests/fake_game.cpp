@@ -17,6 +17,78 @@
 #include <cstdlib>
 #include <string>
 
+// ---------------------------------------------------------------------------
+//  What a game built against a recent SDK has: its interfaces by vtable.
+// ---------------------------------------------------------------------------
+//  Such a game does not import the per-interface accessors - they are inline in
+//  its own headers - so it asks SteamInternal_CreateInterface for a version
+//  string and calls the object it gets back through the vtable. None of those
+//  calls reaches a flat trampoline, which is why the stub hands out objects of
+//  its own.
+//
+//  The declarations below are that game's side of the ABI: the slots in the
+//  order its headers lay them out, and the functions are only ever *declared* -
+//  the object and its implementation belong to the stub, which is the whole
+//  point of the exercise. Only the slots this calls have to be about the right
+//  thing; the ones between them are there for their offsets, so a slot the stub
+//  put in the wrong place is a call answered with the wrong thing.
+//
+//  They sit outside the anonymous namespace so that nothing here pretends to
+//  define a symbol it does not.
+
+struct SteamID {
+    std::uint64_t value;
+};
+
+struct ISteamUser019 {
+    virtual std::int32_t GetHSteamUser();
+    virtual bool BLoggedOn();
+    virtual SteamID GetSteamID();
+};
+
+struct ISteamUtils009 {
+    virtual std::uint32_t GetSecondsSinceAppActive();
+    virtual std::uint32_t GetSecondsSinceComputerActive();
+    virtual std::int32_t GetConnectedUniverse();
+    virtual std::uint32_t GetServerRealTime();
+    virtual const char* GetIPCountry();
+    virtual bool GetImageSize(std::int32_t image, std::uint32_t* width, std::uint32_t* height);
+    virtual bool GetImageRGBA(std::int32_t image, std::uint8_t* destination, std::int32_t size);
+    virtual void GetCSERIPPort(std::uint32_t* ip, std::uint16_t* port);
+    virtual std::uint8_t GetCurrentBatteryPower();
+    virtual std::uint32_t GetAppID();
+};
+
+// The stats interface, for the two things the flat checks cannot show: an
+// out-parameter written back through a *vtable* call, and a value class - a
+// CSteamID - travelling as an argument. The slots are the layouts' order, which
+// for the two GetStat overloads is the DLL's (float first) rather than the order
+// the SDK's own headers declare them in. Nothing here calls those two: they are
+// declared because the offsets of what follows depend on the count.
+struct ISteamUserStats011 {
+    virtual bool RequestCurrentStats();
+    virtual bool GetStat(const char* name, float* value);
+    virtual bool GetStat(const char* name, std::int32_t* value);
+    virtual bool SetStat(const char* name, float value);
+    virtual bool SetStat(const char* name, std::int32_t value);
+    virtual bool UpdateAvgRateStat(const char* name, float count, double seconds);
+    virtual bool GetAchievement(const char* name, bool* achieved);
+    virtual bool SetAchievement(const char* name);
+    virtual bool ClearAchievement(const char* name);
+    virtual bool GetAchievementAndUnlockTime(const char* name, bool* achieved, std::uint32_t* time);
+    virtual bool StoreStats();
+    virtual std::int32_t GetAchievementIcon(const char* name);
+    virtual const char* GetAchievementDisplayAttribute(const char* name, const char* key);
+    virtual bool IndicateAchievementProgress(const char* name, std::uint32_t current,
+                                             std::uint32_t maximum);
+    virtual std::uint32_t GetNumAchievements();
+    virtual const char* GetAchievementName(std::uint32_t index);
+    virtual std::uint64_t RequestUserStats(SteamID user);
+    virtual bool GetUserStat(SteamID user, const char* name, float* value);
+    virtual bool GetUserStat(SteamID user, const char* name, std::int32_t* value);
+    virtual bool GetUserAchievement(SteamID user, const char* name, bool* achieved);
+};
+
 namespace {
 
 using init_fn = bool (*)();
@@ -35,6 +107,7 @@ using count_fn = std::uint32_t (*)(void*);
 using achievement_name_fn = const char* (*)(void*, std::uint32_t);
 using session_fn = const char* (*)();
 using stats_fn = unsigned long (*)(unsigned long*);
+using create_interface_fn = void* (*)(const char*);
 
 template <typename Fn> Fn resolve(HMODULE module, const char* name) {
     const FARPROC address = GetProcAddress(module, name);
@@ -94,6 +167,8 @@ int main() {
     const auto store_stats = resolve<bool_self_fn>(stub, "SteamAPI_ISteamUserStats_StoreStats");
     const auto session_id = resolve<session_fn>(stub, "SteamBridge_SessionId");
     const auto bridge_stats = resolve<stats_fn>(stub, "SteamBridge_Stats");
+    const auto create_interface =
+        resolve<create_interface_fn>(stub, "SteamInternal_CreateInterface");
 
     // --- the way a game boots ---------------------------------------------
     const bool initialised = api_init();
@@ -169,6 +244,68 @@ int main() {
     // them, so the stub's own no-op is what a game would see with Steam absent.
     api_run_callbacks();
     api_run_callbacks();
+
+    // --- the same API as a recent SDK asks for it -------------------------
+    // Through the vtable, where no trampoline of ours is in the way.
+    void* const modern_user = create_interface("SteamUser019");
+    void* const modern_utils = create_interface("SteamUtils009");
+    void* const modern_stats = create_interface("STEAMUSERSTATS_INTERFACE_VERSION011");
+    std::printf("vtable.user=%s\n", modern_user != nullptr ? "true" : "false");
+    std::printf("vtable.utils=%s\n", modern_utils != nullptr ? "true" : "false");
+    std::printf("vtable.stats=%s\n", modern_stats != nullptr ? "true" : "false");
+    std::printf("vtable.unknown=%s\n",
+                create_interface("SteamUser999") == nullptr ? "true" : "false");
+
+    if (modern_user != nullptr) {
+        auto* modern_user_object = static_cast<ISteamUser019*>(modern_user);
+        // Answered by the profile, exactly as the flat call is.
+        std::printf("vtable.steam_id=%llu\n",
+                    static_cast<unsigned long long>(modern_user_object->GetSteamID().value));
+        // Nobody has an opinion about this one, so it is the game's own default.
+        std::printf("vtable.h_user=%d\n", static_cast<int>(modern_user_object->GetHSteamUser()));
+        std::printf("vtable.logged_on=%s\n", modern_user_object->BLoggedOn() ? "true" : "false");
+    }
+
+    if (modern_utils != nullptr) {
+        auto* modern_utils_object = static_cast<ISteamUtils009*>(modern_utils);
+        std::printf("vtable.app_id=%u\n", static_cast<unsigned>(modern_utils_object->GetAppID()));
+
+        // An out-parameter through the vtable, for a call nobody answers: what
+        // the game passed has to come back untouched.
+        std::uint32_t width = 999;
+        std::uint32_t height = 999;
+        const bool sized = modern_utils_object->GetImageSize(0, &width, &height);
+        std::printf("vtable.image_size_answered=%s\n", sized ? "true" : "false");
+        std::printf("vtable.image_size_untouched=%s\n",
+                    (width == 999 && height == 999) ? "true" : "false");
+    }
+
+    if (modern_stats != nullptr) {
+        auto* stats = static_cast<ISteamUserStats011*>(modern_stats);
+
+        // An out-parameter of a call the backend *does* answer, through the
+        // vtable: the game asked whether ACH_FINISHED is unlocked, and this
+        // starts at true so that only a write-back can make it false.
+        bool modern_achieved = true;
+        const bool found = stats->GetAchievement("ACH_FINISHED", &modern_achieved);
+        std::printf("vtable.achievement.found=%s\n", found ? "true" : "false");
+        std::printf("vtable.achievement.written=%s\n", modern_achieved ? "true" : "false");
+
+        // And the same question about the achievement the *flat* call unlocked
+        // earlier: one session, two ways to ask it.
+        modern_achieved = false;
+        stats->GetAchievement("ACH_BOOTED", &modern_achieved);
+        std::printf("vtable.achievement.unlocked=%s\n", modern_achieved ? "true" : "false");
+
+        // A value class as an argument, for a call nobody answers. Nothing can be
+        // read back here - the IDs are in the transcript - but the steam id has
+        // to survive being passed by value for it to be there.
+        const SteamID user_id{76561198000000001ull};
+        modern_achieved = true;
+        const bool answered = stats->GetUserAchievement(user_id, "ACH_BOOTED", &modern_achieved);
+        std::printf("vtable.user_achievement.answered=%s\n", answered ? "true" : "false");
+        std::printf("vtable.user_achievement.untouched=%s\n", modern_achieved ? "true" : "false");
+    }
 
     unsigned long unhandled = 0;
     const unsigned long forwarded = bridge_stats(&unhandled);

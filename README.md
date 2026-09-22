@@ -21,7 +21,8 @@ being told.*
 
 **Your game doesn't notice.** Drop the built `steam_api64.dll` beside the executable and it shadows
 the real one. What it exports is generated from an IDL file, so the surface can cover whatever a
-game imports.
+game imports - and a game built against a recent SDK, which asks for its interfaces by version string
+and calls them through a vtable, gets objects of ours whose slots forward into the same answer.
 
 **You decide what it's told.** A scenario matches a game to a profile - app id, Steam id, persona,
 language, stats, achievements - and can script individual calls.
@@ -108,7 +109,8 @@ build/Release/steambridge_gui --scenario scenarios/example.json
 
 It is **off by default**, because it is the only part of this project that needs other people's code
 (the GLFW and Dear ImGui submodules). `--start` makes it serve straight away, which is also how it
-can be driven from a script.
+can be driven from a script, and it listens where the stub and the backend do by default - so a game
+started beside it finds it without anything being configured.
 
 It reads snapshots of the server rather than driving it, so a slow frame cannot stall a game and the
 window cannot invent an answer. What it does *not* do yet is change anything - editing stats,
@@ -137,8 +139,9 @@ ends cannot drift apart. `docs/architecture.md` and `docs/protocol.md` have the 
 ## Status
 
 Working today: the loopback bridge, the backend and its session state machine, scenarios with
-per-game profiles, out-parameters, the transcript, offline fallback, the API generator, and the live
-view (read-only so far).
+per-game profiles, out-parameters, the transcript, offline fallback, the API generator, the interface
+objects a game built against a recent SDK calls through its vtables, and the live view (read-only so
+far).
 
 Worth doing next, roughly in order of value:
 
@@ -149,7 +152,10 @@ Worth doing next, roughly in order of value:
    and a reader thread in the stub.
 3. **The whole export surface**, generated from your own `steam_api_flat.h`. The seed here is 41
    calls: the GameServer and `SteamInternal_*` helpers came out of the real headers, and the rest are
-   hand-written and should be reconciled the same way before being relied on.
+   hand-written and should be reconciled the same way before being relied on. What that costs is
+   concrete: a name a real game imports and the surface does not export is a game that will not start
+   at all, before `DllMain` - which is how `SteamInternal_FindOrCreateUserInterface` came to be in the
+   IDL.
 4. **Record and replay.** A pass-through mode that forwards to a real `steam_api64.dll`, records
    both directions, and replays the recording later. The `Transport` interface is already the seam.
 5. **Struct and buffer parameters.** The type table covers scalars, strings and out-parameters;

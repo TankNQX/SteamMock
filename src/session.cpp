@@ -163,7 +163,7 @@ Answer h_get_stat(Session& session, const Json& args) {
         return from_state(Json::boolean(false));
     }
     Json out = Json::object();
-    out.set("pnData", Json::integer(*value));
+    out.set("pData", Json::integer(*value));
     return from_state_out(Json::boolean(true), std::move(out));
 }
 

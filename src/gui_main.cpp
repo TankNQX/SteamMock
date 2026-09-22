@@ -464,7 +464,11 @@ private:
     }
 
     char _host[64] = "127.0.0.1";
-    char _port[8] = "0";
+    // The same port the stub and the backend default to, because the whole point
+    // of the window is to be started and then forgotten while a game is run
+    // beside it. A port of 0 - whatever is free - is there for running two of
+    // these at once, and the field says so.
+    char _port[8] = "50990";
     char _scenario[512] = "scenarios/example.json";
 
     std::unique_ptr<Server> _server;

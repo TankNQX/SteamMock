@@ -1,12 +1,13 @@
 // ============================================================================
 //  GENERATED FILE - do not edit by hand.
 //
-//  Source:   gen/steam_api.idl.json (surface 'seed', revision 2, 41 calls)
+//  Source:   gen/steam_api.idl.json (surface 'seed', revision 2, 43 calls)
 //  Regenerate: steambridge_codegen
 // ============================================================================
 
 #include "bridge/call.hpp"
 #include "bridge/export.hpp"
+#include "bridge/synth.hpp"
 
 namespace {
 
@@ -209,22 +210,22 @@ STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetNu
 }
 
 // SteamAPI_ISteamUserStats_GetStatInt32
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetStatInt32(void* self, const char* pchName, std::int32_t* pnData) {
+STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetStatInt32(void* self, const char* pchName, std::int32_t* pData) {
     bool result = false;
     try {
         steambridge::Json args = steambridge::Json::object();
         args.set("self", steambridge::arg_pointer(self));
         args.set("pchName", steambridge::arg_cstring(pchName));
-        args.set("pnData", pnData != nullptr
-                                  ? steambridge::arg_int(static_cast<std::int32_t>(*pnData))
+        args.set("pData", pData != nullptr
+                                  ? steambridge::arg_int(static_cast<std::int32_t>(*pData))
                                   : steambridge::Json::null());
 
         steambridge::Json reply;
         if (steambridge::invoke("SteamAPI_ISteamUserStats_GetStatInt32", args, reply)) {
-            if (pnData != nullptr) {
-                const steambridge::Json* value = steambridge::reply_out(reply, "pnData");
+            if (pData != nullptr) {
+                const steambridge::Json* value = steambridge::reply_out(reply, "pData");
                 if (value != nullptr && !value->is_null()) {
-                    *pnData = static_cast<std::int32_t>(value->as_int64());
+                    *pData = static_cast<std::int32_t>(value->as_int64());
                 }
             }
             result = steambridge::reply_bool(reply);
@@ -640,13 +641,7 @@ STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamGameServer_Shutdown(void) {
 STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_ContextInit(void* pContextInitData) {
     void* result = nullptr;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("pContextInitData", steambridge::arg_pointer(pContextInitData));
-
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamInternal_ContextInit", args, reply)) {
-            result = steambridge::reply_pointer(reply);
-        }
+        result = steambridge::context_init(pContextInitData, "SteamInternal_ContextInit");
     } catch (...) {
         // Never let an exception cross into the game.
     }
@@ -663,6 +658,51 @@ STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_CreateInterface(const ch
         steambridge::Json reply;
         if (steambridge::invoke("SteamInternal_CreateInterface", args, reply)) {
             result = steambridge::reply_pointer(reply);
+        }
+        if (result == nullptr) {
+            result = steambridge::interface_object(ver);
+        }
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+    return result;
+}
+
+// SteamInternal_FindOrCreateGameServerInterface
+STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_FindOrCreateGameServerInterface(std::int32_t hSteamUser, const char* pszVersion) {
+    void* result = nullptr;
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("hSteamUser", steambridge::arg_int(hSteamUser));
+        args.set("pszVersion", steambridge::arg_cstring(pszVersion));
+
+        steambridge::Json reply;
+        if (steambridge::invoke("SteamInternal_FindOrCreateGameServerInterface", args, reply)) {
+            result = steambridge::reply_pointer(reply);
+        }
+        if (result == nullptr) {
+            result = steambridge::interface_object(pszVersion);
+        }
+    } catch (...) {
+        // Never let an exception cross into the game.
+    }
+    return result;
+}
+
+// SteamInternal_FindOrCreateUserInterface
+STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_FindOrCreateUserInterface(std::int32_t hSteamUser, const char* pszVersion) {
+    void* result = nullptr;
+    try {
+        steambridge::Json args = steambridge::Json::object();
+        args.set("hSteamUser", steambridge::arg_int(hSteamUser));
+        args.set("pszVersion", steambridge::arg_cstring(pszVersion));
+
+        steambridge::Json reply;
+        if (steambridge::invoke("SteamInternal_FindOrCreateUserInterface", args, reply)) {
+            result = steambridge::reply_pointer(reply);
+        }
+        if (result == nullptr) {
+            result = steambridge::interface_object(pszVersion);
         }
     } catch (...) {
         // Never let an exception cross into the game.

@@ -136,6 +136,24 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
                       " result = " + find_type(call.returns)->return_default + ";");
     }
     out.push_back("    try {");
+
+    if (call.fallback == "context") {
+        // The SDK's lazy accessor is the stub's to answer, and it does its own
+        // reporting: the game calls this once per use of an interface, and the
+        // SDK's cache is what makes that cheap. Forwarding every one of those to
+        // the backend would put thousands of records a second in the transcript
+        // for a game that polls - Spacewar's own loop asked 26,228 times in
+        // fourteen seconds - so the call reaches the backend from the initialiser
+        // inside, once, and nowhere else.
+        out.push_back(std::string("        result = steambridge::context_init(") +
+                      call.params[0].name + ", \"" + call.name + "\");");
+        out.push_back("    } catch (...) {");
+        out.push_back("        // Never let an exception cross into the game.");
+        out.push_back("    }");
+        out.push_back("    return result;");
+        return;
+    }
+
     out.push_back("        steambridge::Json args = steambridge::Json::object();");
     for (const IdlParam& param : call.params) {
         const TypeInfo& type = *find_type(param.type);
@@ -184,6 +202,21 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
         if (!returns_void) {
             out.push_back(
                 "            result = " + std::string(find_type(call.returns)->reply_expr) + ";");
+        }
+        out.push_back("        }");
+    }
+    if (!call.fallback.empty()) {
+        // Asked for something this stub can answer itself. A factory call is
+        // asked of the backend first, because a scenario may want to name the
+        // object or to answer for a version string we have no layout for; the
+        // lazy accessor is answered here, and tells the backend when it does.
+        out.push_back("        if (result == nullptr) {");
+        if (call.fallback == "interface") {
+            out.push_back(std::string("            result = steambridge::interface_object(") +
+                          call.fallback_param + ");");
+        } else {
+            out.push_back(std::string("            result = steambridge::context_init(") +
+                          call.params[0].name + ", \"" + call.name + "\");");
         }
         out.push_back("        }");
     }
@@ -312,6 +345,43 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                 call.params.push_back(std::move(param));
             }
         }
+        // The one call that can answer itself: it is handed the version string a
+        // game wants an interface for, and the stub has objects of its own for
+        // some of them (see bridge/synth.hpp).
+        // The calls that can answer themselves: they are handed a version string a
+        // game wants an interface for, and the stub has objects of its own for
+        // some of them (see bridge/synth.hpp).
+        if (const Json* fallback = entry.find("fallback"); fallback != nullptr) {
+            const std::string kind = fallback->is_string() ? fallback->as_string() : std::string();
+            const bool factory = kind == "interface";
+            const bool lazy = kind == "context";
+            if (!factory && !lazy) {
+                error = call.name + ": 'fallback' is either absent, 'interface' or 'context'";
+                return false;
+            }
+            // A factory is handed the version string somewhere among its arguments
+            // - it is the only string in any of them, wherever it sits - and the
+            // lazy accessor is handed the SDK's own blob and nothing else.
+            const IdlParam* version = nullptr;
+            for (const IdlParam& param : call.params) {
+                if (param.type == "cstring" && !param.out) {
+                    version = &param;
+                }
+            }
+            const bool shape_is_right =
+                factory ? version != nullptr
+                        : call.params.size() == 1u && call.params[0].type == "opaque_ptr";
+            if (call.returns != "opaque_ptr" || !shape_is_right) {
+                error = call.name +
+                        ": an 'interface' fallback returns opaque_ptr and is handed the "
+                        "version string, and a 'context' one is handed the SDK's blob";
+                return false;
+            }
+            call.fallback = kind;
+            if (version != nullptr) {
+                call.fallback_param = version->name;
+            }
+        }
         parsed._calls.push_back(std::move(call));
     }
 
@@ -348,6 +418,11 @@ bool Idl::load_file(const std::string& path, Idl& out, std::string& error) {
 // ---------------------------------------------------------------------------
 
 std::string render_api_stub(const Idl& idl) {
+    bool needs_interfaces = false;
+    for (const IdlCall& call : idl.calls()) {
+        needs_interfaces = needs_interfaces || call.fallback == "interface";
+    }
+
     std::vector<std::string> out = generated_header(
         idl, kRegenerate,
         "// ============================================================================",
@@ -355,6 +430,9 @@ std::string render_api_stub(const Idl& idl) {
     out.push_back("");
     out.push_back("#include \"bridge/call.hpp\"");
     out.push_back("#include \"bridge/export.hpp\"");
+    if (needs_interfaces) {
+        out.push_back("#include \"bridge/synth.hpp\"");
+    }
     out.push_back("");
     out.push_back("namespace {");
     out.push_back("");

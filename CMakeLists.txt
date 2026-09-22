@@ -76,6 +76,7 @@ target_link_libraries(steambridge_backend PUBLIC steambridge_core)
 add_library(${STEAMBRIDGE_STUB_NAME} SHARED
     src/dllmain.cpp
     src/generated/api_stub.cpp
+    src/generated/api_interfaces.cpp
     src/generated/steam_api_exports.def
 )
 target_link_libraries(${STEAMBRIDGE_STUB_NAME} PRIVATE steambridge_core)
@@ -100,7 +101,7 @@ target_link_libraries(steambridge PRIVATE steambridge_backend)
 set_target_properties(steambridge PROPERTIES OUTPUT_NAME "steambridge")
 target_compile_definitions(steambridge PRIVATE STEAMBRIDGE_VERSION="${PROJECT_VERSION}")
 
-add_executable(steambridge_codegen src/codegen_main.cpp src/idl.cpp)
+add_executable(steambridge_codegen src/codegen_main.cpp src/idl.cpp src/interfaces.cpp)
 target_link_libraries(steambridge_codegen PRIVATE steambridge_core)
 
 # ---------------------------------------------------------------------------

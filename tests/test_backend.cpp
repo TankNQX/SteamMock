@@ -114,14 +114,14 @@ void test_replies() {
           steambridge::kMaxFrameBytes == 4u * 1024u * 1024u);
 
     Json out = Json::object();
-    out.set("pnData", Json::integer(42));
+    out.set("pData", Json::integer(42));
     const Json answered = steambridge::make_reply(8, true, Json::boolean(true), out);
     check("an answered reply says handled", text_of(answered, "answer") == "handled");
     check("an answered reply carries the value",
           answered.find("ret") != nullptr && answered.find("ret")->as_bool());
     check("an answered reply carries out parameters",
-          answered.find("out") != nullptr && answered.find("out")->find("pnData") != nullptr &&
-              answered.find("out")->find("pnData")->as_int64() == 42);
+          answered.find("out") != nullptr && answered.find("out")->find("pData") != nullptr &&
+              answered.find("out")->find("pData")->as_int64() == 42);
 
     check("an answer without out parameters omits out",
           steambridge::make_reply(9, true, Json::integer(3), Json::null()).find("out") == nullptr);
@@ -197,7 +197,7 @@ void test_stats() {
     const Answer read =
         session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths"));
     check("a known stat is answered", read.answered && read.ret.as_bool());
-    check("a stat is read as named out parameters", out_int(read, "pnData") == 3);
+    check("a stat is read as named out parameters", out_int(read, "pData") == 3);
 
     Json write = name_argument("Deaths");
     write.set("nData", Json::integer(9));
@@ -206,7 +206,7 @@ void test_stats() {
 
     const Answer reread =
         session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths"));
-    check("reading it back sees the new value", out_int(reread, "pnData") == 9);
+    check("reading it back sees the new value", out_int(reread, "pData") == 9);
     check("the write is remembered for a transcript",
           session.stats_written().size() == 1u && session.stats_written()[0].second == 9);
 
@@ -410,7 +410,7 @@ void test_surface_matches_the_idl() {
         check("the out parameter is marked as one",
               calls[index].param_count == 3u && calls[index].params[2].out);
         check("the out parameter keeps its name",
-              std::string(calls[index].params[2].name) == "pnData");
+              std::string(calls[index].params[2].name) == "pData");
     }
 }
 

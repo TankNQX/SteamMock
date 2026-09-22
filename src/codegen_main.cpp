@@ -1,8 +1,10 @@
 // ---------------------------------------------------------------------------
-//  steambridge_codegen - turn gen/steam_api.idl.json into the generated files.
+//  steambridge_codegen - turn the two data files into the generated files.
 // ---------------------------------------------------------------------------
-//  The IDL is the single source of truth for what the stub exports. Adding a
-//  call means adding one entry there and regenerating:
+//  gen/steam_api.idl.json is the source of truth for what the stub exports, and
+//  gen/steam_interfaces.json for the interface versions it hands out. Adding a
+//  call means adding one entry there, and adding an interface version means the
+//  same in the other file; either way, then:
 //
 //    steambridge_codegen            # rewrite the generated files
 //    steambridge_codegen --check    # fail if they are stale (used by CI)
@@ -11,6 +13,7 @@
 //    api_stub.cpp             one trampoline per call
 //    steam_api_exports.def    the export list, so names stay undecorated
 //    api_surface.cpp          the table the backend prints with --list-api
+//    api_interfaces.cpp       the objects the stub hands out for a version string
 //
 //  Written as bytes and compared as bytes, because the files are committed and
 //  line endings must not depend on the platform that ran the generator.
@@ -22,10 +25,12 @@
 #include <vector>
 
 #include "bridge/idl.hpp"
+#include "bridge/interfaces.hpp"
 
 namespace {
 
 const char* const kDefaultIdl = "gen/steam_api.idl.json";
+const char* const kDefaultInterfaces = "gen/steam_interfaces.json";
 
 bool read_file_bytes(const std::string& path, std::string& out) {
     std::FILE* file = std::fopen(path.c_str(), "rb");
@@ -66,19 +71,23 @@ std::string join_path(const std::string& directory, const std::string& name) {
 
 void print_usage(std::FILE* out) {
     std::fprintf(out,
-                 "steambridge_codegen - regenerate the stub's trampolines and export list\n\n"
-                 "usage: steambridge_codegen [--idl FILE] [--root DIR] [--check]\n\n"
-                 "  --idl FILE   the API surface to read (default %s)\n"
-                 "  --root DIR   the checkout the outputs belong to (default: the parent of\n"
-                 "               the IDL's directory)\n"
-                 "  --check      do not write; fail if the generated files are out of date\n",
-                 kDefaultIdl);
+                 "steambridge_codegen - regenerate the stub's trampolines, export list and "
+                 "interfaces\n\n"
+                 "usage: steambridge_codegen [--idl FILE] [--interfaces FILE] [--root DIR] "
+                 "[--check]\n\n"
+                 "  --idl FILE         the API surface to read (default %s)\n"
+                 "  --interfaces FILE  the interface layouts to read (default %s)\n"
+                 "  --root DIR         the checkout the outputs belong to (default: the parent of\n"
+                 "                     the IDL's directory)\n"
+                 "  --check            do not write; fail if the generated files are out of date\n",
+                 kDefaultIdl, kDefaultInterfaces);
 }
 
 }  // namespace
 
 int run(int argc, char** argv) {
     std::string idl_path = kDefaultIdl;
+    std::string interfaces_path = kDefaultInterfaces;
     std::string root;
     bool root_given = false;
     bool check = false;
@@ -104,6 +113,13 @@ int run(int argc, char** argv) {
         if (argument == "--idl") {
             if (!take(idl_path)) {
                 std::fprintf(stderr, "steambridge_codegen: --idl needs a value\n");
+                return 2;
+            }
+            continue;
+        }
+        if (argument == "--interfaces") {
+            if (!take(interfaces_path)) {
+                std::fprintf(stderr, "steambridge_codegen: --interfaces needs a value\n");
                 return 2;
             }
             continue;
@@ -134,11 +150,19 @@ int run(int argc, char** argv) {
         return 2;
     }
 
+    steambridge::Interfaces interfaces;
+    if (!steambridge::Interfaces::load_file(interfaces_path, interfaces, error)) {
+        std::fprintf(stderr, "interfaces error: %s\n", error.c_str());
+        return 2;
+    }
+
     const std::vector<std::pair<std::string, std::string>> outputs = {
         {join_path(root, "src/generated/api_stub.cpp"), steambridge::render_api_stub(idl)},
         {join_path(root, "src/generated/steam_api_exports.def"),
          steambridge::render_exports_def(idl)},
         {join_path(root, "src/generated/api_surface.cpp"), steambridge::render_api_surface(idl)},
+        {join_path(root, "src/generated/api_interfaces.cpp"),
+         steambridge::render_api_interfaces(interfaces)},
     };
 
     std::vector<std::string> stale;
