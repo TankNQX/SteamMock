@@ -16,9 +16,40 @@ the [README](../README.md); for how the two halves talk, see [protocol.md](proto
 | `src/session.cpp`, `src/scenario.cpp` | The backend's decisions: per-game state, and the scenario that overrides it. |
 | `src/server.cpp`, `src/backend_main.cpp` | The loopback server, and the console front end for it. |
 | `src/gui_main.cpp` | The live view. Optional, behind `STEAMBRIDGE_BUILD_GUI`. |
-| `scenarios/` | Example scenario: two games, two profiles. |
+| `scenarios/` | Two scenarios: `example.json` for `fake_game` and the tests, `spacewar.json` for the walkthrough in the [README](../README.md). |
 | `tests/` | C++ unit tests, `fake_game`, and the end-to-end test. |
 | `docs/` | These notes. |
+
+## Command lines and environment
+
+The stub takes no arguments, which is the point of it, so everything a game or a backend is told comes
+from where it runs and what is in its environment:
+
+| Variable | What it does |
+| --- | --- |
+| `STEAMBRIDGE_HOST`, `STEAMBRIDGE_PORT` | Where the backend is. Default `127.0.0.1:50990`. |
+| `STEAMBRIDGE_OFF` | Set to `1` to bypass the bridge: every call answers as if Steam is absent. |
+| `STEAMBRIDGE_TIMEOUT_MS` | How long a call waits for the backend. Default `2000`. |
+| `STEAMBRIDGE_LOG` | A file to append the stub's own log to. |
+| `STEAMBRIDGE_LOG_LEVEL` | `error`, `warning`, `info` (default) or `debug`. |
+
+If no backend is listening, the stub says so once and every call takes its Steam-absent value. A game
+still boots, and a backend started later is picked up on the next call.
+
+Both front ends take the same options - the console backend and the live view:
+
+| Option | What it does |
+| --- | --- |
+| `--host`, `--port` | Where to listen. `--port 0` picks a free one; the default is the 50990 above. |
+| `--scenario FILE` | What each game is told (default `scenarios/example.json`). |
+| `--transcript FILE` | Append every call, as JSON lines, to this file. |
+| `--log-level LEVEL` | `error`, `warning`, `info` or `debug`. |
+| `--list-api` | Print the calls the stub exports, then exit. |
+| `--show-profiles` | Print the scenario's games and match rules, then exit. |
+
+The live view adds `--start`, which serves as soon as the window opens instead of waiting for a click,
+and `-DSTEAMBRIDGE_STUB_NAME` decides what the built DLL is called - `steam_api` for a 32-bit game,
+which is what the README's walkthrough builds.
 
 ## Tests
 
@@ -33,6 +64,14 @@ ctest --test-dir build -C Release --output-on-failure
 | `server` | The server in process: a real port, a real connection through the stub's own transport, and the snapshots and summary the live view draws. |
 | `generated_files_are_current` | The generated files match `gen/steam_api.idl.json`. |
 | `end_to_end` | The real thing: the backend started as a subprocess, a game loading the real DLL, both sides checked, and the command line itself. |
+
+`fake_game` is also a smoke test you can run by hand, without a game of your own - it loads the stub
+the way a game's import table would and prints what it got:
+
+```bat
+set STEAMBRIDGE_STUB=build\Release\steam_api.dll
+build\Release\fake_game.exe
+```
 
 ## Adding a call
 

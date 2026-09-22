@@ -1,0 +1,35 @@
+{
+  "profiles": {
+    "default": {
+      "app_id": 480,
+      "steam_id": 76561198000000001,
+      "persona_name": "DebugPlayer",
+      "language": "english",
+      "ui_language": "english",
+      "install_path": "C:\\Program Files (x86)\\Steam",
+      "build_id": 4242,
+      "stats": { "Deaths": 7, "PlaytimeMinutes": 42 },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": true },
+        { "name": "ACH_FINISHED", "achieved": false }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_RestartAppIfNecessary": { "ret": false },
+        "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
+        "SteamAPI_ISteamUserStats_RequestCurrentStats": { "ret": true },
+        "SteamAPI_ISteamUserStats_GetStatInt32": { "ret": true, "out": { "pData": 7 } },
+        "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
+        "SteamAPI_ISteamController_Init": { "ret": true },
+        "SteamAPI_ISteamController_Shutdown": { "ret": true },
+        "SteamAPI_ISteamController_GetActionSetHandle": { "ret": 11 },
+        "SteamAPI_ISteamController_GetDigitalActionHandle": { "ret": 22 },
+        "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
+        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true }
+      }
+    }
+  },
+  "match": [ { "exe_contains": "SteamworksExample", "profile": "default" } ],
+  "default_profile": "default"
+}
