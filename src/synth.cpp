@@ -141,6 +141,10 @@ void call_object(void* object, const EventInfo& event, const Json* fields, std::
     }
     const RunPayloadFunction run = reinterpret_cast<RunPayloadFunction>(vtable[0]);
     run(object, payload);
+    // Said after the game's own code has run and returned, so a payload that goes in
+    // and does not come back - a handler that never returns - is visible as itself
+    // rather than as a missing line somewhere else.
+    log_write(LogLevel::debug, "the game returned from a " + std::string(event.name) + " callback");
 }
 
 // One event, as the backend spells it: the payload's name, and either the call it
@@ -176,6 +180,9 @@ void deliver_one(const Json& event) noexcept {
             const auto found = callbacks_by_id().find(static_cast<std::int32_t>(id->as_int64()));
             if (found != callbacks_by_id().end()) {
                 object = found->second;
+                log_write(LogLevel::debug, "delivering " + name->as_string() +
+                                               " to the callback the game registered for id " +
+                                               std::to_string(id->as_int64()));
             }
         } else {
             // Nobody asked for this, because it is not an answer to anything: a room
