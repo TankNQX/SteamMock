@@ -288,12 +288,17 @@ const InterfaceVersion* interface_versions(std::size_t& count) noexcept;
 // ---------------------------------------------------------------------------
 //  The backend answers a call, and may say what should happen to the game next:
 //  a registered callback or call result wants one of these, and the layouts file
-//  declares each one's fields and the size the SDK's callback pack gives it.
-//  Nothing here reads a payload back - the bytes go into the game's own object.
+//  declares each one's fields, the size the SDK's callback pack gives it, and the
+//  id a game registers it under. Nothing here reads a payload back - the bytes go
+//  into the game's own object.
 
 struct EventInfo {
     const char* name;
     std::size_t size;
+    // The SDK's own id for this callback, which is the only thing that can tie a
+    // payload nobody asked for to the object that wants it. Two callbacks can be
+    // the same size, and one of them is not the one that was meant.
+    int callback;
     void (*fill)(const Json& fields, void* buffer) noexcept;
 };
 

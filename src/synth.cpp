@@ -104,20 +104,11 @@ using RunFunction = void(STEAMMOCK_MEMBER_CALL*)(void* self, void* payload, bool
                                                  std::uint64_t call);
 using RunPayloadFunction = void(STEAMMOCK_MEMBER_CALL*)(void* self, void* payload);
 
-// The third slot, and the game's own answer to "how big a payload do I expect" -
-// which is how a callback nobody called finds its owner.
-using SizeFunction = int(STEAMMOCK_MEMBER_CALL*)(void* self);
-
+// The third slot is the SDK's GetCallbackSizeBytes, which the stub no longer asks
+// for: a payload nobody asked for names the callback it belongs to instead of being
+// matched by size, because two of them can be the same size and one of them is not
+// the one that was meant.
 static_assert(sizeof(RunFunction) == sizeof(void*), "a vtable slot is one pointer");
-
-int callback_size(void* object) noexcept {
-    void* const* const vtable = *reinterpret_cast<void* const* const*>(object);
-    if (vtable == nullptr || vtable[2] == nullptr) {
-        return 0;
-    }
-    const SizeFunction size = reinterpret_cast<SizeFunction>(vtable[2]);
-    return size(object);
-}
 
 void call_object(void* object, const EventInfo& event, const Json* fields, std::uint64_t call,
                  bool call_result) noexcept {
@@ -185,28 +176,16 @@ void deliver_one(const Json& event) noexcept {
                 object = found->second;
             }
         } else {
-            // Nobody asked for this - a room changed, a packet arrived - so the only
-            // thing tying it to an object is the size that object said it expects,
-            // which is what the game handed over when it registered. Two candidates
-            // and it would be a guess, so no guess is made.
-            int matches = 0;
-            for (const auto& entry : callbacks_by_id()) {
-                if (entry.second == object) {
-                    continue;  // the same object, registered under another id
-                }
-                if (callback_size(entry.second) != static_cast<int>(info->size)) {
-                    continue;
-                }
-                object = entry.second;
-                ++matches;
-            }
-            if (matches != 1) {
-                object = nullptr;
-                if (matches > 1) {
-                    log_write(LogLevel::warn, "more than one callback expects a payload the size "
-                                              "of " +
-                                                  name->as_string() + "; not delivering it");
-                }
+            // Nobody asked for this, because it is not an answer to anything: a room
+            // changed, a packet arrived. What ties it to an object is the payload's
+            // own name - the SDK's callback id - which is what the game registered
+            // under when it said it wanted to hear about this.
+            const auto found = callbacks_by_id().find(info->callback);
+            if (found != callbacks_by_id().end()) {
+                object = found->second;
+                log_write(LogLevel::debug, "delivering " + name->as_string() +
+                                               " to the callback registered for id " +
+                                               std::to_string(info->callback));
             }
         }
     }
@@ -216,7 +195,10 @@ void deliver_one(const Json& event) noexcept {
         // unregistered, or something it never asked to hear about. The real SDK
         // drops those too - but it says so, because an event that goes nowhere is
         // the hardest kind of silence.
-        log_write(LogLevel::warn, "an event nobody is waiting for: " + name->as_string());
+        log_write(LogLevel::warn,
+                  "an event nobody is waiting for: " + name->as_string() +
+                      (call_result ? std::string()
+                                   : " (callback " + std::to_string(info->callback) + ")"));
         return;
     }
     call_object(object, *info, fields, call, call_result);

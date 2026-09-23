@@ -21,8 +21,12 @@ namespace {
 //  ever travels by value is its members. The assertions check both against the
 //  sizes the layouts were imported with, so getting one wrong is a build error
 //  rather than a call the game reads the wrong way.
+//
+//  The pack is the SDK's and not ours. A callback struct is read by a game that
+//  has already decided where its members are, and the pack is what decides it:
+//  at four, Spacewar read a lobby id out of the padding and got half of it.
 
-#pragma pack(push, 4)
+#pragma pack(push, 8)
 struct CGameID {
     std::uint64_t m_gameid;
 };
@@ -91,12 +95,12 @@ struct SteamPartyBeaconLocation_t {
     std::int32_t m_eType;
     std::uint64_t m_ulLocationID;
 };
-static_assert(sizeof(SteamPartyBeaconLocation_t) == 12, "SteamPartyBeaconLocation_t has to be the size the ABI passes");
+static_assert(sizeof(SteamPartyBeaconLocation_t) == 16, "SteamPartyBeaconLocation_t has to be the size the ABI passes");
 struct LobbyCreated_t {
     std::int32_t m_eResult;
     std::uint64_t m_ulSteamIDLobby;
 };
-static_assert(sizeof(LobbyCreated_t) == 12, "LobbyCreated_t has to be the size the SDK's callback pack gives it");
+static_assert(sizeof(LobbyCreated_t) == 16, "LobbyCreated_t has to be the size the SDK's callback pack gives it");
 struct LobbyMatchList_t {
     std::uint32_t m_nLobbiesMatching;
 };
@@ -107,14 +111,14 @@ struct LobbyEnter_t {
     bool m_bLocked;
     std::int32_t m_EChatRoomEnterResponse;
 };
-static_assert(sizeof(LobbyEnter_t) == 20, "LobbyEnter_t has to be the size the SDK's callback pack gives it");
+static_assert(sizeof(LobbyEnter_t) == 24, "LobbyEnter_t has to be the size the SDK's callback pack gives it");
 struct LobbyChatUpdate_t {
     std::uint64_t m_ulSteamIDLobby;
     std::uint64_t m_ulSteamIDUserChanged;
     std::uint64_t m_ulSteamIDMakingChange;
     std::uint32_t m_rgfChatMemberStateChange;
 };
-static_assert(sizeof(LobbyChatUpdate_t) == 28, "LobbyChatUpdate_t has to be the size the SDK's callback pack gives it");
+static_assert(sizeof(LobbyChatUpdate_t) == 32, "LobbyChatUpdate_t has to be the size the SDK's callback pack gives it");
 struct LobbyChatMsg_t {
     std::uint64_t m_ulSteamIDLobby;
     std::uint64_t m_ulSteamIDUser;
@@ -127,7 +131,7 @@ struct LobbyDataUpdate_t {
     std::uint64_t m_ulSteamIDMember;
     bool m_bSuccess;
 };
-static_assert(sizeof(LobbyDataUpdate_t) == 20, "LobbyDataUpdate_t has to be the size the SDK's callback pack gives it");
+static_assert(sizeof(LobbyDataUpdate_t) == 24, "LobbyDataUpdate_t has to be the size the SDK's callback pack gives it");
 #pragma pack(pop)
 
 }  // namespace
@@ -8814,21 +8818,27 @@ void fill_LobbyDataUpdate_t(const Json& fields, void* buffer) noexcept {
 const steammock::EventInfo kEvents[] = {
     {"LobbyCreated_t",
      sizeof(LobbyCreated_t),
+     513,
      &fill_LobbyCreated_t},
     {"LobbyMatchList_t",
      sizeof(LobbyMatchList_t),
+     510,
      &fill_LobbyMatchList_t},
     {"LobbyEnter_t",
      sizeof(LobbyEnter_t),
+     504,
      &fill_LobbyEnter_t},
     {"LobbyChatUpdate_t",
      sizeof(LobbyChatUpdate_t),
+     506,
      &fill_LobbyChatUpdate_t},
     {"LobbyChatMsg_t",
      sizeof(LobbyChatMsg_t),
+     507,
      &fill_LobbyChatMsg_t},
     {"LobbyDataUpdate_t",
      sizeof(LobbyDataUpdate_t),
+     505,
      &fill_LobbyDataUpdate_t},
 };
 

@@ -1,6 +1,6 @@
 {
   "source": "Steamworks SDK interface headers, one entry per interface version",
-  "format": "each version's slots are one row each: [method, returns] or [method, returns, params], a parameter being [name, type] with \"out\" or \"unmarshalable\" after it. A type is a kind from steammock_codegen's table or a value class or structure declared here. A row that says more carries an object of notes as its last element, and the vtable's destructor slot is [\"~\"] - or [\"~\", notes] for the one the SDK gives a flat name. An event is a payload the backend can complete a call with: a name, the size the SDK gives it, and its members, which are laid out in the order written, packed as VALVE_CALLBACK_PACK_SMALL does on the target the stub was built for.",
+  "format": "each version's slots are one row each: [method, returns] or [method, returns, params], a parameter being [name, type] with \"out\" or \"unmarshalable\" after it. A type is a kind from steammock_codegen's table or a value class or structure declared here. A row that says more carries an object of notes as its last element, and the vtable's destructor slot is [\"~\"] - or [\"~\", notes] for the one the SDK gives a flat name. An event is a payload the backend can complete a call with: a name, the size the SDK gives it, and its members, which are laid out in the order written, packed the way the SDK packs its callback structs - 8, which is what the games this was measured against read them at. A size that is wrong here is not a wrong answer; it is a game reading the wrong bytes.",
   "value_types": [
     {"name": "CGameID", "wire": "uint64", "size": 8, "member": "m_gameid"},
     {"name": "CSteamID", "wire": "uint64", "size": 8, "member": "m_steamid"}
@@ -13,15 +13,15 @@
     {"name": "InputDigitalActionData_t", "members": [["bool", "bState"], ["bool", "bActive"]], "size": 2},
     {"name": "InputMotionData_t", "members": [["float", "rotQuatX"], ["float", "rotQuatY"], ["float", "rotQuatZ"], ["float", "rotQuatW"], ["float", "posAccelX"], ["float", "posAccelY"], ["float", "posAccelZ"], ["float", "rotVelX"], ["float", "rotVelY"], ["float", "rotVelZ"]], "size": 40},
     {"name": "SteamIPAddress_t", "members": [["uint8", "m_rgubIPv6[16]"], ["ESteamIPType", "m_eType"]], "size": 20},
-    {"name": "SteamPartyBeaconLocation_t", "members": [["ESteamPartyBeaconLocationType", "m_eType"], ["uint64", "m_ulLocationID"]], "size": 12}
+    {"name": "SteamPartyBeaconLocation_t", "members": [["ESteamPartyBeaconLocationType", "m_eType"], ["uint64", "m_ulLocationID"]], "size": 16}
   ],
   "events": [
-    {"name": "LobbyCreated_t", "members": [["int32", "m_eResult"], ["uint64", "m_ulSteamIDLobby"]], "size": 12},
-    {"name": "LobbyMatchList_t", "members": [["uint32", "m_nLobbiesMatching"]], "size": 4},
-    {"name": "LobbyEnter_t", "members": [["uint64", "m_ulSteamIDLobby"], ["uint32", "m_rgfChatPermissions"], ["bool", "m_bLocked"], ["int32", "m_EChatRoomEnterResponse"]], "size": 20},
-    {"name": "LobbyChatUpdate_t", "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDUserChanged"], ["uint64", "m_ulSteamIDMakingChange"], ["uint32", "m_rgfChatMemberStateChange"]], "size": 28},
-    {"name": "LobbyChatMsg_t", "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDUser"], ["uint8", "m_eChatEntryType"], ["uint32", "m_iChatID"]], "size": 24},
-    {"name": "LobbyDataUpdate_t", "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDMember"], ["bool", "m_bSuccess"]], "size": 20}
+    {"name": "LobbyCreated_t", "size": 16, "callback": 513, "members": [["int32", "m_eResult"], ["uint64", "m_ulSteamIDLobby"]]},
+    {"name": "LobbyMatchList_t", "size": 4, "callback": 510, "members": [["uint32", "m_nLobbiesMatching"]]},
+    {"name": "LobbyEnter_t", "size": 24, "callback": 504, "members": [["uint64", "m_ulSteamIDLobby"], ["uint32", "m_rgfChatPermissions"], ["bool", "m_bLocked"], ["int32", "m_EChatRoomEnterResponse"]]},
+    {"name": "LobbyChatUpdate_t", "size": 32, "callback": 506, "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDUserChanged"], ["uint64", "m_ulSteamIDMakingChange"], ["uint32", "m_rgfChatMemberStateChange"]]},
+    {"name": "LobbyChatMsg_t", "size": 24, "callback": 507, "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDUser"], ["uint8", "m_eChatEntryType"], ["uint32", "m_iChatID"]]},
+    {"name": "LobbyDataUpdate_t", "size": 24, "callback": 505, "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDMember"], ["bool", "m_bSuccess"]]}
   ],
   "interfaces": [
     {

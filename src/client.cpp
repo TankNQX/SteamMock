@@ -203,19 +203,24 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         }
 
         ++_call_count;
-        const Json* answer = message.find("answer");
-        if (answer == nullptr || answer->as_string() != "handled") {
-            ++_unhandled_count;
-            return false;
-        }
 
-        // What the backend wants done to the game, if anything, arrives with the
-        // reply that says so. It is queued here and handed over on the game's next
-        // RunCallbacks, which is the only place a callback may be delivered from.
+        // What the backend wants done to the game, if anything, arrives with the reply
+        // that says so - and it arrives whether or not the backend had an opinion about
+        // the call it came back on. A game is told things while it is asking about
+        // something else: a lobby host sits on calls nobody answers, and a payload that
+        // rode back on one of those used to be dropped along with the reply.
         if (const Json* events = message.find("events"); events != nullptr && events->is_array()) {
             for (const Json& event : events->items()) {
                 _events.push_back(event);
             }
+            log_write(LogLevel::debug, "the backend sent " + std::to_string(_events.size()) +
+                                           " payload(s) for the game to be given next");
+        }
+
+        const Json* answer = message.find("answer");
+        if (answer == nullptr || answer->as_string() != "handled") {
+            ++_unhandled_count;
+            return false;
         }
 
         reply = std::move(message);

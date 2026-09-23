@@ -479,6 +479,26 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
         return false;
     }
 
+    // Every payload carries the SDK's id for its callback as well as its size, and
+    // it has to: a payload that completes no call can only be handed over to the
+    // object a game registered under that id, so an event without one could be
+    // written but never delivered.
+    if (const Json* events = member(document, "events"); events != nullptr && events->is_array()) {
+        if (events->items().size() != parsed._events.size()) {
+            error = "events: the array changed while it was being read";
+            return false;
+        }
+        for (std::size_t index = 0; index < parsed._events.size(); ++index) {
+            const std::string where = "events[" + std::to_string(index) + "]";
+            const Json* callback = member(events->items()[index], "callback");
+            if (callback == nullptr || !callback->is_number()) {
+                error = where + ": an event needs the callback id a game registers it under";
+                return false;
+            }
+            parsed._events[index].callback = static_cast<std::int32_t>(callback->as_int64());
+        }
+    }
+
     // The names a slot can write where a kind would go. Both lists are read by
     // now, which is what lets a type name be told from a kind.
     std::vector<std::pair<std::string, std::string>> named;
@@ -655,8 +675,12 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         "//  ever travels by value is its members. The assertions check both against the",
         "//  sizes the layouts were imported with, so getting one wrong is a build error",
         "//  rather than a call the game reads the wrong way.",
+        "//",
+        "//  The pack is the SDK's and not ours. A callback struct is read by a game that",
+        "//  has already decided where its members are, and the pack is what decides it:",
+        "//  at four, Spacewar read a lobby id out of the padding and got half of it.",
         "",
-        "#pragma pack(push, 4)",
+        "#pragma pack(push, 8)",
     };
 
     for (const InterfaceValueType& value : interfaces.value_types()) {
@@ -931,6 +955,7 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         for (const InterfaceEvent& event : interfaces.events()) {
             out.push_back("    {" + literal(event.name) + ",");
             out.push_back("     sizeof(" + event.name + "),");
+            out.push_back("     " + number(event.callback) + ",");
             out.push_back("     &fill_" + event.name + "},");
         }
         out.push_back("};");

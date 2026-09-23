@@ -65,13 +65,19 @@ struct InterfaceStructure {
     std::string name;
     std::vector<std::pair<std::string, std::string>> members;
     int size = 0;
+
+    // An event's own id in the SDK, being what a game registers an object for when
+    // it wants to hear about something nobody asked it about. A structure is not a
+    // callback and leaves this zero.
+    int callback = 0;
 };
 
 // A payload the backend can complete a call with, which is the SDK's own struct
 // laid out the way its callback pack gives it. The shape is a structure's, but
 // these bytes are written rather than merely declared: the fields come off the
 // wire and go into the game's callback object, which is why the size here is
-// asserted against a real type rather than trusted.
+// asserted against a real type rather than trusted - and why the callback id is
+// required: a payload that names no call has to name the callback it is for.
 using InterfaceEvent = InterfaceStructure;
 
 // A class passed and returned by value - CSteamID, CGameID - which the wire
