@@ -14,6 +14,12 @@
 //  whatever is left, which means no panel can be clipped by the window size or
 //  by the display's scaling.
 //
+//  The calls have two views, because one game in its own loop is enough to make
+//  the other one useless: a frame that polls a call that nobody answers buries
+//  everything else, and the first thing anyone wants is the shape rather than
+//  the sequence. "by function" counts what the game asks for, most-called first;
+//  "live" is the call-by-call list it scrolls past.
+//
 //  Build it with -DSTEAMBRIDGE_BUILD_GUI=ON (see README, "The live view").
 // ---------------------------------------------------------------------------
 
@@ -21,6 +27,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -79,6 +86,18 @@ void panel_header(const char* title) {
     ImGui::TextDisabled("%s", title);
     ImGui::Separator();
 }
+
+// How often one call has been seen, and how much of it was answered. Kept as the
+// calls arrive rather than counted from the history, because the history grows
+// without bound while a game runs - and the panel that shows this is the one
+// that has to stay usable when a game has made tens of thousands of calls.
+struct CallTally {
+    std::size_t calls = 0;
+    std::size_t answered = 0;
+    double total_ms = 0.0;
+};
+
+using CallTallies = std::map<std::string, CallTally>;
 
 // ---------------------------------------------------------------------------
 //  The window's state: the server, what it has told us so far, and what the
@@ -209,6 +228,9 @@ private:
         // A new server means a new history.
         _calls.clear();
         _shown.clear();
+        _tallies.clear();
+        _function_order.clear();
+        _tallies_dirty = false;
         _seen = 0;
         _games.clear();
         _selected.clear();
@@ -241,7 +263,16 @@ private:
         std::vector<CallRecord> fresh = _server->records_since(_seen);
         _seen = _server->record_count();
         for (CallRecord& record : fresh) {
+            CallTally& tally = _tallies[record.call];
+            ++tally.calls;
+            if (record.answered) {
+                ++tally.answered;
+            }
+            tally.total_ms += record.ms;
             _calls.push_back(std::move(record));
+        }
+        if (!fresh.empty()) {
+            _tallies_dirty = true;
         }
     }
 
@@ -320,8 +351,92 @@ private:
         }
     }
 
+    // Two views of the same calls, because one game in its own loop is enough to
+    // make one of them useless: a call somebody polls every frame buries every
+    // other call in the list, so the count comes first and the sequence second.
     void draw_calls() {
         panel_header("Calls");
+        if (ImGui::BeginTabBar("call_views")) {
+            if (ImGui::BeginTabItem("by function")) {
+                draw_calls_by_function();
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("live")) {
+                draw_calls_live();
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
+    }
+
+    // Every call the game has made, one row per name. A list of a hundred calls
+    // is a profile, and the end worth reading is the top, so the order is by how
+    // often each was asked for.
+    void draw_calls_by_function() {
+        ImGui::SetNextItemWidth(180);
+        _filter.Draw("filter");
+        ImGui::SameLine();
+        ImGui::TextDisabled("%zu function(s)", _tallies.size());
+
+        // Sorted when the counts change rather than every frame, so a game that
+        // has flooded the history does not make the window sort it sixty times a
+        // second to draw the same order.
+        if (_tallies_dirty) {
+            _tallies_dirty = false;
+            _function_order.clear();
+            _function_order.reserve(_tallies.size());
+            for (const CallTallies::value_type& entry : _tallies) {
+                _function_order.push_back(&entry);
+            }
+            // A map hands these back in name order, which is not the order this
+            // panel is for; the name settles a tie so rows do not swap places
+            // between frames while their counts are equal.
+            std::sort(
+                _function_order.begin(), _function_order.end(),
+                [](const CallTallies::value_type* left, const CallTallies::value_type* right) {
+                    if (left->second.calls != right->second.calls) {
+                        return left->second.calls > right->second.calls;
+                    }
+                    return left->first < right->first;
+                });
+        }
+
+        const ImGuiTableFlags flags =
+            ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
+        if (ImGui::BeginTable("by_function", 2, flags, ImVec2(0, -1))) {
+            ImGui::TableSetupScrollFreeze(0, 1);
+            ImGui::TableSetupColumn("function", ImGuiTableColumnFlags_WidthStretch, 3.0f);
+            ImGui::TableSetupColumn("calls", ImGuiTableColumnFlags_WidthFixed, 72.0f);
+            ImGui::TableHeadersRow();
+
+            // No clipper here, unlike the live list: the rows are the distinct
+            // calls the game has made - a few dozen for a game that polls - where
+            // that list is every call there has ever been.
+            for (const CallTallies::value_type* entry : _function_order) {
+                if (!_filter.PassFilter(entry->first.c_str())) {
+                    continue;
+                }
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::TextUnformatted(entry->first.c_str());
+                if (ImGui::IsItemHovered()) {
+                    const CallTally& tally = entry->second;
+                    ImGui::SetTooltip("%zu answered, %zu left to the stub\nmean %.3f ms",
+                                      tally.answered, tally.calls - tally.answered,
+                                      tally.calls == 0u
+                                          ? 0.0
+                                          : tally.total_ms / static_cast<double>(tally.calls));
+                }
+                ImGui::TableNextColumn();
+                ImGui::Text("%zu", entry->second.calls);
+            }
+            ImGui::EndTable();
+        }
+    }
+
+    // The calls in the order they were made, which is where a scenario or a
+    // session's state gets read back.
+    void draw_calls_live() {
         ImGui::SetNextItemWidth(180);
         const bool filter_changed = _filter.Draw("filter");
         ImGui::SameLine();
@@ -477,6 +592,11 @@ private:
     std::size_t _seen = 0;
     std::vector<CallRecord> _calls;
     std::vector<std::size_t> _shown;
+    // What the "by function" view draws, and the order it draws it in: pointers
+    // into the map, which a node-based container keeps valid as calls arrive.
+    CallTallies _tallies;
+    std::vector<const CallTallies::value_type*> _function_order;
+    bool _tallies_dirty = false;
     std::vector<SessionSnapshot> _games;
     std::string _selected;
 

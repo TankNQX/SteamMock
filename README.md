@@ -55,8 +55,11 @@ were left to the game's own defaults.
 
 * **Games** - each running game, the profile it was matched to, and whether it is still connected. Two
   copies of one game can run at once: each gets its own session and its own row here.
-* **Calls** - every Steam call the game makes, what answered it, and how long it took. `via / ms`
-  says where the answer came from: your scenario, the game's session state, or nobody.
+* **Calls** - two views of the same calls, both narrowed by the filter box at the top. **by function**
+  counts them, most-called first: a game that polls one call every frame buries everything else in a
+  list, and this is the view that stays readable. **live** is the call-by-call list, where `via / ms`
+  says where each answer came from - your scenario, the game's session state, or nobody - and how
+  long it took.
 * **Game state** - who the game thinks it is talking to: app id, Steam id, persona, language, and the
   stats and achievements it has been told about. Read-only for now.
 
