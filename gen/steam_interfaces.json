@@ -1,6 +1,6 @@
 {
   "source": "Steamworks SDK interface headers, one entry per interface version",
-  "format": "each version's slots are one row each: [method, returns] or [method, returns, params], a parameter being [name, type] with \"out\" or \"unmarshalable\" after it. A type is a kind from steammock_codegen's table or a value class or structure declared here. A row that says more carries an object of notes as its last element, and the vtable's destructor slot is [\"~\"] - or [\"~\", notes] for the one the SDK gives a flat name.",
+  "format": "each version's slots are one row each: [method, returns] or [method, returns, params], a parameter being [name, type] with \"out\" or \"unmarshalable\" after it. A type is a kind from steammock_codegen's table or a value class or structure declared here. A row that says more carries an object of notes as its last element, and the vtable's destructor slot is [\"~\"] - or [\"~\", notes] for the one the SDK gives a flat name. An event is a payload the backend can complete a call with: a name, the size the SDK gives it, and its members, which are laid out in the order written, packed as VALVE_CALLBACK_PACK_SMALL does on the target the stub was built for.",
   "value_types": [
     {"name": "CGameID", "wire": "uint64", "size": 8, "member": "m_gameid"},
     {"name": "CSteamID", "wire": "uint64", "size": 8, "member": "m_steamid"}
@@ -14,6 +14,9 @@
     {"name": "InputMotionData_t", "members": [["float", "rotQuatX"], ["float", "rotQuatY"], ["float", "rotQuatZ"], ["float", "rotQuatW"], ["float", "posAccelX"], ["float", "posAccelY"], ["float", "posAccelZ"], ["float", "rotVelX"], ["float", "rotVelY"], ["float", "rotVelZ"]], "size": 40},
     {"name": "SteamIPAddress_t", "members": [["uint8", "m_rgubIPv6[16]"], ["ESteamIPType", "m_eType"]], "size": 20},
     {"name": "SteamPartyBeaconLocation_t", "members": [["ESteamPartyBeaconLocationType", "m_eType"], ["uint64", "m_ulLocationID"]], "size": 12}
+  ],
+  "events": [
+    {"name": "LobbyCreated_t", "members": [["int32", "m_eResult"], ["uint64", "m_ulSteamIDLobby"]], "size": 12}
   ],
   "interfaces": [
     {

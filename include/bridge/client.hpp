@@ -5,6 +5,7 @@
 #include <mutex>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "bridge/json.hpp"
 #include "bridge/transport.hpp"
@@ -38,6 +39,12 @@ public:
     // made a real API call.
     bool backend_connected() noexcept;
 
+    // Events the backend sent with a reply and the game has not been handed yet:
+    // they wait here until its own RunCallbacks pumps them. Taking one copies it
+    // out and dispatches nothing, so a game that calls back into the bridge from
+    // inside a callback cannot deadlock on itself.
+    bool take_event(Json& out) noexcept;
+
     const std::string& session_id() const noexcept { return _session_id; }
     unsigned call_count() const noexcept { return _call_count; }
     unsigned unhandled_count() const noexcept { return _unhandled_count; }
@@ -70,6 +77,9 @@ private:
     unsigned _sequence = 0;
     unsigned _call_count = 0;
     unsigned _unhandled_count = 0;
+
+    // The payloads waiting for the game's next pump, in the order they arrived.
+    std::vector<Json> _events;
 };
 
 // The one call a generated trampoline makes.

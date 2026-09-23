@@ -73,6 +73,11 @@ struct Answer {
     bool answered = false;
     Json ret;
     Json out;
+    // What the backend wants done to the game once this answer is on its way: the
+    // payloads a scripted entry asked for, with the call handle that entry
+    // returned filled in. They travel with the reply, and the stub hands them over
+    // on the game's next RunCallbacks - see bridge/synth.hpp.
+    Json events;
     std::string via = "none";
 };
 

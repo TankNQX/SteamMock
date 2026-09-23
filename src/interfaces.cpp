@@ -399,6 +399,45 @@ bool read_slot(const Json& row, const std::string& interface_name,
     return true;
 }
 
+// The structures and the events are read the same way - a name, the size the
+// layouts were imported with, and the members that size is made of - so one
+// reader serves both. `what` is only there to name the thing in an error.
+bool read_layouts(const Json& document, const char* key, const char* what,
+                  std::vector<InterfaceStructure>& out, std::string& error) {
+    const Json* entries = member(document, key);
+    if (entries == nullptr || !entries->is_array()) {
+        return true;
+    }
+    for (const Json& entry : entries->items()) {
+        InterfaceStructure layout;
+        const std::string where = std::string(key) + "[" + std::to_string(out.size()) + "]";
+        if (!read_string(entry, "name", true, layout.name, error, where) ||
+            !read_size(entry, layout.size, error, where)) {
+            return false;
+        }
+        const Json* members = member(entry, "members");
+        if (members == nullptr || !members->is_array() || members->items().empty()) {
+            error = where + ": a " + what + " needs its members - that is what its ABI is";
+            return false;
+        }
+        for (const Json& declared : members->items()) {
+            if (!declared.is_array() || declared.items().size() != 2u) {
+                error = where + ": every member is a pair of a type and a name";
+                return false;
+            }
+            const std::string type = declared.items()[0].as_string();
+            std::string cpp;
+            if (!member_type(type, cpp, error)) {
+                error = where + " (" + layout.name + "): " + error;
+                return false;
+            }
+            layout.members.emplace_back(cpp, declared.items()[1].as_string());
+        }
+        out.push_back(std::move(layout));
+    }
+    return true;
+}
+
 }  // namespace
 
 bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& error) {
@@ -435,36 +474,9 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
         }
     }
 
-    if (const Json* structures = member(document, "structures");
-        structures != nullptr && structures->is_array()) {
-        for (const Json& entry : structures->items()) {
-            InterfaceStructure structure;
-            const std::string where =
-                "structures[" + std::to_string(parsed._structures.size()) + "]";
-            if (!read_string(entry, "name", true, structure.name, error, where) ||
-                !read_size(entry, structure.size, error, where)) {
-                return false;
-            }
-            const Json* members = member(entry, "members");
-            if (members == nullptr || !members->is_array() || members->items().empty()) {
-                error = where + ": a structure needs its members - that is what its ABI is";
-                return false;
-            }
-            for (const Json& declared : members->items()) {
-                if (!declared.is_array() || declared.items().size() != 2u) {
-                    error = where + ": every member is a pair of a type and a name";
-                    return false;
-                }
-                const std::string type = declared.items()[0].as_string();
-                std::string cpp;
-                if (!member_type(type, cpp, error)) {
-                    error = where + " (" + structure.name + "): " + error;
-                    return false;
-                }
-                structure.members.emplace_back(cpp, declared.items()[1].as_string());
-            }
-            parsed._structures.push_back(std::move(structure));
-        }
+    if (!read_layouts(document, "structures", "structure", parsed._structures, error) ||
+        !read_layouts(document, "events", "event", parsed._events, error)) {
+        return false;
     }
 
     // The names a slot can write where a kind would go. Both lists are read by
@@ -669,6 +681,19 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                       ", \"" + structure.name + " has to be the size the ABI passes\");");
     }
 
+    // A payload a call can be completed with is the SDK's own struct, so it is
+    // declared in the same packed block - and asserted the same way, because a
+    // size that is wrong here is a game reading past what the stub wrote.
+    for (const InterfaceEvent& event : interfaces.events()) {
+        out.push_back("struct " + event.name + " {");
+        for (const auto& declared_member : event.members) {
+            out.push_back("    " + declared_member.first + " " + declared_member.second + ";");
+        }
+        out.push_back("};");
+        out.push_back("static_assert(sizeof(" + event.name + ") == " + number(event.size) + ", \"" +
+                      event.name + " has to be the size the SDK's callback pack gives it\");");
+    }
+
     out.push_back("#pragma pack(pop)");
     out.push_back("");
     out.push_back("}  // namespace");
@@ -850,6 +875,81 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("};");
         out.push_back("");
         out.push_back("Version_" + id + " g_" + id + ";");
+        out.push_back("");
+    }
+
+    // -----------------------------------------------------------------------
+    //  The payloads a call can be completed with.
+    // -----------------------------------------------------------------------
+    //  Written off the wire and into the game's own callback object, so the bytes
+    //  have to be the game's layout - which is what the assertions above are for.
+    //  A member the wire cannot carry in one field, an array, is left zeroed: a
+    //  payload that needs one needs a rule this does not have yet.
+    if (!interfaces.events().empty()) {
+        out.push_back(
+            "// ---------------------------------------------------------------------------");
+        out.push_back("//  The payloads a call can be completed with.");
+        out.push_back(
+            "// ---------------------------------------------------------------------------");
+        out.push_back(
+            "//  Written into the game's own callback object, so the bytes are the ones the");
+        out.push_back(
+            "//  SDK's struct has - which is what the assertions above check. A member the");
+        out.push_back("//  wire cannot carry in one field is left zeroed.");
+        out.push_back("");
+
+        for (const InterfaceEvent& event : interfaces.events()) {
+            out.push_back("void fill_" + event.name +
+                          "(const Json& fields, void* buffer) noexcept {");
+            out.push_back("    " + event.name + " value{};");
+            for (const auto& declared_member : event.members) {
+                const std::string& cpp = declared_member.first;
+                const std::string& member = declared_member.second;
+                if (member.find('[') != std::string::npos) {
+                    continue;
+                }
+                std::string read = "as_int64()";
+                if (cpp == "bool") {
+                    read = "as_bool()";
+                } else if (cpp == "float" || cpp == "double") {
+                    read = "as_double()";
+                } else if (cpp.compare(0, 9, "std::uint") == 0 || cpp == "std::size_t") {
+                    read = "as_uint64()";
+                }
+                out.push_back("    if (const Json* field = fields.find(" + literal(member) +
+                              ")) {");
+                out.push_back("        value." + member + " = static_cast<" + cpp + ">(field->" +
+                              read + ");");
+                out.push_back("    }");
+            }
+            out.push_back("    std::memcpy(buffer, &value, sizeof(value));");
+            out.push_back("}");
+            out.push_back("");
+        }
+
+        out.push_back("const steammock::EventInfo kEvents[] = {");
+        for (const InterfaceEvent& event : interfaces.events()) {
+            out.push_back("    {" + literal(event.name) + ",");
+            out.push_back("     sizeof(" + event.name + "),");
+            out.push_back("     &fill_" + event.name + "},");
+        }
+        out.push_back("};");
+        out.push_back("");
+        // Closed and reopened around this one definition: the marshalling in
+        // synth.cpp is another translation unit, so the lookup needs external
+        // linkage - everything above it in this file is internal on purpose.
+        out.push_back("}  // namespace");
+        out.push_back("");
+        out.push_back("const EventInfo* find_event(const char* name) noexcept {");
+        out.push_back("    for (const EventInfo& event : kEvents) {");
+        out.push_back("        if (std::strcmp(event.name, name) == 0) {");
+        out.push_back("            return &event;");
+        out.push_back("        }");
+        out.push_back("    }");
+        out.push_back("    return nullptr;");
+        out.push_back("}");
+        out.push_back("");
+        out.push_back("namespace {");
         out.push_back("");
     }
 

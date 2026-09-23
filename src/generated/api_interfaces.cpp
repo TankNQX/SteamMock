@@ -92,6 +92,11 @@ struct SteamPartyBeaconLocation_t {
     std::uint64_t m_ulLocationID;
 };
 static_assert(sizeof(SteamPartyBeaconLocation_t) == 12, "SteamPartyBeaconLocation_t has to be the size the ABI passes");
+struct LobbyCreated_t {
+    std::int32_t m_eResult;
+    std::uint64_t m_ulSteamIDLobby;
+};
+static_assert(sizeof(LobbyCreated_t) == 12, "LobbyCreated_t has to be the size the SDK's callback pack gives it");
 #pragma pack(pop)
 
 }  // namespace
@@ -8683,6 +8688,43 @@ public:
 };
 
 Version_STEAMVIDEO_INTERFACE_V002 g_STEAMVIDEO_INTERFACE_V002;
+
+// ---------------------------------------------------------------------------
+//  The payloads a call can be completed with.
+// ---------------------------------------------------------------------------
+//  Written into the game's own callback object, so the bytes are the ones the
+//  SDK's struct has - which is what the assertions above check. A member the
+//  wire cannot carry in one field is left zeroed.
+
+void fill_LobbyCreated_t(const Json& fields, void* buffer) noexcept {
+    LobbyCreated_t value{};
+    if (const Json* field = fields.find("m_eResult")) {
+        value.m_eResult = static_cast<std::int32_t>(field->as_int64());
+    }
+    if (const Json* field = fields.find("m_ulSteamIDLobby")) {
+        value.m_ulSteamIDLobby = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    std::memcpy(buffer, &value, sizeof(value));
+}
+
+const steammock::EventInfo kEvents[] = {
+    {"LobbyCreated_t",
+     sizeof(LobbyCreated_t),
+     &fill_LobbyCreated_t},
+};
+
+}  // namespace
+
+const EventInfo* find_event(const char* name) noexcept {
+    for (const EventInfo& event : kEvents) {
+        if (std::strcmp(event.name, name) == 0) {
+            return &event;
+        }
+    }
+    return nullptr;
+}
+
+namespace {
 
 const steammock::InterfaceVersion kVersions[] = {
     {"STEAMAPPLIST_INTERFACE_VERSION001", &g_STEAMAPPLIST_INTERFACE_VERSION001},

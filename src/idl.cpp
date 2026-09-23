@@ -137,6 +137,27 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
     }
     out.push_back("    try {");
 
+    if (!call.hook.empty()) {
+        // A trampoline that has to do something a forward cannot: the calls that
+        // remember what a game registered, and the pump that hands it what the
+        // backend sent. Recording happens before the forward, so an answer that
+        // carries an event of its own arrives with somewhere for it to go.
+        if (call.hook == "register_callback") {
+            out.push_back("        steammock::callback_registered(" + call.params[0].name + ", " +
+                          call.params[1].name + ");");
+        } else if (call.hook == "unregister_callback") {
+            out.push_back("        steammock::callback_unregistered(" + call.params[0].name + ");");
+        } else if (call.hook == "register_call_result") {
+            out.push_back("        steammock::call_result_registered(" + call.params[0].name +
+                          ", " + call.params[1].name + ");");
+        } else if (call.hook == "unregister_call_result") {
+            out.push_back("        steammock::call_result_unregistered(" + call.params[0].name +
+                          ", " + call.params[1].name + ");");
+        } else if (call.hook == "deliver_events") {
+            out.push_back("        steammock::deliver_events();");
+        }
+    }
+
     if (call.fallback == "context") {
         // The SDK's lazy accessor is the stub's to answer, and it does its own
         // reporting: the game calls this once per use of an interface, and the
@@ -293,6 +314,26 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                 return false;
             }
             call.returns = returns->as_string();
+        }
+        if (const Json* hook = entry.find("hook"); hook != nullptr) {
+            if (!hook->is_string()) {
+                error = call.name + ": 'hook' has to be a name";
+                return false;
+            }
+            call.hook = hook->as_string();
+            // Named rather than trusted: a hook the generator does not know is a
+            // trampoline that would quietly do nothing.
+            static const char* const kHooks[] = {"register_callback", "unregister_callback",
+                                                 "register_call_result", "unregister_call_result",
+                                                 "deliver_events"};
+            bool known = false;
+            for (const char* candidate : kHooks) {
+                known = known || call.hook == candidate;
+            }
+            if (!known) {
+                error = call.name + ": '" + call.hook + "' is not a hook this has";
+                return false;
+            }
         }
         if (call.returns != "void" && find_type(call.returns) == nullptr) {
             error = call.name + ": unknown return type '" + call.returns + "'";

@@ -569,7 +569,14 @@ std::string Server::handle_call(Session& session, const Json& message) {
         log(LogLevel::debug, "-- " + name + ": no opinion, the stub uses its default");
     }
 
-    return make_reply(seq, answer.answered, answer.ret, answer.out).dump();
+    // What the backend wants done to the game rides with the reply: the stub
+    // queues it and hands it over on the game's own next RunCallbacks, which is
+    // the only place a callback object may be called from.
+    Json reply = make_reply(seq, answer.answered, answer.ret, answer.out);
+    if (answer.events.is_array() && !answer.events.items().empty()) {
+        reply.set("events", answer.events);
+    }
+    return reply.dump();
 }
 
 void Server::write_transcript(const CallRecord& record) {

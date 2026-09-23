@@ -36,6 +36,10 @@ struct IdlCall {
     // version string from.
     std::string fallback;
     std::string fallback_param;
+    // A trampoline that has to do something a forward cannot: the calls that
+    // remember what a game registered, and the pump that hands it what the backend
+    // sent. One of a fixed set, and empty - the usual case - means forward only.
+    std::string hook;
     std::vector<IdlParam> params;
 };
 

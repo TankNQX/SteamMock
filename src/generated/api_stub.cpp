@@ -460,6 +460,7 @@ STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_IsSteamRunning(void) {
 // SteamAPI_RegisterCallResult
 STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_RegisterCallResult(void* pCallback, std::uint64_t hAPICall) {
     try {
+        steammock::call_result_registered(pCallback, hAPICall);
         steammock::Json args = steammock::Json::object();
         args.set("pCallback", steammock::arg_pointer(pCallback));
         args.set("hAPICall", steammock::arg_uint(hAPICall));
@@ -474,6 +475,7 @@ STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_RegisterCallResult(void* pCallback
 // SteamAPI_RegisterCallback
 STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_RegisterCallback(void* pCallback, std::int32_t iCallback) {
     try {
+        steammock::callback_registered(pCallback, iCallback);
         steammock::Json args = steammock::Json::object();
         args.set("pCallback", steammock::arg_pointer(pCallback));
         args.set("iCallback", steammock::arg_int(iCallback));
@@ -505,6 +507,7 @@ STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_RestartAppIfNecessary(std::uint32_
 // SteamAPI_RunCallbacks
 STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_RunCallbacks(void) {
     try {
+        steammock::deliver_events();
         steammock::Json args = steammock::Json::object();
 
         steammock::Json reply;
@@ -542,6 +545,7 @@ STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_Shutdown(void) {
 // SteamAPI_UnregisterCallResult
 STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_UnregisterCallResult(void* pCallback, std::uint64_t hAPICall) {
     try {
+        steammock::call_result_unregistered(pCallback, hAPICall);
         steammock::Json args = steammock::Json::object();
         args.set("pCallback", steammock::arg_pointer(pCallback));
         args.set("hAPICall", steammock::arg_uint(hAPICall));
@@ -556,6 +560,7 @@ STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_UnregisterCallResult(void* pCallba
 // SteamAPI_UnregisterCallback
 STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_UnregisterCallback(void* pCallback) {
     try {
+        steammock::callback_unregistered(pCallback);
         steammock::Json args = steammock::Json::object();
         args.set("pCallback", steammock::arg_pointer(pCallback));
 
@@ -616,6 +621,7 @@ STEAMMOCK_EXPORT std::uint32_t STEAMMOCK_CALL SteamGameServer_GetHSteamUser(void
 // SteamGameServer_RunCallbacks
 STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamGameServer_RunCallbacks(void) {
     try {
+        steammock::deliver_events();
         steammock::Json args = steammock::Json::object();
 
         steammock::Json reply;

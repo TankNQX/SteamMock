@@ -214,6 +214,27 @@ Answer Dispatcher::answer(Session& session, const std::string& name, const Json&
         if (const Json* out = scripted->find("out")) {
             answer.out = *out;
         }
+        // A `then` list is what should happen to the game once this answer is on
+        // its way: each entry names a payload and the fields to write into it, and
+        // the call it completes is the handle this entry just returned - so a
+        // scenario says "create the lobby" once rather than twice.
+        if (const Json* then = scripted->find("then"); then != nullptr && then->is_array()) {
+            Json events = Json::array();
+            for (const Json& entry : then->items()) {
+                if (!entry.is_object()) {
+                    continue;
+                }
+                Json event = entry;
+                if (event.find("call") == nullptr && event.find("id") == nullptr &&
+                    answer.ret.is_number()) {
+                    event.set("call", answer.ret);
+                }
+                events.push(std::move(event));
+            }
+            if (!events.items().empty()) {
+                answer.events = std::move(events);
+            }
+        }
         return answer;
     }
 

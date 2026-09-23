@@ -67,6 +67,13 @@ struct InterfaceStructure {
     int size = 0;
 };
 
+// A payload the backend can complete a call with, which is the SDK's own struct
+// laid out the way its callback pack gives it. The shape is a structure's, but
+// these bytes are written rather than merely declared: the fields come off the
+// wire and go into the game's callback object, which is why the size here is
+// asserted against a real type rather than trusted.
+using InterfaceEvent = InterfaceStructure;
+
 // A class passed and returned by value - CSteamID, CGameID - which the wire
 // carries as the single integer it is.
 struct InterfaceValueType {
@@ -86,11 +93,13 @@ public:
 
     const std::vector<InterfaceVersion>& versions() const noexcept { return _versions; }
     const std::vector<InterfaceStructure>& structures() const noexcept { return _structures; }
+    const std::vector<InterfaceEvent>& events() const noexcept { return _events; }
     const std::vector<InterfaceValueType>& value_types() const noexcept { return _value_types; }
 
 private:
     std::vector<InterfaceVersion> _versions;
     std::vector<InterfaceStructure> _structures;
+    std::vector<InterfaceEvent> _events;
     std::vector<InterfaceValueType> _value_types;
 };
 

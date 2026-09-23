@@ -4,7 +4,7 @@
   "calls": [
     { "name": "SteamAPI_Init", "returns": "bool" },
     { "name": "SteamAPI_Shutdown", "returns": "void" },
-    { "name": "SteamAPI_RunCallbacks", "returns": "void" },
+    { "name": "SteamAPI_RunCallbacks", "returns": "void", "hook": "deliver_events" },
     { "name": "SteamAPI_IsSteamRunning", "returns": "bool" },
     { "name": "SteamAPI_RestartAppIfNecessary", "returns": "bool",
       "params": [ { "name": "unOwnAppID", "type": "uint32" } ] },
@@ -63,7 +63,7 @@
 
     { "name": "SteamGameServer_GetHSteamUser", "returns": "uint32" },
     { "name": "SteamGameServer_GetHSteamPipe", "returns": "uint32" },
-    { "name": "SteamGameServer_RunCallbacks", "returns": "void" },
+    { "name": "SteamGameServer_RunCallbacks", "returns": "void", "hook": "deliver_events" },
     { "name": "SteamGameServer_Shutdown", "returns": "void" },
     { "name": "SteamInternal_GameServer_Init", "returns": "bool",
       "params": [ { "name": "unIP", "type": "uint32" },
@@ -86,15 +86,15 @@
     { "name": "SteamInternal_ContextInit", "returns": "opaque_ptr", "fallback": "context",
       "params": [ { "name": "pContextInitData", "type": "opaque_ptr" } ] },
 
-    { "name": "SteamAPI_RegisterCallback", "returns": "void",
+    { "name": "SteamAPI_RegisterCallback", "returns": "void", "hook": "register_callback",
       "params": [ { "name": "pCallback", "type": "opaque_ptr" },
                   { "name": "iCallback", "type": "int32" } ] },
-    { "name": "SteamAPI_UnregisterCallback", "returns": "void",
+    { "name": "SteamAPI_UnregisterCallback", "returns": "void", "hook": "unregister_callback",
       "params": [ { "name": "pCallback", "type": "opaque_ptr" } ] },
-    { "name": "SteamAPI_RegisterCallResult", "returns": "void",
+    { "name": "SteamAPI_RegisterCallResult", "returns": "void", "hook": "register_call_result",
       "params": [ { "name": "pCallback", "type": "opaque_ptr" },
                   { "name": "hAPICall", "type": "uint64" } ] },
-    { "name": "SteamAPI_UnregisterCallResult", "returns": "void",
+    { "name": "SteamAPI_UnregisterCallResult", "returns": "void", "hook": "unregister_call_result",
       "params": [ { "name": "pCallback", "type": "opaque_ptr" },
                   { "name": "hAPICall", "type": "uint64" } ] },
 

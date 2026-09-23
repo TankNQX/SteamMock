@@ -236,7 +236,6 @@ inline const char* name_at(const SlotInfo& info, std::size_t index) noexcept {
 // with any one signature, and leaving it in the header would write a copy of it
 // into every shape of call the generated file declares.
 bool run_slot(const SlotInfo& info, const Arg* args, std::size_t count, Json& reply) noexcept;
-
 template <class Parameter>
 void store_out(const SlotInfo& info, std::size_t index, const Json& reply,
                Parameter parameter) noexcept {
@@ -283,6 +282,43 @@ void* interface_object(const char* version) noexcept;
 
 // Every version string the stub can answer, for a harness that wants to say so.
 const InterfaceVersion* interface_versions(std::size_t& count) noexcept;
+
+// ---------------------------------------------------------------------------
+//  The payloads a call can be completed with.
+// ---------------------------------------------------------------------------
+//  The backend answers a call, and may say what should happen to the game next:
+//  a registered callback or call result wants one of these, and the layouts file
+//  declares each one's fields and the size the SDK's callback pack gives it.
+//  Nothing here reads a payload back - the bytes go into the game's own object.
+
+struct EventInfo {
+    const char* name;
+    std::size_t size;
+    void (*fill)(const Json& fields, void* buffer) noexcept;
+};
+
+// The payload of that name, or null when the layouts do not declare one - which
+// is what a scenario naming an event the data does not have has to be told.
+const EventInfo* find_event(const char* name) noexcept;
+
+// ---------------------------------------------------------------------------
+//  What the game registered, and what wants one of those payloads.
+// ---------------------------------------------------------------------------
+//  A game hands its callback object and an id to RegisterCallback, or its call
+//  result and the handle it was given to RegisterCallResult, and the SDK is then
+//  expected to call that object when the thing it is waiting for happens. That is
+//  what this is: the pairs are remembered where they were registered, the reply to
+//  a call says which payload it wants delivered, and the game's own RunCallbacks -
+//  its pump, on its own thread - is where delivery happens. A game that never
+//  pumps is never told anything, which is what the real SDK does too.
+
+void callback_registered(void* object, std::int32_t id) noexcept;
+void callback_unregistered(void* object) noexcept;
+void call_result_registered(void* object, std::uint64_t call) noexcept;
+void call_result_unregistered(void* object, std::uint64_t call) noexcept;
+
+// Hands the game whatever the backend has sent since the last pump.
+void deliver_events() noexcept;
 
 // ---------------------------------------------------------------------------
 //  The lazy accessor a recent SDK bounces through.

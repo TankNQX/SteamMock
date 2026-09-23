@@ -199,12 +199,38 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
             ++_unhandled_count;
             return false;
         }
+
+        // What the backend wants done to the game, if anything, arrives with the
+        // reply that says so. It is queued here and handed over on the game's next
+        // RunCallbacks, which is the only place a callback may be delivered from.
+        if (const Json* events = message.find("events"); events != nullptr && events->is_array()) {
+            for (const Json& event : events->items()) {
+                _events.push_back(event);
+            }
+        }
+
         reply = std::move(message);
         return true;
     } catch (...) {
         // Allocation failure, or anything else: a game must never see an
         // exception thrown across the exported API.
         log_write(LogLevel::error, "the bridge hit an unexpected exception");
+        return false;
+    }
+}
+
+bool Client::take_event(Json& out) noexcept {
+    try {
+        // Copied out with the lock dropped before the caller dispatches, because a
+        // game may call back into the bridge from inside a callback it was given.
+        std::lock_guard<std::mutex> lock(*_mutex);
+        if (_events.empty()) {
+            return false;
+        }
+        out = std::move(_events.front());
+        _events.erase(_events.begin());
+        return true;
+    } catch (...) {
         return false;
     }
 }
