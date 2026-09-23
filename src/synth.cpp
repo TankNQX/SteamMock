@@ -128,6 +128,7 @@ void call_object(void* object, const EventInfo& event, const Json* fields, std::
     // a call result, rather than one of them being handed the other's stack.
     if (call_result) {
         if (vtable[1] == nullptr) {
+            log_write(LogLevel::warn, "a callback object has no slot to run a call result in");
             return;
         }
         const RunFunction run = reinterpret_cast<RunFunction>(vtable[1]);
@@ -135,6 +136,7 @@ void call_object(void* object, const EventInfo& event, const Json* fields, std::
         return;
     }
     if (vtable[0] == nullptr) {
+        log_write(LogLevel::warn, "a callback object has no slot to run a callback in");
         return;
     }
     const RunPayloadFunction run = reinterpret_cast<RunPayloadFunction>(vtable[0]);
@@ -260,6 +262,13 @@ void deliver_events() noexcept {
             if (!Client::instance().take_event(event)) {
                 return;
             }
+            // Said out loud, because a payload that comes out of the queue and then does
+            // nothing is the one thing here that is otherwise invisible.
+            const Json* name = event.find("event");
+            log_write(LogLevel::debug,
+                      "taking a payload out of the queue to hand over: " +
+                          (name != nullptr && name->is_string() ? name->as_string()
+                                                                : std::string("<no name>")));
             deliver_one(event);
         }
     } catch (...) {
