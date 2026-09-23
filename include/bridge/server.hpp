@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -12,6 +13,7 @@
 #include <vector>
 
 #include "bridge/json.hpp"
+#include "bridge/lobby.hpp"
 #include "bridge/log.hpp"
 #include "bridge/scenario.hpp"
 #include "bridge/session.hpp"
@@ -127,6 +129,16 @@ private:
 
     Dispatcher _dispatcher;
     ServerOptions _options;
+
+    // The rooms games made. The only state here that is not per session, because it
+    // is what makes two instances agree about the same lobby instead of each being
+    // handed its own convenient story.
+    LobbyWorld _world;
+
+    // What a game has been told but has not heard yet, by session. A game learns
+    // things only when it asks, so anything said to it while it was busy waits here
+    // for its next call and travels back on that reply.
+    std::map<std::string, std::vector<Json>> _inbox;
 
     // Sockets are held as integers so this header stays free of winsock
     // includes; kNoSocket marks "not listening".

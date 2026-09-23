@@ -162,12 +162,26 @@ bool Dispatcher::has_profile(const std::string& name) const {
 Profile Dispatcher::profile_for(const Json& hello) const {
     std::string exe;
     std::int64_t pid = 0;
+    std::string requested;
     if (hello.is_object()) {
         if (const Json* value = hello.find("exe")) {
             exe = lower_ascii(text_of(*value));
         }
         if (const Json* value = hello.find("pid"); value != nullptr && value->is_number()) {
             pid = value->as_int64();
+        }
+        if (const Json* value = hello.find("profile"); value != nullptr && value->is_string()) {
+            requested = value->as_string();
+        }
+    }
+
+    // A game that asked for a profile by name gets it, before any match rule. Two
+    // copies of the same exe are indistinguishable by name, and a pid cannot be
+    // written into a scenario in advance - so this is how one file describes two
+    // instances of the same game running side by side.
+    if (!requested.empty()) {
+        if (const Profile* profile = find_profile(requested)) {
+            return *profile;
         }
     }
 

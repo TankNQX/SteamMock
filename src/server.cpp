@@ -527,10 +527,41 @@ std::string Server::handle_call(Session& session, const Json& message) {
     const auto started = std::chrono::steady_clock::now();
     Answer answer;
     {
-        // Resolving a call reads the scenario and may write the session's stats,
-        // so it happens under the lock; the socket work around it does not.
+        // Resolving a call reads the scenario, may write this session's stats, and
+        // may now touch the lobbies other games are in - so it happens under the
+        // lock, and so does telling the games that were not asking. The socket work
+        // around it does not.
         std::lock_guard<std::mutex> lock(_mutex);
-        answer = _dispatcher.answer(session, name, args);
+
+        std::vector<std::pair<std::uint64_t, Json>> notifications;
+        if (!_world.answer(session, name, args, answer, notifications)) {
+            // The world only speaks about rooms that games made. Everything else is
+            // the scenario's to answer, and then this session's own state.
+            answer = _dispatcher.answer(session, name, args);
+        }
+
+        // What the other members have to be told: theirs is not the call that did
+        // this, so it waits for them and rides back on whatever reply they make
+        // next - which is the only way a game ever learns anything.
+        for (const auto& notification : notifications) {
+            for (const auto& other : _sessions) {
+                if (other->connected() && other->profile().steam_id == notification.first) {
+                    _inbox[other->id()].push_back(notification.second);
+                }
+            }
+        }
+
+        // ...and whatever this game was told while it was busy, on this reply.
+        if (const auto queued = _inbox.find(session.id()); queued != _inbox.end()) {
+            if (!answer.events.is_array()) {
+                answer.events = Json::array();
+            }
+            for (const Json& payload : queued->second) {
+                answer.events.push(payload);
+            }
+            _inbox.erase(queued);
+        }
+
         session.note_call();
     }
     const double elapsed_ms =

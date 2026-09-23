@@ -28,38 +28,33 @@
         "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
         "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
 
-        "SteamAPI_ISteamMatchmaking_CreateLobby": {
-          "ret": 1001,
-          "then": [
-            { "event": "LobbyCreated_t", "in": { "m_eResult": 1, "m_ulSteamIDLobby": 109775241234567890 } }
-          ]
-        },
-        "SteamAPI_ISteamMatchmaking_RequestLobbyList": {
-          "ret": 1002,
-          "then": [ { "event": "LobbyMatchList_t", "in": { "m_nLobbiesMatching": 1 } } ]
-        },
-        "SteamAPI_ISteamMatchmaking_JoinLobby": {
-          "ret": 1003,
-          "then": [
-            {
-              "event": "LobbyEnter_t",
-              "in": {
-                "m_ulSteamIDLobby": 109775241234567890,
-                "m_rgfChatPermissions": 0,
-                "m_bLocked": false,
-                "m_EChatRoomEnterResponse": 1
-              }
-            }
-          ]
-        },
-        "SteamAPI_ISteamMatchmaking_GetLobbyByIndex": { "ret": 109775241234567890 },
-        "SteamAPI_ISteamMatchmaking_GetLobbyData": { "ret": "steammock" },
-        "SteamAPI_ISteamMatchmaking_GetLobbyDataCount": { "ret": 1 },
-        "SteamAPI_ISteamMatchmaking_GetNumLobbyMembers": { "ret": 1 },
-        "SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex": { "ret": 76561198000000001 },
-        "SteamAPI_ISteamMatchmaking_GetLobbyOwner": { "ret": 76561198000000001 },
-        "SteamAPI_ISteamMatchmaking_GetLobbyMemberLimit": { "ret": 4 },
-        "SteamAPI_ISteamMatchmaking_GetLobbyMemberData": { "ret": "DebugPlayer" },
+        "SteamInternal_GameServer_Init": { "ret": true },
+        "SteamGameServer_GetHSteamUser": { "ret": 1 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 1 }
+      }
+    },
+    "second_player": {
+      "steam_id": 76561198000000002,
+      "persona_name": "DebugPlayer2",
+      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": true },
+        { "name": "ACH_FINISHED", "achieved": false }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_RestartAppIfNecessary": { "ret": false },
+        "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
+        "SteamAPI_ISteamUserStats_RequestCurrentStats": { "ret": true },
+        "SteamAPI_ISteamUserStats_GetStatInt32": { "ret": true, "out": { "pData": 3 } },
+        "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
+        "SteamAPI_ISteamController_Init": { "ret": true },
+        "SteamAPI_ISteamController_Shutdown": { "ret": true },
+        "SteamAPI_ISteamController_GetActionSetHandle": { "ret": 11 },
+        "SteamAPI_ISteamController_GetDigitalActionHandle": { "ret": 22 },
+        "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
+        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
 
         "SteamInternal_GameServer_Init": { "ret": true },
         "SteamGameServer_GetHSteamUser": { "ret": 1 },

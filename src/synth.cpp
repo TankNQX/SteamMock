@@ -102,9 +102,25 @@ std::map<std::uint64_t, void*>& results_by_call() noexcept {
 // result is the second slot and a plain callback the first.
 using RunFunction = void(STEAMMOCK_MEMBER_CALL*)(void* self, void* payload, bool io_failure,
                                                  std::uint64_t call);
+using RunPayloadFunction = void(STEAMMOCK_MEMBER_CALL*)(void* self, void* payload);
 
-void call_object(void* object, const EventInfo& event, const Json* fields,
-                 std::uint64_t call) noexcept {
+// The third slot, and the game's own answer to "how big a payload do I expect" -
+// which is how a callback nobody called finds its owner.
+using SizeFunction = int(STEAMMOCK_MEMBER_CALL*)(void* self);
+
+static_assert(sizeof(RunFunction) == sizeof(void*), "a vtable slot is one pointer");
+
+int callback_size(void* object) noexcept {
+    void* const* const vtable = *reinterpret_cast<void* const* const*>(object);
+    if (vtable == nullptr || vtable[2] == nullptr) {
+        return 0;
+    }
+    const SizeFunction size = reinterpret_cast<SizeFunction>(vtable[2]);
+    return size(object);
+}
+
+void call_object(void* object, const EventInfo& event, const Json* fields, std::uint64_t call,
+                 bool call_result) noexcept {
     // Zeroed, and larger than any payload this declares: a layout that is wrong
     // then reads zeros rather than past what the stub wrote.
     alignas(std::uint64_t) unsigned char payload[64] = {};
@@ -113,15 +129,30 @@ void call_object(void* object, const EventInfo& event, const Json* fields,
     }
 
     void* const* const vtable = *reinterpret_cast<void* const* const*>(object);
-    if (vtable == nullptr || vtable[1] == nullptr) {
+    if (vtable == nullptr) {
         return;
     }
-    const RunFunction run = reinterpret_cast<RunFunction>(vtable[1]);
-    run(object, payload, false, call);
+    // Each slot takes its own argument list, and on x86 the callee pops what it was
+    // declared with - so a callback gets called as a callback and a call result as
+    // a call result, rather than one of them being handed the other's stack.
+    if (call_result) {
+        if (vtable[1] == nullptr) {
+            return;
+        }
+        const RunFunction run = reinterpret_cast<RunFunction>(vtable[1]);
+        run(object, payload, false, call);
+        return;
+    }
+    if (vtable[0] == nullptr) {
+        return;
+    }
+    const RunPayloadFunction run = reinterpret_cast<RunPayloadFunction>(vtable[0]);
+    run(object, payload);
 }
 
 // One event, as the backend spells it: the payload's name, and either the call it
-// completes or the callback id it belongs to.
+// completes, the callback id it belongs to, or neither - in which case it is
+// something that happened to a game rather than an answer to something it asked.
 void deliver_one(const Json& event) noexcept {
     const Json* name = event.find("event");
     if (name == nullptr || !name->is_string()) {
@@ -136,6 +167,7 @@ void deliver_one(const Json& event) noexcept {
     const Json* fields = event.find("in");
     void* object = nullptr;
     std::uint64_t call = 0;
+    bool call_result = false;
     {
         const std::lock_guard<std::mutex> lock(registry_mutex());
         const Json* handle = event.find("call");
@@ -145,23 +177,49 @@ void deliver_one(const Json& event) noexcept {
             const auto found = results_by_call().find(call);
             if (found != results_by_call().end()) {
                 object = found->second;
+                call_result = true;
             }
         } else if (id != nullptr && id->is_number()) {
             const auto found = callbacks_by_id().find(static_cast<std::int32_t>(id->as_int64()));
             if (found != callbacks_by_id().end()) {
                 object = found->second;
             }
+        } else {
+            // Nobody asked for this - a room changed, a packet arrived - so the only
+            // thing tying it to an object is the size that object said it expects,
+            // which is what the game handed over when it registered. Two candidates
+            // and it would be a guess, so no guess is made.
+            int matches = 0;
+            for (const auto& entry : callbacks_by_id()) {
+                if (entry.second == object) {
+                    continue;  // the same object, registered under another id
+                }
+                if (callback_size(entry.second) != static_cast<int>(info->size)) {
+                    continue;
+                }
+                object = entry.second;
+                ++matches;
+            }
+            if (matches != 1) {
+                object = nullptr;
+                if (matches > 1) {
+                    log_write(LogLevel::warn, "more than one callback expects a payload the size "
+                                              "of " +
+                                                  name->as_string() + "; not delivering it");
+                }
+            }
         }
     }
 
     if (object == nullptr) {
-        // Nobody is waiting: a result the game never registered, or one it has
-        // already unregistered. The real SDK drops those too - but it says so,
-        // because an event that goes nowhere is the hardest kind of silence.
+        // Nobody is waiting: a result the game never registered, one it has already
+        // unregistered, or something it never asked to hear about. The real SDK
+        // drops those too - but it says so, because an event that goes nowhere is
+        // the hardest kind of silence.
         log_write(LogLevel::warn, "an event nobody is waiting for: " + name->as_string());
         return;
     }
-    call_object(object, *info, fields, call);
+    call_object(object, *info, fields, call, call_result);
 }
 
 }  // namespace

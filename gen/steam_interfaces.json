@@ -18,7 +18,10 @@
   "events": [
     {"name": "LobbyCreated_t", "members": [["int32", "m_eResult"], ["uint64", "m_ulSteamIDLobby"]], "size": 12},
     {"name": "LobbyMatchList_t", "members": [["uint32", "m_nLobbiesMatching"]], "size": 4},
-    {"name": "LobbyEnter_t", "members": [["uint64", "m_ulSteamIDLobby"], ["uint32", "m_rgfChatPermissions"], ["bool", "m_bLocked"], ["int32", "m_EChatRoomEnterResponse"]], "size": 20}
+    {"name": "LobbyEnter_t", "members": [["uint64", "m_ulSteamIDLobby"], ["uint32", "m_rgfChatPermissions"], ["bool", "m_bLocked"], ["int32", "m_EChatRoomEnterResponse"]], "size": 20},
+    {"name": "LobbyChatUpdate_t", "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDUserChanged"], ["uint64", "m_ulSteamIDMakingChange"], ["uint32", "m_rgfChatMemberStateChange"]], "size": 28},
+    {"name": "LobbyChatMsg_t", "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDUser"], ["uint8", "m_eChatEntryType"], ["uint32", "m_iChatID"]], "size": 24},
+    {"name": "LobbyDataUpdate_t", "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDMember"], ["bool", "m_bSuccess"]], "size": 20}
   ],
   "interfaces": [
     {

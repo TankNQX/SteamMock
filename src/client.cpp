@@ -130,6 +130,15 @@ bool Client::ensure_connected() {
     hello.set("arch", Json::string(sizeof(void*) == 8u ? "x64" : "x86"));
     hello.set("module", Json::string("steam_api stub"));
     hello.set("pid", Json::integer(static_cast<std::int64_t>(GetCurrentProcessId())));
+    // Which game this one is pretending to be, when a single scenario has to
+    // describe two of them running at once: the exe name cannot tell two Spacewars
+    // apart, and a pid cannot be written down in advance.
+    char wanted[64] = {};
+    const DWORD wanted_length =
+        GetEnvironmentVariableA("STEAMMOCK_PROFILE", wanted, sizeof(wanted));
+    if (wanted_length > 0 && wanted_length < sizeof(wanted)) {
+        hello.set("profile", Json::string(wanted));
+    }
 
     std::string response;
     if (!_transport->exchange(hello.dump(), response)) {

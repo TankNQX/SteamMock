@@ -108,6 +108,26 @@ struct LobbyEnter_t {
     std::int32_t m_EChatRoomEnterResponse;
 };
 static_assert(sizeof(LobbyEnter_t) == 20, "LobbyEnter_t has to be the size the SDK's callback pack gives it");
+struct LobbyChatUpdate_t {
+    std::uint64_t m_ulSteamIDLobby;
+    std::uint64_t m_ulSteamIDUserChanged;
+    std::uint64_t m_ulSteamIDMakingChange;
+    std::uint32_t m_rgfChatMemberStateChange;
+};
+static_assert(sizeof(LobbyChatUpdate_t) == 28, "LobbyChatUpdate_t has to be the size the SDK's callback pack gives it");
+struct LobbyChatMsg_t {
+    std::uint64_t m_ulSteamIDLobby;
+    std::uint64_t m_ulSteamIDUser;
+    std::uint8_t m_eChatEntryType;
+    std::uint32_t m_iChatID;
+};
+static_assert(sizeof(LobbyChatMsg_t) == 24, "LobbyChatMsg_t has to be the size the SDK's callback pack gives it");
+struct LobbyDataUpdate_t {
+    std::uint64_t m_ulSteamIDLobby;
+    std::uint64_t m_ulSteamIDMember;
+    bool m_bSuccess;
+};
+static_assert(sizeof(LobbyDataUpdate_t) == 20, "LobbyDataUpdate_t has to be the size the SDK's callback pack gives it");
 #pragma pack(pop)
 
 }  // namespace
@@ -8743,6 +8763,54 @@ void fill_LobbyEnter_t(const Json& fields, void* buffer) noexcept {
     std::memcpy(buffer, &value, sizeof(value));
 }
 
+void fill_LobbyChatUpdate_t(const Json& fields, void* buffer) noexcept {
+    LobbyChatUpdate_t value{};
+    if (const Json* field = fields.find("m_ulSteamIDLobby")) {
+        value.m_ulSteamIDLobby = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_ulSteamIDUserChanged")) {
+        value.m_ulSteamIDUserChanged = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_ulSteamIDMakingChange")) {
+        value.m_ulSteamIDMakingChange = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_rgfChatMemberStateChange")) {
+        value.m_rgfChatMemberStateChange = static_cast<std::uint32_t>(field->as_uint64());
+    }
+    std::memcpy(buffer, &value, sizeof(value));
+}
+
+void fill_LobbyChatMsg_t(const Json& fields, void* buffer) noexcept {
+    LobbyChatMsg_t value{};
+    if (const Json* field = fields.find("m_ulSteamIDLobby")) {
+        value.m_ulSteamIDLobby = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_ulSteamIDUser")) {
+        value.m_ulSteamIDUser = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_eChatEntryType")) {
+        value.m_eChatEntryType = static_cast<std::uint8_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_iChatID")) {
+        value.m_iChatID = static_cast<std::uint32_t>(field->as_uint64());
+    }
+    std::memcpy(buffer, &value, sizeof(value));
+}
+
+void fill_LobbyDataUpdate_t(const Json& fields, void* buffer) noexcept {
+    LobbyDataUpdate_t value{};
+    if (const Json* field = fields.find("m_ulSteamIDLobby")) {
+        value.m_ulSteamIDLobby = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_ulSteamIDMember")) {
+        value.m_ulSteamIDMember = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_bSuccess")) {
+        value.m_bSuccess = static_cast<bool>(field->as_bool());
+    }
+    std::memcpy(buffer, &value, sizeof(value));
+}
+
 const steammock::EventInfo kEvents[] = {
     {"LobbyCreated_t",
      sizeof(LobbyCreated_t),
@@ -8753,6 +8821,15 @@ const steammock::EventInfo kEvents[] = {
     {"LobbyEnter_t",
      sizeof(LobbyEnter_t),
      &fill_LobbyEnter_t},
+    {"LobbyChatUpdate_t",
+     sizeof(LobbyChatUpdate_t),
+     &fill_LobbyChatUpdate_t},
+    {"LobbyChatMsg_t",
+     sizeof(LobbyChatMsg_t),
+     &fill_LobbyChatMsg_t},
+    {"LobbyDataUpdate_t",
+     sizeof(LobbyDataUpdate_t),
+     &fill_LobbyDataUpdate_t},
 };
 
 }  // namespace
