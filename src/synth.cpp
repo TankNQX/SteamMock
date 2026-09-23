@@ -156,7 +156,9 @@ void deliver_one(const Json& event) noexcept {
 
     if (object == nullptr) {
         // Nobody is waiting: a result the game never registered, or one it has
-        // already unregistered. The real SDK drops those too.
+        // already unregistered. The real SDK drops those too - but it says so,
+        // because an event that goes nowhere is the hardest kind of silence.
+        log_write(LogLevel::warn, "an event nobody is waiting for: " + name->as_string());
         return;
     }
     call_object(object, *info, fields, call);

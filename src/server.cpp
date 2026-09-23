@@ -575,6 +575,8 @@ std::string Server::handle_call(Session& session, const Json& message) {
     Json reply = make_reply(seq, answer.answered, answer.ret, answer.out);
     if (answer.events.is_array() && !answer.events.items().empty()) {
         reply.set("events", answer.events);
+        log(LogLevel::debug, "   .. " + std::to_string(answer.events.items().size()) +
+                                 " payload(s) for the game, on its next pump");
     }
     return reply.dump();
 }
