@@ -21,6 +21,7 @@
 
 #include "bridge/frame.hpp"
 #include "bridge/json.hpp"
+#include "bridge/lobby.hpp"
 #include "bridge/protocol.hpp"
 #include "bridge/scenario.hpp"
 #include "bridge/session.hpp"
@@ -35,6 +36,7 @@ namespace {
 using steammock::Answer;
 using steammock::Dispatcher;
 using steammock::Json;
+using steammock::LobbyWorld;
 using steammock::Profile;
 using steammock::Session;
 
@@ -366,6 +368,165 @@ void test_profiles_are_per_session() {
                .ret.as_bool());
 }
 
+// The lobbies a run holds are the one piece of backend state that is not per game,
+// so what is worth proving is what two games can see of each other through it: one
+// makes a room, the other finds it, joins it, and reads back a roster that neither
+// of them was told.
+void test_the_lobbies_a_run_holds() {
+    std::printf("[:] the lobbies a run holds\n");
+
+    auto profile_for = [](const char* persona, std::uint64_t steam_id) {
+        const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
+                                 std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
+                                 "\",\"language\":\"english\"}";
+        Json data;
+        check("the lobby fixture parses", Json::parse(text, data));
+        return Profile::from_json(persona, data);
+    };
+    constexpr std::uint64_t kHostId = 76561198000000001ull;
+    constexpr std::uint64_t kGuestId = 76561198000000002ull;
+
+    auto session_for = [](const char* id, const Profile& profile) {
+        Json hello = Json::object();
+        hello.set("exe", Json::string("game.exe"));
+        hello.set("pid", Json::integer(1234));
+        return Session(id, hello, profile);
+    };
+
+    Session host = session_for("host", profile_for("Host", kHostId));
+    Session guest = session_for("guest", profile_for("Guest", kGuestId));
+
+    LobbyWorld world;
+    // Cleared by hand because the world appends: whoever a call tells is not whoever
+    // the next call tells.
+    std::vector<std::pair<std::uint64_t, Json>> told;
+
+    auto ask = [&](Session& who, const char* call, const Json& args) {
+        Answer answer;
+        told.clear();
+        const bool handled = world.answer(who, call, args, answer, told);
+        check((std::string("the world answers ") + call).c_str(), handled);
+        return answer;
+    };
+    // The field of the payload a call came with, which is how the world completes one.
+    auto field_of = [](const Answer& answer, const char* field) -> const Json* {
+        if (!answer.events.is_array() || answer.events.items().empty()) {
+            return nullptr;
+        }
+        const Json* in = answer.events.items().front().find("in");
+        return in != nullptr ? in->find(field) : nullptr;
+    };
+    auto lobby_argument = [](const char* key, std::uint64_t value, const char* call) {
+        (void)call;
+        Json args = Json::object();
+        args.set(key, Json::integer(static_cast<std::int64_t>(value)));
+        return args;
+    };
+
+    {
+        const Answer listed =
+            ask(host, "SteamAPI_ISteamMatchmaking_RequestLobbyList", Json::object());
+        const Json* count = field_of(listed, "m_nLobbiesMatching");
+        check("a run with no lobbies lists none", count != nullptr && count->as_int64() == 0);
+    }
+
+    Json create = Json::object();
+    create.set("eLobbyType", Json::integer(2));
+    create.set("cMaxMembers", Json::integer(4));
+    const Answer created = ask(host, "SteamAPI_ISteamMatchmaking_CreateLobby", create);
+    const Json* made = field_of(created, "m_ulSteamIDLobby");
+    check("creating a lobby hands one back", made != nullptr && made->as_uint64() != 0);
+    check("and the world says so", created.via == "lobby");
+
+    const Json* call_of_payload = nullptr;
+    if (created.events.is_array() && !created.events.items().empty()) {
+        call_of_payload = created.events.items().front().find("call");
+    }
+    check("the payload completes the call the answer returned",
+          call_of_payload != nullptr && call_of_payload->is_number() &&
+              call_of_payload->as_uint64() == created.ret.as_uint64());
+
+    const std::uint64_t lobby = made != nullptr ? made->as_uint64() : 0;
+
+    // The host names it, the way a game does, and the world keeps that.
+    Json named = lobby_argument("steamIDLobby", lobby, "named");
+    named.set("pchKey", Json::string("name"));
+    named.set("pchValue", Json::string("A lobby"));
+    ask(host, "SteamAPI_ISteamMatchmaking_SetLobbyData", named);
+
+    // Now the other game can see it.
+    const Answer listed = ask(guest, "SteamAPI_ISteamMatchmaking_RequestLobbyList", Json::object());
+    const Json* count = field_of(listed, "m_nLobbiesMatching");
+    check("the other game lists the one that exists", count != nullptr && count->as_int64() == 1);
+
+    Json index = Json::object();
+    index.set("iLobby", Json::integer(0));
+    const Answer found = ask(guest, "SteamAPI_ISteamMatchmaking_GetLobbyByIndex", index);
+    check("and it is the host's lobby rather than a lookalike",
+          found.ret.is_number() && found.ret.as_uint64() == lobby);
+
+    Json name_key = lobby_argument("steamIDLobby", lobby, "name key");
+    name_key.set("pchKey", Json::string("name"));
+    check("with the name the host wrote",
+          ask(guest, "SteamAPI_ISteamMatchmaking_GetLobbyData", name_key).ret.as_string() ==
+              "A lobby");
+
+    // It joins, and the room is told - including the game that joined.
+    const Answer entered = ask(guest, "SteamAPI_ISteamMatchmaking_JoinLobby",
+                               lobby_argument("steamIDLobby", lobby, "join"));
+    const Json* room_joined = field_of(entered, "m_ulSteamIDLobby");
+    check("joining says which room it is in",
+          room_joined != nullptr && room_joined->as_uint64() == lobby);
+    check("both members of the room are told", told.size() == 4);
+
+    bool told_host = false;
+    bool told_guest = false;
+    for (const auto& note : told) {
+        told_host = told_host || note.first == kHostId;
+        told_guest = told_guest || note.first == kGuestId;
+    }
+    check("the host is told", told_host);
+    check("and so is the game that just joined", told_guest);
+
+    // What the two of them read now is the same room, seen from either side.
+    check("the room has two members", ask(host, "SteamAPI_ISteamMatchmaking_GetNumLobbyMembers",
+                                          lobby_argument("steamIDLobby", lobby, "members"))
+                                              .ret.as_int64() == 2);
+
+    Json second_member = lobby_argument("steamIDLobby", lobby, "member");
+    second_member.set("iMember", Json::integer(1));
+    check("and the second one is the game that joined",
+          ask(host, "SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex", second_member)
+                  .ret.as_uint64() == kGuestId);
+
+    check("the host still owns it", ask(guest, "SteamAPI_ISteamMatchmaking_GetLobbyOwner",
+                                        lobby_argument("steamIDLobby", lobby, "owner"))
+                                            .ret.as_uint64() == kHostId);
+
+    Json a_member = Json::object();
+    a_member.set("steamIDFriend", Json::integer(static_cast<std::int64_t>(kGuestId)));
+    check("a member can be asked for by name",
+          ask(host, "SteamAPI_ISteamFriends_GetFriendPersonaName", a_member).ret.as_string() ==
+              "Guest");
+
+    Json member_name = lobby_argument("steamIDLobby", lobby, "member name");
+    member_name.set("steamIDUser", Json::integer(static_cast<std::int64_t>(kGuestId)));
+    member_name.set("pchKey", Json::string("name"));
+    check("and a roster row has a name to draw",
+          ask(host, "SteamAPI_ISteamMatchmaking_GetLobbyMemberData", member_name).ret.as_string() ==
+              "Guest");
+
+    // A room the run has never seen is not one it will invent: the world has no
+    // opinion, which leaves the scenario and the session their say about it.
+    Answer unheard;
+    told.clear();
+    check("a room nobody made is declined",
+          !world.answer(guest, "SteamAPI_ISteamMatchmaking_JoinLobby",
+                        lobby_argument("steamIDLobby", 424242, "stranger"), unheard, told));
+    check("and nothing is told about it", told.empty());
+    check("the world handles the lobby surface", LobbyWorld::handled_calls().size() >= 18);
+}
+
 void test_surface_matches_the_idl() {
     std::printf("[:] the generated surface\n");
 
@@ -463,6 +624,7 @@ int main() {
     test_describe();
     test_scenarios();
     test_profiles_are_per_session();
+    test_the_lobbies_a_run_holds();
     test_surface_matches_the_idl();
     test_numbers();
 
