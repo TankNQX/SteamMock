@@ -42,6 +42,8 @@ constexpr KindInfo kKinds[] = {
     {"enum", "std::int32_t"},
     {"cstring", "const char*"},
     {"opaque_ptr", "void*"},
+    {"bytes", "const void*"},
+    {"out_bytes", "void*"},
 };
 
 const KindInfo* find_kind(const std::string& name) noexcept {
@@ -291,6 +293,15 @@ bool read_param(const Json& row, const std::vector<std::pair<std::string, std::s
             out.out = true;
         } else if (text == "unmarshalable") {
             out.opaque = true;
+        } else if (out.kind == "bytes" || out.kind == "out_bytes") {
+            // A byte buffer is two things on the wire, the bytes and how many of them, and
+            // the wire has one value per parameter - so the file has to name the parameter
+            // that carries the length rather than the size being guessed at.
+            if (!out.length.empty()) {
+                error = param_where + ": a byte buffer names one length parameter";
+                return false;
+            }
+            out.length = text;
         } else {
             error = param_where + ": '" + text + "' is neither 'out' nor 'unmarshalable'";
             return false;
@@ -861,7 +872,17 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                     arguments += ", ";
                 }
                 parameters += param.cpp + " " + param.name;
-                arguments += param.name;
+                if (param.kind == "bytes") {
+                    // The buffer and how long it is travel together, which is what the
+                    // layouts name the length parameter for. Braces rather than a call:
+                    // one of these is an aggregate, and a function-style cast of an
+                    // aggregate is only spelled that way from C++20 on.
+                    arguments += "steammock::Bytes{" + param.name + ", " + param.length + "}";
+                } else if (param.kind == "out_bytes") {
+                    arguments += "steammock::BytesOut{" + param.name + ", " + param.length + "}";
+                } else {
+                    arguments += param.name;
+                }
             }
 
             const std::string passed = at + (arguments.empty() ? "" : ", " + arguments);

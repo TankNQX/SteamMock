@@ -199,6 +199,118 @@ template <> struct Kind<void*> {
     static void* fallback() noexcept { return nullptr; }
 };
 
+// A buffer the wire carries, as hex. A game's packets and a lobby chat line are bytes,
+// and hex is the one shape the protocol already has for text - the marshalling asks for
+// the buffer and its length together, and the hex lives until the end of the call that
+// built it, which is as long as anything reads it.
+inline std::string hex_of(const void* data, std::uint32_t size) {
+    static constexpr char kDigits[] = "0123456789abcdef";
+    std::string text;
+    if (data == nullptr || size == 0) {
+        return text;
+    }
+    const unsigned char* bytes = static_cast<const unsigned char*>(data);
+    text.reserve(static_cast<std::size_t>(size) * 2u);
+    for (std::uint32_t index = 0; index < size; ++index) {
+        text.push_back(kDigits[bytes[index] >> 4u]);
+        text.push_back(kDigits[bytes[index] & 0x0Fu]);
+    }
+    return text;
+}
+
+inline int hex_digit(char value) noexcept {
+    if (value >= '0' && value <= '9') {
+        return value - '0';
+    }
+    if (value >= 'a' && value <= 'f') {
+        return value - 'a' + 10;
+    }
+    if (value >= 'A' && value <= 'F') {
+        return value - 'A' + 10;
+    }
+    return -1;
+}
+
+// Writes as much of the hex as the game's buffer has room for, and answers how much that
+// was: the game passed the capacity, and a stub that overran it would be writing into
+// whatever is next to it in the game's own memory.
+inline std::uint32_t bytes_into(void* data, std::uint32_t capacity, const std::string& hex) {
+    unsigned char* target = static_cast<unsigned char*>(data);
+    if (target == nullptr || capacity == 0) {
+        return 0;
+    }
+    std::uint32_t written = 0;
+    for (std::size_t index = 0; index + 1 < hex.size() && written < capacity; index += 2) {
+        const int high = hex_digit(hex[index]);
+        const int low = hex_digit(hex[index + 1]);
+        if (high < 0 || low < 0) {
+            break;
+        }
+        target[written++] = static_cast<unsigned char>((high << 4) | low);
+    }
+    return written;
+}
+
+// A buffer the wire carries, as hex. A game's packets and a lobby chat line are bytes,
+// and hex is the one shape the protocol already has for text. The size is taken as a
+// signed 64-bit value because the SDK declares these lengths both ways - a packet's is
+// a uint32 and a chat line's an int32 - and braces will not narrow.
+class Bytes {
+public:
+    Bytes(const void* data, std::int64_t size)
+        : _hex(hex_of(data, size > 0 ? static_cast<std::uint32_t>(size) : 0u)) {}
+
+    const std::string& text() const noexcept { return _hex; }
+
+private:
+    std::string _hex;
+};
+
+// A buffer the game wants filled in: the reply carries the hex and the stub writes it
+// into the game's own memory, up to the capacity the game passed with the pointer.
+struct BytesOut {
+    void* data = nullptr;
+    std::uint32_t size = 0;
+
+    BytesOut() = default;
+    BytesOut(void* target, std::int64_t capacity)
+        : data(target), size(capacity > 0 ? static_cast<std::uint32_t>(capacity) : 0u) {}
+};
+
+template <> struct Kind<Bytes> {
+    static constexpr bool out() noexcept { return false; }
+
+    static Arg arg(const Bytes& value) noexcept { return wire_cstring(value.text().c_str()); }
+    static Bytes from(const Json& reply) noexcept {
+        (void)reply;
+        return Bytes(nullptr, 0);
+    }
+    static void store(Bytes target, const Json& value) noexcept {
+        (void)target;
+        (void)value;
+    }
+    static Bytes fallback() noexcept { return Bytes(nullptr, 0); }
+};
+
+template <> struct Kind<BytesOut> {
+    static constexpr bool out() noexcept { return true; }
+
+    static Arg arg(const BytesOut& value) noexcept {
+        (void)value;
+        return wire_null();
+    }
+    static BytesOut from(const Json& reply) noexcept {
+        (void)reply;
+        return BytesOut{};
+    }
+    // Called with the parameter the caller passed, which for one of these is the whole
+    // thing: the game's pointer and the room it has, which is why this takes it by value.
+    static void store(BytesOut target, const Json& value) noexcept {
+        bytes_into(target.data, target.size, reply_cstring(value));
+    }
+    static BytesOut fallback() noexcept { return BytesOut{}; }
+};
+
 // A pointer to anything with a kind of its own is an out-parameter: what the
 // caller passed is sent so the backend can see it, and what comes back is
 // written through the pointer only if the backend sent it - which is what makes

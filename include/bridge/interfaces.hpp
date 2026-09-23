@@ -34,6 +34,10 @@ struct InterfaceParam {
     std::string cpp;   // the declaration this resolves to, pointer included
     bool out = false;
     bool opaque = false;  // a buffer the wire can report but not carry
+
+    // For a byte buffer - a kind the wire carries rather than reports - the parameter
+    // that says how long it is, which is the second half of what a buffer needs.
+    std::string length;
 };
 
 struct InterfaceSlot {

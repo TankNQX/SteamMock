@@ -5262,11 +5262,11 @@ public:
     virtual void SetLobbyMemberData(CSteamID steamIDLobby, const char* pchKey, const char* pchValue) {
         steammock::slot<void>(kCall_450, steamIDLobby, pchKey, pchValue);
     }
-    virtual bool SendLobbyChatMsg(CSteamID steamIDLobby, void* pvMsgBody, std::int32_t cubMsgBody) {
-        return steammock::slot<bool>(kCall_451, steamIDLobby, pvMsgBody, cubMsgBody);
+    virtual bool SendLobbyChatMsg(CSteamID steamIDLobby, const void* pvMsgBody, std::int32_t cubMsgBody) {
+        return steammock::slot<bool>(kCall_451, steamIDLobby, steammock::Bytes{pvMsgBody, cubMsgBody}, cubMsgBody);
     }
     virtual std::int32_t GetLobbyChatEntry(CSteamID steamIDLobby, std::int32_t iChatID, CSteamID* pSteamIDUser, void* pvData, std::int32_t cubData, std::int32_t* peChatEntryType) {
-        return steammock::slot<std::int32_t>(kCall_452, steamIDLobby, iChatID, pSteamIDUser, pvData, cubData, peChatEntryType);
+        return steammock::slot<std::int32_t>(kCall_452, steamIDLobby, iChatID, pSteamIDUser, steammock::BytesOut{pvData, cubData}, cubData, peChatEntryType);
     }
     virtual bool RequestLobbyData(CSteamID steamIDLobby) {
         return steammock::slot<bool>(kCall_453, steamIDLobby);
@@ -5440,14 +5440,14 @@ Version_STEAMMUSICREMOTE_INTERFACE_VERSION001 g_STEAMMUSICREMOTE_INTERFACE_VERSI
 // ISteamNetworking SteamNetworking005
 class Version_SteamNetworking005 {
 public:
-    virtual bool SendP2PPacket(CSteamID steamIDRemote, void* pubData, std::uint32_t cubData, std::int32_t eP2PSendType, std::int32_t nChannel) {
-        return steammock::slot<bool>(kCall_521, steamIDRemote, pubData, cubData, eP2PSendType, nChannel);
+    virtual bool SendP2PPacket(CSteamID steamIDRemote, const void* pubData, std::uint32_t cubData, std::int32_t eP2PSendType, std::int32_t nChannel) {
+        return steammock::slot<bool>(kCall_521, steamIDRemote, steammock::Bytes{pubData, cubData}, cubData, eP2PSendType, nChannel);
     }
     virtual bool IsP2PPacketAvailable(std::uint32_t* pcubMsgSize, std::int32_t nChannel) {
         return steammock::slot<bool>(kCall_522, pcubMsgSize, nChannel);
     }
     virtual bool ReadP2PPacket(void* pubDest, std::uint32_t cubDest, std::uint32_t* pcubMsgSize, CSteamID* psteamIDRemote, std::int32_t nChannel) {
-        return steammock::slot<bool>(kCall_523, pubDest, cubDest, pcubMsgSize, psteamIDRemote, nChannel);
+        return steammock::slot<bool>(kCall_523, steammock::BytesOut{pubDest, cubDest}, cubDest, pcubMsgSize, psteamIDRemote, nChannel);
     }
     virtual bool AcceptP2PSessionWithUser(CSteamID steamIDRemote) {
         return steammock::slot<bool>(kCall_524, steamIDRemote);
@@ -5513,14 +5513,14 @@ Version_SteamNetworking005 g_SteamNetworking005;
 // ISteamNetworking SteamNetworking006
 class Version_SteamNetworking006 {
 public:
-    virtual bool SendP2PPacket(CSteamID steamIDRemote, void* pubData, std::uint32_t cubData, std::int32_t eP2PSendType, std::int32_t nChannel) {
-        return steammock::slot<bool>(kCall_521, steamIDRemote, pubData, cubData, eP2PSendType, nChannel);
+    virtual bool SendP2PPacket(CSteamID steamIDRemote, const void* pubData, std::uint32_t cubData, std::int32_t eP2PSendType, std::int32_t nChannel) {
+        return steammock::slot<bool>(kCall_521, steamIDRemote, steammock::Bytes{pubData, cubData}, cubData, eP2PSendType, nChannel);
     }
     virtual bool IsP2PPacketAvailable(std::uint32_t* pcubMsgSize, std::int32_t nChannel) {
         return steammock::slot<bool>(kCall_522, pcubMsgSize, nChannel);
     }
     virtual bool ReadP2PPacket(void* pubDest, std::uint32_t cubDest, std::uint32_t* pcubMsgSize, CSteamID* psteamIDRemote, std::int32_t nChannel) {
-        return steammock::slot<bool>(kCall_523, pubDest, cubDest, pcubMsgSize, psteamIDRemote, nChannel);
+        return steammock::slot<bool>(kCall_523, steammock::BytesOut{pubDest, cubDest}, cubDest, pcubMsgSize, psteamIDRemote, nChannel);
     }
     virtual bool AcceptP2PSessionWithUser(CSteamID steamIDRemote) {
         return steammock::slot<bool>(kCall_524, steamIDRemote);
