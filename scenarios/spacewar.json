@@ -26,7 +26,11 @@
         "SteamAPI_ISteamController_GetActionSetHandle": { "ret": 11 },
         "SteamAPI_ISteamController_GetDigitalActionHandle": { "ret": 22 },
         "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
-        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true }
+        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
+
+        "SteamInternal_GameServer_Init": { "ret": true },
+        "SteamGameServer_GetHSteamUser": { "ret": 1 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 1 }
       }
     }
   },
