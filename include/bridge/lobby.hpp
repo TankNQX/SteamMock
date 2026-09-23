@@ -96,6 +96,12 @@ private:
     std::vector<Lobby> _lobbies;
     std::uint64_t _next_lobby_id = kFirstLobbyId;
     std::uint64_t _next_call = kFirstCallHandle;
+
+    // Where each session's game server says it would be, by Steam id. A game that starts
+    // a server tells the SDK its game port and often passes zero for the address when it
+    // publishes it, expecting Steam to fill both in - so the run has to know both to do
+    // the same. Recorded from the calls that carry them, not asked for.
+    std::vector<std::pair<std::uint64_t, std::uint16_t>> _game_ports;
 };
 
 }  // namespace steammock

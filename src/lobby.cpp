@@ -236,6 +236,11 @@ constexpr const char* kRequestLobbyData = "SteamAPI_ISteamMatchmaking_RequestLob
 constexpr const char* kSetLobbyGameServer = "SteamAPI_ISteamMatchmaking_SetLobbyGameServer";
 constexpr const char* kGetLobbyGameServer = "SteamAPI_ISteamMatchmaking_GetLobbyGameServer";
 constexpr const char* kGetFriendPersonaName = "SteamAPI_ISteamFriends_GetFriendPersonaName";
+constexpr const char* kGameServerInit = "SteamInternal_GameServer_Init";
+
+// 127.0.0.1 the way Steam hands addresses around: host order, so a game that reads it and
+// passes it to inet_ntoa or htonl sees the machine it is standing on.
+constexpr std::uint32_t kLoopback = 0x7F000001u;
 
 }  // namespace
 
@@ -299,6 +304,27 @@ void LobbyWorld::notify_member_change(
 bool LobbyWorld::answer(const Session& session, const std::string& call, const Json& args,
                         Answer& out, std::vector<std::pair<std::uint64_t, Json>>& notifications) {
     const std::uint64_t me = session.profile().steam_id;
+
+    if (call == kGameServerInit) {
+        // Not answered here - the scenario decides whether a game server comes up at all -
+        // but listened to, because the port a game asked for when it started a server is the
+        // port its server has to be reached on when it publishes one without saying where.
+        const std::int64_t port = int_member(args, "usGamePort", 0);
+        if (port > 0) {
+            bool known = false;
+            for (auto& entry : _game_ports) {
+                if (entry.first == me) {
+                    entry.second = static_cast<std::uint16_t>(port);
+                    known = true;
+                    break;
+                }
+            }
+            if (!known) {
+                _game_ports.emplace_back(me, static_cast<std::uint16_t>(port));
+            }
+        }
+        return false;
+    }
 
     if (call == kCreateLobby) {
         Lobby lobby;
@@ -525,11 +551,30 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         lobby->game_server_port =
             static_cast<std::uint16_t>(int_member(args, "unGameServerPort", 0));
         lobby->game_server_id = id_member(args, "steamIDGameServer");
-        // The others hear about it; the game that put the server up already knows.
-        for (const LobbyMember& other : lobby->members) {
-            if (other.steam_id != me) {
-                notifications.emplace_back(other.steam_id, lobby_game_created_payload(*lobby));
+
+        // A game is allowed to publish its server without saying where it is and expect
+        // Steam to fill that in. Spacewar does exactly that, and the client it then sends
+        // to has nothing to dial - which is what "Failed sending data to server" is. The
+        // address a run is reachable at is the machine it is standing on, and the port is
+        // the one the game itself asked for when it started the server.
+        if (lobby->game_server_ip == 0) {
+            lobby->game_server_ip = kLoopback;
+        }
+        if (lobby->game_server_port == 0) {
+            for (const auto& entry : _game_ports) {
+                if (entry.first == me) {
+                    lobby->game_server_port = entry.second;
+                    break;
+                }
             }
+        }
+
+        // Everyone in the room hears about it, including the game that put the server up:
+        // it is a client as well as a host, and the one thing a client needs to connect is
+        // the address in this payload. Steam tells the setter too, and a host that only
+        // heard about the others would have to special-case itself out of its own room.
+        for (const LobbyMember& other : lobby->members) {
+            notifications.emplace_back(other.steam_id, lobby_game_created_payload(*lobby));
         }
         out = from_lobby(Json::boolean(true));
         return true;
