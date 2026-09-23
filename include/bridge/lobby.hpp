@@ -117,6 +117,12 @@ private:
     const P2PPacket* peek_packet(std::uint64_t user, std::int32_t channel) const noexcept;
     void drop_packet(std::uint64_t user, std::int32_t channel);
 
+    // The session behind a Steam id, which is the id itself unless it names a game server,
+    // and whether this pair has already talked - the question Steam's session request hangs
+    // on.
+    std::uint64_t user_of(std::uint64_t id) const noexcept;
+    bool needs_session_request(std::uint64_t from, std::uint64_t to);
+
     std::vector<Lobby> _lobbies;
     std::uint64_t _next_lobby_id = kFirstLobbyId;
     std::uint64_t _next_call = kFirstCallHandle;
@@ -136,6 +142,10 @@ private:
     // recipient. Steam moves these itself and never shows them to anyone, so the only part
     // that has to be modelled is that they arrive whole and in the order they were sent.
     std::vector<std::pair<std::uint64_t, std::vector<P2PPacket>>> _packets;
+
+    // Which pairs have talked, so a game is told the first time somebody it has not spoken
+    // to writes to it - which is what Steam's session request is for.
+    std::vector<std::pair<std::uint64_t, std::uint64_t>> _contacts;
 };
 
 }  // namespace steammock

@@ -23,7 +23,9 @@
     {"name": "LobbyChatMsg_t", "size": 24, "callback": 507, "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDUser"], ["uint8", "m_eChatEntryType"], ["uint32", "m_iChatID"]]},
     {"name": "LobbyDataUpdate_t", "size": 24, "callback": 505, "members": [["uint64", "m_ulSteamIDLobby"], ["uint64", "m_ulSteamIDMember"], ["bool", "m_bSuccess"]]},
     {"name": "SteamServersConnected_t", "size": 1, "callback": 101, "members": []},
-    {"name": "LobbyGameCreated_t", "size": 24, "callback": 509, "members": [["uint64", "m_ulSteamIDLobby"], ["uint32", "m_unIP"], ["uint16", "m_usPort"], ["uint64", "m_ulSteamIDGameServer"]]}
+    {"name": "LobbyGameCreated_t", "size": 24, "callback": 509, "members": [["uint64", "m_ulSteamIDLobby"], ["uint32", "m_unIP"], ["uint16", "m_usPort"], ["uint64", "m_ulSteamIDGameServer"]]},
+    {"name": "P2PSessionRequest_t", "size": 8, "callback": 1202, "members": [["uint64", "m_steamIDRemote"]]},
+    {"name": "P2PSessionConnectFail_t", "size": 16, "callback": 1203, "members": [["uint64", "m_steamIDRemote"], ["uint8", "m_eP2PSessionError"]]}
   ],
   "interfaces": [
     {

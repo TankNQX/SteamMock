@@ -142,6 +142,15 @@ struct LobbyGameCreated_t {
     std::uint64_t m_ulSteamIDGameServer;
 };
 static_assert(sizeof(LobbyGameCreated_t) == 24, "LobbyGameCreated_t has to be the size the SDK's callback pack gives it");
+struct P2PSessionRequest_t {
+    std::uint64_t m_steamIDRemote;
+};
+static_assert(sizeof(P2PSessionRequest_t) == 8, "P2PSessionRequest_t has to be the size the SDK's callback pack gives it");
+struct P2PSessionConnectFail_t {
+    std::uint64_t m_steamIDRemote;
+    std::uint8_t m_eP2PSessionError;
+};
+static_assert(sizeof(P2PSessionConnectFail_t) == 16, "P2PSessionConnectFail_t has to be the size the SDK's callback pack gives it");
 #pragma pack(pop)
 
 }  // namespace
@@ -8848,6 +8857,25 @@ void fill_LobbyGameCreated_t(const Json& fields, void* buffer) noexcept {
     std::memcpy(buffer, &value, sizeof(value));
 }
 
+void fill_P2PSessionRequest_t(const Json& fields, void* buffer) noexcept {
+    P2PSessionRequest_t value{};
+    if (const Json* field = fields.find("m_steamIDRemote")) {
+        value.m_steamIDRemote = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    std::memcpy(buffer, &value, sizeof(value));
+}
+
+void fill_P2PSessionConnectFail_t(const Json& fields, void* buffer) noexcept {
+    P2PSessionConnectFail_t value{};
+    if (const Json* field = fields.find("m_steamIDRemote")) {
+        value.m_steamIDRemote = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_eP2PSessionError")) {
+        value.m_eP2PSessionError = static_cast<std::uint8_t>(field->as_uint64());
+    }
+    std::memcpy(buffer, &value, sizeof(value));
+}
+
 const steammock::EventInfo kEvents[] = {
     {"LobbyCreated_t",
      sizeof(LobbyCreated_t),
@@ -8881,6 +8909,14 @@ const steammock::EventInfo kEvents[] = {
      sizeof(LobbyGameCreated_t),
      509,
      &fill_LobbyGameCreated_t},
+    {"P2PSessionRequest_t",
+     sizeof(P2PSessionRequest_t),
+     1202,
+     &fill_P2PSessionRequest_t},
+    {"P2PSessionConnectFail_t",
+     sizeof(P2PSessionConnectFail_t),
+     1203,
+     &fill_P2PSessionConnectFail_t},
 };
 
 }  // namespace

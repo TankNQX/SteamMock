@@ -215,6 +215,26 @@ Json lobby_game_created_payload(const Lobby& lobby) {
 constexpr std::uint32_t kMemberEntered = 0x0001;
 constexpr std::uint32_t kMemberLeft = 0x0002;
 
+// The id an anonymous game server is known by, told from a player's by the account type in
+// the top bits - which is the only thing the wire carries about either.
+constexpr std::uint64_t kGameServerAccountType = 4;
+
+bool is_game_server_id(std::uint64_t id) noexcept {
+    return ((id >> 52) & 0xFu) == kGameServerAccountType;
+}
+
+// "somebody wants to talk to you": the callback a game answers by accepting the session,
+// which is what a server does before it will serve whoever just knocked.
+Json session_request_payload(std::uint64_t remote) {
+    Json fields = Json::object();
+    fields.set("m_steamIDRemote", id_value(remote));
+
+    Json event = Json::object();
+    event.set("event", Json::string("P2PSessionRequest_t"));
+    event.set("in", std::move(fields));
+    return event;
+}
+
 constexpr const char* kCreateLobby = "SteamAPI_ISteamMatchmaking_CreateLobby";
 constexpr const char* kRequestLobbyList = "SteamAPI_ISteamMatchmaking_RequestLobbyList";
 constexpr const char* kGetLobbyByIndex = "SteamAPI_ISteamMatchmaking_GetLobbyByIndex";
@@ -312,6 +332,28 @@ std::uint64_t LobbyWorld::game_server_id_of(std::uint64_t user) {
     const std::uint64_t minted = kFirstGameServerId + _game_server_ids.size();
     _game_server_ids.emplace_back(user, minted);
     return minted;
+}
+
+std::uint64_t LobbyWorld::user_of(std::uint64_t id) const noexcept {
+    for (const auto& entry : _game_server_ids) {
+        if (entry.second == id) {
+            return entry.first;
+        }
+    }
+    return id;
+}
+
+bool LobbyWorld::needs_session_request(std::uint64_t from, std::uint64_t to) {
+    for (const auto& pair : _contacts) {
+        if (pair.first == from && pair.second == to) {
+            return false;  // this direction has already been announced
+        }
+        if (pair.first == to && pair.second == from) {
+            return false;  // they have talked, so Steam would not ask again
+        }
+    }
+    _contacts.emplace_back(from, to);
+    return true;
 }
 
 void LobbyWorld::queue_packet(std::uint64_t to, std::uint64_t from, std::int32_t channel,
@@ -643,6 +685,13 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
                 }
             }
         }
+        if (lobby->game_server_id == 0) {
+            // The id is the other half of the same thing. A client addresses its packets to
+            // the game server's own id, and a payload that leaves it zero leaves the client
+            // it reaches with nothing to dial - which is why a guest that was told about a
+            // game server sat on its lobby screen and never tried.
+            lobby->game_server_id = game_server_id_of(me);
+        }
 
         // Everyone in the room hears about it, including the game that put the server up:
         // it is a client as well as a host, and the one thing a client needs to connect is
@@ -697,9 +746,23 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         // "bytes" kind and the marshalling in bridge/synth.hpp. Nothing is checked about the
         // destination: Steam would refuse a peer it does not know, but a run that did would
         // be inventing a rule the games cannot see anyway.
-        queue_packet(id_member(args, "steamIDRemote"), me,
-                     static_cast<std::int32_t>(int_member(args, "nChannel", 0)),
-                     string_member(args, "pubData"));
+        const std::uint64_t to = id_member(args, "steamIDRemote");
+        const std::int32_t channel = static_cast<std::int32_t>(int_member(args, "nChannel", 0));
+        // Who the receiver is told this came from: a client is a player to the server it
+        // talks to, and a server is the game server to the client that dialled it - the id
+        // the other side knows it by, and the one it can answer to.
+        const std::uint64_t mine = is_game_server_id(to) ? me : known_game_server_id(me);
+        const std::uint64_t from = mine != 0 ? mine : me;
+        const std::uint64_t recipient = user_of(to);
+
+        queue_packet(to, from, channel, string_member(args, "pubData"));
+
+        // Steam asks a game whether it will talk to a peer it has not heard from before, and
+        // a server that is never asked has no client to hand the packet to - which is what
+        // "Received unknown message on our listen socket" is.
+        if (needs_session_request(from, recipient)) {
+            notifications.emplace_back(recipient, session_request_payload(from));
+        }
         out = from_lobby(Json::boolean(true));
         return true;
     }
