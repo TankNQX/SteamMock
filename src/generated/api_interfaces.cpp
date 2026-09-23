@@ -97,6 +97,17 @@ struct LobbyCreated_t {
     std::uint64_t m_ulSteamIDLobby;
 };
 static_assert(sizeof(LobbyCreated_t) == 12, "LobbyCreated_t has to be the size the SDK's callback pack gives it");
+struct LobbyMatchList_t {
+    std::uint32_t m_nLobbiesMatching;
+};
+static_assert(sizeof(LobbyMatchList_t) == 4, "LobbyMatchList_t has to be the size the SDK's callback pack gives it");
+struct LobbyEnter_t {
+    std::uint64_t m_ulSteamIDLobby;
+    std::uint32_t m_rgfChatPermissions;
+    bool m_bLocked;
+    std::int32_t m_EChatRoomEnterResponse;
+};
+static_assert(sizeof(LobbyEnter_t) == 20, "LobbyEnter_t has to be the size the SDK's callback pack gives it");
 #pragma pack(pop)
 
 }  // namespace
@@ -8707,10 +8718,41 @@ void fill_LobbyCreated_t(const Json& fields, void* buffer) noexcept {
     std::memcpy(buffer, &value, sizeof(value));
 }
 
+void fill_LobbyMatchList_t(const Json& fields, void* buffer) noexcept {
+    LobbyMatchList_t value{};
+    if (const Json* field = fields.find("m_nLobbiesMatching")) {
+        value.m_nLobbiesMatching = static_cast<std::uint32_t>(field->as_uint64());
+    }
+    std::memcpy(buffer, &value, sizeof(value));
+}
+
+void fill_LobbyEnter_t(const Json& fields, void* buffer) noexcept {
+    LobbyEnter_t value{};
+    if (const Json* field = fields.find("m_ulSteamIDLobby")) {
+        value.m_ulSteamIDLobby = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_rgfChatPermissions")) {
+        value.m_rgfChatPermissions = static_cast<std::uint32_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_bLocked")) {
+        value.m_bLocked = static_cast<bool>(field->as_bool());
+    }
+    if (const Json* field = fields.find("m_EChatRoomEnterResponse")) {
+        value.m_EChatRoomEnterResponse = static_cast<std::int32_t>(field->as_int64());
+    }
+    std::memcpy(buffer, &value, sizeof(value));
+}
+
 const steammock::EventInfo kEvents[] = {
     {"LobbyCreated_t",
      sizeof(LobbyCreated_t),
      &fill_LobbyCreated_t},
+    {"LobbyMatchList_t",
+     sizeof(LobbyMatchList_t),
+     &fill_LobbyMatchList_t},
+    {"LobbyEnter_t",
+     sizeof(LobbyEnter_t),
+     &fill_LobbyEnter_t},
 };
 
 }  // namespace

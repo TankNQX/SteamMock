@@ -16,7 +16,9 @@
     {"name": "SteamPartyBeaconLocation_t", "members": [["ESteamPartyBeaconLocationType", "m_eType"], ["uint64", "m_ulLocationID"]], "size": 12}
   ],
   "events": [
-    {"name": "LobbyCreated_t", "members": [["int32", "m_eResult"], ["uint64", "m_ulSteamIDLobby"]], "size": 12}
+    {"name": "LobbyCreated_t", "members": [["int32", "m_eResult"], ["uint64", "m_ulSteamIDLobby"]], "size": 12},
+    {"name": "LobbyMatchList_t", "members": [["uint32", "m_nLobbiesMatching"]], "size": 4},
+    {"name": "LobbyEnter_t", "members": [["uint64", "m_ulSteamIDLobby"], ["uint32", "m_rgfChatPermissions"], ["bool", "m_bLocked"], ["int32", "m_EChatRoomEnterResponse"]], "size": 20}
   ],
   "interfaces": [
     {

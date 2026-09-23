@@ -28,6 +28,39 @@
         "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
         "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
 
+        "SteamAPI_ISteamMatchmaking_CreateLobby": {
+          "ret": 1001,
+          "then": [
+            { "event": "LobbyCreated_t", "in": { "m_eResult": 1, "m_ulSteamIDLobby": 109775241234567890 } }
+          ]
+        },
+        "SteamAPI_ISteamMatchmaking_RequestLobbyList": {
+          "ret": 1002,
+          "then": [ { "event": "LobbyMatchList_t", "in": { "m_nLobbiesMatching": 1 } } ]
+        },
+        "SteamAPI_ISteamMatchmaking_JoinLobby": {
+          "ret": 1003,
+          "then": [
+            {
+              "event": "LobbyEnter_t",
+              "in": {
+                "m_ulSteamIDLobby": 109775241234567890,
+                "m_rgfChatPermissions": 0,
+                "m_bLocked": false,
+                "m_EChatRoomEnterResponse": 1
+              }
+            }
+          ]
+        },
+        "SteamAPI_ISteamMatchmaking_GetLobbyByIndex": { "ret": 109775241234567890 },
+        "SteamAPI_ISteamMatchmaking_GetLobbyData": { "ret": "steammock" },
+        "SteamAPI_ISteamMatchmaking_GetLobbyDataCount": { "ret": 1 },
+        "SteamAPI_ISteamMatchmaking_GetNumLobbyMembers": { "ret": 1 },
+        "SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex": { "ret": 76561198000000001 },
+        "SteamAPI_ISteamMatchmaking_GetLobbyOwner": { "ret": 76561198000000001 },
+        "SteamAPI_ISteamMatchmaking_GetLobbyMemberLimit": { "ret": 4 },
+        "SteamAPI_ISteamMatchmaking_GetLobbyMemberData": { "ret": "DebugPlayer" },
+
         "SteamInternal_GameServer_Init": { "ret": true },
         "SteamGameServer_GetHSteamUser": { "ret": 1 },
         "SteamGameServer_GetHSteamPipe": { "ret": 1 }
