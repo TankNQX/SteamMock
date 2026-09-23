@@ -20,6 +20,12 @@ namespace steambridge {
 //  it before it will generate anything from it. It is the input to the synthesized
 //  objects - see bridge/synth.hpp for what they are and why a generated slot body
 //  is one line.
+//
+//  A version's slots are rows rather than one object per slot, which is what
+//  keeps a file of two thousand slots to two thousand lines. The shape of a row
+//  is written down where it is read - see src/interfaces.cpp, "Reading a slot" -
+//  and the long version is a method, the type it returns, its parameters, and an
+//  object of notes for the rare slot that needs one.
 
 struct InterfaceParam {
     std::string name;
@@ -38,6 +44,13 @@ struct InterfaceSlot {
     std::string returns_cpp;  // "void", or the declaration the return resolves to
     std::vector<InterfaceParam> params;
     bool destructor = false;
+
+    // Recorded from the file and carried through the generator, but nothing
+    // writes a declaration from either of them: they say what the wire cannot
+    // carry, which is a fact about the SDK's method rather than about the C++
+    // this writes for it. They are kept because the file is the record.
+    bool private_api = false;            // STEAM_PRIVATE_API: owns a slot, has no flat name
+    bool returns_unmarshalable = false;  // the wire cannot carry what is returned
 };
 
 struct InterfaceVersion {

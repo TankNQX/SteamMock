@@ -89,7 +89,7 @@ did does it hand out one of ours. That object is a singleton per version string,
 `gen/steam_interfaces.json` - the layouts imported from SDK headers and checked against real
 `steam_api.dll` images (see [development.md](development.md#interface-layouts)).
 
-Two decisions keep that from being 2,115 hand-written functions:
+Three decisions keep that from being 2,115 hand-written functions:
 
 * **The declarations speak the wire's types, not an SDK's.** An enum is an int, `CSteamID` is eight
   bytes, a structure returned by value is as many bytes as the file says. Nothing from an SDK is
@@ -97,6 +97,12 @@ Two decisions keep that from being 2,115 hand-written functions:
   *type* a declaration used, and each kind appears once (`bridge/synth.hpp`) rather than once per
   slot. That is what lets a generated slot body be one line, with the compiler still laying out the
   vtable and the calling convention.
+* **What does not differ per slot is written once.** Building the request, sending it and reading the
+  reply has nothing to do with any one signature, so it is one out-of-line function
+  (`src/synth.cpp`) rather than a copy inlined into every shape of call - which is what it cost as a
+  header: a copy in each of the 374 shapes the file declares, and 700 KB of the DLL's code. The calls
+  themselves are pooled too: the same call with the same arguments declared in six versions is one
+  entry in the generated file, and the linker folds the identical thunks that reach it.
 * **One name per call, whichever route reached it.** A slot is named what the newest imported SDK names
   that method with that signature - not what the game's own SDK called it, since the SDKs renamed these
   along the way: 1.47 says `SteamAPI_ISteamUserStats_GetStat` for the int32 overload where 1.51 and

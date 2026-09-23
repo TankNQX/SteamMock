@@ -9,10 +9,10 @@ the [README](../README.md); for how the two halves talk, see [protocol.md](proto
 | Path | What lives there |
 | --- | --- |
 | `gen/steam_api.idl.json` | The flat API surface the stub exports. **The one file to edit to add a call.** |
-| `gen/steam_interfaces.json` | The interface layouts the stub hands out: names, version strings, slot order and argument kinds. Hand-maintained, and validated by the generator - see [Interface layouts](#interface-layouts). |
+| `gen/steam_interfaces.json` | The interface layouts the stub hands out: names, version strings, slot order and argument kinds. Hand-maintained, one row per slot, and validated by the generator - see [Interface layouts](#interface-layouts). |
 | `src/idl.cpp`, `src/codegen_main.cpp` | `steambridge_codegen` turns the IDL into the trampolines, the `.def` and the surface table. |
 | `src/generated/` | Generated and committed - the build needs nothing to regenerate them. `--check` fails if stale. |
-| `include/bridge/`, `src/` | Protocol, JSON, transport, client, the DLL entry point. |
+| `include/bridge/`, `src/` | Protocol, JSON, transport, client, the slot marshalling in `synth.cpp`, the DLL entry point. |
 | `src/session.cpp`, `src/scenario.cpp` | The backend's decisions: per-game state, and the scenario that overrides it. |
 | `src/server.cpp`, `src/backend_main.cpp` | The loopback server, and the console front end for it. |
 | `src/gui_main.cpp` | The live view. Optional, behind `STEAMBRIDGE_BUILD_GUI`. |
@@ -118,6 +118,25 @@ game reads the wrong way. The entries were laid out by importing SDK headers onc
 a time, oldest first, one version string per entry), and what that established is what a hand edit has
 to keep to.
 
+A version's slots are rows - one per slot, in vtable order - rather than an object per slot, which is
+what keeps a file of two thousand slots to two thousand lines:
+
+```json
+["GetInstalledApps", "uint32", [["pvecAppID", "uint32", "out"], ["unMaxAppIDs", "uint32"]]]
+["GetStat", "bool", [["steamIDUser", "CSteamID"], ["pchName", "cstring"]],
+ {"call": "SteamAPI_ISteamUserStats_GetStatInt32"}]
+["~"]
+```
+
+A row is a method and the type it returns, then its parameters, then an object of notes for the rare
+slot that needs one. A parameter is a name and a type, and `out` or `unmarshalable` after it. A type is
+one name - a kind from the tables in `src/interfaces.cpp`, or a value class or structure the file
+declares - so the file says `CSteamID` rather than a kind *and* the type behind it, and a name that is
+neither is refused. `["~"]` is the vtable's destructor slot, which is where it sits in the version
+rather than anything the row says. The `call` in a note is the flat name, for the slots where the
+method does not imply it; without one the generator derives `SteamAPI_<interface>_<method>`. The whole
+shape is written down where it is read: `src/interfaces.cpp`, "Reading a slot".
+
 The SDKs are never vendored here, and are not needed to build. Unreal Engine bundles five of them,
 under `Engine/Source/ThirdParty/Steamworks/Steamv1*`: headers for 1.46 through 1.57 and a 32-bit
 `steam_api.dll` for 1.51, 1.53 and 1.57. The generation Spacewar was built against - `SteamUser019`,
@@ -179,10 +198,12 @@ taken from an import:
 * one class per version string, whose virtuals mirror the interface's slots in order, so the vtable
   is the compiler's - and with it the calling convention, which is the part that has to be exactly
   right;
-* for each slot, one line: the signature from the kinds in the file, the index of its descriptor, and
-  its argument names. The names go over the wire as data, and the marshalling is in
-  `include/bridge/synth.hpp` - a `Kind<>` trait per wire kind plus one variadic body - so adding a
-  version adds lines to a table rather than a body to write;
+* one line per slot where it fits: the signature, and the pooled call it names. A `Kind<>` trait per
+  wire kind packs each argument as the signature says, and the marshalling itself is one out-of-line
+  function in `src/synth.cpp` - so adding a version adds rows to a table rather than a body to write;
+* the pooled calls and argument-name lists those rows name. The same call with the same arguments
+  declared in six versions is one entry, which is what keeps a file of two thousand slots to a row
+  per slot rather than a table and a class body per slot;
 * the value classes and structures the declarations name, with `static_assert`s against the sizes the
   file carries. A size that is wrong in the file is then a build error, not a call the game reads the
   wrong way;
@@ -196,8 +217,10 @@ taken from an import:
   pchVersion )` family: a slot that returns an interface pointer *and* takes a version string gets the
   object of ours for it when the backend declines.
 
-Adding a version is therefore an edit to that file and one command. The slot's `call` is the name the
-newest SDK gave that method, so the backend answers a call the same way whichever route it arrived by.
+Adding a version is therefore an edit to that file and one command. A row records a call name only
+where the method does not imply it - an overload, or a `STEAM_FLAT_NAME` the class header states - and
+the name is the one the newest SDK gave that method, so the backend answers a call the same way
+whichever route it arrived by.
 
 ### What the file does not cover
 

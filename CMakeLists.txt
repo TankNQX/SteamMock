@@ -75,6 +75,7 @@ target_link_libraries(steambridge_backend PUBLIC steambridge_core)
 # ---------------------------------------------------------------------------
 add_library(${STEAMBRIDGE_STUB_NAME} SHARED
     src/dllmain.cpp
+    src/synth.cpp
     src/generated/api_stub.cpp
     src/generated/api_interfaces.cpp
     src/generated/steam_api_exports.def
@@ -177,6 +178,13 @@ if(STEAMBRIDGE_BUILD_TESTS)
         STEAMBRIDGE_SCENARIO_PATH="${CMAKE_CURRENT_SOURCE_DIR}/scenarios/example.json")
     add_test(NAME backend COMMAND test_backend)
 
+    # Reading the interface layouts: the row format, and what it refuses. The
+    # generator is the only thing between a hand edit and a vtable a game reads
+    # the wrong way, so what it accepts is pinned here rather than assumed.
+    add_executable(test_interfaces tests/test_interfaces.cpp src/interfaces.cpp)
+    target_link_libraries(test_interfaces PRIVATE steambridge_core)
+    add_test(NAME interfaces COMMAND test_interfaces)
+
     # The server itself: a real port, a real connection through the stub's own
     # transport, and the snapshots and summary a live view would draw.
     add_executable(test_server tests/test_server.cpp)
@@ -224,7 +232,8 @@ set(STEAMBRIDGE_TARGETS
     steambridge_codegen
 )
 if(STEAMBRIDGE_BUILD_TESTS)
-    list(APPEND STEAMBRIDGE_TARGETS test_protocol test_backend test_server fake_game test_end_to_end)
+    list(APPEND STEAMBRIDGE_TARGETS test_protocol test_backend test_interfaces test_server
+         fake_game test_end_to_end)
 endif()
 if(STEAMBRIDGE_BUILD_GUI)
     list(APPEND STEAMBRIDGE_TARGETS steambridge_gui)

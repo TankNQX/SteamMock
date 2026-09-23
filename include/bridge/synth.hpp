@@ -21,7 +21,7 @@ namespace steambridge {
 //  flat trampoline, so the stub answers them with objects of its own, built from
 //  gen/steam_interfaces.json.
 //
-//  Two things make that cheaper than it looks:
+//  Three things make that cheaper than it looks:
 //
 //  * The generated declarations speak the wire's types rather than an SDK's - an
 //    enum is an int, CSteamID is eight bytes, a structure returned by value is as
@@ -33,6 +33,12 @@ namespace steambridge {
 //    that differs per slot is its name and its parameter names, and those are
 //    data - so a generated slot body is one line, and the compiler still lays out
 //    the vtable and the calling convention.
+//  * A slot packs its arguments into the wire form below and hands them to one
+//    out-of-line function, `run_slot`, which builds the request and reads the
+//    reply. A signature still owns its packing, which is where the calling
+//    convention lives - but the JSON machinery exists once in the DLL rather
+//    than once per signature, which is what keeps a wide interface file from
+//    writing a fresh copy of it into every shape of call it declares.
 //
 //  Nothing here answers anything: a slot forwards to the backend exactly like a
 //  trampoline does, and what the backend declines falls back to the same default
@@ -56,6 +62,54 @@ struct InterfaceVersion {
 inline const char kEmptyText[] = "";
 
 // ---------------------------------------------------------------------------
+//  One argument, packed.
+// ---------------------------------------------------------------------------
+//  `bits` is the value the wire carries and `wire` says how to read it: an
+//  integer, a boolean, the bits of a double, or the address of the text. There
+//  is no kind for a pointer or for a value class, because the protocol carries
+//  neither - an address is an integer and CSteamID is the one integer it is -
+//  and what an argument *is* has already been decided by the type it was
+//  declared with, which is the one place that knows.
+//
+//  A null pointer is not a wire kind: `Kind<T*>::arg` packs the pointed-to value
+//  and a null there is `wire_null`, which is the same null the wire has for a
+//  value nobody could send.
+
+enum class Wire : std::uint8_t { null_value, boolean, integer, real, cstring };
+
+struct Arg {
+    std::uint64_t bits;
+    Wire wire;
+};
+
+inline Arg wire_null() noexcept { return {0, Wire::null_value}; }
+inline Arg wire_bool(bool value) noexcept { return {value ? 1u : 0u, Wire::boolean}; }
+
+// The two integer spellings differ in the cast at the call site, not here: one
+// sign-extends and one zero-extends, and widening a value the wrong way is a
+// different number on the wire.
+inline Arg wire_int(std::int64_t value) noexcept {
+    return {static_cast<std::uint64_t>(value), Wire::integer};
+}
+inline Arg wire_uint(std::uint64_t value) noexcept { return {value, Wire::integer}; }
+
+inline Arg wire_real(double value) noexcept {
+    Arg arg{0, Wire::real};
+    std::memcpy(&arg.bits, &value, sizeof(value));
+    return arg;
+}
+
+// An address travels as the integer it is, which is what the protocol has for a
+// handle no side can dereference.
+inline Arg wire_pointer(const void* value) noexcept {
+    return {reinterpret_cast<std::uint64_t>(value), Wire::integer};
+}
+
+inline Arg wire_cstring(const char* value) noexcept {
+    return {reinterpret_cast<std::uint64_t>(value), Wire::cstring};
+}
+
+// ---------------------------------------------------------------------------
 //  The kind a C++ type travels as.
 // ---------------------------------------------------------------------------
 //  `in` is what the game passed, `from` is the return value the reply carries,
@@ -77,15 +131,15 @@ template <class T, class = void> struct Kind {
 
     static constexpr bool out() noexcept { return false; }
 
-    static Json in(T value) noexcept {
+    static Arg arg(T value) noexcept {
         if constexpr (std::is_same_v<T, bool>) {
-            return arg_bool(value);
+            return wire_bool(value);
         } else if constexpr (std::is_floating_point_v<T>) {
-            return arg_real(static_cast<double>(value));
+            return wire_real(static_cast<double>(value));
         } else if constexpr (std::is_signed_v<T>) {
-            return arg_int(static_cast<std::int64_t>(value));
+            return wire_int(static_cast<std::int64_t>(value));
         } else {
-            return arg_uint(static_cast<std::uint64_t>(value));
+            return wire_uint(static_cast<std::uint64_t>(value));
         }
     }
 
@@ -131,7 +185,7 @@ template <> struct Kind<void> {
 template <> struct Kind<const char*> {
     static constexpr bool out() noexcept { return false; }
 
-    static Json in(const char* value) { return arg_cstring(value); }
+    static Arg arg(const char* value) noexcept { return wire_cstring(value); }
     static const char* from(const Json& reply) { return reply_cstring(reply, kEmptyText); }
     static const char* fallback() noexcept { return kEmptyText; }
 };
@@ -140,7 +194,7 @@ template <> struct Kind<const char*> {
 template <> struct Kind<void*> {
     static constexpr bool out() noexcept { return false; }
 
-    static Json in(const void* value) noexcept { return arg_pointer(value); }
+    static Arg arg(const void* value) noexcept { return wire_pointer(value); }
     static void* from(const Json& reply) noexcept { return reply_pointer(reply); }
     static void* fallback() noexcept { return nullptr; }
 };
@@ -149,11 +203,14 @@ template <> struct Kind<void*> {
 // caller passed is sent so the backend can see it, and what comes back is
 // written through the pointer only if the backend sent it - which is what makes
 // "answer only the calls you care about" work for out-parameters too.
+//
+// Sending it is the value it points at, widened by that type's own kind, so the
+// pointer itself has a kind only when there is nothing to point at.
 template <class T> struct Kind<T*, void> {
     static constexpr bool out() noexcept { return true; }
 
-    static Json in(T* value) noexcept {
-        return value != nullptr ? Kind<T>::in(*value) : Json::null();
+    static Arg arg(T* value) noexcept {
+        return value != nullptr ? Kind<T>::arg(*value) : wire_null();
     }
 
     static void store(T* target, const Json& value) noexcept { Kind<T>::store(target, value); }
@@ -169,6 +226,16 @@ template <class T> struct Kind<T*, void> {
 inline const char* name_at(const SlotInfo& info, std::size_t index) noexcept {
     return info.parameters != nullptr ? info.parameters[index] : "";
 }
+
+// One call, marshalled: the request carries the argument names the descriptor
+// holds and the values as packed, and the reply is left for the caller to read.
+// False means nobody answered and the caller falls back to a default.
+//
+// It is defined in synth.cpp rather than here, once, because the work it does -
+// building a request, sending it, parsing what came back - has nothing to do
+// with any one signature, and leaving it in the header would write a copy of it
+// into every shape of call the generated file declares.
+bool run_slot(const SlotInfo& info, const Arg* args, std::size_t count, Json& reply) noexcept;
 
 template <class Parameter>
 void store_out(const SlotInfo& info, std::size_t index, const Json& reply,
@@ -189,17 +256,14 @@ void store_out(const SlotInfo& info, std::size_t index, const Json& reply,
 template <class Return, class... Parameters>
 Return slot(const SlotInfo& info, Parameters... parameters) noexcept {
     try {
-        Json args = Json::object();
+        const Arg packed[sizeof...(Parameters) + 1] = {Kind<Parameters>::arg(parameters)...};
         Json reply;
 
-        std::size_t index = 0;
-        (args.set(name_at(info, index++), Kind<Parameters>::in(parameters)), ...);
-
-        if (!invoke(info.call, args, reply)) {
+        if (!run_slot(info, packed, sizeof...(Parameters), reply)) {
             return Kind<Return>::fallback();
         }
 
-        index = 0;
+        std::size_t index = 0;
         (store_out(info, index++, reply, parameters), ...);
         return Kind<Return>::from(reply);
     } catch (...) {

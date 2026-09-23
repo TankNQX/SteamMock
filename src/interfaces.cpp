@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdio>
+#include <map>
 #include <set>
 #include <string>
 #include <utility>
@@ -221,6 +222,183 @@ bool read_size(const Json& object, int& out, std::string& error, const std::stri
     return true;
 }
 
+// ---------------------------------------------------------------------------
+//  Reading a slot
+// ---------------------------------------------------------------------------
+//  A version's slots are rows, one per slot, in vtable order:
+//
+//    ["GetSteamID", "CSteamID"]
+//    ["GetInstalledApps", "uint32", [["pvecAppID", "uint32", "out"], ["unMaxAppIDs", "uint32"]]]
+//    ["GetStat", "bool", [["steamIDUser", "CSteamID"], ["pchName", "cstring"]],
+//     {"call": "SteamAPI_ISteamUserStats_GetStatInt32"}]
+//    ["~"]                                  the vtable's destructor slot
+//    ["~", {"call": "..."}]                 the same, with the name the SDK gives it
+//
+//  A type is one name - a kind from the table above, or a value class or a
+//  structure this file declares - so the file says "CSteamID" rather than a kind
+//  and a type behind it. A parameter's trailing strings are `out` and
+//  `unmarshalable`, and a fourth row element is the rare slot that needs more:
+//  the call name when it is not the flat name the method implies, or what the
+//  wire cannot carry.
+//
+//  `named` is the value classes and structures read above, which is what tells a
+//  type name from a kind.
+
+bool resolve_type(const std::string& name,
+                  const std::vector<std::pair<std::string, std::string>>& named, std::string& kind,
+                  std::string& decl, std::string& error, const std::string& where) {
+    if (name == "void") {
+        kind = "void";
+        decl.clear();
+        return true;
+    }
+    if (find_kind(name) != nullptr) {
+        kind = name;
+        decl.clear();
+        return true;
+    }
+    for (const std::pair<std::string, std::string>& entry : named) {
+        if (entry.first == name) {
+            kind = entry.second;  // "value" or "struct"
+            decl = name;
+            return true;
+        }
+    }
+    error = where + ": '" + name + "' is neither a wire kind nor a type this file declares";
+    return false;
+}
+
+bool read_param(const Json& row, const std::vector<std::pair<std::string, std::string>>& named,
+                InterfaceParam& out, std::string& error, const std::string& where) {
+    if (!row.is_array() || row.items().size() < 2u || !row.items()[0].is_string() ||
+        !row.items()[1].is_string()) {
+        error = where + ": a parameter is [name, type], and 'out' or 'unmarshalable' after it";
+        return false;
+    }
+    out.name = row.items()[0].as_string();
+    const std::string param_where = where + "." + out.name;
+    if (!resolve_type(row.items()[1].as_string(), named, out.kind, out.decl, error, param_where)) {
+        return false;
+    }
+    for (std::size_t index = 2; index < row.items().size(); ++index) {
+        const Json& flag = row.items()[index];
+        if (!flag.is_string()) {
+            error = param_where + ": 'out' and 'unmarshalable' are written as strings";
+            return false;
+        }
+        const std::string text = flag.as_string();
+        if (text == "out") {
+            out.out = true;
+        } else if (text == "unmarshalable") {
+            out.opaque = true;
+        } else {
+            error = param_where + ": '" + text + "' is neither 'out' nor 'unmarshalable'";
+            return false;
+        }
+    }
+    if (out.out && (out.kind == "cstring" || out.kind == "opaque_ptr")) {
+        error = param_where + ": an out parameter of kind '" + out.kind +
+                "' is a buffer the wire cannot carry";
+        return false;
+    }
+    if (!declared_type(out.kind, out.decl, out.cpp, error, param_where)) {
+        return false;
+    }
+    if (out.out) {
+        out.cpp += "*";
+    }
+    return true;
+}
+
+// What a row says beyond its signature: the call name when it is not the one the
+// method implies, whether the SDK keeps the method private, and whether the wire
+// cannot carry what is returned. A destructor's row may carry the same object,
+// which is how a version that has a flat name for its destructor records it.
+bool read_notes(const Json& notes, InterfaceSlot& out, std::string& error,
+                const std::string& where) {
+    if (!notes.is_object()) {
+        error = where + ": what a row says beyond its signature is an object of notes";
+        return false;
+    }
+    return read_string(notes, "call", false, out.call, error, where) &&
+           read_flag(notes, "private", out.private_api, error, where) &&
+           read_flag(notes, "unmarshalable", out.returns_unmarshalable, error, where);
+}
+
+// One slot row. `interface_name` is the version's own name, which is what a call
+// name is derived from when the row does not record one.
+bool read_slot(const Json& row, const std::string& interface_name,
+               const std::vector<std::pair<std::string, std::string>>& named, InterfaceSlot& out,
+               std::string& error, const std::string& where) {
+    if (!row.is_array() || row.items().empty() || !row.items()[0].is_string()) {
+        error = where + ": a slot is a row - [method, returns] or [method, returns, params], " +
+                "or [\"~\"] for the destructor";
+        return false;
+    }
+    const std::vector<Json>& items = row.items();
+    const std::string head = items[0].as_string();
+
+    if (head == "~") {
+        // The destructor owns a slot and names no call of its own. Where it sits
+        // is what the row's position says, which is first in both versions that
+        // have one.
+        out.destructor = true;
+        out.returns = "void";
+        out.returns_cpp = "void";
+        if (items.size() > 2u) {
+            error = where + ": the destructor row is [\"~\"] and at most one object of notes";
+            return false;
+        }
+        return items.size() == 1u || read_notes(items[1], out, error, where);
+    }
+
+    const std::string slot_where = where + " (" + head + ")";
+    if (items.size() < 2u || !items[1].is_string()) {
+        error = slot_where + ": a slot needs the type it returns";
+        return false;
+    }
+    out.method = head;
+    if (!resolve_type(items[1].as_string(), named, out.returns, out.returns_decl, error,
+                      slot_where)) {
+        return false;
+    }
+    out.returns_cpp = "void";
+    if (out.returns != "void" &&
+        !declared_type(out.returns, out.returns_decl, out.returns_cpp, error, slot_where)) {
+        return false;
+    }
+
+    if (items.size() > 2u && !items[2].is_null()) {
+        if (!items[2].is_array()) {
+            error = slot_where + ": a slot's parameters are a list of rows";
+            return false;
+        }
+        for (const Json& declared : items[2].items()) {
+            InterfaceParam param;
+            if (!read_param(declared, named, param, error, slot_where)) {
+                return false;
+            }
+            out.params.push_back(std::move(param));
+        }
+    }
+
+    if (items.size() > 3u && !read_notes(items[3], out, error, slot_where)) {
+        return false;
+    }
+    if (items.size() > 4u) {
+        error = slot_where + ": a slot row carries a method, a return type, its parameters " +
+                "and at most one object of notes";
+        return false;
+    }
+
+    // The flat name the call travels under, which is the method's own unless the
+    // row recorded the one an overload or an implemented-in-terms-of threw away.
+    if (out.call.empty()) {
+        out.call = "SteamAPI_" + interface_name + "_" + out.method;
+    }
+    return true;
+}
+
 }  // namespace
 
 bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& error) {
@@ -289,6 +467,17 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
         }
     }
 
+    // The names a slot can write where a kind would go. Both lists are read by
+    // now, which is what lets a type name be told from a kind.
+    std::vector<std::pair<std::string, std::string>> named;
+    named.reserve(parsed._value_types.size() + parsed._structures.size());
+    for (const InterfaceValueType& value : parsed._value_types) {
+        named.emplace_back(value.name, "value");
+    }
+    for (const InterfaceStructure& structure : parsed._structures) {
+        named.emplace_back(structure.name, "struct");
+    }
+
     for (const Json& entry : versions->items()) {
         InterfaceVersion version;
         const std::string where = "interfaces[" + std::to_string(parsed._versions.size()) + "]";
@@ -304,62 +493,9 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
 
         for (const Json& declared : slots->items()) {
             InterfaceSlot slot;
-            const std::string slot_where = where + " (" + version.version + ")";
-            if (!read_string(declared, "method", true, slot.method, error, slot_where) ||
-                !read_string(declared, "returns", true, slot.returns, error, slot_where) ||
-                !read_string(declared, "call", false, slot.call, error, slot_where) ||
-                !read_string(declared, "returns_decl", false, slot.returns_decl, error,
-                             slot_where) ||
-                !read_flag(declared, "destructor", slot.destructor, error, slot_where)) {
+            if (!read_slot(declared, version.name, named, slot, error,
+                           where + " (" + version.version + ")")) {
                 return false;
-            }
-
-            slot.returns_cpp = "void";
-            if (slot.returns != "void" &&
-                !declared_type(slot.returns, slot.returns_decl, slot.returns_cpp, error,
-                               slot_where + "." + slot.method)) {
-                return false;
-            }
-
-            if (const Json* params = member(declared, "params");
-                params != nullptr && params->is_array()) {
-                for (const Json& declared_param : params->items()) {
-                    InterfaceParam param;
-                    const std::string param_where = slot_where + "." + slot.method;
-                    if (!read_string(declared_param, "name", true, param.name, error,
-                                     param_where) ||
-                        !read_string(declared_param, "kind", true, param.kind, error,
-                                     param_where) ||
-                        !read_string(declared_param, "decl", false, param.decl, error,
-                                     param_where) ||
-                        !read_flag(declared_param, "unmarshalable", param.opaque, error,
-                                   param_where)) {
-                        return false;
-                    }
-                    if (const Json* direction = member(declared_param, "dir");
-                        direction != nullptr) {
-                        if (!direction->is_string() || direction->as_string() != "out") {
-                            error = param_where + "." + param.name +
-                                    ": 'dir' is either absent or 'out'";
-                            return false;
-                        }
-                        param.out = true;
-                    }
-                    if (!declared_type(param.kind, param.decl, param.cpp, error,
-                                       param_where + "." + param.name)) {
-                        return false;
-                    }
-                    if (param.out) {
-                        if (param.kind == "cstring" || param.kind == "opaque_ptr") {
-                            error = param_where + "." + param.name +
-                                    ": an out parameter of kind '" + param.kind +
-                                    "' is a buffer the wire cannot carry";
-                            return false;
-                        }
-                        param.cpp += "*";
-                    }
-                    slot.params.push_back(std::move(param));
-                }
             }
             version.slots.push_back(std::move(slot));
         }
@@ -402,16 +538,83 @@ bool Interfaces::load_file(const std::string& path, Interfaces& out, std::string
 // ---------------------------------------------------------------------------
 //  The generated file
 // ---------------------------------------------------------------------------
-//  A slot body is one line because the marshalling lives in bridge/synth.hpp and
-//  the names are data: what is written here per slot is its signature, the index
-//  its descriptor sits at, and its argument names. The compiler still lays out
-//  the vtable and the calling convention, which is the part that has to be
-//  exactly right.
+//  What is written per slot is its signature and the pooled call it names - one
+//  line where that fits. What is *not* written per slot is anything two versions
+//  share: the argument names a call carries and the call itself are interned
+//  here first, because the same call with the same arguments declared in six
+//  versions is one call, and writing it out six times is how this file came to
+//  be larger than everything it describes.
+//
+//  The compiler still lays out the vtable and the calling convention, which is
+//  the part that has to be exactly right.
 
 std::string render_api_interfaces(const Interfaces& interfaces) {
+    // -----------------------------------------------------------------------
+    //  The pools.
+    // -----------------------------------------------------------------------
+    //  Both are filled in the order a version first declares them, so the number
+    //  a call gets is a property of the layout file rather than of the run - a
+    //  reordering that changed the numbers would show up as a regenerated file
+    //  rather than as a mystery in a diff.
+    std::vector<std::vector<std::string>> param_lists;
+    std::map<std::string, int> param_index;
+    std::vector<std::pair<std::string, int>> calls;  // the call, and its names (-1: none)
+    std::map<std::string, int> call_index;
+
+    // A call with no arguments has no names to pool, and `nullptr` is what the
+    // descriptor says instead - which is also what a slot with no names has
+    // always carried.
+    const auto intern_names = [&](const InterfaceSlot& slot) {
+        std::vector<std::string> names;
+        names.reserve(slot.params.size());
+        for (const InterfaceParam& param : slot.params) {
+            names.push_back(param.name);
+        }
+        if (names.empty()) {
+            return -1;
+        }
+
+        // \x1f because a name is text: it cannot appear in one, so no two lists
+        // can run together into the same key.
+        std::string key;
+        for (const std::string& name : names) {
+            key += name;
+            key += '\x1f';
+        }
+
+        const auto found = param_index.find(key);
+        if (found != param_index.end()) {
+            return found->second;
+        }
+        const int index = static_cast<int>(param_lists.size());
+        param_index.emplace(std::move(key), index);
+        param_lists.push_back(std::move(names));
+        return index;
+    };
+
     std::size_t slot_count = 0;
-    for (const InterfaceVersion& version : interfaces.versions()) {
+    std::vector<std::vector<int>> slot_call(interfaces.versions().size());
+    for (std::size_t v = 0; v < interfaces.versions().size(); ++v) {
+        const InterfaceVersion& version = interfaces.versions()[v];
         slot_count += version.slots.size();
+        for (const InterfaceSlot& slot : version.slots) {
+            if (slot.destructor) {
+                // The destructor owns a slot and names no call.
+                slot_call[v].push_back(-1);
+                continue;
+            }
+            const int names = intern_names(slot);
+            const std::string key = slot.call + '\x1f' + number(names);
+            const auto found = call_index.find(key);
+            if (found != call_index.end()) {
+                slot_call[v].push_back(found->second);
+                continue;
+            }
+            const int index = static_cast<int>(calls.size());
+            call_index.emplace(key, index);
+            calls.emplace_back(slot.call, names);
+            slot_call[v].push_back(index);
+        }
     }
 
     std::vector<std::string> out = {
@@ -420,7 +623,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         "//",
         "//  Source:   gen/steam_interfaces.json (" +
             number(static_cast<int>(interfaces.versions().size())) + " interface versions, " +
-            number(static_cast<int>(slot_count)) + " slots)",
+            number(static_cast<int>(slot_count)) + " slots,",
+        "//            " + number(static_cast<int>(calls.size())) + " distinct calls)",
         "//  Regenerate: steambridge_codegen",
         "// ============================================================================",
         "",
@@ -481,8 +685,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("template <> struct Kind<" + value.name + "> {");
             out.push_back("    static constexpr bool out() noexcept { return false; }");
             out.push_back("");
-            out.push_back("    static Json in(" + value.name + " value) noexcept {");
-            out.push_back("        return arg_uint(value." + value.member + ");");
+            out.push_back("    static Arg arg(" + value.name + " value) noexcept {");
+            out.push_back("        return wire_uint(value." + value.member + ");");
             out.push_back("    }");
             out.push_back("    static " + value.name + " from(const Json& reply) noexcept {");
             out.push_back("        return " + value.name + "{reply_uint(reply)};");
@@ -502,8 +706,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("template <> struct Kind<" + structure.name + "> {");
             out.push_back("    static constexpr bool out() noexcept { return false; }");
             out.push_back("");
-            out.push_back("    static Json in(const " + structure.name + "&) noexcept {");
-            out.push_back("        return Json::null();");
+            out.push_back("    static Arg arg(const " + structure.name + "&) noexcept {");
+            out.push_back("        return wire_null();");
             out.push_back("    }");
             out.push_back("    static " + structure.name + " from(const Json&) noexcept {");
             out.push_back("        return " + structure.name + "{};");
@@ -518,50 +722,81 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("namespace {");
     out.push_back("");
 
-    for (const InterfaceVersion& version : interfaces.versions()) {
-        const std::string id = identified(version.version);
+    // -----------------------------------------------------------------------
+    //  The argument names, pooled.
+    // -----------------------------------------------------------------------
+    out.push_back("// ---------------------------------------------------------------------------");
+    out.push_back("//  The argument names the calls carry.");
+    out.push_back("// ---------------------------------------------------------------------------");
+    out.push_back(
+        "//  One list per distinct set of names, so a call declared in six versions names");
+    out.push_back("//  its arguments once and all six point here. A call that takes none has no");
+    out.push_back("//  list, which is what the null in its descriptor says.");
+    out.push_back("");
 
-        // The argument names the backend sees, one array per slot that has any.
-        for (std::size_t index = 0; index < version.slots.size(); ++index) {
-            const InterfaceSlot& slot = version.slots[index];
-            if (slot.params.empty()) {
-                continue;
+    for (std::size_t index = 0; index < param_lists.size(); ++index) {
+        const std::vector<std::string>& names = param_lists[index];
+        const std::string head =
+            "const char* const kParams_" + number(static_cast<int>(index)) + "[] = {";
+
+        std::string one = head;
+        for (std::size_t at = 0; at < names.size(); ++at) {
+            if (at != 0u) {
+                one += " ";
             }
-            out.push_back("const char* const kParams_" + id + "_" +
-                          number(static_cast<int>(index)) + "[] = {");
-            for (const InterfaceParam& param : slot.params) {
-                out.push_back("    " + literal(param.name) + ",");
-            }
-            out.push_back("};");
+            one += literal(names[at]) + (at + 1u == names.size() ? "};" : ",");
+        }
+        if (one.size() <= 100u) {
+            out.push_back(one);
+            continue;
         }
 
-        out.push_back("// " + version.name + " " + version.version);
-        out.push_back("const steambridge::SlotInfo kSlots_" + id + "[] = {");
-        for (std::size_t index = 0; index < version.slots.size(); ++index) {
-            const InterfaceSlot& slot = version.slots[index];
-            if (slot.destructor) {
-                out.push_back("    {nullptr, nullptr},  // the virtual destructor");
-                continue;
-            }
-            out.push_back("    {" + literal(slot.call) + ", " +
-                          (slot.params.empty()
-                               ? "nullptr"
-                               : "kParams_" + id + "_" + number(static_cast<int>(index))) +
-                          "},");
+        out.push_back(head);
+        for (const std::string& name : names) {
+            out.push_back("    " + literal(name) + ",");
         }
         out.push_back("};");
-        out.push_back("");
+    }
+    out.push_back("");
 
+    // -----------------------------------------------------------------------
+    //  The calls, pooled.
+    // -----------------------------------------------------------------------
+    out.push_back("// ---------------------------------------------------------------------------");
+    out.push_back("//  The calls themselves.");
+    out.push_back("// ---------------------------------------------------------------------------");
+    out.push_back("//  One entry per distinct call: the name it travels under, and the argument");
+    out.push_back("//  names it carries. Two versions that declare the same call with the same");
+    out.push_back("//  arguments are the same call, and each slot body below names one of these -");
+    out.push_back("//  which is the whole of what a slot knows about itself.");
+    out.push_back("");
+
+    for (std::size_t index = 0; index < calls.size(); ++index) {
+        const int names = calls[index].second;
+        out.push_back("const steambridge::SlotInfo kCall_" + number(static_cast<int>(index)) +
+                      " = {" + literal(calls[index].first) + ", " +
+                      (names < 0 ? "nullptr" : "kParams_" + number(names)) + "};");
+    }
+    out.push_back("");
+
+    // -----------------------------------------------------------------------
+    //  One class per version, whose virtuals mirror its slots in order.
+    // -----------------------------------------------------------------------
+    for (std::size_t v = 0; v < interfaces.versions().size(); ++v) {
+        const InterfaceVersion& version = interfaces.versions()[v];
+        const std::string id = identified(version.version);
+
+        out.push_back("// " + version.name + " " + version.version);
         out.push_back("class Version_" + id + " {");
         out.push_back("public:");
         for (std::size_t index = 0; index < version.slots.size(); ++index) {
             const InterfaceSlot& slot = version.slots[index];
-            const std::string at = "kSlots_" + id + "[" + number(static_cast<int>(index)) + "]";
             if (slot.destructor) {
                 out.push_back("    virtual ~Version_" + id + "() {}");
                 continue;
             }
 
+            const std::string at = "kCall_" + number(slot_call[v][index]);
             std::string parameters;
             std::string arguments;
             for (const InterfaceParam& param : slot.params) {
@@ -573,20 +808,38 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                 arguments += param.name;
             }
 
-            const std::string call = at + (arguments.empty() ? "" : ", " + arguments);
+            const std::string passed = at + (arguments.empty() ? "" : ", " + arguments);
             const std::string factory = interface_factory_parameter(slot);
+
+            // A slot that only forwards fits on one line, which is what most of
+            // them are. The ones that answer with an object of ours keep the
+            // fallback under the signature, and so do the signatures that a
+            // single line cannot hold.
+            if (factory.empty()) {
+                const std::string one =
+                    "    virtual " + slot.returns_cpp + " " + slot.method + "(" + parameters +
+                    ") { " +
+                    (slot.returns == "void"
+                         ? "steambridge::slot<void>(" + passed + "); }"
+                         : "return steambridge::slot<" + slot.returns_cpp + ">(" + passed + "); }");
+                if (one.size() <= 100u) {
+                    out.push_back(one);
+                    continue;
+                }
+            }
+
             out.push_back("    virtual " + slot.returns_cpp + " " + slot.method + "(" + parameters +
                           ") {");
             if (slot.returns == "void") {
-                out.push_back("        steambridge::slot<void>(" + call + ");");
+                out.push_back("        steambridge::slot<void>(" + passed + ");");
             } else if (factory.empty()) {
-                out.push_back("        return steambridge::slot<" + slot.returns_cpp + ">(" + call +
-                              ");");
+                out.push_back("        return steambridge::slot<" + slot.returns_cpp + ">(" +
+                              passed + ");");
             } else {
                 // The same fallback the factory call in api_stub.cpp has: the
                 // backend answered, or this is the object of ours for the string
                 // the game named.
-                out.push_back("        void* result = steambridge::slot<void*>(" + call + ");");
+                out.push_back("        void* result = steambridge::slot<void*>(" + passed + ");");
                 out.push_back("        if (result == nullptr) {");
                 out.push_back("            result = steambridge::interface_object(" + factory +
                               ");");
