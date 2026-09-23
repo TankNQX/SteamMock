@@ -7,7 +7,7 @@
 
 #include "bridge/json.hpp"
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  gen/steam_interfaces.json - the interface layouts the stub hands out.
@@ -16,7 +16,7 @@ namespace steambridge {
 //  this file is hand-maintained data: one entry per interface *version*, with the
 //  slots in vtable order and the argument kinds each one carries. It was imported
 //  from Steamworks SDK headers when the surface was laid out, and adding a version
-//  means editing it - `steambridge_codegen` validates every kind, name and size in
+//  means editing it - `steammock_codegen` validates every kind, name and size in
 //  it before it will generate anything from it. It is the input to the synthesized
 //  objects - see bridge/synth.hpp for what they are and why a generated slot body
 //  is one line.
@@ -96,4 +96,4 @@ private:
 
 std::string render_api_interfaces(const Interfaces& interfaces);
 
-}  // namespace steambridge
+}  // namespace steammock

@@ -1,13 +1,13 @@
 // ---------------------------------------------------------------------------
-//  steambridge_codegen - turn the two data files into the generated files.
+//  steammock_codegen - turn the two data files into the generated files.
 // ---------------------------------------------------------------------------
 //  gen/steam_api.idl.json is the source of truth for what the stub exports, and
 //  gen/steam_interfaces.json for the interface versions it hands out. Adding a
 //  call means adding one entry there, and adding an interface version means the
 //  same in the other file; either way, then:
 //
-//    steambridge_codegen            # rewrite the generated files
-//    steambridge_codegen --check    # fail if they are stale (used by CI)
+//    steammock_codegen            # rewrite the generated files
+//    steammock_codegen --check    # fail if they are stale (used by CI)
 //
 //  Outputs, all under <root>/src/generated/:
 //    api_stub.cpp             one trampoline per call
@@ -71,9 +71,9 @@ std::string join_path(const std::string& directory, const std::string& name) {
 
 void print_usage(std::FILE* out) {
     std::fprintf(out,
-                 "steambridge_codegen - regenerate the stub's trampolines, export list and "
+                 "steammock_codegen - regenerate the stub's trampolines, export list and "
                  "interfaces\n\n"
-                 "usage: steambridge_codegen [--idl FILE] [--interfaces FILE] [--root DIR] "
+                 "usage: steammock_codegen [--idl FILE] [--interfaces FILE] [--root DIR] "
                  "[--check]\n\n"
                  "  --idl FILE         the API surface to read (default %s)\n"
                  "  --interfaces FILE  the interface layouts to read (default %s)\n"
@@ -112,27 +112,27 @@ int run(int argc, char** argv) {
         }
         if (argument == "--idl") {
             if (!take(idl_path)) {
-                std::fprintf(stderr, "steambridge_codegen: --idl needs a value\n");
+                std::fprintf(stderr, "steammock_codegen: --idl needs a value\n");
                 return 2;
             }
             continue;
         }
         if (argument == "--interfaces") {
             if (!take(interfaces_path)) {
-                std::fprintf(stderr, "steambridge_codegen: --interfaces needs a value\n");
+                std::fprintf(stderr, "steammock_codegen: --interfaces needs a value\n");
                 return 2;
             }
             continue;
         }
         if (argument == "--root") {
             if (!take(root)) {
-                std::fprintf(stderr, "steambridge_codegen: --root needs a value\n");
+                std::fprintf(stderr, "steammock_codegen: --root needs a value\n");
                 return 2;
             }
             root_given = true;
             continue;
         }
-        std::fprintf(stderr, "steambridge_codegen: unknown option '%s'\n", argument.c_str());
+        std::fprintf(stderr, "steammock_codegen: unknown option '%s'\n", argument.c_str());
         print_usage(stderr);
         return 2;
     }
@@ -143,26 +143,26 @@ int run(int argc, char** argv) {
         root = parent_of(parent_of(idl_path));
     }
 
-    steambridge::Idl idl;
+    steammock::Idl idl;
     std::string error;
-    if (!steambridge::Idl::load_file(idl_path, idl, error)) {
+    if (!steammock::Idl::load_file(idl_path, idl, error)) {
         std::fprintf(stderr, "idl error: %s\n", error.c_str());
         return 2;
     }
 
-    steambridge::Interfaces interfaces;
-    if (!steambridge::Interfaces::load_file(interfaces_path, interfaces, error)) {
+    steammock::Interfaces interfaces;
+    if (!steammock::Interfaces::load_file(interfaces_path, interfaces, error)) {
         std::fprintf(stderr, "interfaces error: %s\n", error.c_str());
         return 2;
     }
 
     const std::vector<std::pair<std::string, std::string>> outputs = {
-        {join_path(root, "src/generated/api_stub.cpp"), steambridge::render_api_stub(idl)},
+        {join_path(root, "src/generated/api_stub.cpp"), steammock::render_api_stub(idl)},
         {join_path(root, "src/generated/steam_api_exports.def"),
-         steambridge::render_exports_def(idl)},
-        {join_path(root, "src/generated/api_surface.cpp"), steambridge::render_api_surface(idl)},
+         steammock::render_exports_def(idl)},
+        {join_path(root, "src/generated/api_surface.cpp"), steammock::render_api_surface(idl)},
         {join_path(root, "src/generated/api_interfaces.cpp"),
-         steambridge::render_api_interfaces(interfaces)},
+         steammock::render_api_interfaces(interfaces)},
     };
 
     std::vector<std::string> stale;
@@ -184,7 +184,7 @@ int run(int argc, char** argv) {
 
     if (check) {
         if (!stale.empty()) {
-            std::fprintf(stderr, "stale generated files (run: steambridge_codegen):\n");
+            std::fprintf(stderr, "stale generated files (run: steammock_codegen):\n");
             for (const std::string& path : stale) {
                 std::fprintf(stderr, "  %s\n", path.c_str());
             }
@@ -201,10 +201,10 @@ int main(int argc, char** argv) {
     try {
         return run(argc, argv);
     } catch (const std::bad_alloc&) {
-        std::fprintf(stderr, "steambridge_codegen: out of memory\n");
+        std::fprintf(stderr, "steammock_codegen: out of memory\n");
         return 2;
     } catch (...) {
-        std::fprintf(stderr, "steambridge_codegen: unexpected failure\n");
+        std::fprintf(stderr, "steammock_codegen: unexpected failure\n");
         return 2;
     }
 }

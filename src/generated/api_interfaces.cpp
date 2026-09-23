@@ -3,14 +3,14 @@
 //
 //  Source:   gen/steam_interfaces.json (58 interface versions, 2115 slots,
 //            937 distinct calls)
-//  Regenerate: steambridge_codegen
+//  Regenerate: steammock_codegen
 // ============================================================================
 
 #include "bridge/synth.hpp"
 
 #include <cstring>
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 // ---------------------------------------------------------------------------
@@ -1247,961 +1247,959 @@ const char* const kParams_554[] = {"unVideoAppID", "pchBuffer", "pnBufferSize"};
 //  arguments are the same call, and each slot body below names one of these -
 //  which is the whole of what a slot knows about itself.
 
-const steambridge::SlotInfo kCall_0 = {"SteamAPI_ISteamAppList_GetNumInstalledApps", nullptr};
-const steambridge::SlotInfo kCall_1 = {"SteamAPI_ISteamAppList_GetInstalledApps", kParams_0};
-const steambridge::SlotInfo kCall_2 = {"SteamAPI_ISteamAppList_GetAppName", kParams_1};
-const steambridge::SlotInfo kCall_3 = {"SteamAPI_ISteamAppList_GetAppInstallDir", kParams_2};
-const steambridge::SlotInfo kCall_4 = {"SteamAPI_ISteamAppList_GetAppBuildId", kParams_3};
-const steambridge::SlotInfo kCall_5 = {"SteamAPI_ISteamApps_BIsSubscribed", nullptr};
-const steambridge::SlotInfo kCall_6 = {"SteamAPI_ISteamApps_BIsLowViolence", nullptr};
-const steambridge::SlotInfo kCall_7 = {"SteamAPI_ISteamApps_BIsCybercafe", nullptr};
-const steambridge::SlotInfo kCall_8 = {"SteamAPI_ISteamApps_BIsVACBanned", nullptr};
-const steambridge::SlotInfo kCall_9 = {"SteamAPI_ISteamApps_GetCurrentGameLanguage", nullptr};
-const steambridge::SlotInfo kCall_10 = {"SteamAPI_ISteamApps_GetAvailableGameLanguages", nullptr};
-const steambridge::SlotInfo kCall_11 = {"SteamAPI_ISteamApps_BIsSubscribedApp", kParams_4};
-const steambridge::SlotInfo kCall_12 = {"SteamAPI_ISteamApps_BIsDlcInstalled", kParams_4};
-const steambridge::SlotInfo kCall_13 = {"SteamAPI_ISteamApps_GetEarliestPurchaseUnixTime", kParams_3};
-const steambridge::SlotInfo kCall_14 = {"SteamAPI_ISteamApps_BIsSubscribedFromFreeWeekend", nullptr};
-const steambridge::SlotInfo kCall_15 = {"SteamAPI_ISteamApps_GetDLCCount", nullptr};
-const steambridge::SlotInfo kCall_16 = {"SteamAPI_ISteamApps_BGetDLCDataByIndex", kParams_5};
-const steambridge::SlotInfo kCall_17 = {"SteamAPI_ISteamApps_InstallDLC", kParams_3};
-const steambridge::SlotInfo kCall_18 = {"SteamAPI_ISteamApps_UninstallDLC", kParams_3};
-const steambridge::SlotInfo kCall_19 = {"SteamAPI_ISteamApps_RequestAppProofOfPurchaseKey", kParams_3};
-const steambridge::SlotInfo kCall_20 = {"SteamAPI_ISteamApps_GetCurrentBetaName", kParams_6};
-const steambridge::SlotInfo kCall_21 = {"SteamAPI_ISteamApps_MarkContentCorrupt", kParams_7};
-const steambridge::SlotInfo kCall_22 = {"SteamAPI_ISteamApps_GetInstalledDepots", kParams_8};
-const steambridge::SlotInfo kCall_23 = {"SteamAPI_ISteamApps_GetAppInstallDir", kParams_9};
-const steambridge::SlotInfo kCall_24 = {"SteamAPI_ISteamApps_BIsAppInstalled", kParams_4};
-const steambridge::SlotInfo kCall_25 = {"SteamAPI_ISteamApps_GetAppOwner", nullptr};
-const steambridge::SlotInfo kCall_26 = {"SteamAPI_ISteamApps_GetLaunchQueryParam", kParams_10};
-const steambridge::SlotInfo kCall_27 = {"SteamAPI_ISteamApps_GetDlcDownloadProgress", kParams_11};
-const steambridge::SlotInfo kCall_28 = {"SteamAPI_ISteamApps_GetAppBuildId", nullptr};
-const steambridge::SlotInfo kCall_29 = {"SteamAPI_ISteamApps_RequestAllProofOfPurchaseKeys", nullptr};
-const steambridge::SlotInfo kCall_30 = {"SteamAPI_ISteamApps_GetFileDetails", kParams_12};
-const steambridge::SlotInfo kCall_31 = {"SteamAPI_ISteamApps_GetLaunchCommandLine", kParams_13};
-const steambridge::SlotInfo kCall_32 = {"SteamAPI_ISteamApps_BIsSubscribedFromFamilySharing", nullptr};
-const steambridge::SlotInfo kCall_33 = {"SteamAPI_ISteamApps_BIsTimedTrial", kParams_14};
-const steambridge::SlotInfo kCall_34 = {"SteamAPI_ISteamApps_SetDlcContext", kParams_3};
-const steambridge::SlotInfo kCall_35 = {"SteamAPI_ISteamClient_CreateSteamPipe", nullptr};
-const steambridge::SlotInfo kCall_36 = {"SteamAPI_ISteamClient_BReleaseSteamPipe", kParams_15};
-const steambridge::SlotInfo kCall_37 = {"SteamAPI_ISteamClient_ConnectToGlobalUser", kParams_15};
-const steambridge::SlotInfo kCall_38 = {"SteamAPI_ISteamClient_CreateLocalUser", kParams_16};
-const steambridge::SlotInfo kCall_39 = {"SteamAPI_ISteamClient_ReleaseUser", kParams_17};
-const steambridge::SlotInfo kCall_40 = {"SteamAPI_ISteamClient_GetISteamUser", kParams_18};
-const steambridge::SlotInfo kCall_41 = {"SteamAPI_ISteamClient_GetISteamGameServer", kParams_18};
-const steambridge::SlotInfo kCall_42 = {"SteamAPI_ISteamClient_SetLocalIPBinding", kParams_19};
-const steambridge::SlotInfo kCall_43 = {"SteamAPI_ISteamClient_GetISteamFriends", kParams_18};
-const steambridge::SlotInfo kCall_44 = {"SteamAPI_ISteamClient_GetISteamUtils", kParams_20};
-const steambridge::SlotInfo kCall_45 = {"SteamAPI_ISteamClient_GetISteamMatchmaking", kParams_18};
-const steambridge::SlotInfo kCall_46 = {"SteamAPI_ISteamClient_GetISteamMatchmakingServers", kParams_18};
-const steambridge::SlotInfo kCall_47 = {"SteamAPI_ISteamClient_GetISteamGenericInterface", kParams_18};
-const steambridge::SlotInfo kCall_48 = {"SteamAPI_ISteamClient_GetISteamUserStats", kParams_18};
-const steambridge::SlotInfo kCall_49 = {"SteamAPI_ISteamClient_GetISteamGameServerStats", kParams_21};
-const steambridge::SlotInfo kCall_50 = {"SteamAPI_ISteamClient_GetISteamApps", kParams_18};
-const steambridge::SlotInfo kCall_51 = {"SteamAPI_ISteamClient_GetISteamNetworking", kParams_18};
-const steambridge::SlotInfo kCall_52 = {"SteamAPI_ISteamClient_GetISteamRemoteStorage", kParams_21};
-const steambridge::SlotInfo kCall_53 = {"SteamAPI_ISteamClient_GetISteamScreenshots", kParams_21};
-const steambridge::SlotInfo kCall_54 = {"ISteamClient::RunFrame", nullptr};
-const steambridge::SlotInfo kCall_55 = {"SteamAPI_ISteamClient_GetIPCCallCount", nullptr};
-const steambridge::SlotInfo kCall_56 = {"SteamAPI_ISteamClient_SetWarningMessageHook", kParams_22};
-const steambridge::SlotInfo kCall_57 = {"SteamAPI_ISteamClient_BShutdownIfAllPipesClosed", nullptr};
-const steambridge::SlotInfo kCall_58 = {"SteamAPI_ISteamClient_GetISteamHTTP", kParams_21};
-const steambridge::SlotInfo kCall_59 = {"SteamAPI_ISteamClient_GetISteamUnifiedMessages", kParams_21};
-const steambridge::SlotInfo kCall_60 = {"SteamAPI_ISteamClient_GetISteamController", kParams_18};
-const steambridge::SlotInfo kCall_61 = {"SteamAPI_ISteamClient_GetISteamUGC", kParams_18};
-const steambridge::SlotInfo kCall_62 = {"SteamAPI_ISteamClient_GetISteamAppList", kParams_18};
-const steambridge::SlotInfo kCall_63 = {"SteamAPI_ISteamClient_GetISteamMusic", kParams_21};
-const steambridge::SlotInfo kCall_64 = {"SteamAPI_ISteamClient_GetISteamMusicRemote", kParams_21};
-const steambridge::SlotInfo kCall_65 = {"SteamAPI_ISteamClient_GetISteamHTMLSurface", kParams_21};
-const steambridge::SlotInfo kCall_66 = {"ISteamClient::DEPRECATED_Set_SteamAPI_CPostAPIResultInProcess", kParams_23};
-const steambridge::SlotInfo kCall_67 = {"ISteamClient::DEPRECATED_Remove_SteamAPI_CPostAPIResultInProcess", kParams_23};
-const steambridge::SlotInfo kCall_68 = {"ISteamClient::Set_SteamAPI_CCheckCallbackRegisteredInProcess", kParams_24};
-const steambridge::SlotInfo kCall_69 = {"SteamAPI_ISteamClient_GetISteamInventory", kParams_21};
-const steambridge::SlotInfo kCall_70 = {"SteamAPI_ISteamClient_GetISteamVideo", kParams_21};
-const steambridge::SlotInfo kCall_71 = {"SteamAPI_ISteamClient_GetISteamParentalSettings", kParams_21};
-const steambridge::SlotInfo kCall_72 = {"SteamAPI_ISteamClient_GetISteamGameSearch", kParams_21};
-const steambridge::SlotInfo kCall_73 = {"ISteamClient::DEPRECATED_GetISteamUnifiedMessages", kParams_21};
-const steambridge::SlotInfo kCall_74 = {"SteamAPI_ISteamClient_GetISteamInput", kParams_18};
-const steambridge::SlotInfo kCall_75 = {"SteamAPI_ISteamClient_GetISteamParties", kParams_18};
-const steambridge::SlotInfo kCall_76 = {"SteamAPI_ISteamClient_GetISteamRemotePlay", kParams_18};
-const steambridge::SlotInfo kCall_77 = {"ISteamClient::DestroyAllInterfaces", nullptr};
-const steambridge::SlotInfo kCall_78 = {"SteamAPI_ISteamController_Init", nullptr};
-const steambridge::SlotInfo kCall_79 = {"SteamAPI_ISteamController_Shutdown", nullptr};
-const steambridge::SlotInfo kCall_80 = {"SteamAPI_ISteamController_RunFrame", nullptr};
-const steambridge::SlotInfo kCall_81 = {"SteamAPI_ISteamController_GetConnectedControllers", kParams_25};
-const steambridge::SlotInfo kCall_82 = {"SteamAPI_ISteamController_ShowBindingPanel", kParams_26};
-const steambridge::SlotInfo kCall_83 = {"SteamAPI_ISteamController_GetActionSetHandle", kParams_27};
-const steambridge::SlotInfo kCall_84 = {"SteamAPI_ISteamController_ActivateActionSet", kParams_28};
-const steambridge::SlotInfo kCall_85 = {"SteamAPI_ISteamController_GetCurrentActionSet", kParams_26};
-const steambridge::SlotInfo kCall_86 = {"SteamAPI_ISteamController_GetDigitalActionHandle", kParams_29};
-const steambridge::SlotInfo kCall_87 = {"SteamAPI_ISteamController_GetDigitalActionData", kParams_30};
-const steambridge::SlotInfo kCall_88 = {"SteamAPI_ISteamController_GetDigitalActionOrigins", kParams_31};
-const steambridge::SlotInfo kCall_89 = {"SteamAPI_ISteamController_GetAnalogActionHandle", kParams_29};
-const steambridge::SlotInfo kCall_90 = {"SteamAPI_ISteamController_GetAnalogActionData", kParams_32};
-const steambridge::SlotInfo kCall_91 = {"SteamAPI_ISteamController_GetAnalogActionOrigins", kParams_33};
-const steambridge::SlotInfo kCall_92 = {"SteamAPI_ISteamController_StopAnalogActionMomentum", kParams_34};
-const steambridge::SlotInfo kCall_93 = {"SteamAPI_ISteamController_TriggerHapticPulse", kParams_35};
-const steambridge::SlotInfo kCall_94 = {"SteamAPI_ISteamController_TriggerRepeatedHapticPulse", kParams_36};
-const steambridge::SlotInfo kCall_95 = {"SteamAPI_ISteamController_TriggerVibration", kParams_37};
-const steambridge::SlotInfo kCall_96 = {"SteamAPI_ISteamController_SetLEDColor", kParams_38};
-const steambridge::SlotInfo kCall_97 = {"SteamAPI_ISteamController_GetGamepadIndexForController", kParams_39};
-const steambridge::SlotInfo kCall_98 = {"SteamAPI_ISteamController_GetControllerForGamepadIndex", kParams_40};
-const steambridge::SlotInfo kCall_99 = {"SteamAPI_ISteamController_GetMotionData", kParams_26};
-const steambridge::SlotInfo kCall_100 = {"SteamAPI_ISteamController_ShowDigitalActionOrigins", kParams_41};
-const steambridge::SlotInfo kCall_101 = {"SteamAPI_ISteamController_ShowAnalogActionOrigins", kParams_42};
-const steambridge::SlotInfo kCall_102 = {"SteamAPI_ISteamController_GetStringForActionOrigin", kParams_43};
-const steambridge::SlotInfo kCall_103 = {"SteamAPI_ISteamController_GetGlyphForActionOrigin", kParams_43};
-const steambridge::SlotInfo kCall_104 = {"SteamAPI_ISteamController_ActivateActionSetLayer", kParams_44};
-const steambridge::SlotInfo kCall_105 = {"SteamAPI_ISteamController_DeactivateActionSetLayer", kParams_44};
-const steambridge::SlotInfo kCall_106 = {"SteamAPI_ISteamController_DeactivateAllActionSetLayers", kParams_26};
-const steambridge::SlotInfo kCall_107 = {"SteamAPI_ISteamController_GetActiveActionSetLayers", kParams_45};
-const steambridge::SlotInfo kCall_108 = {"SteamAPI_ISteamController_GetInputTypeForHandle", kParams_26};
-const steambridge::SlotInfo kCall_109 = {"SteamAPI_ISteamController_GetStringForXboxOrigin", kParams_43};
-const steambridge::SlotInfo kCall_110 = {"SteamAPI_ISteamController_GetGlyphForXboxOrigin", kParams_43};
-const steambridge::SlotInfo kCall_111 = {"SteamAPI_ISteamController_GetActionOriginFromXboxOrigin", kParams_46};
-const steambridge::SlotInfo kCall_112 = {"SteamAPI_ISteamController_TranslateActionOrigin", kParams_47};
-const steambridge::SlotInfo kCall_113 = {"SteamAPI_ISteamController_GetControllerBindingRevision", kParams_48};
-const steambridge::SlotInfo kCall_114 = {"SteamAPI_ISteamFriends_GetPersonaName", nullptr};
-const steambridge::SlotInfo kCall_115 = {"SteamAPI_ISteamFriends_SetPersonaName", kParams_49};
-const steambridge::SlotInfo kCall_116 = {"SteamAPI_ISteamFriends_GetPersonaState", nullptr};
-const steambridge::SlotInfo kCall_117 = {"SteamAPI_ISteamFriends_GetFriendCount", kParams_50};
-const steambridge::SlotInfo kCall_118 = {"SteamAPI_ISteamFriends_GetFriendByIndex", kParams_51};
-const steambridge::SlotInfo kCall_119 = {"SteamAPI_ISteamFriends_GetFriendRelationship", kParams_52};
-const steambridge::SlotInfo kCall_120 = {"SteamAPI_ISteamFriends_GetFriendPersonaState", kParams_52};
-const steambridge::SlotInfo kCall_121 = {"SteamAPI_ISteamFriends_GetFriendPersonaName", kParams_52};
-const steambridge::SlotInfo kCall_122 = {"SteamAPI_ISteamFriends_GetFriendGamePlayed", kParams_53};
-const steambridge::SlotInfo kCall_123 = {"SteamAPI_ISteamFriends_GetFriendPersonaNameHistory", kParams_54};
-const steambridge::SlotInfo kCall_124 = {"SteamAPI_ISteamFriends_GetFriendSteamLevel", kParams_52};
-const steambridge::SlotInfo kCall_125 = {"SteamAPI_ISteamFriends_GetPlayerNickname", kParams_55};
-const steambridge::SlotInfo kCall_126 = {"SteamAPI_ISteamFriends_GetFriendsGroupCount", nullptr};
-const steambridge::SlotInfo kCall_127 = {"SteamAPI_ISteamFriends_GetFriendsGroupIDByIndex", kParams_56};
-const steambridge::SlotInfo kCall_128 = {"SteamAPI_ISteamFriends_GetFriendsGroupName", kParams_57};
-const steambridge::SlotInfo kCall_129 = {"SteamAPI_ISteamFriends_GetFriendsGroupMembersCount", kParams_57};
-const steambridge::SlotInfo kCall_130 = {"SteamAPI_ISteamFriends_GetFriendsGroupMembersList", kParams_58};
-const steambridge::SlotInfo kCall_131 = {"SteamAPI_ISteamFriends_HasFriend", kParams_59};
-const steambridge::SlotInfo kCall_132 = {"SteamAPI_ISteamFriends_GetClanCount", nullptr};
-const steambridge::SlotInfo kCall_133 = {"SteamAPI_ISteamFriends_GetClanByIndex", kParams_60};
-const steambridge::SlotInfo kCall_134 = {"SteamAPI_ISteamFriends_GetClanName", kParams_61};
-const steambridge::SlotInfo kCall_135 = {"SteamAPI_ISteamFriends_GetClanTag", kParams_61};
-const steambridge::SlotInfo kCall_136 = {"SteamAPI_ISteamFriends_GetClanActivityCounts", kParams_62};
-const steambridge::SlotInfo kCall_137 = {"SteamAPI_ISteamFriends_DownloadClanActivityCounts", kParams_63};
-const steambridge::SlotInfo kCall_138 = {"SteamAPI_ISteamFriends_GetFriendCountFromSource", kParams_64};
-const steambridge::SlotInfo kCall_139 = {"SteamAPI_ISteamFriends_GetFriendFromSourceByIndex", kParams_65};
-const steambridge::SlotInfo kCall_140 = {"SteamAPI_ISteamFriends_IsUserInSource", kParams_66};
-const steambridge::SlotInfo kCall_141 = {"SteamAPI_ISteamFriends_SetInGameVoiceSpeaking", kParams_67};
-const steambridge::SlotInfo kCall_142 = {"SteamAPI_ISteamFriends_ActivateGameOverlay", kParams_68};
-const steambridge::SlotInfo kCall_143 = {"SteamAPI_ISteamFriends_ActivateGameOverlayToUser", kParams_69};
-const steambridge::SlotInfo kCall_144 = {"SteamAPI_ISteamFriends_ActivateGameOverlayToWebPage", kParams_70};
-const steambridge::SlotInfo kCall_145 = {"SteamAPI_ISteamFriends_ActivateGameOverlayToStore", kParams_71};
-const steambridge::SlotInfo kCall_146 = {"SteamAPI_ISteamFriends_SetPlayedWith", kParams_72};
-const steambridge::SlotInfo kCall_147 = {"SteamAPI_ISteamFriends_ActivateGameOverlayInviteDialog", kParams_73};
-const steambridge::SlotInfo kCall_148 = {"SteamAPI_ISteamFriends_GetSmallFriendAvatar", kParams_52};
-const steambridge::SlotInfo kCall_149 = {"SteamAPI_ISteamFriends_GetMediumFriendAvatar", kParams_52};
-const steambridge::SlotInfo kCall_150 = {"SteamAPI_ISteamFriends_GetLargeFriendAvatar", kParams_52};
-const steambridge::SlotInfo kCall_151 = {"SteamAPI_ISteamFriends_RequestUserInformation", kParams_74};
-const steambridge::SlotInfo kCall_152 = {"SteamAPI_ISteamFriends_RequestClanOfficerList", kParams_61};
-const steambridge::SlotInfo kCall_153 = {"SteamAPI_ISteamFriends_GetClanOwner", kParams_61};
-const steambridge::SlotInfo kCall_154 = {"SteamAPI_ISteamFriends_GetClanOfficerCount", kParams_61};
-const steambridge::SlotInfo kCall_155 = {"SteamAPI_ISteamFriends_GetClanOfficerByIndex", kParams_75};
-const steambridge::SlotInfo kCall_156 = {"SteamAPI_ISteamFriends_GetUserRestrictions", nullptr};
-const steambridge::SlotInfo kCall_157 = {"SteamAPI_ISteamFriends_SetRichPresence", kParams_76};
-const steambridge::SlotInfo kCall_158 = {"SteamAPI_ISteamFriends_ClearRichPresence", nullptr};
-const steambridge::SlotInfo kCall_159 = {"SteamAPI_ISteamFriends_GetFriendRichPresence", kParams_77};
-const steambridge::SlotInfo kCall_160 = {"SteamAPI_ISteamFriends_GetFriendRichPresenceKeyCount", kParams_52};
-const steambridge::SlotInfo kCall_161 = {"SteamAPI_ISteamFriends_GetFriendRichPresenceKeyByIndex", kParams_78};
-const steambridge::SlotInfo kCall_162 = {"SteamAPI_ISteamFriends_RequestFriendRichPresence", kParams_52};
-const steambridge::SlotInfo kCall_163 = {"SteamAPI_ISteamFriends_InviteUserToGame", kParams_79};
-const steambridge::SlotInfo kCall_164 = {"SteamAPI_ISteamFriends_GetCoplayFriendCount", nullptr};
-const steambridge::SlotInfo kCall_165 = {"SteamAPI_ISteamFriends_GetCoplayFriend", kParams_80};
-const steambridge::SlotInfo kCall_166 = {"SteamAPI_ISteamFriends_GetFriendCoplayTime", kParams_52};
-const steambridge::SlotInfo kCall_167 = {"SteamAPI_ISteamFriends_GetFriendCoplayGame", kParams_52};
-const steambridge::SlotInfo kCall_168 = {"SteamAPI_ISteamFriends_JoinClanChatRoom", kParams_61};
-const steambridge::SlotInfo kCall_169 = {"SteamAPI_ISteamFriends_LeaveClanChatRoom", kParams_61};
-const steambridge::SlotInfo kCall_170 = {"SteamAPI_ISteamFriends_GetClanChatMemberCount", kParams_61};
-const steambridge::SlotInfo kCall_171 = {"SteamAPI_ISteamFriends_GetChatMemberByIndex", kParams_81};
-const steambridge::SlotInfo kCall_172 = {"SteamAPI_ISteamFriends_SendClanChatMessage", kParams_82};
-const steambridge::SlotInfo kCall_173 = {"SteamAPI_ISteamFriends_GetClanChatMessage", kParams_83};
-const steambridge::SlotInfo kCall_174 = {"SteamAPI_ISteamFriends_IsClanChatAdmin", kParams_84};
-const steambridge::SlotInfo kCall_175 = {"SteamAPI_ISteamFriends_IsClanChatWindowOpenInSteam", kParams_85};
-const steambridge::SlotInfo kCall_176 = {"SteamAPI_ISteamFriends_OpenClanChatWindowInSteam", kParams_85};
-const steambridge::SlotInfo kCall_177 = {"SteamAPI_ISteamFriends_CloseClanChatWindowInSteam", kParams_85};
-const steambridge::SlotInfo kCall_178 = {"SteamAPI_ISteamFriends_SetListenForFriendsMessages", kParams_86};
-const steambridge::SlotInfo kCall_179 = {"SteamAPI_ISteamFriends_ReplyToFriendMessage", kParams_87};
-const steambridge::SlotInfo kCall_180 = {"SteamAPI_ISteamFriends_GetFriendMessage", kParams_88};
-const steambridge::SlotInfo kCall_181 = {"SteamAPI_ISteamFriends_GetFollowerCount", kParams_89};
-const steambridge::SlotInfo kCall_182 = {"SteamAPI_ISteamFriends_IsFollowing", kParams_89};
-const steambridge::SlotInfo kCall_183 = {"SteamAPI_ISteamFriends_EnumerateFollowingList", kParams_90};
-const steambridge::SlotInfo kCall_184 = {"SteamAPI_ISteamFriends_ActivateGameOverlayToWebPage", kParams_91};
-const steambridge::SlotInfo kCall_185 = {"SteamAPI_ISteamFriends_IsClanPublic", kParams_61};
-const steambridge::SlotInfo kCall_186 = {"SteamAPI_ISteamFriends_IsClanOfficialGameGroup", kParams_61};
-const steambridge::SlotInfo kCall_187 = {"SteamAPI_ISteamFriends_GetNumChatsWithUnreadPriorityMessages", nullptr};
-const steambridge::SlotInfo kCall_188 = {"SteamAPI_ISteamFriends_ActivateGameOverlayRemotePlayTogetherInviteDialog", kParams_73};
-const steambridge::SlotInfo kCall_189 = {"SteamAPI_ISteamFriends_RegisterProtocolInOverlayBrowser", kParams_92};
-const steambridge::SlotInfo kCall_190 = {"SteamAPI_ISteamFriends_ActivateGameOverlayInviteDialogConnectString", kParams_93};
-const steambridge::SlotInfo kCall_191 = {"SteamAPI_ISteamFriends_RequestEquippedProfileItems", kParams_89};
-const steambridge::SlotInfo kCall_192 = {"SteamAPI_ISteamFriends_BHasEquippedProfileItem", kParams_94};
-const steambridge::SlotInfo kCall_193 = {"SteamAPI_ISteamFriends_GetProfileItemPropertyString", kParams_95};
-const steambridge::SlotInfo kCall_194 = {"SteamAPI_ISteamFriends_GetProfileItemPropertyUint", kParams_95};
-const steambridge::SlotInfo kCall_195 = {"SteamAPI_ISteamGameSearch_AddGameSearchParams", kParams_96};
-const steambridge::SlotInfo kCall_196 = {"SteamAPI_ISteamGameSearch_SearchForGameWithLobby", kParams_97};
-const steambridge::SlotInfo kCall_197 = {"SteamAPI_ISteamGameSearch_SearchForGameSolo", kParams_98};
-const steambridge::SlotInfo kCall_198 = {"SteamAPI_ISteamGameSearch_AcceptGame", nullptr};
-const steambridge::SlotInfo kCall_199 = {"SteamAPI_ISteamGameSearch_DeclineGame", nullptr};
-const steambridge::SlotInfo kCall_200 = {"SteamAPI_ISteamGameSearch_RetrieveConnectionDetails", kParams_99};
-const steambridge::SlotInfo kCall_201 = {"SteamAPI_ISteamGameSearch_EndGameSearch", nullptr};
-const steambridge::SlotInfo kCall_202 = {"SteamAPI_ISteamGameSearch_SetGameHostParams", kParams_76};
-const steambridge::SlotInfo kCall_203 = {"SteamAPI_ISteamGameSearch_SetConnectionDetails", kParams_100};
-const steambridge::SlotInfo kCall_204 = {"SteamAPI_ISteamGameSearch_RequestPlayersForGame", kParams_101};
-const steambridge::SlotInfo kCall_205 = {"SteamAPI_ISteamGameSearch_HostConfirmGameStart", kParams_102};
-const steambridge::SlotInfo kCall_206 = {"SteamAPI_ISteamGameSearch_CancelRequestPlayersForGame", nullptr};
-const steambridge::SlotInfo kCall_207 = {"SteamAPI_ISteamGameSearch_SubmitPlayerResult", kParams_103};
-const steambridge::SlotInfo kCall_208 = {"SteamAPI_ISteamGameSearch_EndGame", kParams_102};
-const steambridge::SlotInfo kCall_209 = {"SteamAPI_ISteamGameServer_InitGameServer", kParams_104};
-const steambridge::SlotInfo kCall_210 = {"SteamAPI_ISteamGameServer_SetProduct", kParams_105};
-const steambridge::SlotInfo kCall_211 = {"SteamAPI_ISteamGameServer_SetGameDescription", kParams_106};
-const steambridge::SlotInfo kCall_212 = {"SteamAPI_ISteamGameServer_SetModDir", kParams_107};
-const steambridge::SlotInfo kCall_213 = {"SteamAPI_ISteamGameServer_SetDedicatedServer", kParams_108};
-const steambridge::SlotInfo kCall_214 = {"SteamAPI_ISteamGameServer_LogOn", kParams_109};
-const steambridge::SlotInfo kCall_215 = {"SteamAPI_ISteamGameServer_LogOnAnonymous", nullptr};
-const steambridge::SlotInfo kCall_216 = {"SteamAPI_ISteamGameServer_LogOff", nullptr};
-const steambridge::SlotInfo kCall_217 = {"SteamAPI_ISteamGameServer_BLoggedOn", nullptr};
-const steambridge::SlotInfo kCall_218 = {"SteamAPI_ISteamGameServer_BSecure", nullptr};
-const steambridge::SlotInfo kCall_219 = {"SteamAPI_ISteamGameServer_GetSteamID", nullptr};
-const steambridge::SlotInfo kCall_220 = {"SteamAPI_ISteamGameServer_WasRestartRequested", nullptr};
-const steambridge::SlotInfo kCall_221 = {"SteamAPI_ISteamGameServer_SetMaxPlayerCount", kParams_110};
-const steambridge::SlotInfo kCall_222 = {"SteamAPI_ISteamGameServer_SetBotPlayerCount", kParams_111};
-const steambridge::SlotInfo kCall_223 = {"SteamAPI_ISteamGameServer_SetServerName", kParams_112};
-const steambridge::SlotInfo kCall_224 = {"SteamAPI_ISteamGameServer_SetMapName", kParams_113};
-const steambridge::SlotInfo kCall_225 = {"SteamAPI_ISteamGameServer_SetPasswordProtected", kParams_114};
-const steambridge::SlotInfo kCall_226 = {"SteamAPI_ISteamGameServer_SetSpectatorPort", kParams_115};
-const steambridge::SlotInfo kCall_227 = {"SteamAPI_ISteamGameServer_SetSpectatorServerName", kParams_116};
-const steambridge::SlotInfo kCall_228 = {"SteamAPI_ISteamGameServer_ClearAllKeyValues", nullptr};
-const steambridge::SlotInfo kCall_229 = {"SteamAPI_ISteamGameServer_SetKeyValue", kParams_117};
-const steambridge::SlotInfo kCall_230 = {"SteamAPI_ISteamGameServer_SetGameTags", kParams_118};
-const steambridge::SlotInfo kCall_231 = {"SteamAPI_ISteamGameServer_SetGameData", kParams_119};
-const steambridge::SlotInfo kCall_232 = {"SteamAPI_ISteamGameServer_SetRegion", kParams_120};
-const steambridge::SlotInfo kCall_233 = {"SteamAPI_ISteamGameServer_SendUserConnectAndAuthenticate", kParams_121};
-const steambridge::SlotInfo kCall_234 = {"SteamAPI_ISteamGameServer_CreateUnauthenticatedUserConnection", nullptr};
-const steambridge::SlotInfo kCall_235 = {"SteamAPI_ISteamGameServer_SendUserDisconnect", kParams_122};
-const steambridge::SlotInfo kCall_236 = {"SteamAPI_ISteamGameServer_BUpdateUserData", kParams_123};
-const steambridge::SlotInfo kCall_237 = {"SteamAPI_ISteamGameServer_GetAuthSessionTicket", kParams_124};
-const steambridge::SlotInfo kCall_238 = {"SteamAPI_ISteamGameServer_BeginAuthSession", kParams_125};
-const steambridge::SlotInfo kCall_239 = {"SteamAPI_ISteamGameServer_EndAuthSession", kParams_89};
-const steambridge::SlotInfo kCall_240 = {"SteamAPI_ISteamGameServer_CancelAuthTicket", kParams_126};
-const steambridge::SlotInfo kCall_241 = {"SteamAPI_ISteamGameServer_UserHasLicenseForApp", kParams_127};
-const steambridge::SlotInfo kCall_242 = {"SteamAPI_ISteamGameServer_RequestUserGroupStatus", kParams_128};
-const steambridge::SlotInfo kCall_243 = {"SteamAPI_ISteamGameServer_GetGameplayStats", nullptr};
-const steambridge::SlotInfo kCall_244 = {"SteamAPI_ISteamGameServer_GetServerReputation", nullptr};
-const steambridge::SlotInfo kCall_245 = {"SteamAPI_ISteamGameServer_GetPublicIP", nullptr};
-const steambridge::SlotInfo kCall_246 = {"SteamAPI_ISteamGameServer_HandleIncomingPacket", kParams_129};
-const steambridge::SlotInfo kCall_247 = {"SteamAPI_ISteamGameServer_GetNextOutgoingPacket", kParams_130};
-const steambridge::SlotInfo kCall_248 = {"SteamAPI_ISteamGameServer_EnableHeartbeats", kParams_131};
-const steambridge::SlotInfo kCall_249 = {"SteamAPI_ISteamGameServer_SetHeartbeatInterval", kParams_132};
-const steambridge::SlotInfo kCall_250 = {"SteamAPI_ISteamGameServer_ForceHeartbeat", nullptr};
-const steambridge::SlotInfo kCall_251 = {"SteamAPI_ISteamGameServer_AssociateWithClan", kParams_61};
-const steambridge::SlotInfo kCall_252 = {"SteamAPI_ISteamGameServer_ComputeNewPlayerCompatibility", kParams_133};
-const steambridge::SlotInfo kCall_253 = {"ISteamGameServer::InitGameServer", kParams_104};
-const steambridge::SlotInfo kCall_254 = {"SteamAPI_ISteamGameServer_SetAdvertiseServerActive", kParams_131};
-const steambridge::SlotInfo kCall_255 = {"SteamAPI_ISteamGameServer_SendUserConnectAndAuthenticate_DEPRECATED", kParams_121};
-const steambridge::SlotInfo kCall_256 = {"SteamAPI_ISteamGameServer_SendUserDisconnect_DEPRECATED", kParams_122};
-const steambridge::SlotInfo kCall_257 = {"ISteamGameServer::SetMasterServerHeartbeatInterval_DEPRECATED", kParams_132};
-const steambridge::SlotInfo kCall_258 = {"ISteamGameServer::ForceMasterServerHeartbeat_DEPRECATED", nullptr};
-const steambridge::SlotInfo kCall_259 = {"SteamAPI_ISteamGameServer_GetAuthSessionTicket", kParams_134};
-const steambridge::SlotInfo kCall_260 = {"SteamAPI_ISteamGameServerStats_RequestUserStats", kParams_122};
-const steambridge::SlotInfo kCall_261 = {"SteamAPI_ISteamGameServerStats_GetUserStatInt32", kParams_135};
-const steambridge::SlotInfo kCall_262 = {"SteamAPI_ISteamGameServerStats_GetUserStatFloat", kParams_135};
-const steambridge::SlotInfo kCall_263 = {"SteamAPI_ISteamGameServerStats_GetUserAchievement", kParams_136};
-const steambridge::SlotInfo kCall_264 = {"SteamAPI_ISteamGameServerStats_SetUserStatInt32", kParams_137};
-const steambridge::SlotInfo kCall_265 = {"SteamAPI_ISteamGameServerStats_SetUserStatFloat", kParams_138};
-const steambridge::SlotInfo kCall_266 = {"SteamAPI_ISteamGameServerStats_UpdateUserAvgRateStat", kParams_139};
-const steambridge::SlotInfo kCall_267 = {"SteamAPI_ISteamGameServerStats_SetUserAchievement", kParams_140};
-const steambridge::SlotInfo kCall_268 = {"SteamAPI_ISteamGameServerStats_ClearUserAchievement", kParams_140};
-const steambridge::SlotInfo kCall_269 = {"SteamAPI_ISteamGameServerStats_StoreUserStats", kParams_122};
-const steambridge::SlotInfo kCall_270 = {"SteamAPI_ISteamHTMLSurface_Init", nullptr};
-const steambridge::SlotInfo kCall_271 = {"SteamAPI_ISteamHTMLSurface_Shutdown", nullptr};
-const steambridge::SlotInfo kCall_272 = {"SteamAPI_ISteamHTMLSurface_CreateBrowser", kParams_141};
-const steambridge::SlotInfo kCall_273 = {"SteamAPI_ISteamHTMLSurface_RemoveBrowser", kParams_142};
-const steambridge::SlotInfo kCall_274 = {"SteamAPI_ISteamHTMLSurface_LoadURL", kParams_143};
-const steambridge::SlotInfo kCall_275 = {"SteamAPI_ISteamHTMLSurface_SetSize", kParams_144};
-const steambridge::SlotInfo kCall_276 = {"SteamAPI_ISteamHTMLSurface_StopLoad", kParams_142};
-const steambridge::SlotInfo kCall_277 = {"SteamAPI_ISteamHTMLSurface_Reload", kParams_142};
-const steambridge::SlotInfo kCall_278 = {"SteamAPI_ISteamHTMLSurface_GoBack", kParams_142};
-const steambridge::SlotInfo kCall_279 = {"SteamAPI_ISteamHTMLSurface_GoForward", kParams_142};
-const steambridge::SlotInfo kCall_280 = {"SteamAPI_ISteamHTMLSurface_AddHeader", kParams_145};
-const steambridge::SlotInfo kCall_281 = {"SteamAPI_ISteamHTMLSurface_ExecuteJavascript", kParams_146};
-const steambridge::SlotInfo kCall_282 = {"SteamAPI_ISteamHTMLSurface_MouseUp", kParams_147};
-const steambridge::SlotInfo kCall_283 = {"SteamAPI_ISteamHTMLSurface_MouseDown", kParams_147};
-const steambridge::SlotInfo kCall_284 = {"SteamAPI_ISteamHTMLSurface_MouseDoubleClick", kParams_147};
-const steambridge::SlotInfo kCall_285 = {"SteamAPI_ISteamHTMLSurface_MouseMove", kParams_148};
-const steambridge::SlotInfo kCall_286 = {"SteamAPI_ISteamHTMLSurface_MouseWheel", kParams_149};
-const steambridge::SlotInfo kCall_287 = {"SteamAPI_ISteamHTMLSurface_KeyDown", kParams_150};
-const steambridge::SlotInfo kCall_288 = {"SteamAPI_ISteamHTMLSurface_KeyUp", kParams_150};
-const steambridge::SlotInfo kCall_289 = {"SteamAPI_ISteamHTMLSurface_KeyChar", kParams_151};
-const steambridge::SlotInfo kCall_290 = {"SteamAPI_ISteamHTMLSurface_SetHorizontalScroll", kParams_152};
-const steambridge::SlotInfo kCall_291 = {"SteamAPI_ISteamHTMLSurface_SetVerticalScroll", kParams_152};
-const steambridge::SlotInfo kCall_292 = {"SteamAPI_ISteamHTMLSurface_SetKeyFocus", kParams_153};
-const steambridge::SlotInfo kCall_293 = {"SteamAPI_ISteamHTMLSurface_ViewSource", kParams_142};
-const steambridge::SlotInfo kCall_294 = {"SteamAPI_ISteamHTMLSurface_CopyToClipboard", kParams_142};
-const steambridge::SlotInfo kCall_295 = {"SteamAPI_ISteamHTMLSurface_PasteFromClipboard", kParams_142};
-const steambridge::SlotInfo kCall_296 = {"SteamAPI_ISteamHTMLSurface_Find", kParams_154};
-const steambridge::SlotInfo kCall_297 = {"SteamAPI_ISteamHTMLSurface_StopFind", kParams_142};
-const steambridge::SlotInfo kCall_298 = {"SteamAPI_ISteamHTMLSurface_GetLinkAtPosition", kParams_148};
-const steambridge::SlotInfo kCall_299 = {"SteamAPI_ISteamHTMLSurface_SetCookie", kParams_155};
-const steambridge::SlotInfo kCall_300 = {"SteamAPI_ISteamHTMLSurface_SetPageScaleFactor", kParams_156};
-const steambridge::SlotInfo kCall_301 = {"SteamAPI_ISteamHTMLSurface_SetBackgroundMode", kParams_157};
-const steambridge::SlotInfo kCall_302 = {"SteamAPI_ISteamHTMLSurface_SetDPIScalingFactor", kParams_158};
-const steambridge::SlotInfo kCall_303 = {"SteamAPI_ISteamHTMLSurface_AllowStartRequest", kParams_159};
-const steambridge::SlotInfo kCall_304 = {"SteamAPI_ISteamHTMLSurface_JSDialogResponse", kParams_160};
-const steambridge::SlotInfo kCall_305 = {"ISteamHTMLSurface::FileLoadDialogResponse", kParams_161};
-const steambridge::SlotInfo kCall_306 = {"SteamAPI_ISteamHTMLSurface_KeyDown", kParams_162};
-const steambridge::SlotInfo kCall_307 = {"SteamAPI_ISteamHTMLSurface_OpenDeveloperTools", kParams_142};
-const steambridge::SlotInfo kCall_308 = {"SteamAPI_ISteamHTMLSurface_FileLoadDialogResponse", kParams_161};
-const steambridge::SlotInfo kCall_309 = {"SteamAPI_ISteamHTTP_CreateHTTPRequest", kParams_163};
-const steambridge::SlotInfo kCall_310 = {"SteamAPI_ISteamHTTP_SetHTTPRequestContextValue", kParams_164};
-const steambridge::SlotInfo kCall_311 = {"SteamAPI_ISteamHTTP_SetHTTPRequestNetworkActivityTimeout", kParams_165};
-const steambridge::SlotInfo kCall_312 = {"SteamAPI_ISteamHTTP_SetHTTPRequestHeaderValue", kParams_166};
-const steambridge::SlotInfo kCall_313 = {"SteamAPI_ISteamHTTP_SetHTTPRequestGetOrPostParameter", kParams_167};
-const steambridge::SlotInfo kCall_314 = {"SteamAPI_ISteamHTTP_SendHTTPRequest", kParams_168};
-const steambridge::SlotInfo kCall_315 = {"SteamAPI_ISteamHTTP_SendHTTPRequestAndStreamResponse", kParams_168};
-const steambridge::SlotInfo kCall_316 = {"SteamAPI_ISteamHTTP_DeferHTTPRequest", kParams_169};
-const steambridge::SlotInfo kCall_317 = {"SteamAPI_ISteamHTTP_PrioritizeHTTPRequest", kParams_169};
-const steambridge::SlotInfo kCall_318 = {"SteamAPI_ISteamHTTP_GetHTTPResponseHeaderSize", kParams_170};
-const steambridge::SlotInfo kCall_319 = {"SteamAPI_ISteamHTTP_GetHTTPResponseHeaderValue", kParams_171};
-const steambridge::SlotInfo kCall_320 = {"SteamAPI_ISteamHTTP_GetHTTPResponseBodySize", kParams_172};
-const steambridge::SlotInfo kCall_321 = {"SteamAPI_ISteamHTTP_GetHTTPResponseBodyData", kParams_173};
-const steambridge::SlotInfo kCall_322 = {"SteamAPI_ISteamHTTP_GetHTTPStreamingResponseBodyData", kParams_174};
-const steambridge::SlotInfo kCall_323 = {"SteamAPI_ISteamHTTP_ReleaseHTTPRequest", kParams_169};
-const steambridge::SlotInfo kCall_324 = {"SteamAPI_ISteamHTTP_GetHTTPDownloadProgressPct", kParams_175};
-const steambridge::SlotInfo kCall_325 = {"SteamAPI_ISteamHTTP_SetHTTPRequestRawPostBody", kParams_176};
-const steambridge::SlotInfo kCall_326 = {"SteamAPI_ISteamHTTP_CreateCookieContainer", kParams_177};
-const steambridge::SlotInfo kCall_327 = {"SteamAPI_ISteamHTTP_ReleaseCookieContainer", kParams_178};
-const steambridge::SlotInfo kCall_328 = {"SteamAPI_ISteamHTTP_SetCookie", kParams_179};
-const steambridge::SlotInfo kCall_329 = {"SteamAPI_ISteamHTTP_SetHTTPRequestCookieContainer", kParams_180};
-const steambridge::SlotInfo kCall_330 = {"SteamAPI_ISteamHTTP_SetHTTPRequestUserAgentInfo", kParams_181};
-const steambridge::SlotInfo kCall_331 = {"SteamAPI_ISteamHTTP_SetHTTPRequestRequiresVerifiedCertificate", kParams_182};
-const steambridge::SlotInfo kCall_332 = {"SteamAPI_ISteamHTTP_SetHTTPRequestAbsoluteTimeoutMS", kParams_183};
-const steambridge::SlotInfo kCall_333 = {"SteamAPI_ISteamHTTP_GetHTTPRequestWasTimedOut", kParams_184};
-const steambridge::SlotInfo kCall_334 = {"SteamAPI_ISteamInput_Init", nullptr};
-const steambridge::SlotInfo kCall_335 = {"SteamAPI_ISteamInput_Shutdown", nullptr};
-const steambridge::SlotInfo kCall_336 = {"SteamAPI_ISteamInput_RunFrame", nullptr};
-const steambridge::SlotInfo kCall_337 = {"SteamAPI_ISteamInput_GetConnectedControllers", kParams_25};
-const steambridge::SlotInfo kCall_338 = {"SteamAPI_ISteamInput_GetActionSetHandle", kParams_27};
-const steambridge::SlotInfo kCall_339 = {"SteamAPI_ISteamInput_ActivateActionSet", kParams_185};
-const steambridge::SlotInfo kCall_340 = {"SteamAPI_ISteamInput_GetCurrentActionSet", kParams_186};
-const steambridge::SlotInfo kCall_341 = {"SteamAPI_ISteamInput_ActivateActionSetLayer", kParams_187};
-const steambridge::SlotInfo kCall_342 = {"SteamAPI_ISteamInput_DeactivateActionSetLayer", kParams_187};
-const steambridge::SlotInfo kCall_343 = {"SteamAPI_ISteamInput_DeactivateAllActionSetLayers", kParams_186};
-const steambridge::SlotInfo kCall_344 = {"SteamAPI_ISteamInput_GetActiveActionSetLayers", kParams_188};
-const steambridge::SlotInfo kCall_345 = {"SteamAPI_ISteamInput_GetDigitalActionHandle", kParams_29};
-const steambridge::SlotInfo kCall_346 = {"SteamAPI_ISteamInput_GetDigitalActionData", kParams_189};
-const steambridge::SlotInfo kCall_347 = {"SteamAPI_ISteamInput_GetDigitalActionOrigins", kParams_190};
-const steambridge::SlotInfo kCall_348 = {"SteamAPI_ISteamInput_GetAnalogActionHandle", kParams_29};
-const steambridge::SlotInfo kCall_349 = {"SteamAPI_ISteamInput_GetAnalogActionData", kParams_191};
-const steambridge::SlotInfo kCall_350 = {"SteamAPI_ISteamInput_GetAnalogActionOrigins", kParams_192};
-const steambridge::SlotInfo kCall_351 = {"SteamAPI_ISteamInput_GetGlyphForActionOrigin", kParams_43};
-const steambridge::SlotInfo kCall_352 = {"SteamAPI_ISteamInput_GetStringForActionOrigin", kParams_43};
-const steambridge::SlotInfo kCall_353 = {"SteamAPI_ISteamInput_StopAnalogActionMomentum", kParams_193};
-const steambridge::SlotInfo kCall_354 = {"SteamAPI_ISteamInput_GetMotionData", kParams_186};
-const steambridge::SlotInfo kCall_355 = {"SteamAPI_ISteamInput_TriggerVibration", kParams_194};
-const steambridge::SlotInfo kCall_356 = {"SteamAPI_ISteamInput_SetLEDColor", kParams_195};
-const steambridge::SlotInfo kCall_357 = {"SteamAPI_ISteamInput_TriggerHapticPulse", kParams_196};
-const steambridge::SlotInfo kCall_358 = {"SteamAPI_ISteamInput_TriggerRepeatedHapticPulse", kParams_197};
-const steambridge::SlotInfo kCall_359 = {"SteamAPI_ISteamInput_ShowBindingPanel", kParams_186};
-const steambridge::SlotInfo kCall_360 = {"SteamAPI_ISteamInput_GetInputTypeForHandle", kParams_186};
-const steambridge::SlotInfo kCall_361 = {"SteamAPI_ISteamInput_GetControllerForGamepadIndex", kParams_40};
-const steambridge::SlotInfo kCall_362 = {"SteamAPI_ISteamInput_GetGamepadIndexForController", kParams_198};
-const steambridge::SlotInfo kCall_363 = {"SteamAPI_ISteamInput_GetStringForXboxOrigin", kParams_43};
-const steambridge::SlotInfo kCall_364 = {"SteamAPI_ISteamInput_GetGlyphForXboxOrigin", kParams_43};
-const steambridge::SlotInfo kCall_365 = {"SteamAPI_ISteamInput_GetActionOriginFromXboxOrigin", kParams_199};
-const steambridge::SlotInfo kCall_366 = {"SteamAPI_ISteamInput_TranslateActionOrigin", kParams_47};
-const steambridge::SlotInfo kCall_367 = {"SteamAPI_ISteamInput_GetDeviceBindingRevision", kParams_200};
-const steambridge::SlotInfo kCall_368 = {"SteamAPI_ISteamInput_GetRemotePlaySessionID", kParams_186};
-const steambridge::SlotInfo kCall_369 = {"SteamAPI_ISteamInput_Init", kParams_201};
-const steambridge::SlotInfo kCall_370 = {"SteamAPI_ISteamInput_SetInputActionManifestFilePath", kParams_202};
-const steambridge::SlotInfo kCall_371 = {"SteamAPI_ISteamInput_RunFrame", kParams_203};
-const steambridge::SlotInfo kCall_372 = {"SteamAPI_ISteamInput_BWaitForData", kParams_204};
-const steambridge::SlotInfo kCall_373 = {"SteamAPI_ISteamInput_BNewDataAvailable", nullptr};
-const steambridge::SlotInfo kCall_374 = {"SteamAPI_ISteamInput_EnableDeviceCallbacks", nullptr};
-const steambridge::SlotInfo kCall_375 = {"SteamAPI_ISteamInput_EnableActionEventCallbacks", kParams_205};
-const steambridge::SlotInfo kCall_376 = {"SteamAPI_ISteamInput_GetStringForDigitalActionName", kParams_206};
-const steambridge::SlotInfo kCall_377 = {"SteamAPI_ISteamInput_GetGlyphPNGForActionOrigin", kParams_207};
-const steambridge::SlotInfo kCall_378 = {"SteamAPI_ISteamInput_GetGlyphSVGForActionOrigin", kParams_208};
-const steambridge::SlotInfo kCall_379 = {"SteamAPI_ISteamInput_GetGlyphForActionOrigin_Legacy", kParams_43};
-const steambridge::SlotInfo kCall_380 = {"SteamAPI_ISteamInput_GetStringForAnalogActionName", kParams_206};
-const steambridge::SlotInfo kCall_381 = {"SteamAPI_ISteamInput_TriggerVibrationExtended", kParams_209};
-const steambridge::SlotInfo kCall_382 = {"SteamAPI_ISteamInput_TriggerSimpleHapticEvent", kParams_210};
-const steambridge::SlotInfo kCall_383 = {"SteamAPI_ISteamInput_Legacy_TriggerHapticPulse", kParams_196};
-const steambridge::SlotInfo kCall_384 = {"SteamAPI_ISteamInput_Legacy_TriggerRepeatedHapticPulse", kParams_197};
-const steambridge::SlotInfo kCall_385 = {"SteamAPI_ISteamInput_GetSessionInputConfigurationSettings", nullptr};
-const steambridge::SlotInfo kCall_386 = {"SteamAPI_ISteamInput_SetDualSenseTriggerEffect", kParams_211};
-const steambridge::SlotInfo kCall_387 = {"SteamAPI_ISteamInventory_GetResultStatus", kParams_212};
-const steambridge::SlotInfo kCall_388 = {"SteamAPI_ISteamInventory_GetResultItems", kParams_213};
-const steambridge::SlotInfo kCall_389 = {"SteamAPI_ISteamInventory_GetResultItemProperty", kParams_214};
-const steambridge::SlotInfo kCall_390 = {"SteamAPI_ISteamInventory_GetResultTimestamp", kParams_212};
-const steambridge::SlotInfo kCall_391 = {"SteamAPI_ISteamInventory_CheckResultSteamID", kParams_215};
-const steambridge::SlotInfo kCall_392 = {"SteamAPI_ISteamInventory_DestroyResult", kParams_212};
-const steambridge::SlotInfo kCall_393 = {"SteamAPI_ISteamInventory_GetAllItems", kParams_216};
-const steambridge::SlotInfo kCall_394 = {"SteamAPI_ISteamInventory_GetItemsByID", kParams_217};
-const steambridge::SlotInfo kCall_395 = {"SteamAPI_ISteamInventory_SerializeResult", kParams_218};
-const steambridge::SlotInfo kCall_396 = {"SteamAPI_ISteamInventory_DeserializeResult", kParams_219};
-const steambridge::SlotInfo kCall_397 = {"SteamAPI_ISteamInventory_GenerateItems", kParams_220};
-const steambridge::SlotInfo kCall_398 = {"SteamAPI_ISteamInventory_GrantPromoItems", kParams_216};
-const steambridge::SlotInfo kCall_399 = {"SteamAPI_ISteamInventory_AddPromoItem", kParams_221};
-const steambridge::SlotInfo kCall_400 = {"SteamAPI_ISteamInventory_AddPromoItems", kParams_222};
-const steambridge::SlotInfo kCall_401 = {"SteamAPI_ISteamInventory_ConsumeItem", kParams_223};
-const steambridge::SlotInfo kCall_402 = {"SteamAPI_ISteamInventory_ExchangeItems", kParams_224};
-const steambridge::SlotInfo kCall_403 = {"SteamAPI_ISteamInventory_TransferItemQuantity", kParams_225};
-const steambridge::SlotInfo kCall_404 = {"SteamAPI_ISteamInventory_SendItemDropHeartbeat", nullptr};
-const steambridge::SlotInfo kCall_405 = {"SteamAPI_ISteamInventory_TriggerItemDrop", kParams_226};
-const steambridge::SlotInfo kCall_406 = {"SteamAPI_ISteamInventory_TradeItems", kParams_227};
-const steambridge::SlotInfo kCall_407 = {"SteamAPI_ISteamInventory_LoadItemDefinitions", nullptr};
-const steambridge::SlotInfo kCall_408 = {"SteamAPI_ISteamInventory_GetItemDefinitionIDs", kParams_228};
-const steambridge::SlotInfo kCall_409 = {"SteamAPI_ISteamInventory_GetItemDefinitionProperty", kParams_229};
-const steambridge::SlotInfo kCall_410 = {"SteamAPI_ISteamInventory_RequestEligiblePromoItemDefinitionsIDs", kParams_89};
-const steambridge::SlotInfo kCall_411 = {"SteamAPI_ISteamInventory_GetEligiblePromoItemDefinitionIDs", kParams_230};
-const steambridge::SlotInfo kCall_412 = {"SteamAPI_ISteamInventory_StartPurchase", kParams_231};
-const steambridge::SlotInfo kCall_413 = {"SteamAPI_ISteamInventory_RequestPrices", nullptr};
-const steambridge::SlotInfo kCall_414 = {"SteamAPI_ISteamInventory_GetNumItemsWithPrices", nullptr};
-const steambridge::SlotInfo kCall_415 = {"SteamAPI_ISteamInventory_GetItemsWithPrices", kParams_232};
-const steambridge::SlotInfo kCall_416 = {"SteamAPI_ISteamInventory_GetItemPrice", kParams_233};
-const steambridge::SlotInfo kCall_417 = {"SteamAPI_ISteamInventory_StartUpdateProperties", nullptr};
-const steambridge::SlotInfo kCall_418 = {"SteamAPI_ISteamInventory_RemoveProperty", kParams_234};
-const steambridge::SlotInfo kCall_419 = {"SteamAPI_ISteamInventory_SetPropertyString", kParams_235};
-const steambridge::SlotInfo kCall_420 = {"SteamAPI_ISteamInventory_SetPropertyBool", kParams_236};
-const steambridge::SlotInfo kCall_421 = {"SteamAPI_ISteamInventory_SetPropertyInt64", kParams_237};
-const steambridge::SlotInfo kCall_422 = {"SteamAPI_ISteamInventory_SetPropertyFloat", kParams_238};
-const steambridge::SlotInfo kCall_423 = {"SteamAPI_ISteamInventory_SubmitUpdateProperties", kParams_239};
-const steambridge::SlotInfo kCall_424 = {"SteamAPI_ISteamInventory_InspectItem", kParams_240};
-const steambridge::SlotInfo kCall_425 = {"SteamAPI_ISteamMatchmaking_GetFavoriteGameCount", nullptr};
-const steambridge::SlotInfo kCall_426 = {"SteamAPI_ISteamMatchmaking_GetFavoriteGame", kParams_241};
-const steambridge::SlotInfo kCall_427 = {"SteamAPI_ISteamMatchmaking_AddFavoriteGame", kParams_242};
-const steambridge::SlotInfo kCall_428 = {"SteamAPI_ISteamMatchmaking_RemoveFavoriteGame", kParams_243};
-const steambridge::SlotInfo kCall_429 = {"SteamAPI_ISteamMatchmaking_RequestLobbyList", nullptr};
-const steambridge::SlotInfo kCall_430 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListStringFilter", kParams_244};
-const steambridge::SlotInfo kCall_431 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListNumericalFilter", kParams_245};
-const steambridge::SlotInfo kCall_432 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListNearValueFilter", kParams_246};
-const steambridge::SlotInfo kCall_433 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListFilterSlotsAvailable", kParams_247};
-const steambridge::SlotInfo kCall_434 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListDistanceFilter", kParams_248};
-const steambridge::SlotInfo kCall_435 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListResultCountFilter", kParams_249};
-const steambridge::SlotInfo kCall_436 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListCompatibleMembersFilter", kParams_73};
-const steambridge::SlotInfo kCall_437 = {"SteamAPI_ISteamMatchmaking_GetLobbyByIndex", kParams_250};
-const steambridge::SlotInfo kCall_438 = {"SteamAPI_ISteamMatchmaking_CreateLobby", kParams_251};
-const steambridge::SlotInfo kCall_439 = {"SteamAPI_ISteamMatchmaking_JoinLobby", kParams_73};
-const steambridge::SlotInfo kCall_440 = {"SteamAPI_ISteamMatchmaking_LeaveLobby", kParams_73};
-const steambridge::SlotInfo kCall_441 = {"SteamAPI_ISteamMatchmaking_InviteUserToLobby", kParams_252};
-const steambridge::SlotInfo kCall_442 = {"SteamAPI_ISteamMatchmaking_GetNumLobbyMembers", kParams_73};
-const steambridge::SlotInfo kCall_443 = {"SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex", kParams_253};
-const steambridge::SlotInfo kCall_444 = {"SteamAPI_ISteamMatchmaking_GetLobbyData", kParams_254};
-const steambridge::SlotInfo kCall_445 = {"SteamAPI_ISteamMatchmaking_SetLobbyData", kParams_255};
-const steambridge::SlotInfo kCall_446 = {"SteamAPI_ISteamMatchmaking_GetLobbyDataCount", kParams_73};
-const steambridge::SlotInfo kCall_447 = {"SteamAPI_ISteamMatchmaking_GetLobbyDataByIndex", kParams_256};
-const steambridge::SlotInfo kCall_448 = {"SteamAPI_ISteamMatchmaking_DeleteLobbyData", kParams_254};
-const steambridge::SlotInfo kCall_449 = {"SteamAPI_ISteamMatchmaking_GetLobbyMemberData", kParams_257};
-const steambridge::SlotInfo kCall_450 = {"SteamAPI_ISteamMatchmaking_SetLobbyMemberData", kParams_255};
-const steambridge::SlotInfo kCall_451 = {"SteamAPI_ISteamMatchmaking_SendLobbyChatMsg", kParams_258};
-const steambridge::SlotInfo kCall_452 = {"SteamAPI_ISteamMatchmaking_GetLobbyChatEntry", kParams_259};
-const steambridge::SlotInfo kCall_453 = {"SteamAPI_ISteamMatchmaking_RequestLobbyData", kParams_73};
-const steambridge::SlotInfo kCall_454 = {"SteamAPI_ISteamMatchmaking_SetLobbyGameServer", kParams_260};
-const steambridge::SlotInfo kCall_455 = {"SteamAPI_ISteamMatchmaking_GetLobbyGameServer", kParams_261};
-const steambridge::SlotInfo kCall_456 = {"SteamAPI_ISteamMatchmaking_SetLobbyMemberLimit", kParams_262};
-const steambridge::SlotInfo kCall_457 = {"SteamAPI_ISteamMatchmaking_GetLobbyMemberLimit", kParams_73};
-const steambridge::SlotInfo kCall_458 = {"SteamAPI_ISteamMatchmaking_SetLobbyType", kParams_263};
-const steambridge::SlotInfo kCall_459 = {"SteamAPI_ISteamMatchmaking_SetLobbyJoinable", kParams_264};
-const steambridge::SlotInfo kCall_460 = {"SteamAPI_ISteamMatchmaking_GetLobbyOwner", kParams_73};
-const steambridge::SlotInfo kCall_461 = {"SteamAPI_ISteamMatchmaking_SetLobbyOwner", kParams_265};
-const steambridge::SlotInfo kCall_462 = {"SteamAPI_ISteamMatchmaking_SetLinkedLobby", kParams_266};
-const steambridge::SlotInfo kCall_463 = {"SteamAPI_ISteamMatchmakingServers_RequestInternetServerList", kParams_267};
-const steambridge::SlotInfo kCall_464 = {"SteamAPI_ISteamMatchmakingServers_RequestLANServerList", kParams_268};
-const steambridge::SlotInfo kCall_465 = {"SteamAPI_ISteamMatchmakingServers_RequestFriendsServerList", kParams_267};
-const steambridge::SlotInfo kCall_466 = {"SteamAPI_ISteamMatchmakingServers_RequestFavoritesServerList", kParams_267};
-const steambridge::SlotInfo kCall_467 = {"SteamAPI_ISteamMatchmakingServers_RequestHistoryServerList", kParams_267};
-const steambridge::SlotInfo kCall_468 = {"SteamAPI_ISteamMatchmakingServers_RequestSpectatorServerList", kParams_267};
-const steambridge::SlotInfo kCall_469 = {"SteamAPI_ISteamMatchmakingServers_ReleaseRequest", kParams_269};
-const steambridge::SlotInfo kCall_470 = {"SteamAPI_ISteamMatchmakingServers_GetServerDetails", kParams_270};
-const steambridge::SlotInfo kCall_471 = {"SteamAPI_ISteamMatchmakingServers_CancelQuery", kParams_169};
-const steambridge::SlotInfo kCall_472 = {"SteamAPI_ISteamMatchmakingServers_RefreshQuery", kParams_169};
-const steambridge::SlotInfo kCall_473 = {"SteamAPI_ISteamMatchmakingServers_IsRefreshing", kParams_169};
-const steambridge::SlotInfo kCall_474 = {"SteamAPI_ISteamMatchmakingServers_GetServerCount", kParams_169};
-const steambridge::SlotInfo kCall_475 = {"SteamAPI_ISteamMatchmakingServers_RefreshServer", kParams_270};
-const steambridge::SlotInfo kCall_476 = {"SteamAPI_ISteamMatchmakingServers_PingServer", kParams_271};
-const steambridge::SlotInfo kCall_477 = {"SteamAPI_ISteamMatchmakingServers_PlayerDetails", kParams_271};
-const steambridge::SlotInfo kCall_478 = {"SteamAPI_ISteamMatchmakingServers_ServerRules", kParams_271};
-const steambridge::SlotInfo kCall_479 = {"SteamAPI_ISteamMatchmakingServers_CancelServerQuery", kParams_272};
-const steambridge::SlotInfo kCall_480 = {"SteamAPI_ISteamMusic_BIsEnabled", nullptr};
-const steambridge::SlotInfo kCall_481 = {"SteamAPI_ISteamMusic_BIsPlaying", nullptr};
-const steambridge::SlotInfo kCall_482 = {"SteamAPI_ISteamMusic_GetPlaybackStatus", nullptr};
-const steambridge::SlotInfo kCall_483 = {"SteamAPI_ISteamMusic_Play", nullptr};
-const steambridge::SlotInfo kCall_484 = {"SteamAPI_ISteamMusic_Pause", nullptr};
-const steambridge::SlotInfo kCall_485 = {"SteamAPI_ISteamMusic_PlayPrevious", nullptr};
-const steambridge::SlotInfo kCall_486 = {"SteamAPI_ISteamMusic_PlayNext", nullptr};
-const steambridge::SlotInfo kCall_487 = {"SteamAPI_ISteamMusic_SetVolume", kParams_273};
-const steambridge::SlotInfo kCall_488 = {"SteamAPI_ISteamMusic_GetVolume", nullptr};
-const steambridge::SlotInfo kCall_489 = {"SteamAPI_ISteamMusicRemote_RegisterSteamMusicRemote", kParams_274};
-const steambridge::SlotInfo kCall_490 = {"SteamAPI_ISteamMusicRemote_DeregisterSteamMusicRemote", nullptr};
-const steambridge::SlotInfo kCall_491 = {"SteamAPI_ISteamMusicRemote_BIsCurrentMusicRemote", nullptr};
-const steambridge::SlotInfo kCall_492 = {"SteamAPI_ISteamMusicRemote_BActivationSuccess", kParams_275};
-const steambridge::SlotInfo kCall_493 = {"SteamAPI_ISteamMusicRemote_SetDisplayName", kParams_276};
-const steambridge::SlotInfo kCall_494 = {"SteamAPI_ISteamMusicRemote_SetPNGIcon_64x64", kParams_277};
-const steambridge::SlotInfo kCall_495 = {"SteamAPI_ISteamMusicRemote_EnablePlayPrevious", kParams_275};
-const steambridge::SlotInfo kCall_496 = {"SteamAPI_ISteamMusicRemote_EnablePlayNext", kParams_275};
-const steambridge::SlotInfo kCall_497 = {"SteamAPI_ISteamMusicRemote_EnableShuffled", kParams_275};
-const steambridge::SlotInfo kCall_498 = {"SteamAPI_ISteamMusicRemote_EnableLooped", kParams_275};
-const steambridge::SlotInfo kCall_499 = {"SteamAPI_ISteamMusicRemote_EnableQueue", kParams_275};
-const steambridge::SlotInfo kCall_500 = {"SteamAPI_ISteamMusicRemote_EnablePlaylists", kParams_275};
-const steambridge::SlotInfo kCall_501 = {"SteamAPI_ISteamMusicRemote_UpdatePlaybackStatus", kParams_278};
-const steambridge::SlotInfo kCall_502 = {"SteamAPI_ISteamMusicRemote_UpdateShuffled", kParams_275};
-const steambridge::SlotInfo kCall_503 = {"SteamAPI_ISteamMusicRemote_UpdateLooped", kParams_275};
-const steambridge::SlotInfo kCall_504 = {"SteamAPI_ISteamMusicRemote_UpdateVolume", kParams_279};
-const steambridge::SlotInfo kCall_505 = {"SteamAPI_ISteamMusicRemote_CurrentEntryWillChange", nullptr};
-const steambridge::SlotInfo kCall_506 = {"SteamAPI_ISteamMusicRemote_CurrentEntryIsAvailable", kParams_280};
-const steambridge::SlotInfo kCall_507 = {"SteamAPI_ISteamMusicRemote_UpdateCurrentEntryText", kParams_281};
-const steambridge::SlotInfo kCall_508 = {"SteamAPI_ISteamMusicRemote_UpdateCurrentEntryElapsedSeconds", kParams_282};
-const steambridge::SlotInfo kCall_509 = {"SteamAPI_ISteamMusicRemote_UpdateCurrentEntryCoverArt", kParams_277};
-const steambridge::SlotInfo kCall_510 = {"SteamAPI_ISteamMusicRemote_CurrentEntryDidChange", nullptr};
-const steambridge::SlotInfo kCall_511 = {"SteamAPI_ISteamMusicRemote_QueueWillChange", nullptr};
-const steambridge::SlotInfo kCall_512 = {"SteamAPI_ISteamMusicRemote_ResetQueueEntries", nullptr};
-const steambridge::SlotInfo kCall_513 = {"SteamAPI_ISteamMusicRemote_SetQueueEntry", kParams_283};
-const steambridge::SlotInfo kCall_514 = {"SteamAPI_ISteamMusicRemote_SetCurrentQueueEntry", kParams_284};
-const steambridge::SlotInfo kCall_515 = {"SteamAPI_ISteamMusicRemote_QueueDidChange", nullptr};
-const steambridge::SlotInfo kCall_516 = {"SteamAPI_ISteamMusicRemote_PlaylistWillChange", nullptr};
-const steambridge::SlotInfo kCall_517 = {"SteamAPI_ISteamMusicRemote_ResetPlaylistEntries", nullptr};
-const steambridge::SlotInfo kCall_518 = {"SteamAPI_ISteamMusicRemote_SetPlaylistEntry", kParams_283};
-const steambridge::SlotInfo kCall_519 = {"SteamAPI_ISteamMusicRemote_SetCurrentPlaylistEntry", kParams_284};
-const steambridge::SlotInfo kCall_520 = {"SteamAPI_ISteamMusicRemote_PlaylistDidChange", nullptr};
-const steambridge::SlotInfo kCall_521 = {"SteamAPI_ISteamNetworking_SendP2PPacket", kParams_285};
-const steambridge::SlotInfo kCall_522 = {"SteamAPI_ISteamNetworking_IsP2PPacketAvailable", kParams_286};
-const steambridge::SlotInfo kCall_523 = {"SteamAPI_ISteamNetworking_ReadP2PPacket", kParams_287};
-const steambridge::SlotInfo kCall_524 = {"SteamAPI_ISteamNetworking_AcceptP2PSessionWithUser", kParams_288};
-const steambridge::SlotInfo kCall_525 = {"SteamAPI_ISteamNetworking_CloseP2PSessionWithUser", kParams_288};
-const steambridge::SlotInfo kCall_526 = {"SteamAPI_ISteamNetworking_CloseP2PChannelWithUser", kParams_289};
-const steambridge::SlotInfo kCall_527 = {"SteamAPI_ISteamNetworking_GetP2PSessionState", kParams_290};
-const steambridge::SlotInfo kCall_528 = {"SteamAPI_ISteamNetworking_AllowP2PPacketRelay", kParams_291};
-const steambridge::SlotInfo kCall_529 = {"SteamAPI_ISteamNetworking_CreateListenSocket", kParams_292};
-const steambridge::SlotInfo kCall_530 = {"SteamAPI_ISteamNetworking_CreateP2PConnectionSocket", kParams_293};
-const steambridge::SlotInfo kCall_531 = {"SteamAPI_ISteamNetworking_CreateConnectionSocket", kParams_294};
-const steambridge::SlotInfo kCall_532 = {"SteamAPI_ISteamNetworking_DestroySocket", kParams_295};
-const steambridge::SlotInfo kCall_533 = {"SteamAPI_ISteamNetworking_DestroyListenSocket", kParams_295};
-const steambridge::SlotInfo kCall_534 = {"SteamAPI_ISteamNetworking_SendDataOnSocket", kParams_296};
-const steambridge::SlotInfo kCall_535 = {"SteamAPI_ISteamNetworking_IsDataAvailableOnSocket", kParams_297};
-const steambridge::SlotInfo kCall_536 = {"SteamAPI_ISteamNetworking_RetrieveDataFromSocket", kParams_298};
-const steambridge::SlotInfo kCall_537 = {"SteamAPI_ISteamNetworking_IsDataAvailable", kParams_299};
-const steambridge::SlotInfo kCall_538 = {"SteamAPI_ISteamNetworking_RetrieveData", kParams_300};
-const steambridge::SlotInfo kCall_539 = {"SteamAPI_ISteamNetworking_GetSocketInfo", kParams_301};
-const steambridge::SlotInfo kCall_540 = {"SteamAPI_ISteamNetworking_GetListenSocketInfo", kParams_302};
-const steambridge::SlotInfo kCall_541 = {"SteamAPI_ISteamNetworking_GetSocketConnectionType", kParams_303};
-const steambridge::SlotInfo kCall_542 = {"SteamAPI_ISteamNetworking_GetMaxPacketSize", kParams_303};
-const steambridge::SlotInfo kCall_543 = {"SteamAPI_ISteamNetworkingMessages_SendMessageToUser", kParams_304};
-const steambridge::SlotInfo kCall_544 = {"SteamAPI_ISteamNetworkingMessages_ReceiveMessagesOnChannel", kParams_305};
-const steambridge::SlotInfo kCall_545 = {"SteamAPI_ISteamNetworkingMessages_AcceptSessionWithUser", kParams_306};
-const steambridge::SlotInfo kCall_546 = {"SteamAPI_ISteamNetworkingMessages_CloseSessionWithUser", kParams_306};
-const steambridge::SlotInfo kCall_547 = {"SteamAPI_ISteamNetworkingMessages_CloseChannelWithUser", kParams_307};
-const steambridge::SlotInfo kCall_548 = {"SteamAPI_ISteamNetworkingMessages_GetSessionConnectionInfo", kParams_308};
-const steambridge::SlotInfo kCall_549 = {"SteamAPI_ISteamNetworkingSockets_CreateListenSocketIP", kParams_309};
-const steambridge::SlotInfo kCall_550 = {"SteamAPI_ISteamNetworkingSockets_ConnectByIPAddress", kParams_310};
-const steambridge::SlotInfo kCall_551 = {"SteamAPI_ISteamNetworkingSockets_CreateListenSocketP2P", kParams_311};
-const steambridge::SlotInfo kCall_552 = {"SteamAPI_ISteamNetworkingSockets_ConnectP2P", kParams_312};
-const steambridge::SlotInfo kCall_553 = {"SteamAPI_ISteamNetworkingSockets_AcceptConnection", kParams_313};
-const steambridge::SlotInfo kCall_554 = {"SteamAPI_ISteamNetworkingSockets_CloseConnection", kParams_314};
-const steambridge::SlotInfo kCall_555 = {"SteamAPI_ISteamNetworkingSockets_CloseListenSocket", kParams_303};
-const steambridge::SlotInfo kCall_556 = {"SteamAPI_ISteamNetworkingSockets_SetConnectionUserData", kParams_315};
-const steambridge::SlotInfo kCall_557 = {"SteamAPI_ISteamNetworkingSockets_GetConnectionUserData", kParams_316};
-const steambridge::SlotInfo kCall_558 = {"SteamAPI_ISteamNetworkingSockets_SetConnectionName", kParams_317};
-const steambridge::SlotInfo kCall_559 = {"SteamAPI_ISteamNetworkingSockets_GetConnectionName", kParams_318};
-const steambridge::SlotInfo kCall_560 = {"SteamAPI_ISteamNetworkingSockets_SendMessageToConnection", kParams_319};
-const steambridge::SlotInfo kCall_561 = {"SteamAPI_ISteamNetworkingSockets_SendMessages", kParams_320};
-const steambridge::SlotInfo kCall_562 = {"SteamAPI_ISteamNetworkingSockets_FlushMessagesOnConnection", kParams_313};
-const steambridge::SlotInfo kCall_563 = {"SteamAPI_ISteamNetworkingSockets_ReceiveMessagesOnConnection", kParams_321};
-const steambridge::SlotInfo kCall_564 = {"SteamAPI_ISteamNetworkingSockets_GetConnectionInfo", kParams_322};
-const steambridge::SlotInfo kCall_565 = {"SteamAPI_ISteamNetworkingSockets_GetQuickConnectionStatus", kParams_323};
-const steambridge::SlotInfo kCall_566 = {"SteamAPI_ISteamNetworkingSockets_GetDetailedConnectionStatus", kParams_324};
-const steambridge::SlotInfo kCall_567 = {"SteamAPI_ISteamNetworkingSockets_GetListenSocketAddress", kParams_325};
-const steambridge::SlotInfo kCall_568 = {"SteamAPI_ISteamNetworkingSockets_CreateSocketPair", kParams_326};
-const steambridge::SlotInfo kCall_569 = {"SteamAPI_ISteamNetworkingSockets_GetIdentity", kParams_327};
-const steambridge::SlotInfo kCall_570 = {"SteamAPI_ISteamNetworkingSockets_InitAuthentication", nullptr};
-const steambridge::SlotInfo kCall_571 = {"SteamAPI_ISteamNetworkingSockets_GetAuthenticationStatus", kParams_328};
-const steambridge::SlotInfo kCall_572 = {"SteamAPI_ISteamNetworkingSockets_CreatePollGroup", nullptr};
-const steambridge::SlotInfo kCall_573 = {"SteamAPI_ISteamNetworkingSockets_DestroyPollGroup", kParams_329};
-const steambridge::SlotInfo kCall_574 = {"SteamAPI_ISteamNetworkingSockets_SetConnectionPollGroup", kParams_330};
-const steambridge::SlotInfo kCall_575 = {"SteamAPI_ISteamNetworkingSockets_ReceiveMessagesOnPollGroup", kParams_331};
-const steambridge::SlotInfo kCall_576 = {"SteamAPI_ISteamNetworkingSockets_ReceivedRelayAuthTicket", kParams_332};
-const steambridge::SlotInfo kCall_577 = {"SteamAPI_ISteamNetworkingSockets_FindRelayAuthTicketForServer", kParams_333};
-const steambridge::SlotInfo kCall_578 = {"SteamAPI_ISteamNetworkingSockets_ConnectToHostedDedicatedServer", kParams_334};
-const steambridge::SlotInfo kCall_579 = {"SteamAPI_ISteamNetworkingSockets_GetHostedDedicatedServerPort", nullptr};
-const steambridge::SlotInfo kCall_580 = {"SteamAPI_ISteamNetworkingSockets_GetHostedDedicatedServerPOPID", nullptr};
-const steambridge::SlotInfo kCall_581 = {"SteamAPI_ISteamNetworkingSockets_GetHostedDedicatedServerAddress", kParams_335};
-const steambridge::SlotInfo kCall_582 = {"SteamAPI_ISteamNetworkingSockets_CreateHostedDedicatedServerListenSocket", kParams_311};
-const steambridge::SlotInfo kCall_583 = {"SteamAPI_ISteamNetworkingSockets_GetGameCoordinatorServerLogin", kParams_336};
-const steambridge::SlotInfo kCall_584 = {"SteamAPI_ISteamNetworkingSockets_ConnectP2PCustomSignaling", kParams_337};
-const steambridge::SlotInfo kCall_585 = {"SteamAPI_ISteamNetworkingSockets_ReceivedP2PCustomSignal", kParams_338};
-const steambridge::SlotInfo kCall_586 = {"SteamAPI_ISteamNetworkingSockets_GetCertificateRequest", kParams_339};
-const steambridge::SlotInfo kCall_587 = {"SteamAPI_ISteamNetworkingSockets_SetCertificate", kParams_340};
-const steambridge::SlotInfo kCall_588 = {"SteamAPI_ISteamNetworkingSockets_RunCallbacks", nullptr};
-const steambridge::SlotInfo kCall_589 = {"SteamAPI_ISteamNetworkingSockets_GetConnectionRealTimeStatus", kParams_341};
-const steambridge::SlotInfo kCall_590 = {"SteamAPI_ISteamNetworkingSockets_ConfigureConnectionLanes", kParams_342};
-const steambridge::SlotInfo kCall_591 = {"SteamAPI_ISteamNetworkingSockets_ResetIdentity", kParams_327};
-const steambridge::SlotInfo kCall_592 = {"SteamAPI_ISteamNetworkingSockets_BeginAsyncRequestFakeIP", kParams_343};
-const steambridge::SlotInfo kCall_593 = {"SteamAPI_ISteamNetworkingSockets_GetFakeIP", kParams_344};
-const steambridge::SlotInfo kCall_594 = {"SteamAPI_ISteamNetworkingSockets_CreateListenSocketP2PFakeIP", kParams_345};
-const steambridge::SlotInfo kCall_595 = {"SteamAPI_ISteamNetworkingSockets_GetRemoteFakeIPForConnection", kParams_346};
-const steambridge::SlotInfo kCall_596 = {"SteamAPI_ISteamNetworkingSockets_CreateFakeUDPPort", kParams_347};
-const steambridge::SlotInfo kCall_597 = {"SteamAPI_ISteamNetworkingUtils_AllocateMessage", kParams_348};
-const steambridge::SlotInfo kCall_598 = {"SteamAPI_ISteamNetworkingUtils_GetRelayNetworkStatus", kParams_328};
-const steambridge::SlotInfo kCall_599 = {"SteamAPI_ISteamNetworkingUtils_GetLocalPingLocation", kParams_349};
-const steambridge::SlotInfo kCall_600 = {"SteamAPI_ISteamNetworkingUtils_EstimatePingTimeBetweenTwoLocations", kParams_350};
-const steambridge::SlotInfo kCall_601 = {"SteamAPI_ISteamNetworkingUtils_EstimatePingTimeFromLocalHost", kParams_351};
-const steambridge::SlotInfo kCall_602 = {"SteamAPI_ISteamNetworkingUtils_ConvertPingLocationToString", kParams_352};
-const steambridge::SlotInfo kCall_603 = {"SteamAPI_ISteamNetworkingUtils_ParsePingLocationString", kParams_353};
-const steambridge::SlotInfo kCall_604 = {"SteamAPI_ISteamNetworkingUtils_CheckPingDataUpToDate", kParams_354};
-const steambridge::SlotInfo kCall_605 = {"SteamAPI_ISteamNetworkingUtils_GetPingToDataCenter", kParams_355};
-const steambridge::SlotInfo kCall_606 = {"SteamAPI_ISteamNetworkingUtils_GetDirectPingToPOP", kParams_356};
-const steambridge::SlotInfo kCall_607 = {"SteamAPI_ISteamNetworkingUtils_GetPOPCount", nullptr};
-const steambridge::SlotInfo kCall_608 = {"SteamAPI_ISteamNetworkingUtils_GetPOPList", kParams_357};
-const steambridge::SlotInfo kCall_609 = {"SteamAPI_ISteamNetworkingUtils_GetLocalTimestamp", nullptr};
-const steambridge::SlotInfo kCall_610 = {"SteamAPI_ISteamNetworkingUtils_SetDebugOutputFunction", kParams_358};
-const steambridge::SlotInfo kCall_611 = {"SteamAPI_ISteamNetworkingUtils_SetConfigValue", kParams_359};
-const steambridge::SlotInfo kCall_612 = {"SteamAPI_ISteamNetworkingUtils_GetConfigValue", kParams_360};
-const steambridge::SlotInfo kCall_613 = {"SteamAPI_ISteamNetworkingUtils_GetConfigValueInfo", kParams_361};
-const steambridge::SlotInfo kCall_614 = {"SteamAPI_ISteamNetworkingUtils_GetFirstConfigValue", nullptr};
-const steambridge::SlotInfo kCall_615 = {"SteamAPI_ISteamNetworkingUtils_SteamNetworkingIPAddr_ToString", kParams_362};
-const steambridge::SlotInfo kCall_616 = {"SteamAPI_ISteamNetworkingUtils_SteamNetworkingIPAddr_ParseString", kParams_363};
-const steambridge::SlotInfo kCall_617 = {"SteamAPI_ISteamNetworkingUtils_SteamNetworkingIdentity_ToString", kParams_364};
-const steambridge::SlotInfo kCall_618 = {"SteamAPI_ISteamNetworkingUtils_SteamNetworkingIdentity_ParseString", kParams_365};
-const steambridge::SlotInfo kCall_619 = {"SteamAPI_ISteamNetworkingUtils_GetIPv4FakeIPType", kParams_366};
-const steambridge::SlotInfo kCall_620 = {"SteamAPI_ISteamNetworkingUtils_GetRealIdentityForFakeIP", kParams_367};
-const steambridge::SlotInfo kCall_621 = {"SteamAPI_ISteamNetworkingUtils_GetConfigValueInfo", kParams_368};
-const steambridge::SlotInfo kCall_622 = {"SteamAPI_ISteamNetworkingUtils_IterateGenericEditableConfigValues", kParams_369};
-const steambridge::SlotInfo kCall_623 = {"SteamAPI_ISteamNetworkingUtils_SteamNetworkingIPAddr_GetFakeIPType", kParams_370};
-const steambridge::SlotInfo kCall_624 = {"SteamAPI_ISteamParentalSettings_BIsParentalLockEnabled", nullptr};
-const steambridge::SlotInfo kCall_625 = {"SteamAPI_ISteamParentalSettings_BIsParentalLockLocked", nullptr};
-const steambridge::SlotInfo kCall_626 = {"SteamAPI_ISteamParentalSettings_BIsAppBlocked", kParams_3};
-const steambridge::SlotInfo kCall_627 = {"SteamAPI_ISteamParentalSettings_BIsAppInBlockList", kParams_3};
-const steambridge::SlotInfo kCall_628 = {"SteamAPI_ISteamParentalSettings_BIsFeatureBlocked", kParams_371};
-const steambridge::SlotInfo kCall_629 = {"SteamAPI_ISteamParentalSettings_BIsFeatureInBlockList", kParams_371};
-const steambridge::SlotInfo kCall_630 = {"SteamAPI_ISteamParties_GetNumActiveBeacons", nullptr};
-const steambridge::SlotInfo kCall_631 = {"SteamAPI_ISteamParties_GetBeaconByIndex", kParams_372};
-const steambridge::SlotInfo kCall_632 = {"SteamAPI_ISteamParties_GetBeaconDetails", kParams_373};
-const steambridge::SlotInfo kCall_633 = {"SteamAPI_ISteamParties_JoinParty", kParams_374};
-const steambridge::SlotInfo kCall_634 = {"SteamAPI_ISteamParties_GetNumAvailableBeaconLocations", kParams_375};
-const steambridge::SlotInfo kCall_635 = {"SteamAPI_ISteamParties_GetAvailableBeaconLocations", kParams_376};
-const steambridge::SlotInfo kCall_636 = {"SteamAPI_ISteamParties_CreateBeacon", kParams_377};
-const steambridge::SlotInfo kCall_637 = {"SteamAPI_ISteamParties_OnReservationCompleted", kParams_378};
-const steambridge::SlotInfo kCall_638 = {"SteamAPI_ISteamParties_CancelReservation", kParams_378};
-const steambridge::SlotInfo kCall_639 = {"SteamAPI_ISteamParties_ChangeNumOpenSlots", kParams_379};
-const steambridge::SlotInfo kCall_640 = {"SteamAPI_ISteamParties_DestroyBeacon", kParams_380};
-const steambridge::SlotInfo kCall_641 = {"SteamAPI_ISteamParties_GetBeaconLocationData", kParams_381};
-const steambridge::SlotInfo kCall_642 = {"SteamAPI_ISteamRemotePlay_GetSessionCount", nullptr};
-const steambridge::SlotInfo kCall_643 = {"SteamAPI_ISteamRemotePlay_GetSessionID", kParams_382};
-const steambridge::SlotInfo kCall_644 = {"SteamAPI_ISteamRemotePlay_GetSessionSteamID", kParams_383};
-const steambridge::SlotInfo kCall_645 = {"SteamAPI_ISteamRemotePlay_GetSessionClientName", kParams_383};
-const steambridge::SlotInfo kCall_646 = {"SteamAPI_ISteamRemotePlay_GetSessionClientFormFactor", kParams_383};
-const steambridge::SlotInfo kCall_647 = {"SteamAPI_ISteamRemotePlay_BGetSessionClientResolution", kParams_384};
-const steambridge::SlotInfo kCall_648 = {"SteamAPI_ISteamRemotePlay_BSendRemotePlayTogetherInvite", kParams_52};
-const steambridge::SlotInfo kCall_649 = {"SteamAPI_ISteamRemoteStorage_FileWrite", kParams_385};
-const steambridge::SlotInfo kCall_650 = {"SteamAPI_ISteamRemoteStorage_FileRead", kParams_386};
-const steambridge::SlotInfo kCall_651 = {"SteamAPI_ISteamRemoteStorage_FileWriteAsync", kParams_385};
-const steambridge::SlotInfo kCall_652 = {"SteamAPI_ISteamRemoteStorage_FileReadAsync", kParams_387};
-const steambridge::SlotInfo kCall_653 = {"SteamAPI_ISteamRemoteStorage_FileReadAsyncComplete", kParams_388};
-const steambridge::SlotInfo kCall_654 = {"SteamAPI_ISteamRemoteStorage_FileForget", kParams_389};
-const steambridge::SlotInfo kCall_655 = {"SteamAPI_ISteamRemoteStorage_FileDelete", kParams_389};
-const steambridge::SlotInfo kCall_656 = {"SteamAPI_ISteamRemoteStorage_FileShare", kParams_389};
-const steambridge::SlotInfo kCall_657 = {"SteamAPI_ISteamRemoteStorage_SetSyncPlatforms", kParams_390};
-const steambridge::SlotInfo kCall_658 = {"SteamAPI_ISteamRemoteStorage_FileWriteStreamOpen", kParams_389};
-const steambridge::SlotInfo kCall_659 = {"SteamAPI_ISteamRemoteStorage_FileWriteStreamWriteChunk", kParams_391};
-const steambridge::SlotInfo kCall_660 = {"SteamAPI_ISteamRemoteStorage_FileWriteStreamClose", kParams_392};
-const steambridge::SlotInfo kCall_661 = {"SteamAPI_ISteamRemoteStorage_FileWriteStreamCancel", kParams_392};
-const steambridge::SlotInfo kCall_662 = {"SteamAPI_ISteamRemoteStorage_FileExists", kParams_389};
-const steambridge::SlotInfo kCall_663 = {"SteamAPI_ISteamRemoteStorage_FilePersisted", kParams_389};
-const steambridge::SlotInfo kCall_664 = {"SteamAPI_ISteamRemoteStorage_GetFileSize", kParams_389};
-const steambridge::SlotInfo kCall_665 = {"SteamAPI_ISteamRemoteStorage_GetFileTimestamp", kParams_389};
-const steambridge::SlotInfo kCall_666 = {"SteamAPI_ISteamRemoteStorage_GetSyncPlatforms", kParams_389};
-const steambridge::SlotInfo kCall_667 = {"SteamAPI_ISteamRemoteStorage_GetFileCount", nullptr};
-const steambridge::SlotInfo kCall_668 = {"SteamAPI_ISteamRemoteStorage_GetFileNameAndSize", kParams_393};
-const steambridge::SlotInfo kCall_669 = {"SteamAPI_ISteamRemoteStorage_GetQuota", kParams_394};
-const steambridge::SlotInfo kCall_670 = {"SteamAPI_ISteamRemoteStorage_IsCloudEnabledForAccount", nullptr};
-const steambridge::SlotInfo kCall_671 = {"SteamAPI_ISteamRemoteStorage_IsCloudEnabledForApp", nullptr};
-const steambridge::SlotInfo kCall_672 = {"SteamAPI_ISteamRemoteStorage_SetCloudEnabledForApp", kParams_395};
-const steambridge::SlotInfo kCall_673 = {"SteamAPI_ISteamRemoteStorage_UGCDownload", kParams_396};
-const steambridge::SlotInfo kCall_674 = {"SteamAPI_ISteamRemoteStorage_GetUGCDownloadProgress", kParams_397};
-const steambridge::SlotInfo kCall_675 = {"SteamAPI_ISteamRemoteStorage_GetUGCDetails", kParams_398};
-const steambridge::SlotInfo kCall_676 = {"SteamAPI_ISteamRemoteStorage_UGCRead", kParams_399};
-const steambridge::SlotInfo kCall_677 = {"SteamAPI_ISteamRemoteStorage_GetCachedUGCCount", nullptr};
-const steambridge::SlotInfo kCall_678 = {"SteamAPI_ISteamRemoteStorage_GetCachedUGCHandle", kParams_400};
-const steambridge::SlotInfo kCall_679 = {"SteamAPI_ISteamRemoteStorage_PublishWorkshopFile", kParams_401};
-const steambridge::SlotInfo kCall_680 = {"SteamAPI_ISteamRemoteStorage_CreatePublishedFileUpdateRequest", kParams_402};
-const steambridge::SlotInfo kCall_681 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileFile", kParams_403};
-const steambridge::SlotInfo kCall_682 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFilePreviewFile", kParams_404};
-const steambridge::SlotInfo kCall_683 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileTitle", kParams_405};
-const steambridge::SlotInfo kCall_684 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileDescription", kParams_406};
-const steambridge::SlotInfo kCall_685 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileVisibility", kParams_407};
-const steambridge::SlotInfo kCall_686 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileTags", kParams_408};
-const steambridge::SlotInfo kCall_687 = {"SteamAPI_ISteamRemoteStorage_CommitPublishedFileUpdate", kParams_409};
-const steambridge::SlotInfo kCall_688 = {"SteamAPI_ISteamRemoteStorage_GetPublishedFileDetails", kParams_410};
-const steambridge::SlotInfo kCall_689 = {"SteamAPI_ISteamRemoteStorage_DeletePublishedFile", kParams_402};
-const steambridge::SlotInfo kCall_690 = {"SteamAPI_ISteamRemoteStorage_EnumerateUserPublishedFiles", kParams_90};
-const steambridge::SlotInfo kCall_691 = {"SteamAPI_ISteamRemoteStorage_SubscribePublishedFile", kParams_402};
-const steambridge::SlotInfo kCall_692 = {"SteamAPI_ISteamRemoteStorage_EnumerateUserSubscribedFiles", kParams_90};
-const steambridge::SlotInfo kCall_693 = {"SteamAPI_ISteamRemoteStorage_UnsubscribePublishedFile", kParams_402};
-const steambridge::SlotInfo kCall_694 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileSetChangeDescription", kParams_411};
-const steambridge::SlotInfo kCall_695 = {"SteamAPI_ISteamRemoteStorage_GetPublishedItemVoteDetails", kParams_402};
-const steambridge::SlotInfo kCall_696 = {"SteamAPI_ISteamRemoteStorage_UpdateUserPublishedItemVote", kParams_412};
-const steambridge::SlotInfo kCall_697 = {"SteamAPI_ISteamRemoteStorage_GetUserPublishedItemVoteDetails", kParams_402};
-const steambridge::SlotInfo kCall_698 = {"SteamAPI_ISteamRemoteStorage_EnumerateUserSharedWorkshopFiles", kParams_413};
-const steambridge::SlotInfo kCall_699 = {"SteamAPI_ISteamRemoteStorage_PublishVideo", kParams_414};
-const steambridge::SlotInfo kCall_700 = {"SteamAPI_ISteamRemoteStorage_SetUserPublishedFileAction", kParams_415};
-const steambridge::SlotInfo kCall_701 = {"SteamAPI_ISteamRemoteStorage_EnumeratePublishedFilesByUserAction", kParams_416};
-const steambridge::SlotInfo kCall_702 = {"SteamAPI_ISteamRemoteStorage_EnumeratePublishedWorkshopFiles", kParams_417};
-const steambridge::SlotInfo kCall_703 = {"SteamAPI_ISteamRemoteStorage_UGCDownloadToLocation", kParams_418};
-const steambridge::SlotInfo kCall_704 = {"SteamAPI_ISteamRemoteStorage_GetLocalFileChangeCount", nullptr};
-const steambridge::SlotInfo kCall_705 = {"SteamAPI_ISteamRemoteStorage_GetLocalFileChange", kParams_419};
-const steambridge::SlotInfo kCall_706 = {"SteamAPI_ISteamRemoteStorage_BeginFileWriteBatch", nullptr};
-const steambridge::SlotInfo kCall_707 = {"SteamAPI_ISteamRemoteStorage_EndFileWriteBatch", nullptr};
-const steambridge::SlotInfo kCall_708 = {"SteamAPI_ISteamScreenshots_WriteScreenshot", kParams_420};
-const steambridge::SlotInfo kCall_709 = {"SteamAPI_ISteamScreenshots_AddScreenshotToLibrary", kParams_421};
-const steambridge::SlotInfo kCall_710 = {"SteamAPI_ISteamScreenshots_TriggerScreenshot", nullptr};
-const steambridge::SlotInfo kCall_711 = {"SteamAPI_ISteamScreenshots_HookScreenshots", kParams_422};
-const steambridge::SlotInfo kCall_712 = {"SteamAPI_ISteamScreenshots_SetLocation", kParams_423};
-const steambridge::SlotInfo kCall_713 = {"SteamAPI_ISteamScreenshots_TagUser", kParams_424};
-const steambridge::SlotInfo kCall_714 = {"SteamAPI_ISteamScreenshots_TagPublishedFile", kParams_425};
-const steambridge::SlotInfo kCall_715 = {"SteamAPI_ISteamScreenshots_IsScreenshotsHooked", nullptr};
-const steambridge::SlotInfo kCall_716 = {"SteamAPI_ISteamScreenshots_AddVRScreenshotToLibrary", kParams_426};
-const steambridge::SlotInfo kCall_717 = {"SteamAPI_ISteamUGC_CreateQueryUserUGCRequest", kParams_427};
-const steambridge::SlotInfo kCall_718 = {"SteamAPI_ISteamUGC_CreateQueryAllUGCRequestPage", kParams_428};
-const steambridge::SlotInfo kCall_719 = {"SteamAPI_ISteamUGC_CreateQueryUGCDetailsRequest", kParams_429};
-const steambridge::SlotInfo kCall_720 = {"SteamAPI_ISteamUGC_SendQueryUGCRequest", kParams_430};
-const steambridge::SlotInfo kCall_721 = {"SteamAPI_ISteamUGC_GetQueryUGCResult", kParams_431};
-const steambridge::SlotInfo kCall_722 = {"SteamAPI_ISteamUGC_GetQueryUGCPreviewURL", kParams_432};
-const steambridge::SlotInfo kCall_723 = {"SteamAPI_ISteamUGC_GetQueryUGCMetadata", kParams_433};
-const steambridge::SlotInfo kCall_724 = {"SteamAPI_ISteamUGC_GetQueryUGCChildren", kParams_434};
-const steambridge::SlotInfo kCall_725 = {"SteamAPI_ISteamUGC_GetQueryUGCStatistic", kParams_435};
-const steambridge::SlotInfo kCall_726 = {"SteamAPI_ISteamUGC_GetQueryUGCNumAdditionalPreviews", kParams_436};
-const steambridge::SlotInfo kCall_727 = {"SteamAPI_ISteamUGC_GetQueryUGCAdditionalPreview", kParams_437};
-const steambridge::SlotInfo kCall_728 = {"SteamAPI_ISteamUGC_GetQueryUGCNumKeyValueTags", kParams_436};
-const steambridge::SlotInfo kCall_729 = {"SteamAPI_ISteamUGC_GetQueryUGCKeyValueTag", kParams_438};
-const steambridge::SlotInfo kCall_730 = {"SteamAPI_ISteamUGC_ReleaseQueryUGCRequest", kParams_430};
-const steambridge::SlotInfo kCall_731 = {"SteamAPI_ISteamUGC_AddRequiredTag", kParams_439};
-const steambridge::SlotInfo kCall_732 = {"SteamAPI_ISteamUGC_AddExcludedTag", kParams_439};
-const steambridge::SlotInfo kCall_733 = {"SteamAPI_ISteamUGC_SetReturnOnlyIDs", kParams_440};
-const steambridge::SlotInfo kCall_734 = {"SteamAPI_ISteamUGC_SetReturnKeyValueTags", kParams_441};
-const steambridge::SlotInfo kCall_735 = {"SteamAPI_ISteamUGC_SetReturnLongDescription", kParams_442};
-const steambridge::SlotInfo kCall_736 = {"SteamAPI_ISteamUGC_SetReturnMetadata", kParams_443};
-const steambridge::SlotInfo kCall_737 = {"SteamAPI_ISteamUGC_SetReturnChildren", kParams_444};
-const steambridge::SlotInfo kCall_738 = {"SteamAPI_ISteamUGC_SetReturnAdditionalPreviews", kParams_445};
-const steambridge::SlotInfo kCall_739 = {"SteamAPI_ISteamUGC_SetReturnTotalOnly", kParams_446};
-const steambridge::SlotInfo kCall_740 = {"SteamAPI_ISteamUGC_SetReturnPlaytimeStats", kParams_447};
-const steambridge::SlotInfo kCall_741 = {"SteamAPI_ISteamUGC_SetLanguage", kParams_448};
-const steambridge::SlotInfo kCall_742 = {"SteamAPI_ISteamUGC_SetAllowCachedResponse", kParams_449};
-const steambridge::SlotInfo kCall_743 = {"SteamAPI_ISteamUGC_SetCloudFileNameFilter", kParams_450};
-const steambridge::SlotInfo kCall_744 = {"SteamAPI_ISteamUGC_SetMatchAnyTag", kParams_451};
-const steambridge::SlotInfo kCall_745 = {"SteamAPI_ISteamUGC_SetSearchText", kParams_452};
-const steambridge::SlotInfo kCall_746 = {"SteamAPI_ISteamUGC_SetRankedByTrendDays", kParams_447};
-const steambridge::SlotInfo kCall_747 = {"SteamAPI_ISteamUGC_AddRequiredKeyValueTag", kParams_453};
-const steambridge::SlotInfo kCall_748 = {"SteamAPI_ISteamUGC_RequestUGCDetails", kParams_454};
-const steambridge::SlotInfo kCall_749 = {"SteamAPI_ISteamUGC_CreateItem", kParams_455};
-const steambridge::SlotInfo kCall_750 = {"SteamAPI_ISteamUGC_StartItemUpdate", kParams_456};
-const steambridge::SlotInfo kCall_751 = {"SteamAPI_ISteamUGC_SetItemTitle", kParams_457};
-const steambridge::SlotInfo kCall_752 = {"SteamAPI_ISteamUGC_SetItemDescription", kParams_458};
-const steambridge::SlotInfo kCall_753 = {"SteamAPI_ISteamUGC_SetItemUpdateLanguage", kParams_448};
-const steambridge::SlotInfo kCall_754 = {"SteamAPI_ISteamUGC_SetItemMetadata", kParams_459};
-const steambridge::SlotInfo kCall_755 = {"SteamAPI_ISteamUGC_SetItemVisibility", kParams_460};
-const steambridge::SlotInfo kCall_756 = {"SteamAPI_ISteamUGC_SetItemTags", kParams_408};
-const steambridge::SlotInfo kCall_757 = {"SteamAPI_ISteamUGC_SetItemContent", kParams_461};
-const steambridge::SlotInfo kCall_758 = {"SteamAPI_ISteamUGC_SetItemPreview", kParams_462};
-const steambridge::SlotInfo kCall_759 = {"SteamAPI_ISteamUGC_RemoveItemKeyValueTags", kParams_463};
-const steambridge::SlotInfo kCall_760 = {"SteamAPI_ISteamUGC_AddItemKeyValueTag", kParams_464};
-const steambridge::SlotInfo kCall_761 = {"SteamAPI_ISteamUGC_AddItemPreviewFile", kParams_465};
-const steambridge::SlotInfo kCall_762 = {"SteamAPI_ISteamUGC_AddItemPreviewVideo", kParams_466};
-const steambridge::SlotInfo kCall_763 = {"SteamAPI_ISteamUGC_UpdateItemPreviewFile", kParams_467};
-const steambridge::SlotInfo kCall_764 = {"SteamAPI_ISteamUGC_UpdateItemPreviewVideo", kParams_468};
-const steambridge::SlotInfo kCall_765 = {"SteamAPI_ISteamUGC_RemoveItemPreview", kParams_436};
-const steambridge::SlotInfo kCall_766 = {"SteamAPI_ISteamUGC_SubmitItemUpdate", kParams_469};
-const steambridge::SlotInfo kCall_767 = {"SteamAPI_ISteamUGC_GetItemUpdateProgress", kParams_470};
-const steambridge::SlotInfo kCall_768 = {"SteamAPI_ISteamUGC_SetUserItemVote", kParams_471};
-const steambridge::SlotInfo kCall_769 = {"SteamAPI_ISteamUGC_GetUserItemVote", kParams_472};
-const steambridge::SlotInfo kCall_770 = {"SteamAPI_ISteamUGC_AddItemToFavorites", kParams_473};
-const steambridge::SlotInfo kCall_771 = {"SteamAPI_ISteamUGC_RemoveItemFromFavorites", kParams_473};
-const steambridge::SlotInfo kCall_772 = {"SteamAPI_ISteamUGC_SubscribeItem", kParams_472};
-const steambridge::SlotInfo kCall_773 = {"SteamAPI_ISteamUGC_UnsubscribeItem", kParams_472};
-const steambridge::SlotInfo kCall_774 = {"SteamAPI_ISteamUGC_GetNumSubscribedItems", nullptr};
-const steambridge::SlotInfo kCall_775 = {"SteamAPI_ISteamUGC_GetSubscribedItems", kParams_474};
-const steambridge::SlotInfo kCall_776 = {"SteamAPI_ISteamUGC_GetItemState", kParams_472};
-const steambridge::SlotInfo kCall_777 = {"SteamAPI_ISteamUGC_GetItemInstallInfo", kParams_475};
-const steambridge::SlotInfo kCall_778 = {"SteamAPI_ISteamUGC_GetItemDownloadInfo", kParams_476};
-const steambridge::SlotInfo kCall_779 = {"SteamAPI_ISteamUGC_DownloadItem", kParams_477};
-const steambridge::SlotInfo kCall_780 = {"SteamAPI_ISteamUGC_BInitWorkshopForGameServer", kParams_478};
-const steambridge::SlotInfo kCall_781 = {"SteamAPI_ISteamUGC_SuspendDownloads", kParams_479};
-const steambridge::SlotInfo kCall_782 = {"SteamAPI_ISteamUGC_StartPlaytimeTracking", kParams_429};
-const steambridge::SlotInfo kCall_783 = {"SteamAPI_ISteamUGC_StopPlaytimeTracking", kParams_429};
-const steambridge::SlotInfo kCall_784 = {"SteamAPI_ISteamUGC_StopPlaytimeTrackingForAllItems", nullptr};
-const steambridge::SlotInfo kCall_785 = {"SteamAPI_ISteamUGC_AddDependency", kParams_480};
-const steambridge::SlotInfo kCall_786 = {"SteamAPI_ISteamUGC_RemoveDependency", kParams_480};
-const steambridge::SlotInfo kCall_787 = {"SteamAPI_ISteamUGC_AddAppDependency", kParams_481};
-const steambridge::SlotInfo kCall_788 = {"SteamAPI_ISteamUGC_RemoveAppDependency", kParams_481};
-const steambridge::SlotInfo kCall_789 = {"SteamAPI_ISteamUGC_GetAppDependencies", kParams_472};
-const steambridge::SlotInfo kCall_790 = {"SteamAPI_ISteamUGC_DeleteItem", kParams_472};
-const steambridge::SlotInfo kCall_791 = {"SteamAPI_ISteamUGC_CreateQueryAllUGCRequestCursor", kParams_482};
-const steambridge::SlotInfo kCall_792 = {"SteamAPI_ISteamUGC_GetQueryFirstUGCKeyValueTag", kParams_483};
-const steambridge::SlotInfo kCall_793 = {"SteamAPI_ISteamUGC_SetAllowLegacyUpload", kParams_484};
-const steambridge::SlotInfo kCall_794 = {"SteamAPI_ISteamUGC_RemoveAllItemKeyValueTags", kParams_430};
-const steambridge::SlotInfo kCall_795 = {"SteamAPI_ISteamUGC_AddRequiredTagGroup", kParams_485};
-const steambridge::SlotInfo kCall_796 = {"SteamAPI_ISteamUGC_GetQueryUGCNumTags", kParams_436};
-const steambridge::SlotInfo kCall_797 = {"SteamAPI_ISteamUGC_GetQueryUGCTag", kParams_486};
-const steambridge::SlotInfo kCall_798 = {"SteamAPI_ISteamUGC_GetQueryUGCTagDisplayName", kParams_486};
-const steambridge::SlotInfo kCall_799 = {"SteamAPI_ISteamUGC_SetTimeCreatedDateRange", kParams_487};
-const steambridge::SlotInfo kCall_800 = {"SteamAPI_ISteamUGC_SetTimeUpdatedDateRange", kParams_487};
-const steambridge::SlotInfo kCall_801 = {"SteamAPI_ISteamUGC_ShowWorkshopEULA", nullptr};
-const steambridge::SlotInfo kCall_802 = {"SteamAPI_ISteamUGC_GetWorkshopEULAStatus", nullptr};
-const steambridge::SlotInfo kCall_803 = {"SteamAPI_ISteamUGC_GetQueryUGCContentDescriptors", kParams_488};
-const steambridge::SlotInfo kCall_804 = {"SteamAPI_ISteamUGC_AddContentDescriptor", kParams_489};
-const steambridge::SlotInfo kCall_805 = {"SteamAPI_ISteamUGC_RemoveContentDescriptor", kParams_489};
-const steambridge::SlotInfo kCall_806 = {"SteamAPI_ISteamUnifiedMessages_SendMethod", kParams_490};
-const steambridge::SlotInfo kCall_807 = {"SteamAPI_ISteamUnifiedMessages_GetMethodResponseInfo", kParams_491};
-const steambridge::SlotInfo kCall_808 = {"SteamAPI_ISteamUnifiedMessages_GetMethodResponseData", kParams_492};
-const steambridge::SlotInfo kCall_809 = {"SteamAPI_ISteamUnifiedMessages_ReleaseMethod", kParams_493};
-const steambridge::SlotInfo kCall_810 = {"SteamAPI_ISteamUnifiedMessages_SendNotification", kParams_494};
-const steambridge::SlotInfo kCall_811 = {"SteamAPI_ISteamUser_GetHSteamUser", nullptr};
-const steambridge::SlotInfo kCall_812 = {"SteamAPI_ISteamUser_BLoggedOn", nullptr};
-const steambridge::SlotInfo kCall_813 = {"SteamAPI_ISteamUser_GetSteamID", nullptr};
-const steambridge::SlotInfo kCall_814 = {"SteamAPI_ISteamUser_InitiateGameConnection", kParams_495};
-const steambridge::SlotInfo kCall_815 = {"SteamAPI_ISteamUser_TerminateGameConnection", kParams_496};
-const steambridge::SlotInfo kCall_816 = {"SteamAPI_ISteamUser_TrackAppUsageEvent", kParams_497};
-const steambridge::SlotInfo kCall_817 = {"SteamAPI_ISteamUser_GetUserDataFolder", kParams_498};
-const steambridge::SlotInfo kCall_818 = {"SteamAPI_ISteamUser_StartVoiceRecording", nullptr};
-const steambridge::SlotInfo kCall_819 = {"SteamAPI_ISteamUser_StopVoiceRecording", nullptr};
-const steambridge::SlotInfo kCall_820 = {"SteamAPI_ISteamUser_GetAvailableVoice", kParams_499};
-const steambridge::SlotInfo kCall_821 = {"SteamAPI_ISteamUser_GetVoice", kParams_500};
-const steambridge::SlotInfo kCall_822 = {"SteamAPI_ISteamUser_DecompressVoice", kParams_501};
-const steambridge::SlotInfo kCall_823 = {"SteamAPI_ISteamUser_GetVoiceOptimalSampleRate", nullptr};
-const steambridge::SlotInfo kCall_824 = {"SteamAPI_ISteamUser_GetAuthSessionTicket", kParams_124};
-const steambridge::SlotInfo kCall_825 = {"SteamAPI_ISteamUser_BeginAuthSession", kParams_125};
-const steambridge::SlotInfo kCall_826 = {"SteamAPI_ISteamUser_EndAuthSession", kParams_89};
-const steambridge::SlotInfo kCall_827 = {"SteamAPI_ISteamUser_CancelAuthTicket", kParams_126};
-const steambridge::SlotInfo kCall_828 = {"SteamAPI_ISteamUser_UserHasLicenseForApp", kParams_127};
-const steambridge::SlotInfo kCall_829 = {"SteamAPI_ISteamUser_BIsBehindNAT", nullptr};
-const steambridge::SlotInfo kCall_830 = {"SteamAPI_ISteamUser_AdvertiseGame", kParams_502};
-const steambridge::SlotInfo kCall_831 = {"SteamAPI_ISteamUser_RequestEncryptedAppTicket", kParams_503};
-const steambridge::SlotInfo kCall_832 = {"SteamAPI_ISteamUser_GetEncryptedAppTicket", kParams_124};
-const steambridge::SlotInfo kCall_833 = {"SteamAPI_ISteamUser_GetGameBadgeLevel", kParams_504};
-const steambridge::SlotInfo kCall_834 = {"SteamAPI_ISteamUser_GetPlayerSteamLevel", nullptr};
-const steambridge::SlotInfo kCall_835 = {"SteamAPI_ISteamUser_RequestStoreAuthURL", kParams_505};
-const steambridge::SlotInfo kCall_836 = {"SteamAPI_ISteamUser_BIsPhoneVerified", nullptr};
-const steambridge::SlotInfo kCall_837 = {"SteamAPI_ISteamUser_BIsTwoFactorEnabled", nullptr};
-const steambridge::SlotInfo kCall_838 = {"SteamAPI_ISteamUser_BIsPhoneIdentifying", nullptr};
-const steambridge::SlotInfo kCall_839 = {"SteamAPI_ISteamUser_BIsPhoneRequiringVerification", nullptr};
-const steambridge::SlotInfo kCall_840 = {"SteamAPI_ISteamUser_GetMarketEligibility", nullptr};
-const steambridge::SlotInfo kCall_841 = {"SteamAPI_ISteamUser_GetDurationControl", nullptr};
-const steambridge::SlotInfo kCall_842 = {"SteamAPI_ISteamUser_InitiateGameConnection_DEPRECATED", kParams_495};
-const steambridge::SlotInfo kCall_843 = {"SteamAPI_ISteamUser_TerminateGameConnection_DEPRECATED", kParams_496};
-const steambridge::SlotInfo kCall_844 = {"SteamAPI_ISteamUser_BSetDurationControlOnlineState", kParams_506};
-const steambridge::SlotInfo kCall_845 = {"SteamAPI_ISteamUser_GetAuthSessionTicket", kParams_507};
-const steambridge::SlotInfo kCall_846 = {"SteamAPI_ISteamUser_GetAuthTicketForWebApi", kParams_508};
-const steambridge::SlotInfo kCall_847 = {"SteamAPI_ISteamUserStats_RequestCurrentStats", nullptr};
-const steambridge::SlotInfo kCall_848 = {"SteamAPI_ISteamUserStats_GetStatInt32", kParams_509};
-const steambridge::SlotInfo kCall_849 = {"SteamAPI_ISteamUserStats_GetStatFloat", kParams_509};
-const steambridge::SlotInfo kCall_850 = {"SteamAPI_ISteamUserStats_SetStatInt32", kParams_510};
-const steambridge::SlotInfo kCall_851 = {"SteamAPI_ISteamUserStats_SetStatFloat", kParams_511};
-const steambridge::SlotInfo kCall_852 = {"SteamAPI_ISteamUserStats_UpdateAvgRateStat", kParams_512};
-const steambridge::SlotInfo kCall_853 = {"SteamAPI_ISteamUserStats_GetAchievement", kParams_513};
-const steambridge::SlotInfo kCall_854 = {"SteamAPI_ISteamUserStats_SetAchievement", kParams_274};
-const steambridge::SlotInfo kCall_855 = {"SteamAPI_ISteamUserStats_ClearAchievement", kParams_274};
-const steambridge::SlotInfo kCall_856 = {"SteamAPI_ISteamUserStats_GetAchievementAndUnlockTime", kParams_514};
-const steambridge::SlotInfo kCall_857 = {"SteamAPI_ISteamUserStats_StoreStats", nullptr};
-const steambridge::SlotInfo kCall_858 = {"SteamAPI_ISteamUserStats_GetAchievementIcon", kParams_274};
-const steambridge::SlotInfo kCall_859 = {"SteamAPI_ISteamUserStats_GetAchievementDisplayAttribute", kParams_515};
-const steambridge::SlotInfo kCall_860 = {"SteamAPI_ISteamUserStats_IndicateAchievementProgress", kParams_516};
-const steambridge::SlotInfo kCall_861 = {"SteamAPI_ISteamUserStats_GetNumAchievements", nullptr};
-const steambridge::SlotInfo kCall_862 = {"SteamAPI_ISteamUserStats_GetAchievementName", kParams_517};
-const steambridge::SlotInfo kCall_863 = {"SteamAPI_ISteamUserStats_RequestUserStats", kParams_122};
-const steambridge::SlotInfo kCall_864 = {"SteamAPI_ISteamUserStats_GetUserStatInt32", kParams_135};
-const steambridge::SlotInfo kCall_865 = {"SteamAPI_ISteamUserStats_GetUserStatFloat", kParams_135};
-const steambridge::SlotInfo kCall_866 = {"SteamAPI_ISteamUserStats_GetUserAchievement", kParams_136};
-const steambridge::SlotInfo kCall_867 = {"SteamAPI_ISteamUserStats_GetUserAchievementAndUnlockTime", kParams_518};
-const steambridge::SlotInfo kCall_868 = {"SteamAPI_ISteamUserStats_ResetAllStats", kParams_519};
-const steambridge::SlotInfo kCall_869 = {"SteamAPI_ISteamUserStats_FindOrCreateLeaderboard", kParams_520};
-const steambridge::SlotInfo kCall_870 = {"SteamAPI_ISteamUserStats_FindLeaderboard", kParams_521};
-const steambridge::SlotInfo kCall_871 = {"SteamAPI_ISteamUserStats_GetLeaderboardName", kParams_522};
-const steambridge::SlotInfo kCall_872 = {"SteamAPI_ISteamUserStats_GetLeaderboardEntryCount", kParams_522};
-const steambridge::SlotInfo kCall_873 = {"SteamAPI_ISteamUserStats_GetLeaderboardSortMethod", kParams_522};
-const steambridge::SlotInfo kCall_874 = {"SteamAPI_ISteamUserStats_GetLeaderboardDisplayType", kParams_522};
-const steambridge::SlotInfo kCall_875 = {"SteamAPI_ISteamUserStats_DownloadLeaderboardEntries", kParams_523};
-const steambridge::SlotInfo kCall_876 = {"SteamAPI_ISteamUserStats_DownloadLeaderboardEntriesForUsers", kParams_524};
-const steambridge::SlotInfo kCall_877 = {"SteamAPI_ISteamUserStats_GetDownloadedLeaderboardEntry", kParams_525};
-const steambridge::SlotInfo kCall_878 = {"SteamAPI_ISteamUserStats_UploadLeaderboardScore", kParams_526};
-const steambridge::SlotInfo kCall_879 = {"SteamAPI_ISteamUserStats_AttachLeaderboardUGC", kParams_527};
-const steambridge::SlotInfo kCall_880 = {"SteamAPI_ISteamUserStats_GetNumberOfCurrentPlayers", nullptr};
-const steambridge::SlotInfo kCall_881 = {"SteamAPI_ISteamUserStats_RequestGlobalAchievementPercentages", nullptr};
-const steambridge::SlotInfo kCall_882 = {"SteamAPI_ISteamUserStats_GetMostAchievedAchievementInfo", kParams_528};
-const steambridge::SlotInfo kCall_883 = {"SteamAPI_ISteamUserStats_GetNextMostAchievedAchievementInfo", kParams_529};
-const steambridge::SlotInfo kCall_884 = {"SteamAPI_ISteamUserStats_GetAchievementAchievedPercent", kParams_530};
-const steambridge::SlotInfo kCall_885 = {"SteamAPI_ISteamUserStats_RequestGlobalStats", kParams_531};
-const steambridge::SlotInfo kCall_886 = {"SteamAPI_ISteamUserStats_GetGlobalStatInt64", kParams_532};
-const steambridge::SlotInfo kCall_887 = {"SteamAPI_ISteamUserStats_GetGlobalStatDouble", kParams_532};
-const steambridge::SlotInfo kCall_888 = {"SteamAPI_ISteamUserStats_GetGlobalStatHistoryInt64", kParams_533};
-const steambridge::SlotInfo kCall_889 = {"SteamAPI_ISteamUserStats_GetGlobalStatHistoryDouble", kParams_533};
-const steambridge::SlotInfo kCall_890 = {"SteamAPI_ISteamUserStats_GetAchievementProgressLimitsInt32", kParams_534};
-const steambridge::SlotInfo kCall_891 = {"SteamAPI_ISteamUserStats_GetAchievementProgressLimitsFloat", kParams_535};
-const steambridge::SlotInfo kCall_892 = {"SteamAPI_ISteamUtils_GetSecondsSinceAppActive", nullptr};
-const steambridge::SlotInfo kCall_893 = {"SteamAPI_ISteamUtils_GetSecondsSinceComputerActive", nullptr};
-const steambridge::SlotInfo kCall_894 = {"SteamAPI_ISteamUtils_GetConnectedUniverse", nullptr};
-const steambridge::SlotInfo kCall_895 = {"SteamAPI_ISteamUtils_GetServerRealTime", nullptr};
-const steambridge::SlotInfo kCall_896 = {"SteamAPI_ISteamUtils_GetIPCountry", nullptr};
-const steambridge::SlotInfo kCall_897 = {"SteamAPI_ISteamUtils_GetImageSize", kParams_536};
-const steambridge::SlotInfo kCall_898 = {"SteamAPI_ISteamUtils_GetImageRGBA", kParams_537};
-const steambridge::SlotInfo kCall_899 = {"SteamAPI_ISteamUtils_GetCSERIPPort", kParams_19};
-const steambridge::SlotInfo kCall_900 = {"SteamAPI_ISteamUtils_GetCurrentBatteryPower", nullptr};
-const steambridge::SlotInfo kCall_901 = {"SteamAPI_ISteamUtils_GetAppID", nullptr};
-const steambridge::SlotInfo kCall_902 = {"SteamAPI_ISteamUtils_SetOverlayNotificationPosition", kParams_538};
-const steambridge::SlotInfo kCall_903 = {"SteamAPI_ISteamUtils_IsAPICallCompleted", kParams_539};
-const steambridge::SlotInfo kCall_904 = {"SteamAPI_ISteamUtils_GetAPICallFailureReason", kParams_540};
-const steambridge::SlotInfo kCall_905 = {"SteamAPI_ISteamUtils_GetAPICallResult", kParams_541};
-const steambridge::SlotInfo kCall_906 = {"ISteamUtils::RunFrame", nullptr};
-const steambridge::SlotInfo kCall_907 = {"SteamAPI_ISteamUtils_GetIPCCallCount", nullptr};
-const steambridge::SlotInfo kCall_908 = {"SteamAPI_ISteamUtils_SetWarningMessageHook", kParams_22};
-const steambridge::SlotInfo kCall_909 = {"SteamAPI_ISteamUtils_IsOverlayEnabled", nullptr};
-const steambridge::SlotInfo kCall_910 = {"SteamAPI_ISteamUtils_BOverlayNeedsPresent", nullptr};
-const steambridge::SlotInfo kCall_911 = {"SteamAPI_ISteamUtils_CheckFileSignature", kParams_542};
-const steambridge::SlotInfo kCall_912 = {"SteamAPI_ISteamUtils_ShowGamepadTextInput", kParams_543};
-const steambridge::SlotInfo kCall_913 = {"SteamAPI_ISteamUtils_GetEnteredGamepadTextLength", nullptr};
-const steambridge::SlotInfo kCall_914 = {"SteamAPI_ISteamUtils_GetEnteredGamepadTextInput", kParams_544};
-const steambridge::SlotInfo kCall_915 = {"SteamAPI_ISteamUtils_GetSteamUILanguage", nullptr};
-const steambridge::SlotInfo kCall_916 = {"SteamAPI_ISteamUtils_IsSteamRunningInVR", nullptr};
-const steambridge::SlotInfo kCall_917 = {"SteamAPI_ISteamUtils_SetOverlayNotificationInset", kParams_545};
-const steambridge::SlotInfo kCall_918 = {"SteamAPI_ISteamUtils_IsSteamInBigPictureMode", nullptr};
-const steambridge::SlotInfo kCall_919 = {"SteamAPI_ISteamUtils_StartVRDashboard", nullptr};
-const steambridge::SlotInfo kCall_920 = {"SteamAPI_ISteamUtils_IsVRHeadsetStreamingEnabled", nullptr};
-const steambridge::SlotInfo kCall_921 = {"SteamAPI_ISteamUtils_SetVRHeadsetStreamingEnabled", kParams_395};
-const steambridge::SlotInfo kCall_922 = {"SteamAPI_ISteamUtils_IsSteamChinaLauncher", nullptr};
-const steambridge::SlotInfo kCall_923 = {"SteamAPI_ISteamUtils_InitFilterText", nullptr};
-const steambridge::SlotInfo kCall_924 = {"SteamAPI_ISteamUtils_FilterText", kParams_546};
-const steambridge::SlotInfo kCall_925 = {"SteamAPI_ISteamUtils_GetIPv6ConnectivityState", kParams_547};
-const steambridge::SlotInfo kCall_926 = {"ISteamUtils::GetCSERIPPort", kParams_19};
-const steambridge::SlotInfo kCall_927 = {"SteamAPI_ISteamUtils_InitFilterText", kParams_548};
-const steambridge::SlotInfo kCall_928 = {"SteamAPI_ISteamUtils_FilterText", kParams_549};
-const steambridge::SlotInfo kCall_929 = {"SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck", nullptr};
-const steambridge::SlotInfo kCall_930 = {"SteamAPI_ISteamUtils_ShowFloatingGamepadTextInput", kParams_550};
-const steambridge::SlotInfo kCall_931 = {"SteamAPI_ISteamUtils_SetGameLauncherMode", kParams_551};
-const steambridge::SlotInfo kCall_932 = {"SteamAPI_ISteamUtils_DismissFloatingGamepadTextInput", nullptr};
-const steambridge::SlotInfo kCall_933 = {"SteamAPI_ISteamVideo_GetVideoURL", kParams_552};
-const steambridge::SlotInfo kCall_934 = {"SteamAPI_ISteamVideo_IsBroadcasting", kParams_553};
-const steambridge::SlotInfo kCall_935 = {"SteamAPI_ISteamVideo_GetOPFSettings", kParams_552};
-const steambridge::SlotInfo kCall_936 = {"SteamAPI_ISteamVideo_GetOPFStringForApp", kParams_554};
+const steammock::SlotInfo kCall_0 = {"SteamAPI_ISteamAppList_GetNumInstalledApps", nullptr};
+const steammock::SlotInfo kCall_1 = {"SteamAPI_ISteamAppList_GetInstalledApps", kParams_0};
+const steammock::SlotInfo kCall_2 = {"SteamAPI_ISteamAppList_GetAppName", kParams_1};
+const steammock::SlotInfo kCall_3 = {"SteamAPI_ISteamAppList_GetAppInstallDir", kParams_2};
+const steammock::SlotInfo kCall_4 = {"SteamAPI_ISteamAppList_GetAppBuildId", kParams_3};
+const steammock::SlotInfo kCall_5 = {"SteamAPI_ISteamApps_BIsSubscribed", nullptr};
+const steammock::SlotInfo kCall_6 = {"SteamAPI_ISteamApps_BIsLowViolence", nullptr};
+const steammock::SlotInfo kCall_7 = {"SteamAPI_ISteamApps_BIsCybercafe", nullptr};
+const steammock::SlotInfo kCall_8 = {"SteamAPI_ISteamApps_BIsVACBanned", nullptr};
+const steammock::SlotInfo kCall_9 = {"SteamAPI_ISteamApps_GetCurrentGameLanguage", nullptr};
+const steammock::SlotInfo kCall_10 = {"SteamAPI_ISteamApps_GetAvailableGameLanguages", nullptr};
+const steammock::SlotInfo kCall_11 = {"SteamAPI_ISteamApps_BIsSubscribedApp", kParams_4};
+const steammock::SlotInfo kCall_12 = {"SteamAPI_ISteamApps_BIsDlcInstalled", kParams_4};
+const steammock::SlotInfo kCall_13 = {"SteamAPI_ISteamApps_GetEarliestPurchaseUnixTime", kParams_3};
+const steammock::SlotInfo kCall_14 = {"SteamAPI_ISteamApps_BIsSubscribedFromFreeWeekend", nullptr};
+const steammock::SlotInfo kCall_15 = {"SteamAPI_ISteamApps_GetDLCCount", nullptr};
+const steammock::SlotInfo kCall_16 = {"SteamAPI_ISteamApps_BGetDLCDataByIndex", kParams_5};
+const steammock::SlotInfo kCall_17 = {"SteamAPI_ISteamApps_InstallDLC", kParams_3};
+const steammock::SlotInfo kCall_18 = {"SteamAPI_ISteamApps_UninstallDLC", kParams_3};
+const steammock::SlotInfo kCall_19 = {"SteamAPI_ISteamApps_RequestAppProofOfPurchaseKey", kParams_3};
+const steammock::SlotInfo kCall_20 = {"SteamAPI_ISteamApps_GetCurrentBetaName", kParams_6};
+const steammock::SlotInfo kCall_21 = {"SteamAPI_ISteamApps_MarkContentCorrupt", kParams_7};
+const steammock::SlotInfo kCall_22 = {"SteamAPI_ISteamApps_GetInstalledDepots", kParams_8};
+const steammock::SlotInfo kCall_23 = {"SteamAPI_ISteamApps_GetAppInstallDir", kParams_9};
+const steammock::SlotInfo kCall_24 = {"SteamAPI_ISteamApps_BIsAppInstalled", kParams_4};
+const steammock::SlotInfo kCall_25 = {"SteamAPI_ISteamApps_GetAppOwner", nullptr};
+const steammock::SlotInfo kCall_26 = {"SteamAPI_ISteamApps_GetLaunchQueryParam", kParams_10};
+const steammock::SlotInfo kCall_27 = {"SteamAPI_ISteamApps_GetDlcDownloadProgress", kParams_11};
+const steammock::SlotInfo kCall_28 = {"SteamAPI_ISteamApps_GetAppBuildId", nullptr};
+const steammock::SlotInfo kCall_29 = {"SteamAPI_ISteamApps_RequestAllProofOfPurchaseKeys", nullptr};
+const steammock::SlotInfo kCall_30 = {"SteamAPI_ISteamApps_GetFileDetails", kParams_12};
+const steammock::SlotInfo kCall_31 = {"SteamAPI_ISteamApps_GetLaunchCommandLine", kParams_13};
+const steammock::SlotInfo kCall_32 = {"SteamAPI_ISteamApps_BIsSubscribedFromFamilySharing", nullptr};
+const steammock::SlotInfo kCall_33 = {"SteamAPI_ISteamApps_BIsTimedTrial", kParams_14};
+const steammock::SlotInfo kCall_34 = {"SteamAPI_ISteamApps_SetDlcContext", kParams_3};
+const steammock::SlotInfo kCall_35 = {"SteamAPI_ISteamClient_CreateSteamPipe", nullptr};
+const steammock::SlotInfo kCall_36 = {"SteamAPI_ISteamClient_BReleaseSteamPipe", kParams_15};
+const steammock::SlotInfo kCall_37 = {"SteamAPI_ISteamClient_ConnectToGlobalUser", kParams_15};
+const steammock::SlotInfo kCall_38 = {"SteamAPI_ISteamClient_CreateLocalUser", kParams_16};
+const steammock::SlotInfo kCall_39 = {"SteamAPI_ISteamClient_ReleaseUser", kParams_17};
+const steammock::SlotInfo kCall_40 = {"SteamAPI_ISteamClient_GetISteamUser", kParams_18};
+const steammock::SlotInfo kCall_41 = {"SteamAPI_ISteamClient_GetISteamGameServer", kParams_18};
+const steammock::SlotInfo kCall_42 = {"SteamAPI_ISteamClient_SetLocalIPBinding", kParams_19};
+const steammock::SlotInfo kCall_43 = {"SteamAPI_ISteamClient_GetISteamFriends", kParams_18};
+const steammock::SlotInfo kCall_44 = {"SteamAPI_ISteamClient_GetISteamUtils", kParams_20};
+const steammock::SlotInfo kCall_45 = {"SteamAPI_ISteamClient_GetISteamMatchmaking", kParams_18};
+const steammock::SlotInfo kCall_46 = {"SteamAPI_ISteamClient_GetISteamMatchmakingServers", kParams_18};
+const steammock::SlotInfo kCall_47 = {"SteamAPI_ISteamClient_GetISteamGenericInterface", kParams_18};
+const steammock::SlotInfo kCall_48 = {"SteamAPI_ISteamClient_GetISteamUserStats", kParams_18};
+const steammock::SlotInfo kCall_49 = {"SteamAPI_ISteamClient_GetISteamGameServerStats", kParams_21};
+const steammock::SlotInfo kCall_50 = {"SteamAPI_ISteamClient_GetISteamApps", kParams_18};
+const steammock::SlotInfo kCall_51 = {"SteamAPI_ISteamClient_GetISteamNetworking", kParams_18};
+const steammock::SlotInfo kCall_52 = {"SteamAPI_ISteamClient_GetISteamRemoteStorage", kParams_21};
+const steammock::SlotInfo kCall_53 = {"SteamAPI_ISteamClient_GetISteamScreenshots", kParams_21};
+const steammock::SlotInfo kCall_54 = {"ISteamClient::RunFrame", nullptr};
+const steammock::SlotInfo kCall_55 = {"SteamAPI_ISteamClient_GetIPCCallCount", nullptr};
+const steammock::SlotInfo kCall_56 = {"SteamAPI_ISteamClient_SetWarningMessageHook", kParams_22};
+const steammock::SlotInfo kCall_57 = {"SteamAPI_ISteamClient_BShutdownIfAllPipesClosed", nullptr};
+const steammock::SlotInfo kCall_58 = {"SteamAPI_ISteamClient_GetISteamHTTP", kParams_21};
+const steammock::SlotInfo kCall_59 = {"SteamAPI_ISteamClient_GetISteamUnifiedMessages", kParams_21};
+const steammock::SlotInfo kCall_60 = {"SteamAPI_ISteamClient_GetISteamController", kParams_18};
+const steammock::SlotInfo kCall_61 = {"SteamAPI_ISteamClient_GetISteamUGC", kParams_18};
+const steammock::SlotInfo kCall_62 = {"SteamAPI_ISteamClient_GetISteamAppList", kParams_18};
+const steammock::SlotInfo kCall_63 = {"SteamAPI_ISteamClient_GetISteamMusic", kParams_21};
+const steammock::SlotInfo kCall_64 = {"SteamAPI_ISteamClient_GetISteamMusicRemote", kParams_21};
+const steammock::SlotInfo kCall_65 = {"SteamAPI_ISteamClient_GetISteamHTMLSurface", kParams_21};
+const steammock::SlotInfo kCall_66 = {"ISteamClient::DEPRECATED_Set_SteamAPI_CPostAPIResultInProcess", kParams_23};
+const steammock::SlotInfo kCall_67 = {"ISteamClient::DEPRECATED_Remove_SteamAPI_CPostAPIResultInProcess", kParams_23};
+const steammock::SlotInfo kCall_68 = {"ISteamClient::Set_SteamAPI_CCheckCallbackRegisteredInProcess", kParams_24};
+const steammock::SlotInfo kCall_69 = {"SteamAPI_ISteamClient_GetISteamInventory", kParams_21};
+const steammock::SlotInfo kCall_70 = {"SteamAPI_ISteamClient_GetISteamVideo", kParams_21};
+const steammock::SlotInfo kCall_71 = {"SteamAPI_ISteamClient_GetISteamParentalSettings", kParams_21};
+const steammock::SlotInfo kCall_72 = {"SteamAPI_ISteamClient_GetISteamGameSearch", kParams_21};
+const steammock::SlotInfo kCall_73 = {"ISteamClient::DEPRECATED_GetISteamUnifiedMessages", kParams_21};
+const steammock::SlotInfo kCall_74 = {"SteamAPI_ISteamClient_GetISteamInput", kParams_18};
+const steammock::SlotInfo kCall_75 = {"SteamAPI_ISteamClient_GetISteamParties", kParams_18};
+const steammock::SlotInfo kCall_76 = {"SteamAPI_ISteamClient_GetISteamRemotePlay", kParams_18};
+const steammock::SlotInfo kCall_77 = {"ISteamClient::DestroyAllInterfaces", nullptr};
+const steammock::SlotInfo kCall_78 = {"SteamAPI_ISteamController_Init", nullptr};
+const steammock::SlotInfo kCall_79 = {"SteamAPI_ISteamController_Shutdown", nullptr};
+const steammock::SlotInfo kCall_80 = {"SteamAPI_ISteamController_RunFrame", nullptr};
+const steammock::SlotInfo kCall_81 = {"SteamAPI_ISteamController_GetConnectedControllers", kParams_25};
+const steammock::SlotInfo kCall_82 = {"SteamAPI_ISteamController_ShowBindingPanel", kParams_26};
+const steammock::SlotInfo kCall_83 = {"SteamAPI_ISteamController_GetActionSetHandle", kParams_27};
+const steammock::SlotInfo kCall_84 = {"SteamAPI_ISteamController_ActivateActionSet", kParams_28};
+const steammock::SlotInfo kCall_85 = {"SteamAPI_ISteamController_GetCurrentActionSet", kParams_26};
+const steammock::SlotInfo kCall_86 = {"SteamAPI_ISteamController_GetDigitalActionHandle", kParams_29};
+const steammock::SlotInfo kCall_87 = {"SteamAPI_ISteamController_GetDigitalActionData", kParams_30};
+const steammock::SlotInfo kCall_88 = {"SteamAPI_ISteamController_GetDigitalActionOrigins", kParams_31};
+const steammock::SlotInfo kCall_89 = {"SteamAPI_ISteamController_GetAnalogActionHandle", kParams_29};
+const steammock::SlotInfo kCall_90 = {"SteamAPI_ISteamController_GetAnalogActionData", kParams_32};
+const steammock::SlotInfo kCall_91 = {"SteamAPI_ISteamController_GetAnalogActionOrigins", kParams_33};
+const steammock::SlotInfo kCall_92 = {"SteamAPI_ISteamController_StopAnalogActionMomentum", kParams_34};
+const steammock::SlotInfo kCall_93 = {"SteamAPI_ISteamController_TriggerHapticPulse", kParams_35};
+const steammock::SlotInfo kCall_94 = {"SteamAPI_ISteamController_TriggerRepeatedHapticPulse", kParams_36};
+const steammock::SlotInfo kCall_95 = {"SteamAPI_ISteamController_TriggerVibration", kParams_37};
+const steammock::SlotInfo kCall_96 = {"SteamAPI_ISteamController_SetLEDColor", kParams_38};
+const steammock::SlotInfo kCall_97 = {"SteamAPI_ISteamController_GetGamepadIndexForController", kParams_39};
+const steammock::SlotInfo kCall_98 = {"SteamAPI_ISteamController_GetControllerForGamepadIndex", kParams_40};
+const steammock::SlotInfo kCall_99 = {"SteamAPI_ISteamController_GetMotionData", kParams_26};
+const steammock::SlotInfo kCall_100 = {"SteamAPI_ISteamController_ShowDigitalActionOrigins", kParams_41};
+const steammock::SlotInfo kCall_101 = {"SteamAPI_ISteamController_ShowAnalogActionOrigins", kParams_42};
+const steammock::SlotInfo kCall_102 = {"SteamAPI_ISteamController_GetStringForActionOrigin", kParams_43};
+const steammock::SlotInfo kCall_103 = {"SteamAPI_ISteamController_GetGlyphForActionOrigin", kParams_43};
+const steammock::SlotInfo kCall_104 = {"SteamAPI_ISteamController_ActivateActionSetLayer", kParams_44};
+const steammock::SlotInfo kCall_105 = {"SteamAPI_ISteamController_DeactivateActionSetLayer", kParams_44};
+const steammock::SlotInfo kCall_106 = {"SteamAPI_ISteamController_DeactivateAllActionSetLayers", kParams_26};
+const steammock::SlotInfo kCall_107 = {"SteamAPI_ISteamController_GetActiveActionSetLayers", kParams_45};
+const steammock::SlotInfo kCall_108 = {"SteamAPI_ISteamController_GetInputTypeForHandle", kParams_26};
+const steammock::SlotInfo kCall_109 = {"SteamAPI_ISteamController_GetStringForXboxOrigin", kParams_43};
+const steammock::SlotInfo kCall_110 = {"SteamAPI_ISteamController_GetGlyphForXboxOrigin", kParams_43};
+const steammock::SlotInfo kCall_111 = {"SteamAPI_ISteamController_GetActionOriginFromXboxOrigin", kParams_46};
+const steammock::SlotInfo kCall_112 = {"SteamAPI_ISteamController_TranslateActionOrigin", kParams_47};
+const steammock::SlotInfo kCall_113 = {"SteamAPI_ISteamController_GetControllerBindingRevision", kParams_48};
+const steammock::SlotInfo kCall_114 = {"SteamAPI_ISteamFriends_GetPersonaName", nullptr};
+const steammock::SlotInfo kCall_115 = {"SteamAPI_ISteamFriends_SetPersonaName", kParams_49};
+const steammock::SlotInfo kCall_116 = {"SteamAPI_ISteamFriends_GetPersonaState", nullptr};
+const steammock::SlotInfo kCall_117 = {"SteamAPI_ISteamFriends_GetFriendCount", kParams_50};
+const steammock::SlotInfo kCall_118 = {"SteamAPI_ISteamFriends_GetFriendByIndex", kParams_51};
+const steammock::SlotInfo kCall_119 = {"SteamAPI_ISteamFriends_GetFriendRelationship", kParams_52};
+const steammock::SlotInfo kCall_120 = {"SteamAPI_ISteamFriends_GetFriendPersonaState", kParams_52};
+const steammock::SlotInfo kCall_121 = {"SteamAPI_ISteamFriends_GetFriendPersonaName", kParams_52};
+const steammock::SlotInfo kCall_122 = {"SteamAPI_ISteamFriends_GetFriendGamePlayed", kParams_53};
+const steammock::SlotInfo kCall_123 = {"SteamAPI_ISteamFriends_GetFriendPersonaNameHistory", kParams_54};
+const steammock::SlotInfo kCall_124 = {"SteamAPI_ISteamFriends_GetFriendSteamLevel", kParams_52};
+const steammock::SlotInfo kCall_125 = {"SteamAPI_ISteamFriends_GetPlayerNickname", kParams_55};
+const steammock::SlotInfo kCall_126 = {"SteamAPI_ISteamFriends_GetFriendsGroupCount", nullptr};
+const steammock::SlotInfo kCall_127 = {"SteamAPI_ISteamFriends_GetFriendsGroupIDByIndex", kParams_56};
+const steammock::SlotInfo kCall_128 = {"SteamAPI_ISteamFriends_GetFriendsGroupName", kParams_57};
+const steammock::SlotInfo kCall_129 = {"SteamAPI_ISteamFriends_GetFriendsGroupMembersCount", kParams_57};
+const steammock::SlotInfo kCall_130 = {"SteamAPI_ISteamFriends_GetFriendsGroupMembersList", kParams_58};
+const steammock::SlotInfo kCall_131 = {"SteamAPI_ISteamFriends_HasFriend", kParams_59};
+const steammock::SlotInfo kCall_132 = {"SteamAPI_ISteamFriends_GetClanCount", nullptr};
+const steammock::SlotInfo kCall_133 = {"SteamAPI_ISteamFriends_GetClanByIndex", kParams_60};
+const steammock::SlotInfo kCall_134 = {"SteamAPI_ISteamFriends_GetClanName", kParams_61};
+const steammock::SlotInfo kCall_135 = {"SteamAPI_ISteamFriends_GetClanTag", kParams_61};
+const steammock::SlotInfo kCall_136 = {"SteamAPI_ISteamFriends_GetClanActivityCounts", kParams_62};
+const steammock::SlotInfo kCall_137 = {"SteamAPI_ISteamFriends_DownloadClanActivityCounts", kParams_63};
+const steammock::SlotInfo kCall_138 = {"SteamAPI_ISteamFriends_GetFriendCountFromSource", kParams_64};
+const steammock::SlotInfo kCall_139 = {"SteamAPI_ISteamFriends_GetFriendFromSourceByIndex", kParams_65};
+const steammock::SlotInfo kCall_140 = {"SteamAPI_ISteamFriends_IsUserInSource", kParams_66};
+const steammock::SlotInfo kCall_141 = {"SteamAPI_ISteamFriends_SetInGameVoiceSpeaking", kParams_67};
+const steammock::SlotInfo kCall_142 = {"SteamAPI_ISteamFriends_ActivateGameOverlay", kParams_68};
+const steammock::SlotInfo kCall_143 = {"SteamAPI_ISteamFriends_ActivateGameOverlayToUser", kParams_69};
+const steammock::SlotInfo kCall_144 = {"SteamAPI_ISteamFriends_ActivateGameOverlayToWebPage", kParams_70};
+const steammock::SlotInfo kCall_145 = {"SteamAPI_ISteamFriends_ActivateGameOverlayToStore", kParams_71};
+const steammock::SlotInfo kCall_146 = {"SteamAPI_ISteamFriends_SetPlayedWith", kParams_72};
+const steammock::SlotInfo kCall_147 = {"SteamAPI_ISteamFriends_ActivateGameOverlayInviteDialog", kParams_73};
+const steammock::SlotInfo kCall_148 = {"SteamAPI_ISteamFriends_GetSmallFriendAvatar", kParams_52};
+const steammock::SlotInfo kCall_149 = {"SteamAPI_ISteamFriends_GetMediumFriendAvatar", kParams_52};
+const steammock::SlotInfo kCall_150 = {"SteamAPI_ISteamFriends_GetLargeFriendAvatar", kParams_52};
+const steammock::SlotInfo kCall_151 = {"SteamAPI_ISteamFriends_RequestUserInformation", kParams_74};
+const steammock::SlotInfo kCall_152 = {"SteamAPI_ISteamFriends_RequestClanOfficerList", kParams_61};
+const steammock::SlotInfo kCall_153 = {"SteamAPI_ISteamFriends_GetClanOwner", kParams_61};
+const steammock::SlotInfo kCall_154 = {"SteamAPI_ISteamFriends_GetClanOfficerCount", kParams_61};
+const steammock::SlotInfo kCall_155 = {"SteamAPI_ISteamFriends_GetClanOfficerByIndex", kParams_75};
+const steammock::SlotInfo kCall_156 = {"SteamAPI_ISteamFriends_GetUserRestrictions", nullptr};
+const steammock::SlotInfo kCall_157 = {"SteamAPI_ISteamFriends_SetRichPresence", kParams_76};
+const steammock::SlotInfo kCall_158 = {"SteamAPI_ISteamFriends_ClearRichPresence", nullptr};
+const steammock::SlotInfo kCall_159 = {"SteamAPI_ISteamFriends_GetFriendRichPresence", kParams_77};
+const steammock::SlotInfo kCall_160 = {"SteamAPI_ISteamFriends_GetFriendRichPresenceKeyCount", kParams_52};
+const steammock::SlotInfo kCall_161 = {"SteamAPI_ISteamFriends_GetFriendRichPresenceKeyByIndex", kParams_78};
+const steammock::SlotInfo kCall_162 = {"SteamAPI_ISteamFriends_RequestFriendRichPresence", kParams_52};
+const steammock::SlotInfo kCall_163 = {"SteamAPI_ISteamFriends_InviteUserToGame", kParams_79};
+const steammock::SlotInfo kCall_164 = {"SteamAPI_ISteamFriends_GetCoplayFriendCount", nullptr};
+const steammock::SlotInfo kCall_165 = {"SteamAPI_ISteamFriends_GetCoplayFriend", kParams_80};
+const steammock::SlotInfo kCall_166 = {"SteamAPI_ISteamFriends_GetFriendCoplayTime", kParams_52};
+const steammock::SlotInfo kCall_167 = {"SteamAPI_ISteamFriends_GetFriendCoplayGame", kParams_52};
+const steammock::SlotInfo kCall_168 = {"SteamAPI_ISteamFriends_JoinClanChatRoom", kParams_61};
+const steammock::SlotInfo kCall_169 = {"SteamAPI_ISteamFriends_LeaveClanChatRoom", kParams_61};
+const steammock::SlotInfo kCall_170 = {"SteamAPI_ISteamFriends_GetClanChatMemberCount", kParams_61};
+const steammock::SlotInfo kCall_171 = {"SteamAPI_ISteamFriends_GetChatMemberByIndex", kParams_81};
+const steammock::SlotInfo kCall_172 = {"SteamAPI_ISteamFriends_SendClanChatMessage", kParams_82};
+const steammock::SlotInfo kCall_173 = {"SteamAPI_ISteamFriends_GetClanChatMessage", kParams_83};
+const steammock::SlotInfo kCall_174 = {"SteamAPI_ISteamFriends_IsClanChatAdmin", kParams_84};
+const steammock::SlotInfo kCall_175 = {"SteamAPI_ISteamFriends_IsClanChatWindowOpenInSteam", kParams_85};
+const steammock::SlotInfo kCall_176 = {"SteamAPI_ISteamFriends_OpenClanChatWindowInSteam", kParams_85};
+const steammock::SlotInfo kCall_177 = {"SteamAPI_ISteamFriends_CloseClanChatWindowInSteam", kParams_85};
+const steammock::SlotInfo kCall_178 = {"SteamAPI_ISteamFriends_SetListenForFriendsMessages", kParams_86};
+const steammock::SlotInfo kCall_179 = {"SteamAPI_ISteamFriends_ReplyToFriendMessage", kParams_87};
+const steammock::SlotInfo kCall_180 = {"SteamAPI_ISteamFriends_GetFriendMessage", kParams_88};
+const steammock::SlotInfo kCall_181 = {"SteamAPI_ISteamFriends_GetFollowerCount", kParams_89};
+const steammock::SlotInfo kCall_182 = {"SteamAPI_ISteamFriends_IsFollowing", kParams_89};
+const steammock::SlotInfo kCall_183 = {"SteamAPI_ISteamFriends_EnumerateFollowingList", kParams_90};
+const steammock::SlotInfo kCall_184 = {"SteamAPI_ISteamFriends_ActivateGameOverlayToWebPage", kParams_91};
+const steammock::SlotInfo kCall_185 = {"SteamAPI_ISteamFriends_IsClanPublic", kParams_61};
+const steammock::SlotInfo kCall_186 = {"SteamAPI_ISteamFriends_IsClanOfficialGameGroup", kParams_61};
+const steammock::SlotInfo kCall_187 = {"SteamAPI_ISteamFriends_GetNumChatsWithUnreadPriorityMessages", nullptr};
+const steammock::SlotInfo kCall_188 = {"SteamAPI_ISteamFriends_ActivateGameOverlayRemotePlayTogetherInviteDialog", kParams_73};
+const steammock::SlotInfo kCall_189 = {"SteamAPI_ISteamFriends_RegisterProtocolInOverlayBrowser", kParams_92};
+const steammock::SlotInfo kCall_190 = {"SteamAPI_ISteamFriends_ActivateGameOverlayInviteDialogConnectString", kParams_93};
+const steammock::SlotInfo kCall_191 = {"SteamAPI_ISteamFriends_RequestEquippedProfileItems", kParams_89};
+const steammock::SlotInfo kCall_192 = {"SteamAPI_ISteamFriends_BHasEquippedProfileItem", kParams_94};
+const steammock::SlotInfo kCall_193 = {"SteamAPI_ISteamFriends_GetProfileItemPropertyString", kParams_95};
+const steammock::SlotInfo kCall_194 = {"SteamAPI_ISteamFriends_GetProfileItemPropertyUint", kParams_95};
+const steammock::SlotInfo kCall_195 = {"SteamAPI_ISteamGameSearch_AddGameSearchParams", kParams_96};
+const steammock::SlotInfo kCall_196 = {"SteamAPI_ISteamGameSearch_SearchForGameWithLobby", kParams_97};
+const steammock::SlotInfo kCall_197 = {"SteamAPI_ISteamGameSearch_SearchForGameSolo", kParams_98};
+const steammock::SlotInfo kCall_198 = {"SteamAPI_ISteamGameSearch_AcceptGame", nullptr};
+const steammock::SlotInfo kCall_199 = {"SteamAPI_ISteamGameSearch_DeclineGame", nullptr};
+const steammock::SlotInfo kCall_200 = {"SteamAPI_ISteamGameSearch_RetrieveConnectionDetails", kParams_99};
+const steammock::SlotInfo kCall_201 = {"SteamAPI_ISteamGameSearch_EndGameSearch", nullptr};
+const steammock::SlotInfo kCall_202 = {"SteamAPI_ISteamGameSearch_SetGameHostParams", kParams_76};
+const steammock::SlotInfo kCall_203 = {"SteamAPI_ISteamGameSearch_SetConnectionDetails", kParams_100};
+const steammock::SlotInfo kCall_204 = {"SteamAPI_ISteamGameSearch_RequestPlayersForGame", kParams_101};
+const steammock::SlotInfo kCall_205 = {"SteamAPI_ISteamGameSearch_HostConfirmGameStart", kParams_102};
+const steammock::SlotInfo kCall_206 = {"SteamAPI_ISteamGameSearch_CancelRequestPlayersForGame", nullptr};
+const steammock::SlotInfo kCall_207 = {"SteamAPI_ISteamGameSearch_SubmitPlayerResult", kParams_103};
+const steammock::SlotInfo kCall_208 = {"SteamAPI_ISteamGameSearch_EndGame", kParams_102};
+const steammock::SlotInfo kCall_209 = {"SteamAPI_ISteamGameServer_InitGameServer", kParams_104};
+const steammock::SlotInfo kCall_210 = {"SteamAPI_ISteamGameServer_SetProduct", kParams_105};
+const steammock::SlotInfo kCall_211 = {"SteamAPI_ISteamGameServer_SetGameDescription", kParams_106};
+const steammock::SlotInfo kCall_212 = {"SteamAPI_ISteamGameServer_SetModDir", kParams_107};
+const steammock::SlotInfo kCall_213 = {"SteamAPI_ISteamGameServer_SetDedicatedServer", kParams_108};
+const steammock::SlotInfo kCall_214 = {"SteamAPI_ISteamGameServer_LogOn", kParams_109};
+const steammock::SlotInfo kCall_215 = {"SteamAPI_ISteamGameServer_LogOnAnonymous", nullptr};
+const steammock::SlotInfo kCall_216 = {"SteamAPI_ISteamGameServer_LogOff", nullptr};
+const steammock::SlotInfo kCall_217 = {"SteamAPI_ISteamGameServer_BLoggedOn", nullptr};
+const steammock::SlotInfo kCall_218 = {"SteamAPI_ISteamGameServer_BSecure", nullptr};
+const steammock::SlotInfo kCall_219 = {"SteamAPI_ISteamGameServer_GetSteamID", nullptr};
+const steammock::SlotInfo kCall_220 = {"SteamAPI_ISteamGameServer_WasRestartRequested", nullptr};
+const steammock::SlotInfo kCall_221 = {"SteamAPI_ISteamGameServer_SetMaxPlayerCount", kParams_110};
+const steammock::SlotInfo kCall_222 = {"SteamAPI_ISteamGameServer_SetBotPlayerCount", kParams_111};
+const steammock::SlotInfo kCall_223 = {"SteamAPI_ISteamGameServer_SetServerName", kParams_112};
+const steammock::SlotInfo kCall_224 = {"SteamAPI_ISteamGameServer_SetMapName", kParams_113};
+const steammock::SlotInfo kCall_225 = {"SteamAPI_ISteamGameServer_SetPasswordProtected", kParams_114};
+const steammock::SlotInfo kCall_226 = {"SteamAPI_ISteamGameServer_SetSpectatorPort", kParams_115};
+const steammock::SlotInfo kCall_227 = {"SteamAPI_ISteamGameServer_SetSpectatorServerName", kParams_116};
+const steammock::SlotInfo kCall_228 = {"SteamAPI_ISteamGameServer_ClearAllKeyValues", nullptr};
+const steammock::SlotInfo kCall_229 = {"SteamAPI_ISteamGameServer_SetKeyValue", kParams_117};
+const steammock::SlotInfo kCall_230 = {"SteamAPI_ISteamGameServer_SetGameTags", kParams_118};
+const steammock::SlotInfo kCall_231 = {"SteamAPI_ISteamGameServer_SetGameData", kParams_119};
+const steammock::SlotInfo kCall_232 = {"SteamAPI_ISteamGameServer_SetRegion", kParams_120};
+const steammock::SlotInfo kCall_233 = {"SteamAPI_ISteamGameServer_SendUserConnectAndAuthenticate", kParams_121};
+const steammock::SlotInfo kCall_234 = {"SteamAPI_ISteamGameServer_CreateUnauthenticatedUserConnection", nullptr};
+const steammock::SlotInfo kCall_235 = {"SteamAPI_ISteamGameServer_SendUserDisconnect", kParams_122};
+const steammock::SlotInfo kCall_236 = {"SteamAPI_ISteamGameServer_BUpdateUserData", kParams_123};
+const steammock::SlotInfo kCall_237 = {"SteamAPI_ISteamGameServer_GetAuthSessionTicket", kParams_124};
+const steammock::SlotInfo kCall_238 = {"SteamAPI_ISteamGameServer_BeginAuthSession", kParams_125};
+const steammock::SlotInfo kCall_239 = {"SteamAPI_ISteamGameServer_EndAuthSession", kParams_89};
+const steammock::SlotInfo kCall_240 = {"SteamAPI_ISteamGameServer_CancelAuthTicket", kParams_126};
+const steammock::SlotInfo kCall_241 = {"SteamAPI_ISteamGameServer_UserHasLicenseForApp", kParams_127};
+const steammock::SlotInfo kCall_242 = {"SteamAPI_ISteamGameServer_RequestUserGroupStatus", kParams_128};
+const steammock::SlotInfo kCall_243 = {"SteamAPI_ISteamGameServer_GetGameplayStats", nullptr};
+const steammock::SlotInfo kCall_244 = {"SteamAPI_ISteamGameServer_GetServerReputation", nullptr};
+const steammock::SlotInfo kCall_245 = {"SteamAPI_ISteamGameServer_GetPublicIP", nullptr};
+const steammock::SlotInfo kCall_246 = {"SteamAPI_ISteamGameServer_HandleIncomingPacket", kParams_129};
+const steammock::SlotInfo kCall_247 = {"SteamAPI_ISteamGameServer_GetNextOutgoingPacket", kParams_130};
+const steammock::SlotInfo kCall_248 = {"SteamAPI_ISteamGameServer_EnableHeartbeats", kParams_131};
+const steammock::SlotInfo kCall_249 = {"SteamAPI_ISteamGameServer_SetHeartbeatInterval", kParams_132};
+const steammock::SlotInfo kCall_250 = {"SteamAPI_ISteamGameServer_ForceHeartbeat", nullptr};
+const steammock::SlotInfo kCall_251 = {"SteamAPI_ISteamGameServer_AssociateWithClan", kParams_61};
+const steammock::SlotInfo kCall_252 = {"SteamAPI_ISteamGameServer_ComputeNewPlayerCompatibility", kParams_133};
+const steammock::SlotInfo kCall_253 = {"ISteamGameServer::InitGameServer", kParams_104};
+const steammock::SlotInfo kCall_254 = {"SteamAPI_ISteamGameServer_SetAdvertiseServerActive", kParams_131};
+const steammock::SlotInfo kCall_255 = {"SteamAPI_ISteamGameServer_SendUserConnectAndAuthenticate_DEPRECATED", kParams_121};
+const steammock::SlotInfo kCall_256 = {"SteamAPI_ISteamGameServer_SendUserDisconnect_DEPRECATED", kParams_122};
+const steammock::SlotInfo kCall_257 = {"ISteamGameServer::SetMasterServerHeartbeatInterval_DEPRECATED", kParams_132};
+const steammock::SlotInfo kCall_258 = {"ISteamGameServer::ForceMasterServerHeartbeat_DEPRECATED", nullptr};
+const steammock::SlotInfo kCall_259 = {"SteamAPI_ISteamGameServer_GetAuthSessionTicket", kParams_134};
+const steammock::SlotInfo kCall_260 = {"SteamAPI_ISteamGameServerStats_RequestUserStats", kParams_122};
+const steammock::SlotInfo kCall_261 = {"SteamAPI_ISteamGameServerStats_GetUserStatInt32", kParams_135};
+const steammock::SlotInfo kCall_262 = {"SteamAPI_ISteamGameServerStats_GetUserStatFloat", kParams_135};
+const steammock::SlotInfo kCall_263 = {"SteamAPI_ISteamGameServerStats_GetUserAchievement", kParams_136};
+const steammock::SlotInfo kCall_264 = {"SteamAPI_ISteamGameServerStats_SetUserStatInt32", kParams_137};
+const steammock::SlotInfo kCall_265 = {"SteamAPI_ISteamGameServerStats_SetUserStatFloat", kParams_138};
+const steammock::SlotInfo kCall_266 = {"SteamAPI_ISteamGameServerStats_UpdateUserAvgRateStat", kParams_139};
+const steammock::SlotInfo kCall_267 = {"SteamAPI_ISteamGameServerStats_SetUserAchievement", kParams_140};
+const steammock::SlotInfo kCall_268 = {"SteamAPI_ISteamGameServerStats_ClearUserAchievement", kParams_140};
+const steammock::SlotInfo kCall_269 = {"SteamAPI_ISteamGameServerStats_StoreUserStats", kParams_122};
+const steammock::SlotInfo kCall_270 = {"SteamAPI_ISteamHTMLSurface_Init", nullptr};
+const steammock::SlotInfo kCall_271 = {"SteamAPI_ISteamHTMLSurface_Shutdown", nullptr};
+const steammock::SlotInfo kCall_272 = {"SteamAPI_ISteamHTMLSurface_CreateBrowser", kParams_141};
+const steammock::SlotInfo kCall_273 = {"SteamAPI_ISteamHTMLSurface_RemoveBrowser", kParams_142};
+const steammock::SlotInfo kCall_274 = {"SteamAPI_ISteamHTMLSurface_LoadURL", kParams_143};
+const steammock::SlotInfo kCall_275 = {"SteamAPI_ISteamHTMLSurface_SetSize", kParams_144};
+const steammock::SlotInfo kCall_276 = {"SteamAPI_ISteamHTMLSurface_StopLoad", kParams_142};
+const steammock::SlotInfo kCall_277 = {"SteamAPI_ISteamHTMLSurface_Reload", kParams_142};
+const steammock::SlotInfo kCall_278 = {"SteamAPI_ISteamHTMLSurface_GoBack", kParams_142};
+const steammock::SlotInfo kCall_279 = {"SteamAPI_ISteamHTMLSurface_GoForward", kParams_142};
+const steammock::SlotInfo kCall_280 = {"SteamAPI_ISteamHTMLSurface_AddHeader", kParams_145};
+const steammock::SlotInfo kCall_281 = {"SteamAPI_ISteamHTMLSurface_ExecuteJavascript", kParams_146};
+const steammock::SlotInfo kCall_282 = {"SteamAPI_ISteamHTMLSurface_MouseUp", kParams_147};
+const steammock::SlotInfo kCall_283 = {"SteamAPI_ISteamHTMLSurface_MouseDown", kParams_147};
+const steammock::SlotInfo kCall_284 = {"SteamAPI_ISteamHTMLSurface_MouseDoubleClick", kParams_147};
+const steammock::SlotInfo kCall_285 = {"SteamAPI_ISteamHTMLSurface_MouseMove", kParams_148};
+const steammock::SlotInfo kCall_286 = {"SteamAPI_ISteamHTMLSurface_MouseWheel", kParams_149};
+const steammock::SlotInfo kCall_287 = {"SteamAPI_ISteamHTMLSurface_KeyDown", kParams_150};
+const steammock::SlotInfo kCall_288 = {"SteamAPI_ISteamHTMLSurface_KeyUp", kParams_150};
+const steammock::SlotInfo kCall_289 = {"SteamAPI_ISteamHTMLSurface_KeyChar", kParams_151};
+const steammock::SlotInfo kCall_290 = {"SteamAPI_ISteamHTMLSurface_SetHorizontalScroll", kParams_152};
+const steammock::SlotInfo kCall_291 = {"SteamAPI_ISteamHTMLSurface_SetVerticalScroll", kParams_152};
+const steammock::SlotInfo kCall_292 = {"SteamAPI_ISteamHTMLSurface_SetKeyFocus", kParams_153};
+const steammock::SlotInfo kCall_293 = {"SteamAPI_ISteamHTMLSurface_ViewSource", kParams_142};
+const steammock::SlotInfo kCall_294 = {"SteamAPI_ISteamHTMLSurface_CopyToClipboard", kParams_142};
+const steammock::SlotInfo kCall_295 = {"SteamAPI_ISteamHTMLSurface_PasteFromClipboard", kParams_142};
+const steammock::SlotInfo kCall_296 = {"SteamAPI_ISteamHTMLSurface_Find", kParams_154};
+const steammock::SlotInfo kCall_297 = {"SteamAPI_ISteamHTMLSurface_StopFind", kParams_142};
+const steammock::SlotInfo kCall_298 = {"SteamAPI_ISteamHTMLSurface_GetLinkAtPosition", kParams_148};
+const steammock::SlotInfo kCall_299 = {"SteamAPI_ISteamHTMLSurface_SetCookie", kParams_155};
+const steammock::SlotInfo kCall_300 = {"SteamAPI_ISteamHTMLSurface_SetPageScaleFactor", kParams_156};
+const steammock::SlotInfo kCall_301 = {"SteamAPI_ISteamHTMLSurface_SetBackgroundMode", kParams_157};
+const steammock::SlotInfo kCall_302 = {"SteamAPI_ISteamHTMLSurface_SetDPIScalingFactor", kParams_158};
+const steammock::SlotInfo kCall_303 = {"SteamAPI_ISteamHTMLSurface_AllowStartRequest", kParams_159};
+const steammock::SlotInfo kCall_304 = {"SteamAPI_ISteamHTMLSurface_JSDialogResponse", kParams_160};
+const steammock::SlotInfo kCall_305 = {"ISteamHTMLSurface::FileLoadDialogResponse", kParams_161};
+const steammock::SlotInfo kCall_306 = {"SteamAPI_ISteamHTMLSurface_KeyDown", kParams_162};
+const steammock::SlotInfo kCall_307 = {"SteamAPI_ISteamHTMLSurface_OpenDeveloperTools", kParams_142};
+const steammock::SlotInfo kCall_308 = {"SteamAPI_ISteamHTMLSurface_FileLoadDialogResponse", kParams_161};
+const steammock::SlotInfo kCall_309 = {"SteamAPI_ISteamHTTP_CreateHTTPRequest", kParams_163};
+const steammock::SlotInfo kCall_310 = {"SteamAPI_ISteamHTTP_SetHTTPRequestContextValue", kParams_164};
+const steammock::SlotInfo kCall_311 = {"SteamAPI_ISteamHTTP_SetHTTPRequestNetworkActivityTimeout", kParams_165};
+const steammock::SlotInfo kCall_312 = {"SteamAPI_ISteamHTTP_SetHTTPRequestHeaderValue", kParams_166};
+const steammock::SlotInfo kCall_313 = {"SteamAPI_ISteamHTTP_SetHTTPRequestGetOrPostParameter", kParams_167};
+const steammock::SlotInfo kCall_314 = {"SteamAPI_ISteamHTTP_SendHTTPRequest", kParams_168};
+const steammock::SlotInfo kCall_315 = {"SteamAPI_ISteamHTTP_SendHTTPRequestAndStreamResponse", kParams_168};
+const steammock::SlotInfo kCall_316 = {"SteamAPI_ISteamHTTP_DeferHTTPRequest", kParams_169};
+const steammock::SlotInfo kCall_317 = {"SteamAPI_ISteamHTTP_PrioritizeHTTPRequest", kParams_169};
+const steammock::SlotInfo kCall_318 = {"SteamAPI_ISteamHTTP_GetHTTPResponseHeaderSize", kParams_170};
+const steammock::SlotInfo kCall_319 = {"SteamAPI_ISteamHTTP_GetHTTPResponseHeaderValue", kParams_171};
+const steammock::SlotInfo kCall_320 = {"SteamAPI_ISteamHTTP_GetHTTPResponseBodySize", kParams_172};
+const steammock::SlotInfo kCall_321 = {"SteamAPI_ISteamHTTP_GetHTTPResponseBodyData", kParams_173};
+const steammock::SlotInfo kCall_322 = {"SteamAPI_ISteamHTTP_GetHTTPStreamingResponseBodyData", kParams_174};
+const steammock::SlotInfo kCall_323 = {"SteamAPI_ISteamHTTP_ReleaseHTTPRequest", kParams_169};
+const steammock::SlotInfo kCall_324 = {"SteamAPI_ISteamHTTP_GetHTTPDownloadProgressPct", kParams_175};
+const steammock::SlotInfo kCall_325 = {"SteamAPI_ISteamHTTP_SetHTTPRequestRawPostBody", kParams_176};
+const steammock::SlotInfo kCall_326 = {"SteamAPI_ISteamHTTP_CreateCookieContainer", kParams_177};
+const steammock::SlotInfo kCall_327 = {"SteamAPI_ISteamHTTP_ReleaseCookieContainer", kParams_178};
+const steammock::SlotInfo kCall_328 = {"SteamAPI_ISteamHTTP_SetCookie", kParams_179};
+const steammock::SlotInfo kCall_329 = {"SteamAPI_ISteamHTTP_SetHTTPRequestCookieContainer", kParams_180};
+const steammock::SlotInfo kCall_330 = {"SteamAPI_ISteamHTTP_SetHTTPRequestUserAgentInfo", kParams_181};
+const steammock::SlotInfo kCall_331 = {"SteamAPI_ISteamHTTP_SetHTTPRequestRequiresVerifiedCertificate", kParams_182};
+const steammock::SlotInfo kCall_332 = {"SteamAPI_ISteamHTTP_SetHTTPRequestAbsoluteTimeoutMS", kParams_183};
+const steammock::SlotInfo kCall_333 = {"SteamAPI_ISteamHTTP_GetHTTPRequestWasTimedOut", kParams_184};
+const steammock::SlotInfo kCall_334 = {"SteamAPI_ISteamInput_Init", nullptr};
+const steammock::SlotInfo kCall_335 = {"SteamAPI_ISteamInput_Shutdown", nullptr};
+const steammock::SlotInfo kCall_336 = {"SteamAPI_ISteamInput_RunFrame", nullptr};
+const steammock::SlotInfo kCall_337 = {"SteamAPI_ISteamInput_GetConnectedControllers", kParams_25};
+const steammock::SlotInfo kCall_338 = {"SteamAPI_ISteamInput_GetActionSetHandle", kParams_27};
+const steammock::SlotInfo kCall_339 = {"SteamAPI_ISteamInput_ActivateActionSet", kParams_185};
+const steammock::SlotInfo kCall_340 = {"SteamAPI_ISteamInput_GetCurrentActionSet", kParams_186};
+const steammock::SlotInfo kCall_341 = {"SteamAPI_ISteamInput_ActivateActionSetLayer", kParams_187};
+const steammock::SlotInfo kCall_342 = {"SteamAPI_ISteamInput_DeactivateActionSetLayer", kParams_187};
+const steammock::SlotInfo kCall_343 = {"SteamAPI_ISteamInput_DeactivateAllActionSetLayers", kParams_186};
+const steammock::SlotInfo kCall_344 = {"SteamAPI_ISteamInput_GetActiveActionSetLayers", kParams_188};
+const steammock::SlotInfo kCall_345 = {"SteamAPI_ISteamInput_GetDigitalActionHandle", kParams_29};
+const steammock::SlotInfo kCall_346 = {"SteamAPI_ISteamInput_GetDigitalActionData", kParams_189};
+const steammock::SlotInfo kCall_347 = {"SteamAPI_ISteamInput_GetDigitalActionOrigins", kParams_190};
+const steammock::SlotInfo kCall_348 = {"SteamAPI_ISteamInput_GetAnalogActionHandle", kParams_29};
+const steammock::SlotInfo kCall_349 = {"SteamAPI_ISteamInput_GetAnalogActionData", kParams_191};
+const steammock::SlotInfo kCall_350 = {"SteamAPI_ISteamInput_GetAnalogActionOrigins", kParams_192};
+const steammock::SlotInfo kCall_351 = {"SteamAPI_ISteamInput_GetGlyphForActionOrigin", kParams_43};
+const steammock::SlotInfo kCall_352 = {"SteamAPI_ISteamInput_GetStringForActionOrigin", kParams_43};
+const steammock::SlotInfo kCall_353 = {"SteamAPI_ISteamInput_StopAnalogActionMomentum", kParams_193};
+const steammock::SlotInfo kCall_354 = {"SteamAPI_ISteamInput_GetMotionData", kParams_186};
+const steammock::SlotInfo kCall_355 = {"SteamAPI_ISteamInput_TriggerVibration", kParams_194};
+const steammock::SlotInfo kCall_356 = {"SteamAPI_ISteamInput_SetLEDColor", kParams_195};
+const steammock::SlotInfo kCall_357 = {"SteamAPI_ISteamInput_TriggerHapticPulse", kParams_196};
+const steammock::SlotInfo kCall_358 = {"SteamAPI_ISteamInput_TriggerRepeatedHapticPulse", kParams_197};
+const steammock::SlotInfo kCall_359 = {"SteamAPI_ISteamInput_ShowBindingPanel", kParams_186};
+const steammock::SlotInfo kCall_360 = {"SteamAPI_ISteamInput_GetInputTypeForHandle", kParams_186};
+const steammock::SlotInfo kCall_361 = {"SteamAPI_ISteamInput_GetControllerForGamepadIndex", kParams_40};
+const steammock::SlotInfo kCall_362 = {"SteamAPI_ISteamInput_GetGamepadIndexForController", kParams_198};
+const steammock::SlotInfo kCall_363 = {"SteamAPI_ISteamInput_GetStringForXboxOrigin", kParams_43};
+const steammock::SlotInfo kCall_364 = {"SteamAPI_ISteamInput_GetGlyphForXboxOrigin", kParams_43};
+const steammock::SlotInfo kCall_365 = {"SteamAPI_ISteamInput_GetActionOriginFromXboxOrigin", kParams_199};
+const steammock::SlotInfo kCall_366 = {"SteamAPI_ISteamInput_TranslateActionOrigin", kParams_47};
+const steammock::SlotInfo kCall_367 = {"SteamAPI_ISteamInput_GetDeviceBindingRevision", kParams_200};
+const steammock::SlotInfo kCall_368 = {"SteamAPI_ISteamInput_GetRemotePlaySessionID", kParams_186};
+const steammock::SlotInfo kCall_369 = {"SteamAPI_ISteamInput_Init", kParams_201};
+const steammock::SlotInfo kCall_370 = {"SteamAPI_ISteamInput_SetInputActionManifestFilePath", kParams_202};
+const steammock::SlotInfo kCall_371 = {"SteamAPI_ISteamInput_RunFrame", kParams_203};
+const steammock::SlotInfo kCall_372 = {"SteamAPI_ISteamInput_BWaitForData", kParams_204};
+const steammock::SlotInfo kCall_373 = {"SteamAPI_ISteamInput_BNewDataAvailable", nullptr};
+const steammock::SlotInfo kCall_374 = {"SteamAPI_ISteamInput_EnableDeviceCallbacks", nullptr};
+const steammock::SlotInfo kCall_375 = {"SteamAPI_ISteamInput_EnableActionEventCallbacks", kParams_205};
+const steammock::SlotInfo kCall_376 = {"SteamAPI_ISteamInput_GetStringForDigitalActionName", kParams_206};
+const steammock::SlotInfo kCall_377 = {"SteamAPI_ISteamInput_GetGlyphPNGForActionOrigin", kParams_207};
+const steammock::SlotInfo kCall_378 = {"SteamAPI_ISteamInput_GetGlyphSVGForActionOrigin", kParams_208};
+const steammock::SlotInfo kCall_379 = {"SteamAPI_ISteamInput_GetGlyphForActionOrigin_Legacy", kParams_43};
+const steammock::SlotInfo kCall_380 = {"SteamAPI_ISteamInput_GetStringForAnalogActionName", kParams_206};
+const steammock::SlotInfo kCall_381 = {"SteamAPI_ISteamInput_TriggerVibrationExtended", kParams_209};
+const steammock::SlotInfo kCall_382 = {"SteamAPI_ISteamInput_TriggerSimpleHapticEvent", kParams_210};
+const steammock::SlotInfo kCall_383 = {"SteamAPI_ISteamInput_Legacy_TriggerHapticPulse", kParams_196};
+const steammock::SlotInfo kCall_384 = {"SteamAPI_ISteamInput_Legacy_TriggerRepeatedHapticPulse", kParams_197};
+const steammock::SlotInfo kCall_385 = {"SteamAPI_ISteamInput_GetSessionInputConfigurationSettings", nullptr};
+const steammock::SlotInfo kCall_386 = {"SteamAPI_ISteamInput_SetDualSenseTriggerEffect", kParams_211};
+const steammock::SlotInfo kCall_387 = {"SteamAPI_ISteamInventory_GetResultStatus", kParams_212};
+const steammock::SlotInfo kCall_388 = {"SteamAPI_ISteamInventory_GetResultItems", kParams_213};
+const steammock::SlotInfo kCall_389 = {"SteamAPI_ISteamInventory_GetResultItemProperty", kParams_214};
+const steammock::SlotInfo kCall_390 = {"SteamAPI_ISteamInventory_GetResultTimestamp", kParams_212};
+const steammock::SlotInfo kCall_391 = {"SteamAPI_ISteamInventory_CheckResultSteamID", kParams_215};
+const steammock::SlotInfo kCall_392 = {"SteamAPI_ISteamInventory_DestroyResult", kParams_212};
+const steammock::SlotInfo kCall_393 = {"SteamAPI_ISteamInventory_GetAllItems", kParams_216};
+const steammock::SlotInfo kCall_394 = {"SteamAPI_ISteamInventory_GetItemsByID", kParams_217};
+const steammock::SlotInfo kCall_395 = {"SteamAPI_ISteamInventory_SerializeResult", kParams_218};
+const steammock::SlotInfo kCall_396 = {"SteamAPI_ISteamInventory_DeserializeResult", kParams_219};
+const steammock::SlotInfo kCall_397 = {"SteamAPI_ISteamInventory_GenerateItems", kParams_220};
+const steammock::SlotInfo kCall_398 = {"SteamAPI_ISteamInventory_GrantPromoItems", kParams_216};
+const steammock::SlotInfo kCall_399 = {"SteamAPI_ISteamInventory_AddPromoItem", kParams_221};
+const steammock::SlotInfo kCall_400 = {"SteamAPI_ISteamInventory_AddPromoItems", kParams_222};
+const steammock::SlotInfo kCall_401 = {"SteamAPI_ISteamInventory_ConsumeItem", kParams_223};
+const steammock::SlotInfo kCall_402 = {"SteamAPI_ISteamInventory_ExchangeItems", kParams_224};
+const steammock::SlotInfo kCall_403 = {"SteamAPI_ISteamInventory_TransferItemQuantity", kParams_225};
+const steammock::SlotInfo kCall_404 = {"SteamAPI_ISteamInventory_SendItemDropHeartbeat", nullptr};
+const steammock::SlotInfo kCall_405 = {"SteamAPI_ISteamInventory_TriggerItemDrop", kParams_226};
+const steammock::SlotInfo kCall_406 = {"SteamAPI_ISteamInventory_TradeItems", kParams_227};
+const steammock::SlotInfo kCall_407 = {"SteamAPI_ISteamInventory_LoadItemDefinitions", nullptr};
+const steammock::SlotInfo kCall_408 = {"SteamAPI_ISteamInventory_GetItemDefinitionIDs", kParams_228};
+const steammock::SlotInfo kCall_409 = {"SteamAPI_ISteamInventory_GetItemDefinitionProperty", kParams_229};
+const steammock::SlotInfo kCall_410 = {"SteamAPI_ISteamInventory_RequestEligiblePromoItemDefinitionsIDs", kParams_89};
+const steammock::SlotInfo kCall_411 = {"SteamAPI_ISteamInventory_GetEligiblePromoItemDefinitionIDs", kParams_230};
+const steammock::SlotInfo kCall_412 = {"SteamAPI_ISteamInventory_StartPurchase", kParams_231};
+const steammock::SlotInfo kCall_413 = {"SteamAPI_ISteamInventory_RequestPrices", nullptr};
+const steammock::SlotInfo kCall_414 = {"SteamAPI_ISteamInventory_GetNumItemsWithPrices", nullptr};
+const steammock::SlotInfo kCall_415 = {"SteamAPI_ISteamInventory_GetItemsWithPrices", kParams_232};
+const steammock::SlotInfo kCall_416 = {"SteamAPI_ISteamInventory_GetItemPrice", kParams_233};
+const steammock::SlotInfo kCall_417 = {"SteamAPI_ISteamInventory_StartUpdateProperties", nullptr};
+const steammock::SlotInfo kCall_418 = {"SteamAPI_ISteamInventory_RemoveProperty", kParams_234};
+const steammock::SlotInfo kCall_419 = {"SteamAPI_ISteamInventory_SetPropertyString", kParams_235};
+const steammock::SlotInfo kCall_420 = {"SteamAPI_ISteamInventory_SetPropertyBool", kParams_236};
+const steammock::SlotInfo kCall_421 = {"SteamAPI_ISteamInventory_SetPropertyInt64", kParams_237};
+const steammock::SlotInfo kCall_422 = {"SteamAPI_ISteamInventory_SetPropertyFloat", kParams_238};
+const steammock::SlotInfo kCall_423 = {"SteamAPI_ISteamInventory_SubmitUpdateProperties", kParams_239};
+const steammock::SlotInfo kCall_424 = {"SteamAPI_ISteamInventory_InspectItem", kParams_240};
+const steammock::SlotInfo kCall_425 = {"SteamAPI_ISteamMatchmaking_GetFavoriteGameCount", nullptr};
+const steammock::SlotInfo kCall_426 = {"SteamAPI_ISteamMatchmaking_GetFavoriteGame", kParams_241};
+const steammock::SlotInfo kCall_427 = {"SteamAPI_ISteamMatchmaking_AddFavoriteGame", kParams_242};
+const steammock::SlotInfo kCall_428 = {"SteamAPI_ISteamMatchmaking_RemoveFavoriteGame", kParams_243};
+const steammock::SlotInfo kCall_429 = {"SteamAPI_ISteamMatchmaking_RequestLobbyList", nullptr};
+const steammock::SlotInfo kCall_430 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListStringFilter", kParams_244};
+const steammock::SlotInfo kCall_431 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListNumericalFilter", kParams_245};
+const steammock::SlotInfo kCall_432 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListNearValueFilter", kParams_246};
+const steammock::SlotInfo kCall_433 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListFilterSlotsAvailable", kParams_247};
+const steammock::SlotInfo kCall_434 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListDistanceFilter", kParams_248};
+const steammock::SlotInfo kCall_435 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListResultCountFilter", kParams_249};
+const steammock::SlotInfo kCall_436 = {"SteamAPI_ISteamMatchmaking_AddRequestLobbyListCompatibleMembersFilter", kParams_73};
+const steammock::SlotInfo kCall_437 = {"SteamAPI_ISteamMatchmaking_GetLobbyByIndex", kParams_250};
+const steammock::SlotInfo kCall_438 = {"SteamAPI_ISteamMatchmaking_CreateLobby", kParams_251};
+const steammock::SlotInfo kCall_439 = {"SteamAPI_ISteamMatchmaking_JoinLobby", kParams_73};
+const steammock::SlotInfo kCall_440 = {"SteamAPI_ISteamMatchmaking_LeaveLobby", kParams_73};
+const steammock::SlotInfo kCall_441 = {"SteamAPI_ISteamMatchmaking_InviteUserToLobby", kParams_252};
+const steammock::SlotInfo kCall_442 = {"SteamAPI_ISteamMatchmaking_GetNumLobbyMembers", kParams_73};
+const steammock::SlotInfo kCall_443 = {"SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex", kParams_253};
+const steammock::SlotInfo kCall_444 = {"SteamAPI_ISteamMatchmaking_GetLobbyData", kParams_254};
+const steammock::SlotInfo kCall_445 = {"SteamAPI_ISteamMatchmaking_SetLobbyData", kParams_255};
+const steammock::SlotInfo kCall_446 = {"SteamAPI_ISteamMatchmaking_GetLobbyDataCount", kParams_73};
+const steammock::SlotInfo kCall_447 = {"SteamAPI_ISteamMatchmaking_GetLobbyDataByIndex", kParams_256};
+const steammock::SlotInfo kCall_448 = {"SteamAPI_ISteamMatchmaking_DeleteLobbyData", kParams_254};
+const steammock::SlotInfo kCall_449 = {"SteamAPI_ISteamMatchmaking_GetLobbyMemberData", kParams_257};
+const steammock::SlotInfo kCall_450 = {"SteamAPI_ISteamMatchmaking_SetLobbyMemberData", kParams_255};
+const steammock::SlotInfo kCall_451 = {"SteamAPI_ISteamMatchmaking_SendLobbyChatMsg", kParams_258};
+const steammock::SlotInfo kCall_452 = {"SteamAPI_ISteamMatchmaking_GetLobbyChatEntry", kParams_259};
+const steammock::SlotInfo kCall_453 = {"SteamAPI_ISteamMatchmaking_RequestLobbyData", kParams_73};
+const steammock::SlotInfo kCall_454 = {"SteamAPI_ISteamMatchmaking_SetLobbyGameServer", kParams_260};
+const steammock::SlotInfo kCall_455 = {"SteamAPI_ISteamMatchmaking_GetLobbyGameServer", kParams_261};
+const steammock::SlotInfo kCall_456 = {"SteamAPI_ISteamMatchmaking_SetLobbyMemberLimit", kParams_262};
+const steammock::SlotInfo kCall_457 = {"SteamAPI_ISteamMatchmaking_GetLobbyMemberLimit", kParams_73};
+const steammock::SlotInfo kCall_458 = {"SteamAPI_ISteamMatchmaking_SetLobbyType", kParams_263};
+const steammock::SlotInfo kCall_459 = {"SteamAPI_ISteamMatchmaking_SetLobbyJoinable", kParams_264};
+const steammock::SlotInfo kCall_460 = {"SteamAPI_ISteamMatchmaking_GetLobbyOwner", kParams_73};
+const steammock::SlotInfo kCall_461 = {"SteamAPI_ISteamMatchmaking_SetLobbyOwner", kParams_265};
+const steammock::SlotInfo kCall_462 = {"SteamAPI_ISteamMatchmaking_SetLinkedLobby", kParams_266};
+const steammock::SlotInfo kCall_463 = {"SteamAPI_ISteamMatchmakingServers_RequestInternetServerList", kParams_267};
+const steammock::SlotInfo kCall_464 = {"SteamAPI_ISteamMatchmakingServers_RequestLANServerList", kParams_268};
+const steammock::SlotInfo kCall_465 = {"SteamAPI_ISteamMatchmakingServers_RequestFriendsServerList", kParams_267};
+const steammock::SlotInfo kCall_466 = {"SteamAPI_ISteamMatchmakingServers_RequestFavoritesServerList", kParams_267};
+const steammock::SlotInfo kCall_467 = {"SteamAPI_ISteamMatchmakingServers_RequestHistoryServerList", kParams_267};
+const steammock::SlotInfo kCall_468 = {"SteamAPI_ISteamMatchmakingServers_RequestSpectatorServerList", kParams_267};
+const steammock::SlotInfo kCall_469 = {"SteamAPI_ISteamMatchmakingServers_ReleaseRequest", kParams_269};
+const steammock::SlotInfo kCall_470 = {"SteamAPI_ISteamMatchmakingServers_GetServerDetails", kParams_270};
+const steammock::SlotInfo kCall_471 = {"SteamAPI_ISteamMatchmakingServers_CancelQuery", kParams_169};
+const steammock::SlotInfo kCall_472 = {"SteamAPI_ISteamMatchmakingServers_RefreshQuery", kParams_169};
+const steammock::SlotInfo kCall_473 = {"SteamAPI_ISteamMatchmakingServers_IsRefreshing", kParams_169};
+const steammock::SlotInfo kCall_474 = {"SteamAPI_ISteamMatchmakingServers_GetServerCount", kParams_169};
+const steammock::SlotInfo kCall_475 = {"SteamAPI_ISteamMatchmakingServers_RefreshServer", kParams_270};
+const steammock::SlotInfo kCall_476 = {"SteamAPI_ISteamMatchmakingServers_PingServer", kParams_271};
+const steammock::SlotInfo kCall_477 = {"SteamAPI_ISteamMatchmakingServers_PlayerDetails", kParams_271};
+const steammock::SlotInfo kCall_478 = {"SteamAPI_ISteamMatchmakingServers_ServerRules", kParams_271};
+const steammock::SlotInfo kCall_479 = {"SteamAPI_ISteamMatchmakingServers_CancelServerQuery", kParams_272};
+const steammock::SlotInfo kCall_480 = {"SteamAPI_ISteamMusic_BIsEnabled", nullptr};
+const steammock::SlotInfo kCall_481 = {"SteamAPI_ISteamMusic_BIsPlaying", nullptr};
+const steammock::SlotInfo kCall_482 = {"SteamAPI_ISteamMusic_GetPlaybackStatus", nullptr};
+const steammock::SlotInfo kCall_483 = {"SteamAPI_ISteamMusic_Play", nullptr};
+const steammock::SlotInfo kCall_484 = {"SteamAPI_ISteamMusic_Pause", nullptr};
+const steammock::SlotInfo kCall_485 = {"SteamAPI_ISteamMusic_PlayPrevious", nullptr};
+const steammock::SlotInfo kCall_486 = {"SteamAPI_ISteamMusic_PlayNext", nullptr};
+const steammock::SlotInfo kCall_487 = {"SteamAPI_ISteamMusic_SetVolume", kParams_273};
+const steammock::SlotInfo kCall_488 = {"SteamAPI_ISteamMusic_GetVolume", nullptr};
+const steammock::SlotInfo kCall_489 = {"SteamAPI_ISteamMusicRemote_RegisterSteamMusicRemote", kParams_274};
+const steammock::SlotInfo kCall_490 = {"SteamAPI_ISteamMusicRemote_DeregisterSteamMusicRemote", nullptr};
+const steammock::SlotInfo kCall_491 = {"SteamAPI_ISteamMusicRemote_BIsCurrentMusicRemote", nullptr};
+const steammock::SlotInfo kCall_492 = {"SteamAPI_ISteamMusicRemote_BActivationSuccess", kParams_275};
+const steammock::SlotInfo kCall_493 = {"SteamAPI_ISteamMusicRemote_SetDisplayName", kParams_276};
+const steammock::SlotInfo kCall_494 = {"SteamAPI_ISteamMusicRemote_SetPNGIcon_64x64", kParams_277};
+const steammock::SlotInfo kCall_495 = {"SteamAPI_ISteamMusicRemote_EnablePlayPrevious", kParams_275};
+const steammock::SlotInfo kCall_496 = {"SteamAPI_ISteamMusicRemote_EnablePlayNext", kParams_275};
+const steammock::SlotInfo kCall_497 = {"SteamAPI_ISteamMusicRemote_EnableShuffled", kParams_275};
+const steammock::SlotInfo kCall_498 = {"SteamAPI_ISteamMusicRemote_EnableLooped", kParams_275};
+const steammock::SlotInfo kCall_499 = {"SteamAPI_ISteamMusicRemote_EnableQueue", kParams_275};
+const steammock::SlotInfo kCall_500 = {"SteamAPI_ISteamMusicRemote_EnablePlaylists", kParams_275};
+const steammock::SlotInfo kCall_501 = {"SteamAPI_ISteamMusicRemote_UpdatePlaybackStatus", kParams_278};
+const steammock::SlotInfo kCall_502 = {"SteamAPI_ISteamMusicRemote_UpdateShuffled", kParams_275};
+const steammock::SlotInfo kCall_503 = {"SteamAPI_ISteamMusicRemote_UpdateLooped", kParams_275};
+const steammock::SlotInfo kCall_504 = {"SteamAPI_ISteamMusicRemote_UpdateVolume", kParams_279};
+const steammock::SlotInfo kCall_505 = {"SteamAPI_ISteamMusicRemote_CurrentEntryWillChange", nullptr};
+const steammock::SlotInfo kCall_506 = {"SteamAPI_ISteamMusicRemote_CurrentEntryIsAvailable", kParams_280};
+const steammock::SlotInfo kCall_507 = {"SteamAPI_ISteamMusicRemote_UpdateCurrentEntryText", kParams_281};
+const steammock::SlotInfo kCall_508 = {"SteamAPI_ISteamMusicRemote_UpdateCurrentEntryElapsedSeconds", kParams_282};
+const steammock::SlotInfo kCall_509 = {"SteamAPI_ISteamMusicRemote_UpdateCurrentEntryCoverArt", kParams_277};
+const steammock::SlotInfo kCall_510 = {"SteamAPI_ISteamMusicRemote_CurrentEntryDidChange", nullptr};
+const steammock::SlotInfo kCall_511 = {"SteamAPI_ISteamMusicRemote_QueueWillChange", nullptr};
+const steammock::SlotInfo kCall_512 = {"SteamAPI_ISteamMusicRemote_ResetQueueEntries", nullptr};
+const steammock::SlotInfo kCall_513 = {"SteamAPI_ISteamMusicRemote_SetQueueEntry", kParams_283};
+const steammock::SlotInfo kCall_514 = {"SteamAPI_ISteamMusicRemote_SetCurrentQueueEntry", kParams_284};
+const steammock::SlotInfo kCall_515 = {"SteamAPI_ISteamMusicRemote_QueueDidChange", nullptr};
+const steammock::SlotInfo kCall_516 = {"SteamAPI_ISteamMusicRemote_PlaylistWillChange", nullptr};
+const steammock::SlotInfo kCall_517 = {"SteamAPI_ISteamMusicRemote_ResetPlaylistEntries", nullptr};
+const steammock::SlotInfo kCall_518 = {"SteamAPI_ISteamMusicRemote_SetPlaylistEntry", kParams_283};
+const steammock::SlotInfo kCall_519 = {"SteamAPI_ISteamMusicRemote_SetCurrentPlaylistEntry", kParams_284};
+const steammock::SlotInfo kCall_520 = {"SteamAPI_ISteamMusicRemote_PlaylistDidChange", nullptr};
+const steammock::SlotInfo kCall_521 = {"SteamAPI_ISteamNetworking_SendP2PPacket", kParams_285};
+const steammock::SlotInfo kCall_522 = {"SteamAPI_ISteamNetworking_IsP2PPacketAvailable", kParams_286};
+const steammock::SlotInfo kCall_523 = {"SteamAPI_ISteamNetworking_ReadP2PPacket", kParams_287};
+const steammock::SlotInfo kCall_524 = {"SteamAPI_ISteamNetworking_AcceptP2PSessionWithUser", kParams_288};
+const steammock::SlotInfo kCall_525 = {"SteamAPI_ISteamNetworking_CloseP2PSessionWithUser", kParams_288};
+const steammock::SlotInfo kCall_526 = {"SteamAPI_ISteamNetworking_CloseP2PChannelWithUser", kParams_289};
+const steammock::SlotInfo kCall_527 = {"SteamAPI_ISteamNetworking_GetP2PSessionState", kParams_290};
+const steammock::SlotInfo kCall_528 = {"SteamAPI_ISteamNetworking_AllowP2PPacketRelay", kParams_291};
+const steammock::SlotInfo kCall_529 = {"SteamAPI_ISteamNetworking_CreateListenSocket", kParams_292};
+const steammock::SlotInfo kCall_530 = {"SteamAPI_ISteamNetworking_CreateP2PConnectionSocket", kParams_293};
+const steammock::SlotInfo kCall_531 = {"SteamAPI_ISteamNetworking_CreateConnectionSocket", kParams_294};
+const steammock::SlotInfo kCall_532 = {"SteamAPI_ISteamNetworking_DestroySocket", kParams_295};
+const steammock::SlotInfo kCall_533 = {"SteamAPI_ISteamNetworking_DestroyListenSocket", kParams_295};
+const steammock::SlotInfo kCall_534 = {"SteamAPI_ISteamNetworking_SendDataOnSocket", kParams_296};
+const steammock::SlotInfo kCall_535 = {"SteamAPI_ISteamNetworking_IsDataAvailableOnSocket", kParams_297};
+const steammock::SlotInfo kCall_536 = {"SteamAPI_ISteamNetworking_RetrieveDataFromSocket", kParams_298};
+const steammock::SlotInfo kCall_537 = {"SteamAPI_ISteamNetworking_IsDataAvailable", kParams_299};
+const steammock::SlotInfo kCall_538 = {"SteamAPI_ISteamNetworking_RetrieveData", kParams_300};
+const steammock::SlotInfo kCall_539 = {"SteamAPI_ISteamNetworking_GetSocketInfo", kParams_301};
+const steammock::SlotInfo kCall_540 = {"SteamAPI_ISteamNetworking_GetListenSocketInfo", kParams_302};
+const steammock::SlotInfo kCall_541 = {"SteamAPI_ISteamNetworking_GetSocketConnectionType", kParams_303};
+const steammock::SlotInfo kCall_542 = {"SteamAPI_ISteamNetworking_GetMaxPacketSize", kParams_303};
+const steammock::SlotInfo kCall_543 = {"SteamAPI_ISteamNetworkingMessages_SendMessageToUser", kParams_304};
+const steammock::SlotInfo kCall_544 = {"SteamAPI_ISteamNetworkingMessages_ReceiveMessagesOnChannel", kParams_305};
+const steammock::SlotInfo kCall_545 = {"SteamAPI_ISteamNetworkingMessages_AcceptSessionWithUser", kParams_306};
+const steammock::SlotInfo kCall_546 = {"SteamAPI_ISteamNetworkingMessages_CloseSessionWithUser", kParams_306};
+const steammock::SlotInfo kCall_547 = {"SteamAPI_ISteamNetworkingMessages_CloseChannelWithUser", kParams_307};
+const steammock::SlotInfo kCall_548 = {"SteamAPI_ISteamNetworkingMessages_GetSessionConnectionInfo", kParams_308};
+const steammock::SlotInfo kCall_549 = {"SteamAPI_ISteamNetworkingSockets_CreateListenSocketIP", kParams_309};
+const steammock::SlotInfo kCall_550 = {"SteamAPI_ISteamNetworkingSockets_ConnectByIPAddress", kParams_310};
+const steammock::SlotInfo kCall_551 = {"SteamAPI_ISteamNetworkingSockets_CreateListenSocketP2P", kParams_311};
+const steammock::SlotInfo kCall_552 = {"SteamAPI_ISteamNetworkingSockets_ConnectP2P", kParams_312};
+const steammock::SlotInfo kCall_553 = {"SteamAPI_ISteamNetworkingSockets_AcceptConnection", kParams_313};
+const steammock::SlotInfo kCall_554 = {"SteamAPI_ISteamNetworkingSockets_CloseConnection", kParams_314};
+const steammock::SlotInfo kCall_555 = {"SteamAPI_ISteamNetworkingSockets_CloseListenSocket", kParams_303};
+const steammock::SlotInfo kCall_556 = {"SteamAPI_ISteamNetworkingSockets_SetConnectionUserData", kParams_315};
+const steammock::SlotInfo kCall_557 = {"SteamAPI_ISteamNetworkingSockets_GetConnectionUserData", kParams_316};
+const steammock::SlotInfo kCall_558 = {"SteamAPI_ISteamNetworkingSockets_SetConnectionName", kParams_317};
+const steammock::SlotInfo kCall_559 = {"SteamAPI_ISteamNetworkingSockets_GetConnectionName", kParams_318};
+const steammock::SlotInfo kCall_560 = {"SteamAPI_ISteamNetworkingSockets_SendMessageToConnection", kParams_319};
+const steammock::SlotInfo kCall_561 = {"SteamAPI_ISteamNetworkingSockets_SendMessages", kParams_320};
+const steammock::SlotInfo kCall_562 = {"SteamAPI_ISteamNetworkingSockets_FlushMessagesOnConnection", kParams_313};
+const steammock::SlotInfo kCall_563 = {"SteamAPI_ISteamNetworkingSockets_ReceiveMessagesOnConnection", kParams_321};
+const steammock::SlotInfo kCall_564 = {"SteamAPI_ISteamNetworkingSockets_GetConnectionInfo", kParams_322};
+const steammock::SlotInfo kCall_565 = {"SteamAPI_ISteamNetworkingSockets_GetQuickConnectionStatus", kParams_323};
+const steammock::SlotInfo kCall_566 = {"SteamAPI_ISteamNetworkingSockets_GetDetailedConnectionStatus", kParams_324};
+const steammock::SlotInfo kCall_567 = {"SteamAPI_ISteamNetworkingSockets_GetListenSocketAddress", kParams_325};
+const steammock::SlotInfo kCall_568 = {"SteamAPI_ISteamNetworkingSockets_CreateSocketPair", kParams_326};
+const steammock::SlotInfo kCall_569 = {"SteamAPI_ISteamNetworkingSockets_GetIdentity", kParams_327};
+const steammock::SlotInfo kCall_570 = {"SteamAPI_ISteamNetworkingSockets_InitAuthentication", nullptr};
+const steammock::SlotInfo kCall_571 = {"SteamAPI_ISteamNetworkingSockets_GetAuthenticationStatus", kParams_328};
+const steammock::SlotInfo kCall_572 = {"SteamAPI_ISteamNetworkingSockets_CreatePollGroup", nullptr};
+const steammock::SlotInfo kCall_573 = {"SteamAPI_ISteamNetworkingSockets_DestroyPollGroup", kParams_329};
+const steammock::SlotInfo kCall_574 = {"SteamAPI_ISteamNetworkingSockets_SetConnectionPollGroup", kParams_330};
+const steammock::SlotInfo kCall_575 = {"SteamAPI_ISteamNetworkingSockets_ReceiveMessagesOnPollGroup", kParams_331};
+const steammock::SlotInfo kCall_576 = {"SteamAPI_ISteamNetworkingSockets_ReceivedRelayAuthTicket", kParams_332};
+const steammock::SlotInfo kCall_577 = {"SteamAPI_ISteamNetworkingSockets_FindRelayAuthTicketForServer", kParams_333};
+const steammock::SlotInfo kCall_578 = {"SteamAPI_ISteamNetworkingSockets_ConnectToHostedDedicatedServer", kParams_334};
+const steammock::SlotInfo kCall_579 = {"SteamAPI_ISteamNetworkingSockets_GetHostedDedicatedServerPort", nullptr};
+const steammock::SlotInfo kCall_580 = {"SteamAPI_ISteamNetworkingSockets_GetHostedDedicatedServerPOPID", nullptr};
+const steammock::SlotInfo kCall_581 = {"SteamAPI_ISteamNetworkingSockets_GetHostedDedicatedServerAddress", kParams_335};
+const steammock::SlotInfo kCall_582 = {"SteamAPI_ISteamNetworkingSockets_CreateHostedDedicatedServerListenSocket", kParams_311};
+const steammock::SlotInfo kCall_583 = {"SteamAPI_ISteamNetworkingSockets_GetGameCoordinatorServerLogin", kParams_336};
+const steammock::SlotInfo kCall_584 = {"SteamAPI_ISteamNetworkingSockets_ConnectP2PCustomSignaling", kParams_337};
+const steammock::SlotInfo kCall_585 = {"SteamAPI_ISteamNetworkingSockets_ReceivedP2PCustomSignal", kParams_338};
+const steammock::SlotInfo kCall_586 = {"SteamAPI_ISteamNetworkingSockets_GetCertificateRequest", kParams_339};
+const steammock::SlotInfo kCall_587 = {"SteamAPI_ISteamNetworkingSockets_SetCertificate", kParams_340};
+const steammock::SlotInfo kCall_588 = {"SteamAPI_ISteamNetworkingSockets_RunCallbacks", nullptr};
+const steammock::SlotInfo kCall_589 = {"SteamAPI_ISteamNetworkingSockets_GetConnectionRealTimeStatus", kParams_341};
+const steammock::SlotInfo kCall_590 = {"SteamAPI_ISteamNetworkingSockets_ConfigureConnectionLanes", kParams_342};
+const steammock::SlotInfo kCall_591 = {"SteamAPI_ISteamNetworkingSockets_ResetIdentity", kParams_327};
+const steammock::SlotInfo kCall_592 = {"SteamAPI_ISteamNetworkingSockets_BeginAsyncRequestFakeIP", kParams_343};
+const steammock::SlotInfo kCall_593 = {"SteamAPI_ISteamNetworkingSockets_GetFakeIP", kParams_344};
+const steammock::SlotInfo kCall_594 = {"SteamAPI_ISteamNetworkingSockets_CreateListenSocketP2PFakeIP", kParams_345};
+const steammock::SlotInfo kCall_595 = {"SteamAPI_ISteamNetworkingSockets_GetRemoteFakeIPForConnection", kParams_346};
+const steammock::SlotInfo kCall_596 = {"SteamAPI_ISteamNetworkingSockets_CreateFakeUDPPort", kParams_347};
+const steammock::SlotInfo kCall_597 = {"SteamAPI_ISteamNetworkingUtils_AllocateMessage", kParams_348};
+const steammock::SlotInfo kCall_598 = {"SteamAPI_ISteamNetworkingUtils_GetRelayNetworkStatus", kParams_328};
+const steammock::SlotInfo kCall_599 = {"SteamAPI_ISteamNetworkingUtils_GetLocalPingLocation", kParams_349};
+const steammock::SlotInfo kCall_600 = {"SteamAPI_ISteamNetworkingUtils_EstimatePingTimeBetweenTwoLocations", kParams_350};
+const steammock::SlotInfo kCall_601 = {"SteamAPI_ISteamNetworkingUtils_EstimatePingTimeFromLocalHost", kParams_351};
+const steammock::SlotInfo kCall_602 = {"SteamAPI_ISteamNetworkingUtils_ConvertPingLocationToString", kParams_352};
+const steammock::SlotInfo kCall_603 = {"SteamAPI_ISteamNetworkingUtils_ParsePingLocationString", kParams_353};
+const steammock::SlotInfo kCall_604 = {"SteamAPI_ISteamNetworkingUtils_CheckPingDataUpToDate", kParams_354};
+const steammock::SlotInfo kCall_605 = {"SteamAPI_ISteamNetworkingUtils_GetPingToDataCenter", kParams_355};
+const steammock::SlotInfo kCall_606 = {"SteamAPI_ISteamNetworkingUtils_GetDirectPingToPOP", kParams_356};
+const steammock::SlotInfo kCall_607 = {"SteamAPI_ISteamNetworkingUtils_GetPOPCount", nullptr};
+const steammock::SlotInfo kCall_608 = {"SteamAPI_ISteamNetworkingUtils_GetPOPList", kParams_357};
+const steammock::SlotInfo kCall_609 = {"SteamAPI_ISteamNetworkingUtils_GetLocalTimestamp", nullptr};
+const steammock::SlotInfo kCall_610 = {"SteamAPI_ISteamNetworkingUtils_SetDebugOutputFunction", kParams_358};
+const steammock::SlotInfo kCall_611 = {"SteamAPI_ISteamNetworkingUtils_SetConfigValue", kParams_359};
+const steammock::SlotInfo kCall_612 = {"SteamAPI_ISteamNetworkingUtils_GetConfigValue", kParams_360};
+const steammock::SlotInfo kCall_613 = {"SteamAPI_ISteamNetworkingUtils_GetConfigValueInfo", kParams_361};
+const steammock::SlotInfo kCall_614 = {"SteamAPI_ISteamNetworkingUtils_GetFirstConfigValue", nullptr};
+const steammock::SlotInfo kCall_615 = {"SteamAPI_ISteamNetworkingUtils_SteamNetworkingIPAddr_ToString", kParams_362};
+const steammock::SlotInfo kCall_616 = {"SteamAPI_ISteamNetworkingUtils_SteamNetworkingIPAddr_ParseString", kParams_363};
+const steammock::SlotInfo kCall_617 = {"SteamAPI_ISteamNetworkingUtils_SteamNetworkingIdentity_ToString", kParams_364};
+const steammock::SlotInfo kCall_618 = {"SteamAPI_ISteamNetworkingUtils_SteamNetworkingIdentity_ParseString", kParams_365};
+const steammock::SlotInfo kCall_619 = {"SteamAPI_ISteamNetworkingUtils_GetIPv4FakeIPType", kParams_366};
+const steammock::SlotInfo kCall_620 = {"SteamAPI_ISteamNetworkingUtils_GetRealIdentityForFakeIP", kParams_367};
+const steammock::SlotInfo kCall_621 = {"SteamAPI_ISteamNetworkingUtils_GetConfigValueInfo", kParams_368};
+const steammock::SlotInfo kCall_622 = {"SteamAPI_ISteamNetworkingUtils_IterateGenericEditableConfigValues", kParams_369};
+const steammock::SlotInfo kCall_623 = {"SteamAPI_ISteamNetworkingUtils_SteamNetworkingIPAddr_GetFakeIPType", kParams_370};
+const steammock::SlotInfo kCall_624 = {"SteamAPI_ISteamParentalSettings_BIsParentalLockEnabled", nullptr};
+const steammock::SlotInfo kCall_625 = {"SteamAPI_ISteamParentalSettings_BIsParentalLockLocked", nullptr};
+const steammock::SlotInfo kCall_626 = {"SteamAPI_ISteamParentalSettings_BIsAppBlocked", kParams_3};
+const steammock::SlotInfo kCall_627 = {"SteamAPI_ISteamParentalSettings_BIsAppInBlockList", kParams_3};
+const steammock::SlotInfo kCall_628 = {"SteamAPI_ISteamParentalSettings_BIsFeatureBlocked", kParams_371};
+const steammock::SlotInfo kCall_629 = {"SteamAPI_ISteamParentalSettings_BIsFeatureInBlockList", kParams_371};
+const steammock::SlotInfo kCall_630 = {"SteamAPI_ISteamParties_GetNumActiveBeacons", nullptr};
+const steammock::SlotInfo kCall_631 = {"SteamAPI_ISteamParties_GetBeaconByIndex", kParams_372};
+const steammock::SlotInfo kCall_632 = {"SteamAPI_ISteamParties_GetBeaconDetails", kParams_373};
+const steammock::SlotInfo kCall_633 = {"SteamAPI_ISteamParties_JoinParty", kParams_374};
+const steammock::SlotInfo kCall_634 = {"SteamAPI_ISteamParties_GetNumAvailableBeaconLocations", kParams_375};
+const steammock::SlotInfo kCall_635 = {"SteamAPI_ISteamParties_GetAvailableBeaconLocations", kParams_376};
+const steammock::SlotInfo kCall_636 = {"SteamAPI_ISteamParties_CreateBeacon", kParams_377};
+const steammock::SlotInfo kCall_637 = {"SteamAPI_ISteamParties_OnReservationCompleted", kParams_378};
+const steammock::SlotInfo kCall_638 = {"SteamAPI_ISteamParties_CancelReservation", kParams_378};
+const steammock::SlotInfo kCall_639 = {"SteamAPI_ISteamParties_ChangeNumOpenSlots", kParams_379};
+const steammock::SlotInfo kCall_640 = {"SteamAPI_ISteamParties_DestroyBeacon", kParams_380};
+const steammock::SlotInfo kCall_641 = {"SteamAPI_ISteamParties_GetBeaconLocationData", kParams_381};
+const steammock::SlotInfo kCall_642 = {"SteamAPI_ISteamRemotePlay_GetSessionCount", nullptr};
+const steammock::SlotInfo kCall_643 = {"SteamAPI_ISteamRemotePlay_GetSessionID", kParams_382};
+const steammock::SlotInfo kCall_644 = {"SteamAPI_ISteamRemotePlay_GetSessionSteamID", kParams_383};
+const steammock::SlotInfo kCall_645 = {"SteamAPI_ISteamRemotePlay_GetSessionClientName", kParams_383};
+const steammock::SlotInfo kCall_646 = {"SteamAPI_ISteamRemotePlay_GetSessionClientFormFactor", kParams_383};
+const steammock::SlotInfo kCall_647 = {"SteamAPI_ISteamRemotePlay_BGetSessionClientResolution", kParams_384};
+const steammock::SlotInfo kCall_648 = {"SteamAPI_ISteamRemotePlay_BSendRemotePlayTogetherInvite", kParams_52};
+const steammock::SlotInfo kCall_649 = {"SteamAPI_ISteamRemoteStorage_FileWrite", kParams_385};
+const steammock::SlotInfo kCall_650 = {"SteamAPI_ISteamRemoteStorage_FileRead", kParams_386};
+const steammock::SlotInfo kCall_651 = {"SteamAPI_ISteamRemoteStorage_FileWriteAsync", kParams_385};
+const steammock::SlotInfo kCall_652 = {"SteamAPI_ISteamRemoteStorage_FileReadAsync", kParams_387};
+const steammock::SlotInfo kCall_653 = {"SteamAPI_ISteamRemoteStorage_FileReadAsyncComplete", kParams_388};
+const steammock::SlotInfo kCall_654 = {"SteamAPI_ISteamRemoteStorage_FileForget", kParams_389};
+const steammock::SlotInfo kCall_655 = {"SteamAPI_ISteamRemoteStorage_FileDelete", kParams_389};
+const steammock::SlotInfo kCall_656 = {"SteamAPI_ISteamRemoteStorage_FileShare", kParams_389};
+const steammock::SlotInfo kCall_657 = {"SteamAPI_ISteamRemoteStorage_SetSyncPlatforms", kParams_390};
+const steammock::SlotInfo kCall_658 = {"SteamAPI_ISteamRemoteStorage_FileWriteStreamOpen", kParams_389};
+const steammock::SlotInfo kCall_659 = {"SteamAPI_ISteamRemoteStorage_FileWriteStreamWriteChunk", kParams_391};
+const steammock::SlotInfo kCall_660 = {"SteamAPI_ISteamRemoteStorage_FileWriteStreamClose", kParams_392};
+const steammock::SlotInfo kCall_661 = {"SteamAPI_ISteamRemoteStorage_FileWriteStreamCancel", kParams_392};
+const steammock::SlotInfo kCall_662 = {"SteamAPI_ISteamRemoteStorage_FileExists", kParams_389};
+const steammock::SlotInfo kCall_663 = {"SteamAPI_ISteamRemoteStorage_FilePersisted", kParams_389};
+const steammock::SlotInfo kCall_664 = {"SteamAPI_ISteamRemoteStorage_GetFileSize", kParams_389};
+const steammock::SlotInfo kCall_665 = {"SteamAPI_ISteamRemoteStorage_GetFileTimestamp", kParams_389};
+const steammock::SlotInfo kCall_666 = {"SteamAPI_ISteamRemoteStorage_GetSyncPlatforms", kParams_389};
+const steammock::SlotInfo kCall_667 = {"SteamAPI_ISteamRemoteStorage_GetFileCount", nullptr};
+const steammock::SlotInfo kCall_668 = {"SteamAPI_ISteamRemoteStorage_GetFileNameAndSize", kParams_393};
+const steammock::SlotInfo kCall_669 = {"SteamAPI_ISteamRemoteStorage_GetQuota", kParams_394};
+const steammock::SlotInfo kCall_670 = {"SteamAPI_ISteamRemoteStorage_IsCloudEnabledForAccount", nullptr};
+const steammock::SlotInfo kCall_671 = {"SteamAPI_ISteamRemoteStorage_IsCloudEnabledForApp", nullptr};
+const steammock::SlotInfo kCall_672 = {"SteamAPI_ISteamRemoteStorage_SetCloudEnabledForApp", kParams_395};
+const steammock::SlotInfo kCall_673 = {"SteamAPI_ISteamRemoteStorage_UGCDownload", kParams_396};
+const steammock::SlotInfo kCall_674 = {"SteamAPI_ISteamRemoteStorage_GetUGCDownloadProgress", kParams_397};
+const steammock::SlotInfo kCall_675 = {"SteamAPI_ISteamRemoteStorage_GetUGCDetails", kParams_398};
+const steammock::SlotInfo kCall_676 = {"SteamAPI_ISteamRemoteStorage_UGCRead", kParams_399};
+const steammock::SlotInfo kCall_677 = {"SteamAPI_ISteamRemoteStorage_GetCachedUGCCount", nullptr};
+const steammock::SlotInfo kCall_678 = {"SteamAPI_ISteamRemoteStorage_GetCachedUGCHandle", kParams_400};
+const steammock::SlotInfo kCall_679 = {"SteamAPI_ISteamRemoteStorage_PublishWorkshopFile", kParams_401};
+const steammock::SlotInfo kCall_680 = {"SteamAPI_ISteamRemoteStorage_CreatePublishedFileUpdateRequest", kParams_402};
+const steammock::SlotInfo kCall_681 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileFile", kParams_403};
+const steammock::SlotInfo kCall_682 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFilePreviewFile", kParams_404};
+const steammock::SlotInfo kCall_683 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileTitle", kParams_405};
+const steammock::SlotInfo kCall_684 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileDescription", kParams_406};
+const steammock::SlotInfo kCall_685 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileVisibility", kParams_407};
+const steammock::SlotInfo kCall_686 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileTags", kParams_408};
+const steammock::SlotInfo kCall_687 = {"SteamAPI_ISteamRemoteStorage_CommitPublishedFileUpdate", kParams_409};
+const steammock::SlotInfo kCall_688 = {"SteamAPI_ISteamRemoteStorage_GetPublishedFileDetails", kParams_410};
+const steammock::SlotInfo kCall_689 = {"SteamAPI_ISteamRemoteStorage_DeletePublishedFile", kParams_402};
+const steammock::SlotInfo kCall_690 = {"SteamAPI_ISteamRemoteStorage_EnumerateUserPublishedFiles", kParams_90};
+const steammock::SlotInfo kCall_691 = {"SteamAPI_ISteamRemoteStorage_SubscribePublishedFile", kParams_402};
+const steammock::SlotInfo kCall_692 = {"SteamAPI_ISteamRemoteStorage_EnumerateUserSubscribedFiles", kParams_90};
+const steammock::SlotInfo kCall_693 = {"SteamAPI_ISteamRemoteStorage_UnsubscribePublishedFile", kParams_402};
+const steammock::SlotInfo kCall_694 = {"SteamAPI_ISteamRemoteStorage_UpdatePublishedFileSetChangeDescription", kParams_411};
+const steammock::SlotInfo kCall_695 = {"SteamAPI_ISteamRemoteStorage_GetPublishedItemVoteDetails", kParams_402};
+const steammock::SlotInfo kCall_696 = {"SteamAPI_ISteamRemoteStorage_UpdateUserPublishedItemVote", kParams_412};
+const steammock::SlotInfo kCall_697 = {"SteamAPI_ISteamRemoteStorage_GetUserPublishedItemVoteDetails", kParams_402};
+const steammock::SlotInfo kCall_698 = {"SteamAPI_ISteamRemoteStorage_EnumerateUserSharedWorkshopFiles", kParams_413};
+const steammock::SlotInfo kCall_699 = {"SteamAPI_ISteamRemoteStorage_PublishVideo", kParams_414};
+const steammock::SlotInfo kCall_700 = {"SteamAPI_ISteamRemoteStorage_SetUserPublishedFileAction", kParams_415};
+const steammock::SlotInfo kCall_701 = {"SteamAPI_ISteamRemoteStorage_EnumeratePublishedFilesByUserAction", kParams_416};
+const steammock::SlotInfo kCall_702 = {"SteamAPI_ISteamRemoteStorage_EnumeratePublishedWorkshopFiles", kParams_417};
+const steammock::SlotInfo kCall_703 = {"SteamAPI_ISteamRemoteStorage_UGCDownloadToLocation", kParams_418};
+const steammock::SlotInfo kCall_704 = {"SteamAPI_ISteamRemoteStorage_GetLocalFileChangeCount", nullptr};
+const steammock::SlotInfo kCall_705 = {"SteamAPI_ISteamRemoteStorage_GetLocalFileChange", kParams_419};
+const steammock::SlotInfo kCall_706 = {"SteamAPI_ISteamRemoteStorage_BeginFileWriteBatch", nullptr};
+const steammock::SlotInfo kCall_707 = {"SteamAPI_ISteamRemoteStorage_EndFileWriteBatch", nullptr};
+const steammock::SlotInfo kCall_708 = {"SteamAPI_ISteamScreenshots_WriteScreenshot", kParams_420};
+const steammock::SlotInfo kCall_709 = {"SteamAPI_ISteamScreenshots_AddScreenshotToLibrary", kParams_421};
+const steammock::SlotInfo kCall_710 = {"SteamAPI_ISteamScreenshots_TriggerScreenshot", nullptr};
+const steammock::SlotInfo kCall_711 = {"SteamAPI_ISteamScreenshots_HookScreenshots", kParams_422};
+const steammock::SlotInfo kCall_712 = {"SteamAPI_ISteamScreenshots_SetLocation", kParams_423};
+const steammock::SlotInfo kCall_713 = {"SteamAPI_ISteamScreenshots_TagUser", kParams_424};
+const steammock::SlotInfo kCall_714 = {"SteamAPI_ISteamScreenshots_TagPublishedFile", kParams_425};
+const steammock::SlotInfo kCall_715 = {"SteamAPI_ISteamScreenshots_IsScreenshotsHooked", nullptr};
+const steammock::SlotInfo kCall_716 = {"SteamAPI_ISteamScreenshots_AddVRScreenshotToLibrary", kParams_426};
+const steammock::SlotInfo kCall_717 = {"SteamAPI_ISteamUGC_CreateQueryUserUGCRequest", kParams_427};
+const steammock::SlotInfo kCall_718 = {"SteamAPI_ISteamUGC_CreateQueryAllUGCRequestPage", kParams_428};
+const steammock::SlotInfo kCall_719 = {"SteamAPI_ISteamUGC_CreateQueryUGCDetailsRequest", kParams_429};
+const steammock::SlotInfo kCall_720 = {"SteamAPI_ISteamUGC_SendQueryUGCRequest", kParams_430};
+const steammock::SlotInfo kCall_721 = {"SteamAPI_ISteamUGC_GetQueryUGCResult", kParams_431};
+const steammock::SlotInfo kCall_722 = {"SteamAPI_ISteamUGC_GetQueryUGCPreviewURL", kParams_432};
+const steammock::SlotInfo kCall_723 = {"SteamAPI_ISteamUGC_GetQueryUGCMetadata", kParams_433};
+const steammock::SlotInfo kCall_724 = {"SteamAPI_ISteamUGC_GetQueryUGCChildren", kParams_434};
+const steammock::SlotInfo kCall_725 = {"SteamAPI_ISteamUGC_GetQueryUGCStatistic", kParams_435};
+const steammock::SlotInfo kCall_726 = {"SteamAPI_ISteamUGC_GetQueryUGCNumAdditionalPreviews", kParams_436};
+const steammock::SlotInfo kCall_727 = {"SteamAPI_ISteamUGC_GetQueryUGCAdditionalPreview", kParams_437};
+const steammock::SlotInfo kCall_728 = {"SteamAPI_ISteamUGC_GetQueryUGCNumKeyValueTags", kParams_436};
+const steammock::SlotInfo kCall_729 = {"SteamAPI_ISteamUGC_GetQueryUGCKeyValueTag", kParams_438};
+const steammock::SlotInfo kCall_730 = {"SteamAPI_ISteamUGC_ReleaseQueryUGCRequest", kParams_430};
+const steammock::SlotInfo kCall_731 = {"SteamAPI_ISteamUGC_AddRequiredTag", kParams_439};
+const steammock::SlotInfo kCall_732 = {"SteamAPI_ISteamUGC_AddExcludedTag", kParams_439};
+const steammock::SlotInfo kCall_733 = {"SteamAPI_ISteamUGC_SetReturnOnlyIDs", kParams_440};
+const steammock::SlotInfo kCall_734 = {"SteamAPI_ISteamUGC_SetReturnKeyValueTags", kParams_441};
+const steammock::SlotInfo kCall_735 = {"SteamAPI_ISteamUGC_SetReturnLongDescription", kParams_442};
+const steammock::SlotInfo kCall_736 = {"SteamAPI_ISteamUGC_SetReturnMetadata", kParams_443};
+const steammock::SlotInfo kCall_737 = {"SteamAPI_ISteamUGC_SetReturnChildren", kParams_444};
+const steammock::SlotInfo kCall_738 = {"SteamAPI_ISteamUGC_SetReturnAdditionalPreviews", kParams_445};
+const steammock::SlotInfo kCall_739 = {"SteamAPI_ISteamUGC_SetReturnTotalOnly", kParams_446};
+const steammock::SlotInfo kCall_740 = {"SteamAPI_ISteamUGC_SetReturnPlaytimeStats", kParams_447};
+const steammock::SlotInfo kCall_741 = {"SteamAPI_ISteamUGC_SetLanguage", kParams_448};
+const steammock::SlotInfo kCall_742 = {"SteamAPI_ISteamUGC_SetAllowCachedResponse", kParams_449};
+const steammock::SlotInfo kCall_743 = {"SteamAPI_ISteamUGC_SetCloudFileNameFilter", kParams_450};
+const steammock::SlotInfo kCall_744 = {"SteamAPI_ISteamUGC_SetMatchAnyTag", kParams_451};
+const steammock::SlotInfo kCall_745 = {"SteamAPI_ISteamUGC_SetSearchText", kParams_452};
+const steammock::SlotInfo kCall_746 = {"SteamAPI_ISteamUGC_SetRankedByTrendDays", kParams_447};
+const steammock::SlotInfo kCall_747 = {"SteamAPI_ISteamUGC_AddRequiredKeyValueTag", kParams_453};
+const steammock::SlotInfo kCall_748 = {"SteamAPI_ISteamUGC_RequestUGCDetails", kParams_454};
+const steammock::SlotInfo kCall_749 = {"SteamAPI_ISteamUGC_CreateItem", kParams_455};
+const steammock::SlotInfo kCall_750 = {"SteamAPI_ISteamUGC_StartItemUpdate", kParams_456};
+const steammock::SlotInfo kCall_751 = {"SteamAPI_ISteamUGC_SetItemTitle", kParams_457};
+const steammock::SlotInfo kCall_752 = {"SteamAPI_ISteamUGC_SetItemDescription", kParams_458};
+const steammock::SlotInfo kCall_753 = {"SteamAPI_ISteamUGC_SetItemUpdateLanguage", kParams_448};
+const steammock::SlotInfo kCall_754 = {"SteamAPI_ISteamUGC_SetItemMetadata", kParams_459};
+const steammock::SlotInfo kCall_755 = {"SteamAPI_ISteamUGC_SetItemVisibility", kParams_460};
+const steammock::SlotInfo kCall_756 = {"SteamAPI_ISteamUGC_SetItemTags", kParams_408};
+const steammock::SlotInfo kCall_757 = {"SteamAPI_ISteamUGC_SetItemContent", kParams_461};
+const steammock::SlotInfo kCall_758 = {"SteamAPI_ISteamUGC_SetItemPreview", kParams_462};
+const steammock::SlotInfo kCall_759 = {"SteamAPI_ISteamUGC_RemoveItemKeyValueTags", kParams_463};
+const steammock::SlotInfo kCall_760 = {"SteamAPI_ISteamUGC_AddItemKeyValueTag", kParams_464};
+const steammock::SlotInfo kCall_761 = {"SteamAPI_ISteamUGC_AddItemPreviewFile", kParams_465};
+const steammock::SlotInfo kCall_762 = {"SteamAPI_ISteamUGC_AddItemPreviewVideo", kParams_466};
+const steammock::SlotInfo kCall_763 = {"SteamAPI_ISteamUGC_UpdateItemPreviewFile", kParams_467};
+const steammock::SlotInfo kCall_764 = {"SteamAPI_ISteamUGC_UpdateItemPreviewVideo", kParams_468};
+const steammock::SlotInfo kCall_765 = {"SteamAPI_ISteamUGC_RemoveItemPreview", kParams_436};
+const steammock::SlotInfo kCall_766 = {"SteamAPI_ISteamUGC_SubmitItemUpdate", kParams_469};
+const steammock::SlotInfo kCall_767 = {"SteamAPI_ISteamUGC_GetItemUpdateProgress", kParams_470};
+const steammock::SlotInfo kCall_768 = {"SteamAPI_ISteamUGC_SetUserItemVote", kParams_471};
+const steammock::SlotInfo kCall_769 = {"SteamAPI_ISteamUGC_GetUserItemVote", kParams_472};
+const steammock::SlotInfo kCall_770 = {"SteamAPI_ISteamUGC_AddItemToFavorites", kParams_473};
+const steammock::SlotInfo kCall_771 = {"SteamAPI_ISteamUGC_RemoveItemFromFavorites", kParams_473};
+const steammock::SlotInfo kCall_772 = {"SteamAPI_ISteamUGC_SubscribeItem", kParams_472};
+const steammock::SlotInfo kCall_773 = {"SteamAPI_ISteamUGC_UnsubscribeItem", kParams_472};
+const steammock::SlotInfo kCall_774 = {"SteamAPI_ISteamUGC_GetNumSubscribedItems", nullptr};
+const steammock::SlotInfo kCall_775 = {"SteamAPI_ISteamUGC_GetSubscribedItems", kParams_474};
+const steammock::SlotInfo kCall_776 = {"SteamAPI_ISteamUGC_GetItemState", kParams_472};
+const steammock::SlotInfo kCall_777 = {"SteamAPI_ISteamUGC_GetItemInstallInfo", kParams_475};
+const steammock::SlotInfo kCall_778 = {"SteamAPI_ISteamUGC_GetItemDownloadInfo", kParams_476};
+const steammock::SlotInfo kCall_779 = {"SteamAPI_ISteamUGC_DownloadItem", kParams_477};
+const steammock::SlotInfo kCall_780 = {"SteamAPI_ISteamUGC_BInitWorkshopForGameServer", kParams_478};
+const steammock::SlotInfo kCall_781 = {"SteamAPI_ISteamUGC_SuspendDownloads", kParams_479};
+const steammock::SlotInfo kCall_782 = {"SteamAPI_ISteamUGC_StartPlaytimeTracking", kParams_429};
+const steammock::SlotInfo kCall_783 = {"SteamAPI_ISteamUGC_StopPlaytimeTracking", kParams_429};
+const steammock::SlotInfo kCall_784 = {"SteamAPI_ISteamUGC_StopPlaytimeTrackingForAllItems", nullptr};
+const steammock::SlotInfo kCall_785 = {"SteamAPI_ISteamUGC_AddDependency", kParams_480};
+const steammock::SlotInfo kCall_786 = {"SteamAPI_ISteamUGC_RemoveDependency", kParams_480};
+const steammock::SlotInfo kCall_787 = {"SteamAPI_ISteamUGC_AddAppDependency", kParams_481};
+const steammock::SlotInfo kCall_788 = {"SteamAPI_ISteamUGC_RemoveAppDependency", kParams_481};
+const steammock::SlotInfo kCall_789 = {"SteamAPI_ISteamUGC_GetAppDependencies", kParams_472};
+const steammock::SlotInfo kCall_790 = {"SteamAPI_ISteamUGC_DeleteItem", kParams_472};
+const steammock::SlotInfo kCall_791 = {"SteamAPI_ISteamUGC_CreateQueryAllUGCRequestCursor", kParams_482};
+const steammock::SlotInfo kCall_792 = {"SteamAPI_ISteamUGC_GetQueryFirstUGCKeyValueTag", kParams_483};
+const steammock::SlotInfo kCall_793 = {"SteamAPI_ISteamUGC_SetAllowLegacyUpload", kParams_484};
+const steammock::SlotInfo kCall_794 = {"SteamAPI_ISteamUGC_RemoveAllItemKeyValueTags", kParams_430};
+const steammock::SlotInfo kCall_795 = {"SteamAPI_ISteamUGC_AddRequiredTagGroup", kParams_485};
+const steammock::SlotInfo kCall_796 = {"SteamAPI_ISteamUGC_GetQueryUGCNumTags", kParams_436};
+const steammock::SlotInfo kCall_797 = {"SteamAPI_ISteamUGC_GetQueryUGCTag", kParams_486};
+const steammock::SlotInfo kCall_798 = {"SteamAPI_ISteamUGC_GetQueryUGCTagDisplayName", kParams_486};
+const steammock::SlotInfo kCall_799 = {"SteamAPI_ISteamUGC_SetTimeCreatedDateRange", kParams_487};
+const steammock::SlotInfo kCall_800 = {"SteamAPI_ISteamUGC_SetTimeUpdatedDateRange", kParams_487};
+const steammock::SlotInfo kCall_801 = {"SteamAPI_ISteamUGC_ShowWorkshopEULA", nullptr};
+const steammock::SlotInfo kCall_802 = {"SteamAPI_ISteamUGC_GetWorkshopEULAStatus", nullptr};
+const steammock::SlotInfo kCall_803 = {"SteamAPI_ISteamUGC_GetQueryUGCContentDescriptors", kParams_488};
+const steammock::SlotInfo kCall_804 = {"SteamAPI_ISteamUGC_AddContentDescriptor", kParams_489};
+const steammock::SlotInfo kCall_805 = {"SteamAPI_ISteamUGC_RemoveContentDescriptor", kParams_489};
+const steammock::SlotInfo kCall_806 = {"SteamAPI_ISteamUnifiedMessages_SendMethod", kParams_490};
+const steammock::SlotInfo kCall_807 = {"SteamAPI_ISteamUnifiedMessages_GetMethodResponseInfo", kParams_491};
+const steammock::SlotInfo kCall_808 = {"SteamAPI_ISteamUnifiedMessages_GetMethodResponseData", kParams_492};
+const steammock::SlotInfo kCall_809 = {"SteamAPI_ISteamUnifiedMessages_ReleaseMethod", kParams_493};
+const steammock::SlotInfo kCall_810 = {"SteamAPI_ISteamUnifiedMessages_SendNotification", kParams_494};
+const steammock::SlotInfo kCall_811 = {"SteamAPI_ISteamUser_GetHSteamUser", nullptr};
+const steammock::SlotInfo kCall_812 = {"SteamAPI_ISteamUser_BLoggedOn", nullptr};
+const steammock::SlotInfo kCall_813 = {"SteamAPI_ISteamUser_GetSteamID", nullptr};
+const steammock::SlotInfo kCall_814 = {"SteamAPI_ISteamUser_InitiateGameConnection", kParams_495};
+const steammock::SlotInfo kCall_815 = {"SteamAPI_ISteamUser_TerminateGameConnection", kParams_496};
+const steammock::SlotInfo kCall_816 = {"SteamAPI_ISteamUser_TrackAppUsageEvent", kParams_497};
+const steammock::SlotInfo kCall_817 = {"SteamAPI_ISteamUser_GetUserDataFolder", kParams_498};
+const steammock::SlotInfo kCall_818 = {"SteamAPI_ISteamUser_StartVoiceRecording", nullptr};
+const steammock::SlotInfo kCall_819 = {"SteamAPI_ISteamUser_StopVoiceRecording", nullptr};
+const steammock::SlotInfo kCall_820 = {"SteamAPI_ISteamUser_GetAvailableVoice", kParams_499};
+const steammock::SlotInfo kCall_821 = {"SteamAPI_ISteamUser_GetVoice", kParams_500};
+const steammock::SlotInfo kCall_822 = {"SteamAPI_ISteamUser_DecompressVoice", kParams_501};
+const steammock::SlotInfo kCall_823 = {"SteamAPI_ISteamUser_GetVoiceOptimalSampleRate", nullptr};
+const steammock::SlotInfo kCall_824 = {"SteamAPI_ISteamUser_GetAuthSessionTicket", kParams_124};
+const steammock::SlotInfo kCall_825 = {"SteamAPI_ISteamUser_BeginAuthSession", kParams_125};
+const steammock::SlotInfo kCall_826 = {"SteamAPI_ISteamUser_EndAuthSession", kParams_89};
+const steammock::SlotInfo kCall_827 = {"SteamAPI_ISteamUser_CancelAuthTicket", kParams_126};
+const steammock::SlotInfo kCall_828 = {"SteamAPI_ISteamUser_UserHasLicenseForApp", kParams_127};
+const steammock::SlotInfo kCall_829 = {"SteamAPI_ISteamUser_BIsBehindNAT", nullptr};
+const steammock::SlotInfo kCall_830 = {"SteamAPI_ISteamUser_AdvertiseGame", kParams_502};
+const steammock::SlotInfo kCall_831 = {"SteamAPI_ISteamUser_RequestEncryptedAppTicket", kParams_503};
+const steammock::SlotInfo kCall_832 = {"SteamAPI_ISteamUser_GetEncryptedAppTicket", kParams_124};
+const steammock::SlotInfo kCall_833 = {"SteamAPI_ISteamUser_GetGameBadgeLevel", kParams_504};
+const steammock::SlotInfo kCall_834 = {"SteamAPI_ISteamUser_GetPlayerSteamLevel", nullptr};
+const steammock::SlotInfo kCall_835 = {"SteamAPI_ISteamUser_RequestStoreAuthURL", kParams_505};
+const steammock::SlotInfo kCall_836 = {"SteamAPI_ISteamUser_BIsPhoneVerified", nullptr};
+const steammock::SlotInfo kCall_837 = {"SteamAPI_ISteamUser_BIsTwoFactorEnabled", nullptr};
+const steammock::SlotInfo kCall_838 = {"SteamAPI_ISteamUser_BIsPhoneIdentifying", nullptr};
+const steammock::SlotInfo kCall_839 = {"SteamAPI_ISteamUser_BIsPhoneRequiringVerification", nullptr};
+const steammock::SlotInfo kCall_840 = {"SteamAPI_ISteamUser_GetMarketEligibility", nullptr};
+const steammock::SlotInfo kCall_841 = {"SteamAPI_ISteamUser_GetDurationControl", nullptr};
+const steammock::SlotInfo kCall_842 = {"SteamAPI_ISteamUser_InitiateGameConnection_DEPRECATED", kParams_495};
+const steammock::SlotInfo kCall_843 = {"SteamAPI_ISteamUser_TerminateGameConnection_DEPRECATED", kParams_496};
+const steammock::SlotInfo kCall_844 = {"SteamAPI_ISteamUser_BSetDurationControlOnlineState", kParams_506};
+const steammock::SlotInfo kCall_845 = {"SteamAPI_ISteamUser_GetAuthSessionTicket", kParams_507};
+const steammock::SlotInfo kCall_846 = {"SteamAPI_ISteamUser_GetAuthTicketForWebApi", kParams_508};
+const steammock::SlotInfo kCall_847 = {"SteamAPI_ISteamUserStats_RequestCurrentStats", nullptr};
+const steammock::SlotInfo kCall_848 = {"SteamAPI_ISteamUserStats_GetStatInt32", kParams_509};
+const steammock::SlotInfo kCall_849 = {"SteamAPI_ISteamUserStats_GetStatFloat", kParams_509};
+const steammock::SlotInfo kCall_850 = {"SteamAPI_ISteamUserStats_SetStatInt32", kParams_510};
+const steammock::SlotInfo kCall_851 = {"SteamAPI_ISteamUserStats_SetStatFloat", kParams_511};
+const steammock::SlotInfo kCall_852 = {"SteamAPI_ISteamUserStats_UpdateAvgRateStat", kParams_512};
+const steammock::SlotInfo kCall_853 = {"SteamAPI_ISteamUserStats_GetAchievement", kParams_513};
+const steammock::SlotInfo kCall_854 = {"SteamAPI_ISteamUserStats_SetAchievement", kParams_274};
+const steammock::SlotInfo kCall_855 = {"SteamAPI_ISteamUserStats_ClearAchievement", kParams_274};
+const steammock::SlotInfo kCall_856 = {"SteamAPI_ISteamUserStats_GetAchievementAndUnlockTime", kParams_514};
+const steammock::SlotInfo kCall_857 = {"SteamAPI_ISteamUserStats_StoreStats", nullptr};
+const steammock::SlotInfo kCall_858 = {"SteamAPI_ISteamUserStats_GetAchievementIcon", kParams_274};
+const steammock::SlotInfo kCall_859 = {"SteamAPI_ISteamUserStats_GetAchievementDisplayAttribute", kParams_515};
+const steammock::SlotInfo kCall_860 = {"SteamAPI_ISteamUserStats_IndicateAchievementProgress", kParams_516};
+const steammock::SlotInfo kCall_861 = {"SteamAPI_ISteamUserStats_GetNumAchievements", nullptr};
+const steammock::SlotInfo kCall_862 = {"SteamAPI_ISteamUserStats_GetAchievementName", kParams_517};
+const steammock::SlotInfo kCall_863 = {"SteamAPI_ISteamUserStats_RequestUserStats", kParams_122};
+const steammock::SlotInfo kCall_864 = {"SteamAPI_ISteamUserStats_GetUserStatInt32", kParams_135};
+const steammock::SlotInfo kCall_865 = {"SteamAPI_ISteamUserStats_GetUserStatFloat", kParams_135};
+const steammock::SlotInfo kCall_866 = {"SteamAPI_ISteamUserStats_GetUserAchievement", kParams_136};
+const steammock::SlotInfo kCall_867 = {"SteamAPI_ISteamUserStats_GetUserAchievementAndUnlockTime", kParams_518};
+const steammock::SlotInfo kCall_868 = {"SteamAPI_ISteamUserStats_ResetAllStats", kParams_519};
+const steammock::SlotInfo kCall_869 = {"SteamAPI_ISteamUserStats_FindOrCreateLeaderboard", kParams_520};
+const steammock::SlotInfo kCall_870 = {"SteamAPI_ISteamUserStats_FindLeaderboard", kParams_521};
+const steammock::SlotInfo kCall_871 = {"SteamAPI_ISteamUserStats_GetLeaderboardName", kParams_522};
+const steammock::SlotInfo kCall_872 = {"SteamAPI_ISteamUserStats_GetLeaderboardEntryCount", kParams_522};
+const steammock::SlotInfo kCall_873 = {"SteamAPI_ISteamUserStats_GetLeaderboardSortMethod", kParams_522};
+const steammock::SlotInfo kCall_874 = {"SteamAPI_ISteamUserStats_GetLeaderboardDisplayType", kParams_522};
+const steammock::SlotInfo kCall_875 = {"SteamAPI_ISteamUserStats_DownloadLeaderboardEntries", kParams_523};
+const steammock::SlotInfo kCall_876 = {"SteamAPI_ISteamUserStats_DownloadLeaderboardEntriesForUsers", kParams_524};
+const steammock::SlotInfo kCall_877 = {"SteamAPI_ISteamUserStats_GetDownloadedLeaderboardEntry", kParams_525};
+const steammock::SlotInfo kCall_878 = {"SteamAPI_ISteamUserStats_UploadLeaderboardScore", kParams_526};
+const steammock::SlotInfo kCall_879 = {"SteamAPI_ISteamUserStats_AttachLeaderboardUGC", kParams_527};
+const steammock::SlotInfo kCall_880 = {"SteamAPI_ISteamUserStats_GetNumberOfCurrentPlayers", nullptr};
+const steammock::SlotInfo kCall_881 = {"SteamAPI_ISteamUserStats_RequestGlobalAchievementPercentages", nullptr};
+const steammock::SlotInfo kCall_882 = {"SteamAPI_ISteamUserStats_GetMostAchievedAchievementInfo", kParams_528};
+const steammock::SlotInfo kCall_883 = {"SteamAPI_ISteamUserStats_GetNextMostAchievedAchievementInfo", kParams_529};
+const steammock::SlotInfo kCall_884 = {"SteamAPI_ISteamUserStats_GetAchievementAchievedPercent", kParams_530};
+const steammock::SlotInfo kCall_885 = {"SteamAPI_ISteamUserStats_RequestGlobalStats", kParams_531};
+const steammock::SlotInfo kCall_886 = {"SteamAPI_ISteamUserStats_GetGlobalStatInt64", kParams_532};
+const steammock::SlotInfo kCall_887 = {"SteamAPI_ISteamUserStats_GetGlobalStatDouble", kParams_532};
+const steammock::SlotInfo kCall_888 = {"SteamAPI_ISteamUserStats_GetGlobalStatHistoryInt64", kParams_533};
+const steammock::SlotInfo kCall_889 = {"SteamAPI_ISteamUserStats_GetGlobalStatHistoryDouble", kParams_533};
+const steammock::SlotInfo kCall_890 = {"SteamAPI_ISteamUserStats_GetAchievementProgressLimitsInt32", kParams_534};
+const steammock::SlotInfo kCall_891 = {"SteamAPI_ISteamUserStats_GetAchievementProgressLimitsFloat", kParams_535};
+const steammock::SlotInfo kCall_892 = {"SteamAPI_ISteamUtils_GetSecondsSinceAppActive", nullptr};
+const steammock::SlotInfo kCall_893 = {"SteamAPI_ISteamUtils_GetSecondsSinceComputerActive", nullptr};
+const steammock::SlotInfo kCall_894 = {"SteamAPI_ISteamUtils_GetConnectedUniverse", nullptr};
+const steammock::SlotInfo kCall_895 = {"SteamAPI_ISteamUtils_GetServerRealTime", nullptr};
+const steammock::SlotInfo kCall_896 = {"SteamAPI_ISteamUtils_GetIPCountry", nullptr};
+const steammock::SlotInfo kCall_897 = {"SteamAPI_ISteamUtils_GetImageSize", kParams_536};
+const steammock::SlotInfo kCall_898 = {"SteamAPI_ISteamUtils_GetImageRGBA", kParams_537};
+const steammock::SlotInfo kCall_899 = {"SteamAPI_ISteamUtils_GetCSERIPPort", kParams_19};
+const steammock::SlotInfo kCall_900 = {"SteamAPI_ISteamUtils_GetCurrentBatteryPower", nullptr};
+const steammock::SlotInfo kCall_901 = {"SteamAPI_ISteamUtils_GetAppID", nullptr};
+const steammock::SlotInfo kCall_902 = {"SteamAPI_ISteamUtils_SetOverlayNotificationPosition", kParams_538};
+const steammock::SlotInfo kCall_903 = {"SteamAPI_ISteamUtils_IsAPICallCompleted", kParams_539};
+const steammock::SlotInfo kCall_904 = {"SteamAPI_ISteamUtils_GetAPICallFailureReason", kParams_540};
+const steammock::SlotInfo kCall_905 = {"SteamAPI_ISteamUtils_GetAPICallResult", kParams_541};
+const steammock::SlotInfo kCall_906 = {"ISteamUtils::RunFrame", nullptr};
+const steammock::SlotInfo kCall_907 = {"SteamAPI_ISteamUtils_GetIPCCallCount", nullptr};
+const steammock::SlotInfo kCall_908 = {"SteamAPI_ISteamUtils_SetWarningMessageHook", kParams_22};
+const steammock::SlotInfo kCall_909 = {"SteamAPI_ISteamUtils_IsOverlayEnabled", nullptr};
+const steammock::SlotInfo kCall_910 = {"SteamAPI_ISteamUtils_BOverlayNeedsPresent", nullptr};
+const steammock::SlotInfo kCall_911 = {"SteamAPI_ISteamUtils_CheckFileSignature", kParams_542};
+const steammock::SlotInfo kCall_912 = {"SteamAPI_ISteamUtils_ShowGamepadTextInput", kParams_543};
+const steammock::SlotInfo kCall_913 = {"SteamAPI_ISteamUtils_GetEnteredGamepadTextLength", nullptr};
+const steammock::SlotInfo kCall_914 = {"SteamAPI_ISteamUtils_GetEnteredGamepadTextInput", kParams_544};
+const steammock::SlotInfo kCall_915 = {"SteamAPI_ISteamUtils_GetSteamUILanguage", nullptr};
+const steammock::SlotInfo kCall_916 = {"SteamAPI_ISteamUtils_IsSteamRunningInVR", nullptr};
+const steammock::SlotInfo kCall_917 = {"SteamAPI_ISteamUtils_SetOverlayNotificationInset", kParams_545};
+const steammock::SlotInfo kCall_918 = {"SteamAPI_ISteamUtils_IsSteamInBigPictureMode", nullptr};
+const steammock::SlotInfo kCall_919 = {"SteamAPI_ISteamUtils_StartVRDashboard", nullptr};
+const steammock::SlotInfo kCall_920 = {"SteamAPI_ISteamUtils_IsVRHeadsetStreamingEnabled", nullptr};
+const steammock::SlotInfo kCall_921 = {"SteamAPI_ISteamUtils_SetVRHeadsetStreamingEnabled", kParams_395};
+const steammock::SlotInfo kCall_922 = {"SteamAPI_ISteamUtils_IsSteamChinaLauncher", nullptr};
+const steammock::SlotInfo kCall_923 = {"SteamAPI_ISteamUtils_InitFilterText", nullptr};
+const steammock::SlotInfo kCall_924 = {"SteamAPI_ISteamUtils_FilterText", kParams_546};
+const steammock::SlotInfo kCall_925 = {"SteamAPI_ISteamUtils_GetIPv6ConnectivityState", kParams_547};
+const steammock::SlotInfo kCall_926 = {"ISteamUtils::GetCSERIPPort", kParams_19};
+const steammock::SlotInfo kCall_927 = {"SteamAPI_ISteamUtils_InitFilterText", kParams_548};
+const steammock::SlotInfo kCall_928 = {"SteamAPI_ISteamUtils_FilterText", kParams_549};
+const steammock::SlotInfo kCall_929 = {"SteamAPI_ISteamUtils_IsSteamRunningOnSteamDeck", nullptr};
+const steammock::SlotInfo kCall_930 = {"SteamAPI_ISteamUtils_ShowFloatingGamepadTextInput", kParams_550};
+const steammock::SlotInfo kCall_931 = {"SteamAPI_ISteamUtils_SetGameLauncherMode", kParams_551};
+const steammock::SlotInfo kCall_932 = {"SteamAPI_ISteamUtils_DismissFloatingGamepadTextInput", nullptr};
+const steammock::SlotInfo kCall_933 = {"SteamAPI_ISteamVideo_GetVideoURL", kParams_552};
+const steammock::SlotInfo kCall_934 = {"SteamAPI_ISteamVideo_IsBroadcasting", kParams_553};
+const steammock::SlotInfo kCall_935 = {"SteamAPI_ISteamVideo_GetOPFSettings", kParams_552};
+const steammock::SlotInfo kCall_936 = {"SteamAPI_ISteamVideo_GetOPFStringForApp", kParams_554};
 
 // ISteamAppList STEAMAPPLIST_INTERFACE_VERSION001
 class Version_STEAMAPPLIST_INTERFACE_VERSION001 {
 public:
-    virtual std::uint32_t GetNumInstalledApps() {
-        return steambridge::slot<std::uint32_t>(kCall_0);
-    }
+    virtual std::uint32_t GetNumInstalledApps() { return steammock::slot<std::uint32_t>(kCall_0); }
     virtual std::uint32_t GetInstalledApps(std::uint32_t* pvecAppID, std::uint32_t unMaxAppIDs) {
-        return steambridge::slot<std::uint32_t>(kCall_1, pvecAppID, unMaxAppIDs);
+        return steammock::slot<std::uint32_t>(kCall_1, pvecAppID, unMaxAppIDs);
     }
     virtual std::int32_t GetAppName(std::uint32_t nAppID, void* pchName, std::int32_t cchNameMax) {
-        return steambridge::slot<std::int32_t>(kCall_2, nAppID, pchName, cchNameMax);
+        return steammock::slot<std::int32_t>(kCall_2, nAppID, pchName, cchNameMax);
     }
     virtual std::int32_t GetAppInstallDir(std::uint32_t nAppID, void* pchDirectory, std::int32_t cchNameMax) {
-        return steambridge::slot<std::int32_t>(kCall_3, nAppID, pchDirectory, cchNameMax);
+        return steammock::slot<std::int32_t>(kCall_3, nAppID, pchDirectory, cchNameMax);
     }
     virtual std::int32_t GetAppBuildId(std::uint32_t nAppID) {
-        return steambridge::slot<std::int32_t>(kCall_4, nAppID);
+        return steammock::slot<std::int32_t>(kCall_4, nAppID);
     }
 };
 
@@ -2210,69 +2208,69 @@ Version_STEAMAPPLIST_INTERFACE_VERSION001 g_STEAMAPPLIST_INTERFACE_VERSION001;
 // ISteamApps STEAMAPPS_INTERFACE_VERSION008
 class Version_STEAMAPPS_INTERFACE_VERSION008 {
 public:
-    virtual bool BIsSubscribed() { return steambridge::slot<bool>(kCall_5); }
-    virtual bool BIsLowViolence() { return steambridge::slot<bool>(kCall_6); }
-    virtual bool BIsCybercafe() { return steambridge::slot<bool>(kCall_7); }
-    virtual bool BIsVACBanned() { return steambridge::slot<bool>(kCall_8); }
-    virtual const char* GetCurrentGameLanguage() { return steambridge::slot<const char*>(kCall_9); }
+    virtual bool BIsSubscribed() { return steammock::slot<bool>(kCall_5); }
+    virtual bool BIsLowViolence() { return steammock::slot<bool>(kCall_6); }
+    virtual bool BIsCybercafe() { return steammock::slot<bool>(kCall_7); }
+    virtual bool BIsVACBanned() { return steammock::slot<bool>(kCall_8); }
+    virtual const char* GetCurrentGameLanguage() { return steammock::slot<const char*>(kCall_9); }
     virtual const char* GetAvailableGameLanguages() {
-        return steambridge::slot<const char*>(kCall_10);
+        return steammock::slot<const char*>(kCall_10);
     }
     virtual bool BIsSubscribedApp(std::uint32_t appID) {
-        return steambridge::slot<bool>(kCall_11, appID);
+        return steammock::slot<bool>(kCall_11, appID);
     }
     virtual bool BIsDlcInstalled(std::uint32_t appID) {
-        return steambridge::slot<bool>(kCall_12, appID);
+        return steammock::slot<bool>(kCall_12, appID);
     }
     virtual std::uint32_t GetEarliestPurchaseUnixTime(std::uint32_t nAppID) {
-        return steambridge::slot<std::uint32_t>(kCall_13, nAppID);
+        return steammock::slot<std::uint32_t>(kCall_13, nAppID);
     }
-    virtual bool BIsSubscribedFromFreeWeekend() { return steambridge::slot<bool>(kCall_14); }
-    virtual std::int32_t GetDLCCount() { return steambridge::slot<std::int32_t>(kCall_15); }
+    virtual bool BIsSubscribedFromFreeWeekend() { return steammock::slot<bool>(kCall_14); }
+    virtual std::int32_t GetDLCCount() { return steammock::slot<std::int32_t>(kCall_15); }
     virtual bool BGetDLCDataByIndex(std::int32_t iDLC, std::uint32_t* pAppID, bool* pbAvailable, void* pchName, std::int32_t cchNameBufferSize) {
-        return steambridge::slot<bool>(kCall_16, iDLC, pAppID, pbAvailable, pchName, cchNameBufferSize);
+        return steammock::slot<bool>(kCall_16, iDLC, pAppID, pbAvailable, pchName, cchNameBufferSize);
     }
-    virtual void InstallDLC(std::uint32_t nAppID) { steambridge::slot<void>(kCall_17, nAppID); }
-    virtual void UninstallDLC(std::uint32_t nAppID) { steambridge::slot<void>(kCall_18, nAppID); }
+    virtual void InstallDLC(std::uint32_t nAppID) { steammock::slot<void>(kCall_17, nAppID); }
+    virtual void UninstallDLC(std::uint32_t nAppID) { steammock::slot<void>(kCall_18, nAppID); }
     virtual void RequestAppProofOfPurchaseKey(std::uint32_t nAppID) {
-        steambridge::slot<void>(kCall_19, nAppID);
+        steammock::slot<void>(kCall_19, nAppID);
     }
     virtual bool GetCurrentBetaName(void* pchName, std::int32_t cchNameBufferSize) {
-        return steambridge::slot<bool>(kCall_20, pchName, cchNameBufferSize);
+        return steammock::slot<bool>(kCall_20, pchName, cchNameBufferSize);
     }
     virtual bool MarkContentCorrupt(bool bMissingFilesOnly) {
-        return steambridge::slot<bool>(kCall_21, bMissingFilesOnly);
+        return steammock::slot<bool>(kCall_21, bMissingFilesOnly);
     }
     virtual std::uint32_t GetInstalledDepots(std::uint32_t appID, std::uint32_t* pvecDepots, std::uint32_t cMaxDepots) {
-        return steambridge::slot<std::uint32_t>(kCall_22, appID, pvecDepots, cMaxDepots);
+        return steammock::slot<std::uint32_t>(kCall_22, appID, pvecDepots, cMaxDepots);
     }
     virtual std::uint32_t GetAppInstallDir(std::uint32_t appID, void* pchFolder, std::uint32_t cchFolderBufferSize) {
-        return steambridge::slot<std::uint32_t>(kCall_23, appID, pchFolder, cchFolderBufferSize);
+        return steammock::slot<std::uint32_t>(kCall_23, appID, pchFolder, cchFolderBufferSize);
     }
     virtual bool BIsAppInstalled(std::uint32_t appID) {
-        return steambridge::slot<bool>(kCall_24, appID);
+        return steammock::slot<bool>(kCall_24, appID);
     }
-    virtual CSteamID GetAppOwner() { return steambridge::slot<CSteamID>(kCall_25); }
+    virtual CSteamID GetAppOwner() { return steammock::slot<CSteamID>(kCall_25); }
     virtual const char* GetLaunchQueryParam(const char* pchKey) {
-        return steambridge::slot<const char*>(kCall_26, pchKey);
+        return steammock::slot<const char*>(kCall_26, pchKey);
     }
     virtual bool GetDlcDownloadProgress(std::uint32_t nAppID, std::uint64_t* punBytesDownloaded, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<bool>(kCall_27, nAppID, punBytesDownloaded, punBytesTotal);
+        return steammock::slot<bool>(kCall_27, nAppID, punBytesDownloaded, punBytesTotal);
     }
-    virtual std::int32_t GetAppBuildId() { return steambridge::slot<std::int32_t>(kCall_28); }
-    virtual void RequestAllProofOfPurchaseKeys() { steambridge::slot<void>(kCall_29); }
+    virtual std::int32_t GetAppBuildId() { return steammock::slot<std::int32_t>(kCall_28); }
+    virtual void RequestAllProofOfPurchaseKeys() { steammock::slot<void>(kCall_29); }
     virtual std::uint64_t GetFileDetails(const char* pszFileName) {
-        return steambridge::slot<std::uint64_t>(kCall_30, pszFileName);
+        return steammock::slot<std::uint64_t>(kCall_30, pszFileName);
     }
     virtual std::int32_t GetLaunchCommandLine(void* pszCommandLine, std::int32_t cubCommandLine) {
-        return steambridge::slot<std::int32_t>(kCall_31, pszCommandLine, cubCommandLine);
+        return steammock::slot<std::int32_t>(kCall_31, pszCommandLine, cubCommandLine);
     }
-    virtual bool BIsSubscribedFromFamilySharing() { return steambridge::slot<bool>(kCall_32); }
+    virtual bool BIsSubscribedFromFamilySharing() { return steammock::slot<bool>(kCall_32); }
     virtual bool BIsTimedTrial(std::uint32_t* punSecondsAllowed, std::uint32_t* punSecondsPlayed) {
-        return steambridge::slot<bool>(kCall_33, punSecondsAllowed, punSecondsPlayed);
+        return steammock::slot<bool>(kCall_33, punSecondsAllowed, punSecondsPlayed);
     }
     virtual bool SetDlcContext(std::uint32_t nAppID) {
-        return steambridge::slot<bool>(kCall_34, nAppID);
+        return steammock::slot<bool>(kCall_34, nAppID);
     }
 };
 
@@ -2281,202 +2279,202 @@ Version_STEAMAPPS_INTERFACE_VERSION008 g_STEAMAPPS_INTERFACE_VERSION008;
 // ISteamClient SteamClient017
 class Version_SteamClient017 {
 public:
-    virtual std::int32_t CreateSteamPipe() { return steambridge::slot<std::int32_t>(kCall_35); }
+    virtual std::int32_t CreateSteamPipe() { return steammock::slot<std::int32_t>(kCall_35); }
     virtual bool BReleaseSteamPipe(std::int32_t hSteamPipe) {
-        return steambridge::slot<bool>(kCall_36, hSteamPipe);
+        return steammock::slot<bool>(kCall_36, hSteamPipe);
     }
     virtual std::int32_t ConnectToGlobalUser(std::int32_t hSteamPipe) {
-        return steambridge::slot<std::int32_t>(kCall_37, hSteamPipe);
+        return steammock::slot<std::int32_t>(kCall_37, hSteamPipe);
     }
     virtual std::int32_t CreateLocalUser(std::int32_t* phSteamPipe, std::int32_t eAccountType) {
-        return steambridge::slot<std::int32_t>(kCall_38, phSteamPipe, eAccountType);
+        return steammock::slot<std::int32_t>(kCall_38, phSteamPipe, eAccountType);
     }
     virtual void ReleaseUser(std::int32_t hSteamPipe, std::int32_t hUser) {
-        steambridge::slot<void>(kCall_39, hSteamPipe, hUser);
+        steammock::slot<void>(kCall_39, hSteamPipe, hUser);
     }
     virtual void* GetISteamUser(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_40, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_40, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGameServer(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_41, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_41, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void SetLocalIPBinding(std::uint32_t unIP, std::uint16_t usPort) {
-        steambridge::slot<void>(kCall_42, unIP, usPort);
+        steammock::slot<void>(kCall_42, unIP, usPort);
     }
     virtual void* GetISteamFriends(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_43, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_43, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamUtils(std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_44, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_44, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMatchmaking(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_45, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_45, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMatchmakingServers(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_46, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_46, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGenericInterface(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_47, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_47, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamUserStats(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_48, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_48, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGameServerStats(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_49, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_49, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamApps(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_50, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_50, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamNetworking(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_51, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_51, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamRemoteStorage(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_52, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_52, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamScreenshots(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_53, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_53, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
-    virtual void RunFrame() { steambridge::slot<void>(kCall_54); }
-    virtual std::uint32_t GetIPCCallCount() { return steambridge::slot<std::uint32_t>(kCall_55); }
+    virtual void RunFrame() { steammock::slot<void>(kCall_54); }
+    virtual std::uint32_t GetIPCCallCount() { return steammock::slot<std::uint32_t>(kCall_55); }
     virtual void SetWarningMessageHook(void* pFunction) {
-        steambridge::slot<void>(kCall_56, pFunction);
+        steammock::slot<void>(kCall_56, pFunction);
     }
-    virtual bool BShutdownIfAllPipesClosed() { return steambridge::slot<bool>(kCall_57); }
+    virtual bool BShutdownIfAllPipesClosed() { return steammock::slot<bool>(kCall_57); }
     virtual void* GetISteamHTTP(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_58, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_58, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamUnifiedMessages(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_59, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_59, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamController(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_60, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_60, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamUGC(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_61, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_61, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamAppList(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_62, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_62, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMusic(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_63, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_63, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMusicRemote(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_64, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_64, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamHTMLSurface(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_65, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_65, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void DEPRECATED_Set_SteamAPI_CPostAPIResultInProcess(void* arg0) {
-        steambridge::slot<void>(kCall_66, arg0);
+        steammock::slot<void>(kCall_66, arg0);
     }
     virtual void DEPRECATED_Remove_SteamAPI_CPostAPIResultInProcess(void* arg0) {
-        steambridge::slot<void>(kCall_67, arg0);
+        steammock::slot<void>(kCall_67, arg0);
     }
     virtual void Set_SteamAPI_CCheckCallbackRegisteredInProcess(void* func) {
-        steambridge::slot<void>(kCall_68, func);
+        steammock::slot<void>(kCall_68, func);
     }
     virtual void* GetISteamInventory(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_69, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_69, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamVideo(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_70, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_70, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamParentalSettings(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_71, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_71, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
@@ -2487,230 +2485,230 @@ Version_SteamClient017 g_SteamClient017;
 // ISteamClient SteamClient019
 class Version_SteamClient019 {
 public:
-    virtual std::int32_t CreateSteamPipe() { return steambridge::slot<std::int32_t>(kCall_35); }
+    virtual std::int32_t CreateSteamPipe() { return steammock::slot<std::int32_t>(kCall_35); }
     virtual bool BReleaseSteamPipe(std::int32_t hSteamPipe) {
-        return steambridge::slot<bool>(kCall_36, hSteamPipe);
+        return steammock::slot<bool>(kCall_36, hSteamPipe);
     }
     virtual std::int32_t ConnectToGlobalUser(std::int32_t hSteamPipe) {
-        return steambridge::slot<std::int32_t>(kCall_37, hSteamPipe);
+        return steammock::slot<std::int32_t>(kCall_37, hSteamPipe);
     }
     virtual std::int32_t CreateLocalUser(std::int32_t* phSteamPipe, std::int32_t eAccountType) {
-        return steambridge::slot<std::int32_t>(kCall_38, phSteamPipe, eAccountType);
+        return steammock::slot<std::int32_t>(kCall_38, phSteamPipe, eAccountType);
     }
     virtual void ReleaseUser(std::int32_t hSteamPipe, std::int32_t hUser) {
-        steambridge::slot<void>(kCall_39, hSteamPipe, hUser);
+        steammock::slot<void>(kCall_39, hSteamPipe, hUser);
     }
     virtual void* GetISteamUser(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_40, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_40, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGameServer(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_41, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_41, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void SetLocalIPBinding(std::uint32_t unIP, std::uint16_t usPort) {
-        steambridge::slot<void>(kCall_42, unIP, usPort);
+        steammock::slot<void>(kCall_42, unIP, usPort);
     }
     virtual void* GetISteamFriends(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_43, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_43, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamUtils(std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_44, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_44, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMatchmaking(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_45, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_45, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMatchmakingServers(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_46, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_46, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGenericInterface(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_47, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_47, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamUserStats(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_48, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_48, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGameServerStats(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_49, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_49, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamApps(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_50, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_50, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamNetworking(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_51, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_51, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamRemoteStorage(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_52, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_52, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamScreenshots(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_53, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_53, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGameSearch(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_72, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_72, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
-    virtual void RunFrame() { steambridge::slot<void>(kCall_54); }
-    virtual std::uint32_t GetIPCCallCount() { return steambridge::slot<std::uint32_t>(kCall_55); }
+    virtual void RunFrame() { steammock::slot<void>(kCall_54); }
+    virtual std::uint32_t GetIPCCallCount() { return steammock::slot<std::uint32_t>(kCall_55); }
     virtual void SetWarningMessageHook(void* pFunction) {
-        steambridge::slot<void>(kCall_56, pFunction);
+        steammock::slot<void>(kCall_56, pFunction);
     }
-    virtual bool BShutdownIfAllPipesClosed() { return steambridge::slot<bool>(kCall_57); }
+    virtual bool BShutdownIfAllPipesClosed() { return steammock::slot<bool>(kCall_57); }
     virtual void* GetISteamHTTP(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_58, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_58, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* DEPRECATED_GetISteamUnifiedMessages(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_73, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_73, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamController(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_60, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_60, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamUGC(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_61, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_61, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamAppList(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_62, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_62, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMusic(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_63, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_63, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMusicRemote(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_64, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_64, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamHTMLSurface(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_65, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_65, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void DEPRECATED_Set_SteamAPI_CPostAPIResultInProcess(void* arg0) {
-        steambridge::slot<void>(kCall_66, arg0);
+        steammock::slot<void>(kCall_66, arg0);
     }
     virtual void DEPRECATED_Remove_SteamAPI_CPostAPIResultInProcess(void* arg0) {
-        steambridge::slot<void>(kCall_67, arg0);
+        steammock::slot<void>(kCall_67, arg0);
     }
     virtual void Set_SteamAPI_CCheckCallbackRegisteredInProcess(void* func) {
-        steambridge::slot<void>(kCall_68, func);
+        steammock::slot<void>(kCall_68, func);
     }
     virtual void* GetISteamInventory(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_69, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_69, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamVideo(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_70, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_70, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamParentalSettings(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_71, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_71, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamInput(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_74, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_74, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamParties(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_75, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_75, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamRemotePlay(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_76, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_76, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
@@ -2721,234 +2719,234 @@ Version_SteamClient019 g_SteamClient019;
 // ISteamClient SteamClient020
 class Version_SteamClient020 {
 public:
-    virtual std::int32_t CreateSteamPipe() { return steambridge::slot<std::int32_t>(kCall_35); }
+    virtual std::int32_t CreateSteamPipe() { return steammock::slot<std::int32_t>(kCall_35); }
     virtual bool BReleaseSteamPipe(std::int32_t hSteamPipe) {
-        return steambridge::slot<bool>(kCall_36, hSteamPipe);
+        return steammock::slot<bool>(kCall_36, hSteamPipe);
     }
     virtual std::int32_t ConnectToGlobalUser(std::int32_t hSteamPipe) {
-        return steambridge::slot<std::int32_t>(kCall_37, hSteamPipe);
+        return steammock::slot<std::int32_t>(kCall_37, hSteamPipe);
     }
     virtual std::int32_t CreateLocalUser(std::int32_t* phSteamPipe, std::int32_t eAccountType) {
-        return steambridge::slot<std::int32_t>(kCall_38, phSteamPipe, eAccountType);
+        return steammock::slot<std::int32_t>(kCall_38, phSteamPipe, eAccountType);
     }
     virtual void ReleaseUser(std::int32_t hSteamPipe, std::int32_t hUser) {
-        steambridge::slot<void>(kCall_39, hSteamPipe, hUser);
+        steammock::slot<void>(kCall_39, hSteamPipe, hUser);
     }
     virtual void* GetISteamUser(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_40, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_40, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGameServer(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_41, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_41, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void SetLocalIPBinding(void* unIP, std::uint16_t usPort) {
-        steambridge::slot<void>(kCall_42, unIP, usPort);
+        steammock::slot<void>(kCall_42, unIP, usPort);
     }
     virtual void* GetISteamFriends(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_43, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_43, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamUtils(std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_44, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_44, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMatchmaking(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_45, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_45, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMatchmakingServers(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_46, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_46, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGenericInterface(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_47, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_47, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamUserStats(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_48, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_48, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGameServerStats(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_49, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_49, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamApps(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_50, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_50, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamNetworking(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_51, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_51, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamRemoteStorage(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_52, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_52, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamScreenshots(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_53, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_53, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamGameSearch(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_72, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_72, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
-    virtual void RunFrame() { steambridge::slot<void>(kCall_54); }
-    virtual std::uint32_t GetIPCCallCount() { return steambridge::slot<std::uint32_t>(kCall_55); }
+    virtual void RunFrame() { steammock::slot<void>(kCall_54); }
+    virtual std::uint32_t GetIPCCallCount() { return steammock::slot<std::uint32_t>(kCall_55); }
     virtual void SetWarningMessageHook(void* pFunction) {
-        steambridge::slot<void>(kCall_56, pFunction);
+        steammock::slot<void>(kCall_56, pFunction);
     }
-    virtual bool BShutdownIfAllPipesClosed() { return steambridge::slot<bool>(kCall_57); }
+    virtual bool BShutdownIfAllPipesClosed() { return steammock::slot<bool>(kCall_57); }
     virtual void* GetISteamHTTP(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_58, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_58, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* DEPRECATED_GetISteamUnifiedMessages(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_73, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_73, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamController(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_60, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_60, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamUGC(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_61, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_61, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamAppList(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_62, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_62, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMusic(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_63, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_63, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamMusicRemote(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_64, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_64, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamHTMLSurface(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_65, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_65, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void DEPRECATED_Set_SteamAPI_CPostAPIResultInProcess(void* arg0) {
-        steambridge::slot<void>(kCall_66, arg0);
+        steammock::slot<void>(kCall_66, arg0);
     }
     virtual void DEPRECATED_Remove_SteamAPI_CPostAPIResultInProcess(void* arg0) {
-        steambridge::slot<void>(kCall_67, arg0);
+        steammock::slot<void>(kCall_67, arg0);
     }
     virtual void Set_SteamAPI_CCheckCallbackRegisteredInProcess(void* func) {
-        steambridge::slot<void>(kCall_68, func);
+        steammock::slot<void>(kCall_68, func);
     }
     virtual void* GetISteamInventory(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_69, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_69, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamVideo(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_70, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_70, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamParentalSettings(std::int32_t hSteamuser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_71, hSteamuser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_71, hSteamuser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamInput(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_74, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_74, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamParties(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_75, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_75, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
     virtual void* GetISteamRemotePlay(std::int32_t hSteamUser, std::int32_t hSteamPipe, const char* pchVersion) {
-        void* result = steambridge::slot<void*>(kCall_76, hSteamUser, hSteamPipe, pchVersion);
+        void* result = steammock::slot<void*>(kCall_76, hSteamUser, hSteamPipe, pchVersion);
         if (result == nullptr) {
-            result = steambridge::interface_object(pchVersion);
+            result = steammock::interface_object(pchVersion);
         }
         return result;
     }
-    virtual void DestroyAllInterfaces() { steambridge::slot<void>(kCall_77); }
+    virtual void DestroyAllInterfaces() { steammock::slot<void>(kCall_77); }
 };
 
 Version_SteamClient020 g_SteamClient020;
@@ -2956,77 +2954,77 @@ Version_SteamClient020 g_SteamClient020;
 // ISteamController SteamController005
 class Version_SteamController005 {
 public:
-    virtual bool Init() { return steambridge::slot<bool>(kCall_78); }
-    virtual bool Shutdown() { return steambridge::slot<bool>(kCall_79); }
-    virtual void RunFrame() { steambridge::slot<void>(kCall_80); }
+    virtual bool Init() { return steammock::slot<bool>(kCall_78); }
+    virtual bool Shutdown() { return steammock::slot<bool>(kCall_79); }
+    virtual void RunFrame() { steammock::slot<void>(kCall_80); }
     virtual std::int32_t GetConnectedControllers(std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_81, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_81, handlesOut);
     }
     virtual bool ShowBindingPanel(std::uint64_t controllerHandle) {
-        return steambridge::slot<bool>(kCall_82, controllerHandle);
+        return steammock::slot<bool>(kCall_82, controllerHandle);
     }
     virtual std::uint64_t GetActionSetHandle(const char* pszActionSetName) {
-        return steambridge::slot<std::uint64_t>(kCall_83, pszActionSetName);
+        return steammock::slot<std::uint64_t>(kCall_83, pszActionSetName);
     }
     virtual void ActivateActionSet(std::uint64_t controllerHandle, std::uint64_t actionSetHandle) {
-        steambridge::slot<void>(kCall_84, controllerHandle, actionSetHandle);
+        steammock::slot<void>(kCall_84, controllerHandle, actionSetHandle);
     }
     virtual std::uint64_t GetCurrentActionSet(std::uint64_t controllerHandle) {
-        return steambridge::slot<std::uint64_t>(kCall_85, controllerHandle);
+        return steammock::slot<std::uint64_t>(kCall_85, controllerHandle);
     }
     virtual std::uint64_t GetDigitalActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_86, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_86, pszActionName);
     }
     virtual ControllerDigitalActionData_t GetDigitalActionData(std::uint64_t controllerHandle, std::uint64_t digitalActionHandle) {
-        return steambridge::slot<ControllerDigitalActionData_t>(kCall_87, controllerHandle, digitalActionHandle);
+        return steammock::slot<ControllerDigitalActionData_t>(kCall_87, controllerHandle, digitalActionHandle);
     }
     virtual std::int32_t GetDigitalActionOrigins(std::uint64_t controllerHandle, std::uint64_t actionSetHandle, std::uint64_t digitalActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_88, controllerHandle, actionSetHandle, digitalActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_88, controllerHandle, actionSetHandle, digitalActionHandle, originsOut);
     }
     virtual std::uint64_t GetAnalogActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_89, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_89, pszActionName);
     }
     virtual ControllerAnalogActionData_t GetAnalogActionData(std::uint64_t controllerHandle, std::uint64_t analogActionHandle) {
-        return steambridge::slot<ControllerAnalogActionData_t>(kCall_90, controllerHandle, analogActionHandle);
+        return steammock::slot<ControllerAnalogActionData_t>(kCall_90, controllerHandle, analogActionHandle);
     }
     virtual std::int32_t GetAnalogActionOrigins(std::uint64_t controllerHandle, std::uint64_t actionSetHandle, std::uint64_t analogActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_91, controllerHandle, actionSetHandle, analogActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_91, controllerHandle, actionSetHandle, analogActionHandle, originsOut);
     }
     virtual void StopAnalogActionMomentum(std::uint64_t controllerHandle, std::uint64_t eAction) {
-        steambridge::slot<void>(kCall_92, controllerHandle, eAction);
+        steammock::slot<void>(kCall_92, controllerHandle, eAction);
     }
     virtual void TriggerHapticPulse(std::uint64_t controllerHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec) {
-        steambridge::slot<void>(kCall_93, controllerHandle, eTargetPad, usDurationMicroSec);
+        steammock::slot<void>(kCall_93, controllerHandle, eTargetPad, usDurationMicroSec);
     }
     virtual void TriggerRepeatedHapticPulse(std::uint64_t controllerHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec, std::uint16_t usOffMicroSec, std::uint16_t unRepeat, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_94, controllerHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
+        steammock::slot<void>(kCall_94, controllerHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
     }
     virtual void TriggerVibration(std::uint64_t controllerHandle, std::uint16_t usLeftSpeed, std::uint16_t usRightSpeed) {
-        steambridge::slot<void>(kCall_95, controllerHandle, usLeftSpeed, usRightSpeed);
+        steammock::slot<void>(kCall_95, controllerHandle, usLeftSpeed, usRightSpeed);
     }
     virtual void SetLEDColor(std::uint64_t controllerHandle, std::uint8_t nColorR, std::uint8_t nColorG, std::uint8_t nColorB, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_96, controllerHandle, nColorR, nColorG, nColorB, nFlags);
+        steammock::slot<void>(kCall_96, controllerHandle, nColorR, nColorG, nColorB, nFlags);
     }
     virtual std::int32_t GetGamepadIndexForController(std::uint64_t ulControllerHandle) {
-        return steambridge::slot<std::int32_t>(kCall_97, ulControllerHandle);
+        return steammock::slot<std::int32_t>(kCall_97, ulControllerHandle);
     }
     virtual std::uint64_t GetControllerForGamepadIndex(std::int32_t nIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_98, nIndex);
+        return steammock::slot<std::uint64_t>(kCall_98, nIndex);
     }
     virtual ControllerMotionData_t GetMotionData(std::uint64_t controllerHandle) {
-        return steambridge::slot<ControllerMotionData_t>(kCall_99, controllerHandle);
+        return steammock::slot<ControllerMotionData_t>(kCall_99, controllerHandle);
     }
     virtual bool ShowDigitalActionOrigins(std::uint64_t controllerHandle, std::uint64_t digitalActionHandle, float flScale, float flXPosition, float flYPosition) {
-        return steambridge::slot<bool>(kCall_100, controllerHandle, digitalActionHandle, flScale, flXPosition, flYPosition);
+        return steammock::slot<bool>(kCall_100, controllerHandle, digitalActionHandle, flScale, flXPosition, flYPosition);
     }
     virtual bool ShowAnalogActionOrigins(std::uint64_t controllerHandle, std::uint64_t analogActionHandle, float flScale, float flXPosition, float flYPosition) {
-        return steambridge::slot<bool>(kCall_101, controllerHandle, analogActionHandle, flScale, flXPosition, flYPosition);
+        return steammock::slot<bool>(kCall_101, controllerHandle, analogActionHandle, flScale, flXPosition, flYPosition);
     }
     virtual const char* GetStringForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_102, eOrigin);
+        return steammock::slot<const char*>(kCall_102, eOrigin);
     }
     virtual const char* GetGlyphForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_103, eOrigin);
+        return steammock::slot<const char*>(kCall_103, eOrigin);
     }
 };
 
@@ -3035,101 +3033,101 @@ Version_SteamController005 g_SteamController005;
 // ISteamController SteamController007
 class Version_SteamController007 {
 public:
-    virtual bool Init() { return steambridge::slot<bool>(kCall_78); }
-    virtual bool Shutdown() { return steambridge::slot<bool>(kCall_79); }
-    virtual void RunFrame() { steambridge::slot<void>(kCall_80); }
+    virtual bool Init() { return steammock::slot<bool>(kCall_78); }
+    virtual bool Shutdown() { return steammock::slot<bool>(kCall_79); }
+    virtual void RunFrame() { steammock::slot<void>(kCall_80); }
     virtual std::int32_t GetConnectedControllers(std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_81, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_81, handlesOut);
     }
     virtual std::uint64_t GetActionSetHandle(const char* pszActionSetName) {
-        return steambridge::slot<std::uint64_t>(kCall_83, pszActionSetName);
+        return steammock::slot<std::uint64_t>(kCall_83, pszActionSetName);
     }
     virtual void ActivateActionSet(std::uint64_t controllerHandle, std::uint64_t actionSetHandle) {
-        steambridge::slot<void>(kCall_84, controllerHandle, actionSetHandle);
+        steammock::slot<void>(kCall_84, controllerHandle, actionSetHandle);
     }
     virtual std::uint64_t GetCurrentActionSet(std::uint64_t controllerHandle) {
-        return steambridge::slot<std::uint64_t>(kCall_85, controllerHandle);
+        return steammock::slot<std::uint64_t>(kCall_85, controllerHandle);
     }
     virtual void ActivateActionSetLayer(std::uint64_t controllerHandle, std::uint64_t actionSetLayerHandle) {
-        steambridge::slot<void>(kCall_104, controllerHandle, actionSetLayerHandle);
+        steammock::slot<void>(kCall_104, controllerHandle, actionSetLayerHandle);
     }
     virtual void DeactivateActionSetLayer(std::uint64_t controllerHandle, std::uint64_t actionSetLayerHandle) {
-        steambridge::slot<void>(kCall_105, controllerHandle, actionSetLayerHandle);
+        steammock::slot<void>(kCall_105, controllerHandle, actionSetLayerHandle);
     }
     virtual void DeactivateAllActionSetLayers(std::uint64_t controllerHandle) {
-        steambridge::slot<void>(kCall_106, controllerHandle);
+        steammock::slot<void>(kCall_106, controllerHandle);
     }
     virtual std::int32_t GetActiveActionSetLayers(std::uint64_t controllerHandle, std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_107, controllerHandle, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_107, controllerHandle, handlesOut);
     }
     virtual std::uint64_t GetDigitalActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_86, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_86, pszActionName);
     }
     virtual ControllerDigitalActionData_t GetDigitalActionData(std::uint64_t controllerHandle, std::uint64_t digitalActionHandle) {
-        return steambridge::slot<ControllerDigitalActionData_t>(kCall_87, controllerHandle, digitalActionHandle);
+        return steammock::slot<ControllerDigitalActionData_t>(kCall_87, controllerHandle, digitalActionHandle);
     }
     virtual std::int32_t GetDigitalActionOrigins(std::uint64_t controllerHandle, std::uint64_t actionSetHandle, std::uint64_t digitalActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_88, controllerHandle, actionSetHandle, digitalActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_88, controllerHandle, actionSetHandle, digitalActionHandle, originsOut);
     }
     virtual std::uint64_t GetAnalogActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_89, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_89, pszActionName);
     }
     virtual ControllerAnalogActionData_t GetAnalogActionData(std::uint64_t controllerHandle, std::uint64_t analogActionHandle) {
-        return steambridge::slot<ControllerAnalogActionData_t>(kCall_90, controllerHandle, analogActionHandle);
+        return steammock::slot<ControllerAnalogActionData_t>(kCall_90, controllerHandle, analogActionHandle);
     }
     virtual std::int32_t GetAnalogActionOrigins(std::uint64_t controllerHandle, std::uint64_t actionSetHandle, std::uint64_t analogActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_91, controllerHandle, actionSetHandle, analogActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_91, controllerHandle, actionSetHandle, analogActionHandle, originsOut);
     }
     virtual const char* GetGlyphForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_103, eOrigin);
+        return steammock::slot<const char*>(kCall_103, eOrigin);
     }
     virtual const char* GetStringForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_102, eOrigin);
+        return steammock::slot<const char*>(kCall_102, eOrigin);
     }
     virtual void StopAnalogActionMomentum(std::uint64_t controllerHandle, std::uint64_t eAction) {
-        steambridge::slot<void>(kCall_92, controllerHandle, eAction);
+        steammock::slot<void>(kCall_92, controllerHandle, eAction);
     }
     virtual ControllerMotionData_t GetMotionData(std::uint64_t controllerHandle) {
-        return steambridge::slot<ControllerMotionData_t>(kCall_99, controllerHandle);
+        return steammock::slot<ControllerMotionData_t>(kCall_99, controllerHandle);
     }
     virtual void TriggerHapticPulse(std::uint64_t controllerHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec) {
-        steambridge::slot<void>(kCall_93, controllerHandle, eTargetPad, usDurationMicroSec);
+        steammock::slot<void>(kCall_93, controllerHandle, eTargetPad, usDurationMicroSec);
     }
     virtual void TriggerRepeatedHapticPulse(std::uint64_t controllerHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec, std::uint16_t usOffMicroSec, std::uint16_t unRepeat, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_94, controllerHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
+        steammock::slot<void>(kCall_94, controllerHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
     }
     virtual void TriggerVibration(std::uint64_t controllerHandle, std::uint16_t usLeftSpeed, std::uint16_t usRightSpeed) {
-        steambridge::slot<void>(kCall_95, controllerHandle, usLeftSpeed, usRightSpeed);
+        steammock::slot<void>(kCall_95, controllerHandle, usLeftSpeed, usRightSpeed);
     }
     virtual void SetLEDColor(std::uint64_t controllerHandle, std::uint8_t nColorR, std::uint8_t nColorG, std::uint8_t nColorB, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_96, controllerHandle, nColorR, nColorG, nColorB, nFlags);
+        steammock::slot<void>(kCall_96, controllerHandle, nColorR, nColorG, nColorB, nFlags);
     }
     virtual bool ShowBindingPanel(std::uint64_t controllerHandle) {
-        return steambridge::slot<bool>(kCall_82, controllerHandle);
+        return steammock::slot<bool>(kCall_82, controllerHandle);
     }
     virtual std::int32_t GetInputTypeForHandle(std::uint64_t controllerHandle) {
-        return steambridge::slot<std::int32_t>(kCall_108, controllerHandle);
+        return steammock::slot<std::int32_t>(kCall_108, controllerHandle);
     }
     virtual std::uint64_t GetControllerForGamepadIndex(std::int32_t nIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_98, nIndex);
+        return steammock::slot<std::uint64_t>(kCall_98, nIndex);
     }
     virtual std::int32_t GetGamepadIndexForController(std::uint64_t ulControllerHandle) {
-        return steambridge::slot<std::int32_t>(kCall_97, ulControllerHandle);
+        return steammock::slot<std::int32_t>(kCall_97, ulControllerHandle);
     }
     virtual const char* GetStringForXboxOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_109, eOrigin);
+        return steammock::slot<const char*>(kCall_109, eOrigin);
     }
     virtual const char* GetGlyphForXboxOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_110, eOrigin);
+        return steammock::slot<const char*>(kCall_110, eOrigin);
     }
     virtual std::int32_t GetActionOriginFromXboxOrigin(std::uint64_t controllerHandle, std::int32_t eOrigin) {
-        return steambridge::slot<std::int32_t>(kCall_111, controllerHandle, eOrigin);
+        return steammock::slot<std::int32_t>(kCall_111, controllerHandle, eOrigin);
     }
     virtual std::int32_t TranslateActionOrigin(std::int32_t eDestinationInputType, std::int32_t eSourceOrigin) {
-        return steambridge::slot<std::int32_t>(kCall_112, eDestinationInputType, eSourceOrigin);
+        return steammock::slot<std::int32_t>(kCall_112, eDestinationInputType, eSourceOrigin);
     }
     virtual bool GetControllerBindingRevision(std::uint64_t controllerHandle, std::int32_t* pMajor, std::int32_t* pMinor) {
-        return steambridge::slot<bool>(kCall_113, controllerHandle, pMajor, pMinor);
+        return steammock::slot<bool>(kCall_113, controllerHandle, pMajor, pMinor);
     }
 };
 
@@ -3138,101 +3136,101 @@ Version_SteamController007 g_SteamController007;
 // ISteamController SteamController008
 class Version_SteamController008 {
 public:
-    virtual bool Init() { return steambridge::slot<bool>(kCall_78); }
-    virtual bool Shutdown() { return steambridge::slot<bool>(kCall_79); }
-    virtual void RunFrame() { steambridge::slot<void>(kCall_80); }
+    virtual bool Init() { return steammock::slot<bool>(kCall_78); }
+    virtual bool Shutdown() { return steammock::slot<bool>(kCall_79); }
+    virtual void RunFrame() { steammock::slot<void>(kCall_80); }
     virtual std::int32_t GetConnectedControllers(std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_81, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_81, handlesOut);
     }
     virtual std::uint64_t GetActionSetHandle(const char* pszActionSetName) {
-        return steambridge::slot<std::uint64_t>(kCall_83, pszActionSetName);
+        return steammock::slot<std::uint64_t>(kCall_83, pszActionSetName);
     }
     virtual void ActivateActionSet(std::uint64_t controllerHandle, std::uint64_t actionSetHandle) {
-        steambridge::slot<void>(kCall_84, controllerHandle, actionSetHandle);
+        steammock::slot<void>(kCall_84, controllerHandle, actionSetHandle);
     }
     virtual std::uint64_t GetCurrentActionSet(std::uint64_t controllerHandle) {
-        return steambridge::slot<std::uint64_t>(kCall_85, controllerHandle);
+        return steammock::slot<std::uint64_t>(kCall_85, controllerHandle);
     }
     virtual void ActivateActionSetLayer(std::uint64_t controllerHandle, std::uint64_t actionSetLayerHandle) {
-        steambridge::slot<void>(kCall_104, controllerHandle, actionSetLayerHandle);
+        steammock::slot<void>(kCall_104, controllerHandle, actionSetLayerHandle);
     }
     virtual void DeactivateActionSetLayer(std::uint64_t controllerHandle, std::uint64_t actionSetLayerHandle) {
-        steambridge::slot<void>(kCall_105, controllerHandle, actionSetLayerHandle);
+        steammock::slot<void>(kCall_105, controllerHandle, actionSetLayerHandle);
     }
     virtual void DeactivateAllActionSetLayers(std::uint64_t controllerHandle) {
-        steambridge::slot<void>(kCall_106, controllerHandle);
+        steammock::slot<void>(kCall_106, controllerHandle);
     }
     virtual std::int32_t GetActiveActionSetLayers(std::uint64_t controllerHandle, std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_107, controllerHandle, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_107, controllerHandle, handlesOut);
     }
     virtual std::uint64_t GetDigitalActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_86, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_86, pszActionName);
     }
     virtual ControllerDigitalActionData_t GetDigitalActionData(std::uint64_t controllerHandle, std::uint64_t digitalActionHandle) {
-        return steambridge::slot<ControllerDigitalActionData_t>(kCall_87, controllerHandle, digitalActionHandle);
+        return steammock::slot<ControllerDigitalActionData_t>(kCall_87, controllerHandle, digitalActionHandle);
     }
     virtual std::int32_t GetDigitalActionOrigins(std::uint64_t controllerHandle, std::uint64_t actionSetHandle, std::uint64_t digitalActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_88, controllerHandle, actionSetHandle, digitalActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_88, controllerHandle, actionSetHandle, digitalActionHandle, originsOut);
     }
     virtual std::uint64_t GetAnalogActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_89, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_89, pszActionName);
     }
     virtual ControllerAnalogActionData_t GetAnalogActionData(std::uint64_t controllerHandle, std::uint64_t analogActionHandle) {
-        return steambridge::slot<ControllerAnalogActionData_t>(kCall_90, controllerHandle, analogActionHandle);
+        return steammock::slot<ControllerAnalogActionData_t>(kCall_90, controllerHandle, analogActionHandle);
     }
     virtual std::int32_t GetAnalogActionOrigins(std::uint64_t controllerHandle, std::uint64_t actionSetHandle, std::uint64_t analogActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_91, controllerHandle, actionSetHandle, analogActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_91, controllerHandle, actionSetHandle, analogActionHandle, originsOut);
     }
     virtual const char* GetGlyphForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_103, eOrigin);
+        return steammock::slot<const char*>(kCall_103, eOrigin);
     }
     virtual const char* GetStringForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_102, eOrigin);
+        return steammock::slot<const char*>(kCall_102, eOrigin);
     }
     virtual void StopAnalogActionMomentum(std::uint64_t controllerHandle, std::uint64_t eAction) {
-        steambridge::slot<void>(kCall_92, controllerHandle, eAction);
+        steammock::slot<void>(kCall_92, controllerHandle, eAction);
     }
     virtual ControllerMotionData_t GetMotionData(std::uint64_t controllerHandle) {
-        return steambridge::slot<ControllerMotionData_t>(kCall_99, controllerHandle);
+        return steammock::slot<ControllerMotionData_t>(kCall_99, controllerHandle);
     }
     virtual void TriggerHapticPulse(std::uint64_t controllerHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec) {
-        steambridge::slot<void>(kCall_93, controllerHandle, eTargetPad, usDurationMicroSec);
+        steammock::slot<void>(kCall_93, controllerHandle, eTargetPad, usDurationMicroSec);
     }
     virtual void TriggerRepeatedHapticPulse(std::uint64_t controllerHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec, std::uint16_t usOffMicroSec, std::uint16_t unRepeat, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_94, controllerHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
+        steammock::slot<void>(kCall_94, controllerHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
     }
     virtual void TriggerVibration(std::uint64_t controllerHandle, std::uint16_t usLeftSpeed, std::uint16_t usRightSpeed) {
-        steambridge::slot<void>(kCall_95, controllerHandle, usLeftSpeed, usRightSpeed);
+        steammock::slot<void>(kCall_95, controllerHandle, usLeftSpeed, usRightSpeed);
     }
     virtual void SetLEDColor(std::uint64_t controllerHandle, std::uint8_t nColorR, std::uint8_t nColorG, std::uint8_t nColorB, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_96, controllerHandle, nColorR, nColorG, nColorB, nFlags);
+        steammock::slot<void>(kCall_96, controllerHandle, nColorR, nColorG, nColorB, nFlags);
     }
     virtual bool ShowBindingPanel(std::uint64_t controllerHandle) {
-        return steambridge::slot<bool>(kCall_82, controllerHandle);
+        return steammock::slot<bool>(kCall_82, controllerHandle);
     }
     virtual std::int32_t GetInputTypeForHandle(std::uint64_t controllerHandle) {
-        return steambridge::slot<std::int32_t>(kCall_108, controllerHandle);
+        return steammock::slot<std::int32_t>(kCall_108, controllerHandle);
     }
     virtual std::uint64_t GetControllerForGamepadIndex(std::int32_t nIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_98, nIndex);
+        return steammock::slot<std::uint64_t>(kCall_98, nIndex);
     }
     virtual std::int32_t GetGamepadIndexForController(std::uint64_t ulControllerHandle) {
-        return steambridge::slot<std::int32_t>(kCall_97, ulControllerHandle);
+        return steammock::slot<std::int32_t>(kCall_97, ulControllerHandle);
     }
     virtual const char* GetStringForXboxOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_109, eOrigin);
+        return steammock::slot<const char*>(kCall_109, eOrigin);
     }
     virtual const char* GetGlyphForXboxOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_110, eOrigin);
+        return steammock::slot<const char*>(kCall_110, eOrigin);
     }
     virtual std::int32_t GetActionOriginFromXboxOrigin(std::uint64_t controllerHandle, std::int32_t eOrigin) {
-        return steambridge::slot<std::int32_t>(kCall_111, controllerHandle, eOrigin);
+        return steammock::slot<std::int32_t>(kCall_111, controllerHandle, eOrigin);
     }
     virtual std::int32_t TranslateActionOrigin(std::int32_t eDestinationInputType, std::int32_t eSourceOrigin) {
-        return steambridge::slot<std::int32_t>(kCall_112, eDestinationInputType, eSourceOrigin);
+        return steammock::slot<std::int32_t>(kCall_112, eDestinationInputType, eSourceOrigin);
     }
     virtual bool GetControllerBindingRevision(std::uint64_t controllerHandle, std::int32_t* pMajor, std::int32_t* pMinor) {
-        return steambridge::slot<bool>(kCall_113, controllerHandle, pMajor, pMinor);
+        return steammock::slot<bool>(kCall_113, controllerHandle, pMajor, pMinor);
     }
 };
 
@@ -3241,207 +3239,203 @@ Version_SteamController008 g_SteamController008;
 // ISteamFriends SteamFriends015
 class Version_SteamFriends015 {
 public:
-    virtual const char* GetPersonaName() { return steambridge::slot<const char*>(kCall_114); }
+    virtual const char* GetPersonaName() { return steammock::slot<const char*>(kCall_114); }
     virtual std::uint64_t SetPersonaName(const char* pchPersonaName) {
-        return steambridge::slot<std::uint64_t>(kCall_115, pchPersonaName);
+        return steammock::slot<std::uint64_t>(kCall_115, pchPersonaName);
     }
-    virtual std::int32_t GetPersonaState() { return steambridge::slot<std::int32_t>(kCall_116); }
+    virtual std::int32_t GetPersonaState() { return steammock::slot<std::int32_t>(kCall_116); }
     virtual std::int32_t GetFriendCount(std::int32_t iFriendFlags) {
-        return steambridge::slot<std::int32_t>(kCall_117, iFriendFlags);
+        return steammock::slot<std::int32_t>(kCall_117, iFriendFlags);
     }
     virtual CSteamID GetFriendByIndex(std::int32_t iFriend, std::int32_t iFriendFlags) {
-        return steambridge::slot<CSteamID>(kCall_118, iFriend, iFriendFlags);
+        return steammock::slot<CSteamID>(kCall_118, iFriend, iFriendFlags);
     }
     virtual std::int32_t GetFriendRelationship(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_119, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_119, steamIDFriend);
     }
     virtual std::int32_t GetFriendPersonaState(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_120, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_120, steamIDFriend);
     }
     virtual const char* GetFriendPersonaName(CSteamID steamIDFriend) {
-        return steambridge::slot<const char*>(kCall_121, steamIDFriend);
+        return steammock::slot<const char*>(kCall_121, steamIDFriend);
     }
     virtual bool GetFriendGamePlayed(CSteamID steamIDFriend, void* pFriendGameInfo) {
-        return steambridge::slot<bool>(kCall_122, steamIDFriend, pFriendGameInfo);
+        return steammock::slot<bool>(kCall_122, steamIDFriend, pFriendGameInfo);
     }
     virtual const char* GetFriendPersonaNameHistory(CSteamID steamIDFriend, std::int32_t iPersonaName) {
-        return steambridge::slot<const char*>(kCall_123, steamIDFriend, iPersonaName);
+        return steammock::slot<const char*>(kCall_123, steamIDFriend, iPersonaName);
     }
     virtual std::int32_t GetFriendSteamLevel(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_124, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_124, steamIDFriend);
     }
     virtual const char* GetPlayerNickname(CSteamID steamIDPlayer) {
-        return steambridge::slot<const char*>(kCall_125, steamIDPlayer);
+        return steammock::slot<const char*>(kCall_125, steamIDPlayer);
     }
-    virtual std::int32_t GetFriendsGroupCount() {
-        return steambridge::slot<std::int32_t>(kCall_126);
-    }
+    virtual std::int32_t GetFriendsGroupCount() { return steammock::slot<std::int32_t>(kCall_126); }
     virtual std::int16_t GetFriendsGroupIDByIndex(std::int32_t iFG) {
-        return steambridge::slot<std::int16_t>(kCall_127, iFG);
+        return steammock::slot<std::int16_t>(kCall_127, iFG);
     }
     virtual const char* GetFriendsGroupName(std::int16_t friendsGroupID) {
-        return steambridge::slot<const char*>(kCall_128, friendsGroupID);
+        return steammock::slot<const char*>(kCall_128, friendsGroupID);
     }
     virtual std::int32_t GetFriendsGroupMembersCount(std::int16_t friendsGroupID) {
-        return steambridge::slot<std::int32_t>(kCall_129, friendsGroupID);
+        return steammock::slot<std::int32_t>(kCall_129, friendsGroupID);
     }
     virtual void GetFriendsGroupMembersList(std::int16_t friendsGroupID, CSteamID* pOutSteamIDMembers, std::int32_t nMembersCount) {
-        steambridge::slot<void>(kCall_130, friendsGroupID, pOutSteamIDMembers, nMembersCount);
+        steammock::slot<void>(kCall_130, friendsGroupID, pOutSteamIDMembers, nMembersCount);
     }
     virtual bool HasFriend(CSteamID steamIDFriend, std::int32_t iFriendFlags) {
-        return steambridge::slot<bool>(kCall_131, steamIDFriend, iFriendFlags);
+        return steammock::slot<bool>(kCall_131, steamIDFriend, iFriendFlags);
     }
-    virtual std::int32_t GetClanCount() { return steambridge::slot<std::int32_t>(kCall_132); }
+    virtual std::int32_t GetClanCount() { return steammock::slot<std::int32_t>(kCall_132); }
     virtual CSteamID GetClanByIndex(std::int32_t iClan) {
-        return steambridge::slot<CSteamID>(kCall_133, iClan);
+        return steammock::slot<CSteamID>(kCall_133, iClan);
     }
     virtual const char* GetClanName(CSteamID steamIDClan) {
-        return steambridge::slot<const char*>(kCall_134, steamIDClan);
+        return steammock::slot<const char*>(kCall_134, steamIDClan);
     }
     virtual const char* GetClanTag(CSteamID steamIDClan) {
-        return steambridge::slot<const char*>(kCall_135, steamIDClan);
+        return steammock::slot<const char*>(kCall_135, steamIDClan);
     }
     virtual bool GetClanActivityCounts(CSteamID steamIDClan, std::int32_t* pnOnline, std::int32_t* pnInGame, std::int32_t* pnChatting) {
-        return steambridge::slot<bool>(kCall_136, steamIDClan, pnOnline, pnInGame, pnChatting);
+        return steammock::slot<bool>(kCall_136, steamIDClan, pnOnline, pnInGame, pnChatting);
     }
     virtual std::uint64_t DownloadClanActivityCounts(CSteamID* psteamIDClans, std::int32_t cClansToRequest) {
-        return steambridge::slot<std::uint64_t>(kCall_137, psteamIDClans, cClansToRequest);
+        return steammock::slot<std::uint64_t>(kCall_137, psteamIDClans, cClansToRequest);
     }
     virtual std::int32_t GetFriendCountFromSource(CSteamID steamIDSource) {
-        return steambridge::slot<std::int32_t>(kCall_138, steamIDSource);
+        return steammock::slot<std::int32_t>(kCall_138, steamIDSource);
     }
     virtual CSteamID GetFriendFromSourceByIndex(CSteamID steamIDSource, std::int32_t iFriend) {
-        return steambridge::slot<CSteamID>(kCall_139, steamIDSource, iFriend);
+        return steammock::slot<CSteamID>(kCall_139, steamIDSource, iFriend);
     }
     virtual bool IsUserInSource(CSteamID steamIDUser, CSteamID steamIDSource) {
-        return steambridge::slot<bool>(kCall_140, steamIDUser, steamIDSource);
+        return steammock::slot<bool>(kCall_140, steamIDUser, steamIDSource);
     }
     virtual void SetInGameVoiceSpeaking(CSteamID steamIDUser, bool bSpeaking) {
-        steambridge::slot<void>(kCall_141, steamIDUser, bSpeaking);
+        steammock::slot<void>(kCall_141, steamIDUser, bSpeaking);
     }
     virtual void ActivateGameOverlay(const char* pchDialog) {
-        steambridge::slot<void>(kCall_142, pchDialog);
+        steammock::slot<void>(kCall_142, pchDialog);
     }
     virtual void ActivateGameOverlayToUser(const char* pchDialog, CSteamID steamID) {
-        steambridge::slot<void>(kCall_143, pchDialog, steamID);
+        steammock::slot<void>(kCall_143, pchDialog, steamID);
     }
     virtual void ActivateGameOverlayToWebPage(const char* pchURL) {
-        steambridge::slot<void>(kCall_144, pchURL);
+        steammock::slot<void>(kCall_144, pchURL);
     }
     virtual void ActivateGameOverlayToStore(std::uint32_t nAppID, std::int32_t eFlag) {
-        steambridge::slot<void>(kCall_145, nAppID, eFlag);
+        steammock::slot<void>(kCall_145, nAppID, eFlag);
     }
     virtual void SetPlayedWith(CSteamID steamIDUserPlayedWith) {
-        steambridge::slot<void>(kCall_146, steamIDUserPlayedWith);
+        steammock::slot<void>(kCall_146, steamIDUserPlayedWith);
     }
     virtual void ActivateGameOverlayInviteDialog(CSteamID steamIDLobby) {
-        steambridge::slot<void>(kCall_147, steamIDLobby);
+        steammock::slot<void>(kCall_147, steamIDLobby);
     }
     virtual std::int32_t GetSmallFriendAvatar(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_148, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_148, steamIDFriend);
     }
     virtual std::int32_t GetMediumFriendAvatar(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_149, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_149, steamIDFriend);
     }
     virtual std::int32_t GetLargeFriendAvatar(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_150, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_150, steamIDFriend);
     }
     virtual bool RequestUserInformation(CSteamID steamIDUser, bool bRequireNameOnly) {
-        return steambridge::slot<bool>(kCall_151, steamIDUser, bRequireNameOnly);
+        return steammock::slot<bool>(kCall_151, steamIDUser, bRequireNameOnly);
     }
     virtual std::uint64_t RequestClanOfficerList(CSteamID steamIDClan) {
-        return steambridge::slot<std::uint64_t>(kCall_152, steamIDClan);
+        return steammock::slot<std::uint64_t>(kCall_152, steamIDClan);
     }
     virtual CSteamID GetClanOwner(CSteamID steamIDClan) {
-        return steambridge::slot<CSteamID>(kCall_153, steamIDClan);
+        return steammock::slot<CSteamID>(kCall_153, steamIDClan);
     }
     virtual std::int32_t GetClanOfficerCount(CSteamID steamIDClan) {
-        return steambridge::slot<std::int32_t>(kCall_154, steamIDClan);
+        return steammock::slot<std::int32_t>(kCall_154, steamIDClan);
     }
     virtual CSteamID GetClanOfficerByIndex(CSteamID steamIDClan, std::int32_t iOfficer) {
-        return steambridge::slot<CSteamID>(kCall_155, steamIDClan, iOfficer);
+        return steammock::slot<CSteamID>(kCall_155, steamIDClan, iOfficer);
     }
     virtual std::uint32_t GetUserRestrictions() {
-        return steambridge::slot<std::uint32_t>(kCall_156);
+        return steammock::slot<std::uint32_t>(kCall_156);
     }
     virtual bool SetRichPresence(const char* pchKey, const char* pchValue) {
-        return steambridge::slot<bool>(kCall_157, pchKey, pchValue);
+        return steammock::slot<bool>(kCall_157, pchKey, pchValue);
     }
-    virtual void ClearRichPresence() { steambridge::slot<void>(kCall_158); }
+    virtual void ClearRichPresence() { steammock::slot<void>(kCall_158); }
     virtual const char* GetFriendRichPresence(CSteamID steamIDFriend, const char* pchKey) {
-        return steambridge::slot<const char*>(kCall_159, steamIDFriend, pchKey);
+        return steammock::slot<const char*>(kCall_159, steamIDFriend, pchKey);
     }
     virtual std::int32_t GetFriendRichPresenceKeyCount(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_160, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_160, steamIDFriend);
     }
     virtual const char* GetFriendRichPresenceKeyByIndex(CSteamID steamIDFriend, std::int32_t iKey) {
-        return steambridge::slot<const char*>(kCall_161, steamIDFriend, iKey);
+        return steammock::slot<const char*>(kCall_161, steamIDFriend, iKey);
     }
     virtual void RequestFriendRichPresence(CSteamID steamIDFriend) {
-        steambridge::slot<void>(kCall_162, steamIDFriend);
+        steammock::slot<void>(kCall_162, steamIDFriend);
     }
     virtual bool InviteUserToGame(CSteamID steamIDFriend, const char* pchConnectString) {
-        return steambridge::slot<bool>(kCall_163, steamIDFriend, pchConnectString);
+        return steammock::slot<bool>(kCall_163, steamIDFriend, pchConnectString);
     }
-    virtual std::int32_t GetCoplayFriendCount() {
-        return steambridge::slot<std::int32_t>(kCall_164);
-    }
+    virtual std::int32_t GetCoplayFriendCount() { return steammock::slot<std::int32_t>(kCall_164); }
     virtual CSteamID GetCoplayFriend(std::int32_t iCoplayFriend) {
-        return steambridge::slot<CSteamID>(kCall_165, iCoplayFriend);
+        return steammock::slot<CSteamID>(kCall_165, iCoplayFriend);
     }
     virtual std::int32_t GetFriendCoplayTime(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_166, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_166, steamIDFriend);
     }
     virtual std::uint32_t GetFriendCoplayGame(CSteamID steamIDFriend) {
-        return steambridge::slot<std::uint32_t>(kCall_167, steamIDFriend);
+        return steammock::slot<std::uint32_t>(kCall_167, steamIDFriend);
     }
     virtual std::uint64_t JoinClanChatRoom(CSteamID steamIDClan) {
-        return steambridge::slot<std::uint64_t>(kCall_168, steamIDClan);
+        return steammock::slot<std::uint64_t>(kCall_168, steamIDClan);
     }
     virtual bool LeaveClanChatRoom(CSteamID steamIDClan) {
-        return steambridge::slot<bool>(kCall_169, steamIDClan);
+        return steammock::slot<bool>(kCall_169, steamIDClan);
     }
     virtual std::int32_t GetClanChatMemberCount(CSteamID steamIDClan) {
-        return steambridge::slot<std::int32_t>(kCall_170, steamIDClan);
+        return steammock::slot<std::int32_t>(kCall_170, steamIDClan);
     }
     virtual CSteamID GetChatMemberByIndex(CSteamID steamIDClan, std::int32_t iUser) {
-        return steambridge::slot<CSteamID>(kCall_171, steamIDClan, iUser);
+        return steammock::slot<CSteamID>(kCall_171, steamIDClan, iUser);
     }
     virtual bool SendClanChatMessage(CSteamID steamIDClanChat, const char* pchText) {
-        return steambridge::slot<bool>(kCall_172, steamIDClanChat, pchText);
+        return steammock::slot<bool>(kCall_172, steamIDClanChat, pchText);
     }
     virtual std::int32_t GetClanChatMessage(CSteamID steamIDClanChat, std::int32_t iMessage, void* prgchText, std::int32_t cchTextMax, std::int32_t* peChatEntryType, CSteamID* psteamidChatter) {
-        return steambridge::slot<std::int32_t>(kCall_173, steamIDClanChat, iMessage, prgchText, cchTextMax, peChatEntryType, psteamidChatter);
+        return steammock::slot<std::int32_t>(kCall_173, steamIDClanChat, iMessage, prgchText, cchTextMax, peChatEntryType, psteamidChatter);
     }
     virtual bool IsClanChatAdmin(CSteamID steamIDClanChat, CSteamID steamIDUser) {
-        return steambridge::slot<bool>(kCall_174, steamIDClanChat, steamIDUser);
+        return steammock::slot<bool>(kCall_174, steamIDClanChat, steamIDUser);
     }
     virtual bool IsClanChatWindowOpenInSteam(CSteamID steamIDClanChat) {
-        return steambridge::slot<bool>(kCall_175, steamIDClanChat);
+        return steammock::slot<bool>(kCall_175, steamIDClanChat);
     }
     virtual bool OpenClanChatWindowInSteam(CSteamID steamIDClanChat) {
-        return steambridge::slot<bool>(kCall_176, steamIDClanChat);
+        return steammock::slot<bool>(kCall_176, steamIDClanChat);
     }
     virtual bool CloseClanChatWindowInSteam(CSteamID steamIDClanChat) {
-        return steambridge::slot<bool>(kCall_177, steamIDClanChat);
+        return steammock::slot<bool>(kCall_177, steamIDClanChat);
     }
     virtual bool SetListenForFriendsMessages(bool bInterceptEnabled) {
-        return steambridge::slot<bool>(kCall_178, bInterceptEnabled);
+        return steammock::slot<bool>(kCall_178, bInterceptEnabled);
     }
     virtual bool ReplyToFriendMessage(CSteamID steamIDFriend, const char* pchMsgToSend) {
-        return steambridge::slot<bool>(kCall_179, steamIDFriend, pchMsgToSend);
+        return steammock::slot<bool>(kCall_179, steamIDFriend, pchMsgToSend);
     }
     virtual std::int32_t GetFriendMessage(CSteamID steamIDFriend, std::int32_t iMessageID, void* pvData, std::int32_t cubData, std::int32_t* peChatEntryType) {
-        return steambridge::slot<std::int32_t>(kCall_180, steamIDFriend, iMessageID, pvData, cubData, peChatEntryType);
+        return steammock::slot<std::int32_t>(kCall_180, steamIDFriend, iMessageID, pvData, cubData, peChatEntryType);
     }
     virtual std::uint64_t GetFollowerCount(CSteamID steamID) {
-        return steambridge::slot<std::uint64_t>(kCall_181, steamID);
+        return steammock::slot<std::uint64_t>(kCall_181, steamID);
     }
     virtual std::uint64_t IsFollowing(CSteamID steamID) {
-        return steambridge::slot<std::uint64_t>(kCall_182, steamID);
+        return steammock::slot<std::uint64_t>(kCall_182, steamID);
     }
     virtual std::uint64_t EnumerateFollowingList(std::uint32_t unStartIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_183, unStartIndex);
+        return steammock::slot<std::uint64_t>(kCall_183, unStartIndex);
     }
 };
 
@@ -3450,237 +3444,233 @@ Version_SteamFriends015 g_SteamFriends015;
 // ISteamFriends SteamFriends017
 class Version_SteamFriends017 {
 public:
-    virtual const char* GetPersonaName() { return steambridge::slot<const char*>(kCall_114); }
+    virtual const char* GetPersonaName() { return steammock::slot<const char*>(kCall_114); }
     virtual std::uint64_t SetPersonaName(const char* pchPersonaName) {
-        return steambridge::slot<std::uint64_t>(kCall_115, pchPersonaName);
+        return steammock::slot<std::uint64_t>(kCall_115, pchPersonaName);
     }
-    virtual std::int32_t GetPersonaState() { return steambridge::slot<std::int32_t>(kCall_116); }
+    virtual std::int32_t GetPersonaState() { return steammock::slot<std::int32_t>(kCall_116); }
     virtual std::int32_t GetFriendCount(std::int32_t iFriendFlags) {
-        return steambridge::slot<std::int32_t>(kCall_117, iFriendFlags);
+        return steammock::slot<std::int32_t>(kCall_117, iFriendFlags);
     }
     virtual CSteamID GetFriendByIndex(std::int32_t iFriend, std::int32_t iFriendFlags) {
-        return steambridge::slot<CSteamID>(kCall_118, iFriend, iFriendFlags);
+        return steammock::slot<CSteamID>(kCall_118, iFriend, iFriendFlags);
     }
     virtual std::int32_t GetFriendRelationship(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_119, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_119, steamIDFriend);
     }
     virtual std::int32_t GetFriendPersonaState(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_120, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_120, steamIDFriend);
     }
     virtual const char* GetFriendPersonaName(CSteamID steamIDFriend) {
-        return steambridge::slot<const char*>(kCall_121, steamIDFriend);
+        return steammock::slot<const char*>(kCall_121, steamIDFriend);
     }
     virtual bool GetFriendGamePlayed(CSteamID steamIDFriend, void* pFriendGameInfo) {
-        return steambridge::slot<bool>(kCall_122, steamIDFriend, pFriendGameInfo);
+        return steammock::slot<bool>(kCall_122, steamIDFriend, pFriendGameInfo);
     }
     virtual const char* GetFriendPersonaNameHistory(CSteamID steamIDFriend, std::int32_t iPersonaName) {
-        return steambridge::slot<const char*>(kCall_123, steamIDFriend, iPersonaName);
+        return steammock::slot<const char*>(kCall_123, steamIDFriend, iPersonaName);
     }
     virtual std::int32_t GetFriendSteamLevel(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_124, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_124, steamIDFriend);
     }
     virtual const char* GetPlayerNickname(CSteamID steamIDPlayer) {
-        return steambridge::slot<const char*>(kCall_125, steamIDPlayer);
+        return steammock::slot<const char*>(kCall_125, steamIDPlayer);
     }
-    virtual std::int32_t GetFriendsGroupCount() {
-        return steambridge::slot<std::int32_t>(kCall_126);
-    }
+    virtual std::int32_t GetFriendsGroupCount() { return steammock::slot<std::int32_t>(kCall_126); }
     virtual std::int16_t GetFriendsGroupIDByIndex(std::int32_t iFG) {
-        return steambridge::slot<std::int16_t>(kCall_127, iFG);
+        return steammock::slot<std::int16_t>(kCall_127, iFG);
     }
     virtual const char* GetFriendsGroupName(std::int16_t friendsGroupID) {
-        return steambridge::slot<const char*>(kCall_128, friendsGroupID);
+        return steammock::slot<const char*>(kCall_128, friendsGroupID);
     }
     virtual std::int32_t GetFriendsGroupMembersCount(std::int16_t friendsGroupID) {
-        return steambridge::slot<std::int32_t>(kCall_129, friendsGroupID);
+        return steammock::slot<std::int32_t>(kCall_129, friendsGroupID);
     }
     virtual void GetFriendsGroupMembersList(std::int16_t friendsGroupID, CSteamID* pOutSteamIDMembers, std::int32_t nMembersCount) {
-        steambridge::slot<void>(kCall_130, friendsGroupID, pOutSteamIDMembers, nMembersCount);
+        steammock::slot<void>(kCall_130, friendsGroupID, pOutSteamIDMembers, nMembersCount);
     }
     virtual bool HasFriend(CSteamID steamIDFriend, std::int32_t iFriendFlags) {
-        return steambridge::slot<bool>(kCall_131, steamIDFriend, iFriendFlags);
+        return steammock::slot<bool>(kCall_131, steamIDFriend, iFriendFlags);
     }
-    virtual std::int32_t GetClanCount() { return steambridge::slot<std::int32_t>(kCall_132); }
+    virtual std::int32_t GetClanCount() { return steammock::slot<std::int32_t>(kCall_132); }
     virtual CSteamID GetClanByIndex(std::int32_t iClan) {
-        return steambridge::slot<CSteamID>(kCall_133, iClan);
+        return steammock::slot<CSteamID>(kCall_133, iClan);
     }
     virtual const char* GetClanName(CSteamID steamIDClan) {
-        return steambridge::slot<const char*>(kCall_134, steamIDClan);
+        return steammock::slot<const char*>(kCall_134, steamIDClan);
     }
     virtual const char* GetClanTag(CSteamID steamIDClan) {
-        return steambridge::slot<const char*>(kCall_135, steamIDClan);
+        return steammock::slot<const char*>(kCall_135, steamIDClan);
     }
     virtual bool GetClanActivityCounts(CSteamID steamIDClan, std::int32_t* pnOnline, std::int32_t* pnInGame, std::int32_t* pnChatting) {
-        return steambridge::slot<bool>(kCall_136, steamIDClan, pnOnline, pnInGame, pnChatting);
+        return steammock::slot<bool>(kCall_136, steamIDClan, pnOnline, pnInGame, pnChatting);
     }
     virtual std::uint64_t DownloadClanActivityCounts(CSteamID* psteamIDClans, std::int32_t cClansToRequest) {
-        return steambridge::slot<std::uint64_t>(kCall_137, psteamIDClans, cClansToRequest);
+        return steammock::slot<std::uint64_t>(kCall_137, psteamIDClans, cClansToRequest);
     }
     virtual std::int32_t GetFriendCountFromSource(CSteamID steamIDSource) {
-        return steambridge::slot<std::int32_t>(kCall_138, steamIDSource);
+        return steammock::slot<std::int32_t>(kCall_138, steamIDSource);
     }
     virtual CSteamID GetFriendFromSourceByIndex(CSteamID steamIDSource, std::int32_t iFriend) {
-        return steambridge::slot<CSteamID>(kCall_139, steamIDSource, iFriend);
+        return steammock::slot<CSteamID>(kCall_139, steamIDSource, iFriend);
     }
     virtual bool IsUserInSource(CSteamID steamIDUser, CSteamID steamIDSource) {
-        return steambridge::slot<bool>(kCall_140, steamIDUser, steamIDSource);
+        return steammock::slot<bool>(kCall_140, steamIDUser, steamIDSource);
     }
     virtual void SetInGameVoiceSpeaking(CSteamID steamIDUser, bool bSpeaking) {
-        steambridge::slot<void>(kCall_141, steamIDUser, bSpeaking);
+        steammock::slot<void>(kCall_141, steamIDUser, bSpeaking);
     }
     virtual void ActivateGameOverlay(const char* pchDialog) {
-        steambridge::slot<void>(kCall_142, pchDialog);
+        steammock::slot<void>(kCall_142, pchDialog);
     }
     virtual void ActivateGameOverlayToUser(const char* pchDialog, CSteamID steamID) {
-        steambridge::slot<void>(kCall_143, pchDialog, steamID);
+        steammock::slot<void>(kCall_143, pchDialog, steamID);
     }
     virtual void ActivateGameOverlayToWebPage(const char* pchURL, std::int32_t eMode) {
-        steambridge::slot<void>(kCall_184, pchURL, eMode);
+        steammock::slot<void>(kCall_184, pchURL, eMode);
     }
     virtual void ActivateGameOverlayToStore(std::uint32_t nAppID, std::int32_t eFlag) {
-        steambridge::slot<void>(kCall_145, nAppID, eFlag);
+        steammock::slot<void>(kCall_145, nAppID, eFlag);
     }
     virtual void SetPlayedWith(CSteamID steamIDUserPlayedWith) {
-        steambridge::slot<void>(kCall_146, steamIDUserPlayedWith);
+        steammock::slot<void>(kCall_146, steamIDUserPlayedWith);
     }
     virtual void ActivateGameOverlayInviteDialog(CSteamID steamIDLobby) {
-        steambridge::slot<void>(kCall_147, steamIDLobby);
+        steammock::slot<void>(kCall_147, steamIDLobby);
     }
     virtual std::int32_t GetSmallFriendAvatar(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_148, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_148, steamIDFriend);
     }
     virtual std::int32_t GetMediumFriendAvatar(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_149, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_149, steamIDFriend);
     }
     virtual std::int32_t GetLargeFriendAvatar(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_150, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_150, steamIDFriend);
     }
     virtual bool RequestUserInformation(CSteamID steamIDUser, bool bRequireNameOnly) {
-        return steambridge::slot<bool>(kCall_151, steamIDUser, bRequireNameOnly);
+        return steammock::slot<bool>(kCall_151, steamIDUser, bRequireNameOnly);
     }
     virtual std::uint64_t RequestClanOfficerList(CSteamID steamIDClan) {
-        return steambridge::slot<std::uint64_t>(kCall_152, steamIDClan);
+        return steammock::slot<std::uint64_t>(kCall_152, steamIDClan);
     }
     virtual CSteamID GetClanOwner(CSteamID steamIDClan) {
-        return steambridge::slot<CSteamID>(kCall_153, steamIDClan);
+        return steammock::slot<CSteamID>(kCall_153, steamIDClan);
     }
     virtual std::int32_t GetClanOfficerCount(CSteamID steamIDClan) {
-        return steambridge::slot<std::int32_t>(kCall_154, steamIDClan);
+        return steammock::slot<std::int32_t>(kCall_154, steamIDClan);
     }
     virtual CSteamID GetClanOfficerByIndex(CSteamID steamIDClan, std::int32_t iOfficer) {
-        return steambridge::slot<CSteamID>(kCall_155, steamIDClan, iOfficer);
+        return steammock::slot<CSteamID>(kCall_155, steamIDClan, iOfficer);
     }
     virtual std::uint32_t GetUserRestrictions() {
-        return steambridge::slot<std::uint32_t>(kCall_156);
+        return steammock::slot<std::uint32_t>(kCall_156);
     }
     virtual bool SetRichPresence(const char* pchKey, const char* pchValue) {
-        return steambridge::slot<bool>(kCall_157, pchKey, pchValue);
+        return steammock::slot<bool>(kCall_157, pchKey, pchValue);
     }
-    virtual void ClearRichPresence() { steambridge::slot<void>(kCall_158); }
+    virtual void ClearRichPresence() { steammock::slot<void>(kCall_158); }
     virtual const char* GetFriendRichPresence(CSteamID steamIDFriend, const char* pchKey) {
-        return steambridge::slot<const char*>(kCall_159, steamIDFriend, pchKey);
+        return steammock::slot<const char*>(kCall_159, steamIDFriend, pchKey);
     }
     virtual std::int32_t GetFriendRichPresenceKeyCount(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_160, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_160, steamIDFriend);
     }
     virtual const char* GetFriendRichPresenceKeyByIndex(CSteamID steamIDFriend, std::int32_t iKey) {
-        return steambridge::slot<const char*>(kCall_161, steamIDFriend, iKey);
+        return steammock::slot<const char*>(kCall_161, steamIDFriend, iKey);
     }
     virtual void RequestFriendRichPresence(CSteamID steamIDFriend) {
-        steambridge::slot<void>(kCall_162, steamIDFriend);
+        steammock::slot<void>(kCall_162, steamIDFriend);
     }
     virtual bool InviteUserToGame(CSteamID steamIDFriend, const char* pchConnectString) {
-        return steambridge::slot<bool>(kCall_163, steamIDFriend, pchConnectString);
+        return steammock::slot<bool>(kCall_163, steamIDFriend, pchConnectString);
     }
-    virtual std::int32_t GetCoplayFriendCount() {
-        return steambridge::slot<std::int32_t>(kCall_164);
-    }
+    virtual std::int32_t GetCoplayFriendCount() { return steammock::slot<std::int32_t>(kCall_164); }
     virtual CSteamID GetCoplayFriend(std::int32_t iCoplayFriend) {
-        return steambridge::slot<CSteamID>(kCall_165, iCoplayFriend);
+        return steammock::slot<CSteamID>(kCall_165, iCoplayFriend);
     }
     virtual std::int32_t GetFriendCoplayTime(CSteamID steamIDFriend) {
-        return steambridge::slot<std::int32_t>(kCall_166, steamIDFriend);
+        return steammock::slot<std::int32_t>(kCall_166, steamIDFriend);
     }
     virtual std::uint32_t GetFriendCoplayGame(CSteamID steamIDFriend) {
-        return steambridge::slot<std::uint32_t>(kCall_167, steamIDFriend);
+        return steammock::slot<std::uint32_t>(kCall_167, steamIDFriend);
     }
     virtual std::uint64_t JoinClanChatRoom(CSteamID steamIDClan) {
-        return steambridge::slot<std::uint64_t>(kCall_168, steamIDClan);
+        return steammock::slot<std::uint64_t>(kCall_168, steamIDClan);
     }
     virtual bool LeaveClanChatRoom(CSteamID steamIDClan) {
-        return steambridge::slot<bool>(kCall_169, steamIDClan);
+        return steammock::slot<bool>(kCall_169, steamIDClan);
     }
     virtual std::int32_t GetClanChatMemberCount(CSteamID steamIDClan) {
-        return steambridge::slot<std::int32_t>(kCall_170, steamIDClan);
+        return steammock::slot<std::int32_t>(kCall_170, steamIDClan);
     }
     virtual CSteamID GetChatMemberByIndex(CSteamID steamIDClan, std::int32_t iUser) {
-        return steambridge::slot<CSteamID>(kCall_171, steamIDClan, iUser);
+        return steammock::slot<CSteamID>(kCall_171, steamIDClan, iUser);
     }
     virtual bool SendClanChatMessage(CSteamID steamIDClanChat, const char* pchText) {
-        return steambridge::slot<bool>(kCall_172, steamIDClanChat, pchText);
+        return steammock::slot<bool>(kCall_172, steamIDClanChat, pchText);
     }
     virtual std::int32_t GetClanChatMessage(CSteamID steamIDClanChat, std::int32_t iMessage, void* prgchText, std::int32_t cchTextMax, std::int32_t* peChatEntryType, CSteamID* psteamidChatter) {
-        return steambridge::slot<std::int32_t>(kCall_173, steamIDClanChat, iMessage, prgchText, cchTextMax, peChatEntryType, psteamidChatter);
+        return steammock::slot<std::int32_t>(kCall_173, steamIDClanChat, iMessage, prgchText, cchTextMax, peChatEntryType, psteamidChatter);
     }
     virtual bool IsClanChatAdmin(CSteamID steamIDClanChat, CSteamID steamIDUser) {
-        return steambridge::slot<bool>(kCall_174, steamIDClanChat, steamIDUser);
+        return steammock::slot<bool>(kCall_174, steamIDClanChat, steamIDUser);
     }
     virtual bool IsClanChatWindowOpenInSteam(CSteamID steamIDClanChat) {
-        return steambridge::slot<bool>(kCall_175, steamIDClanChat);
+        return steammock::slot<bool>(kCall_175, steamIDClanChat);
     }
     virtual bool OpenClanChatWindowInSteam(CSteamID steamIDClanChat) {
-        return steambridge::slot<bool>(kCall_176, steamIDClanChat);
+        return steammock::slot<bool>(kCall_176, steamIDClanChat);
     }
     virtual bool CloseClanChatWindowInSteam(CSteamID steamIDClanChat) {
-        return steambridge::slot<bool>(kCall_177, steamIDClanChat);
+        return steammock::slot<bool>(kCall_177, steamIDClanChat);
     }
     virtual bool SetListenForFriendsMessages(bool bInterceptEnabled) {
-        return steambridge::slot<bool>(kCall_178, bInterceptEnabled);
+        return steammock::slot<bool>(kCall_178, bInterceptEnabled);
     }
     virtual bool ReplyToFriendMessage(CSteamID steamIDFriend, const char* pchMsgToSend) {
-        return steambridge::slot<bool>(kCall_179, steamIDFriend, pchMsgToSend);
+        return steammock::slot<bool>(kCall_179, steamIDFriend, pchMsgToSend);
     }
     virtual std::int32_t GetFriendMessage(CSteamID steamIDFriend, std::int32_t iMessageID, void* pvData, std::int32_t cubData, std::int32_t* peChatEntryType) {
-        return steambridge::slot<std::int32_t>(kCall_180, steamIDFriend, iMessageID, pvData, cubData, peChatEntryType);
+        return steammock::slot<std::int32_t>(kCall_180, steamIDFriend, iMessageID, pvData, cubData, peChatEntryType);
     }
     virtual std::uint64_t GetFollowerCount(CSteamID steamID) {
-        return steambridge::slot<std::uint64_t>(kCall_181, steamID);
+        return steammock::slot<std::uint64_t>(kCall_181, steamID);
     }
     virtual std::uint64_t IsFollowing(CSteamID steamID) {
-        return steambridge::slot<std::uint64_t>(kCall_182, steamID);
+        return steammock::slot<std::uint64_t>(kCall_182, steamID);
     }
     virtual std::uint64_t EnumerateFollowingList(std::uint32_t unStartIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_183, unStartIndex);
+        return steammock::slot<std::uint64_t>(kCall_183, unStartIndex);
     }
     virtual bool IsClanPublic(CSteamID steamIDClan) {
-        return steambridge::slot<bool>(kCall_185, steamIDClan);
+        return steammock::slot<bool>(kCall_185, steamIDClan);
     }
     virtual bool IsClanOfficialGameGroup(CSteamID steamIDClan) {
-        return steambridge::slot<bool>(kCall_186, steamIDClan);
+        return steammock::slot<bool>(kCall_186, steamIDClan);
     }
     virtual std::int32_t GetNumChatsWithUnreadPriorityMessages() {
-        return steambridge::slot<std::int32_t>(kCall_187);
+        return steammock::slot<std::int32_t>(kCall_187);
     }
     virtual void ActivateGameOverlayRemotePlayTogetherInviteDialog(CSteamID steamIDLobby) {
-        steambridge::slot<void>(kCall_188, steamIDLobby);
+        steammock::slot<void>(kCall_188, steamIDLobby);
     }
     virtual bool RegisterProtocolInOverlayBrowser(const char* pchProtocol) {
-        return steambridge::slot<bool>(kCall_189, pchProtocol);
+        return steammock::slot<bool>(kCall_189, pchProtocol);
     }
     virtual void ActivateGameOverlayInviteDialogConnectString(const char* pchConnectString) {
-        steambridge::slot<void>(kCall_190, pchConnectString);
+        steammock::slot<void>(kCall_190, pchConnectString);
     }
     virtual std::uint64_t RequestEquippedProfileItems(CSteamID steamID) {
-        return steambridge::slot<std::uint64_t>(kCall_191, steamID);
+        return steammock::slot<std::uint64_t>(kCall_191, steamID);
     }
     virtual bool BHasEquippedProfileItem(CSteamID steamID, std::int32_t itemType) {
-        return steambridge::slot<bool>(kCall_192, steamID, itemType);
+        return steammock::slot<bool>(kCall_192, steamID, itemType);
     }
     virtual const char* GetProfileItemPropertyString(CSteamID steamID, std::int32_t itemType, std::int32_t prop) {
-        return steambridge::slot<const char*>(kCall_193, steamID, itemType, prop);
+        return steammock::slot<const char*>(kCall_193, steamID, itemType, prop);
     }
     virtual std::uint32_t GetProfileItemPropertyUint(CSteamID steamID, std::int32_t itemType, std::int32_t prop) {
-        return steambridge::slot<std::uint32_t>(kCall_194, steamID, itemType, prop);
+        return steammock::slot<std::uint32_t>(kCall_194, steamID, itemType, prop);
     }
 };
 
@@ -3690,40 +3680,40 @@ Version_SteamFriends017 g_SteamFriends017;
 class Version_SteamMatchGameSearch001 {
 public:
     virtual std::int32_t AddGameSearchParams(const char* pchKeyToFind, const char* pchValuesToFind) {
-        return steambridge::slot<std::int32_t>(kCall_195, pchKeyToFind, pchValuesToFind);
+        return steammock::slot<std::int32_t>(kCall_195, pchKeyToFind, pchValuesToFind);
     }
     virtual std::int32_t SearchForGameWithLobby(CSteamID steamIDLobby, std::int32_t nPlayerMin, std::int32_t nPlayerMax) {
-        return steambridge::slot<std::int32_t>(kCall_196, steamIDLobby, nPlayerMin, nPlayerMax);
+        return steammock::slot<std::int32_t>(kCall_196, steamIDLobby, nPlayerMin, nPlayerMax);
     }
     virtual std::int32_t SearchForGameSolo(std::int32_t nPlayerMin, std::int32_t nPlayerMax) {
-        return steambridge::slot<std::int32_t>(kCall_197, nPlayerMin, nPlayerMax);
+        return steammock::slot<std::int32_t>(kCall_197, nPlayerMin, nPlayerMax);
     }
-    virtual std::int32_t AcceptGame() { return steambridge::slot<std::int32_t>(kCall_198); }
-    virtual std::int32_t DeclineGame() { return steambridge::slot<std::int32_t>(kCall_199); }
+    virtual std::int32_t AcceptGame() { return steammock::slot<std::int32_t>(kCall_198); }
+    virtual std::int32_t DeclineGame() { return steammock::slot<std::int32_t>(kCall_199); }
     virtual std::int32_t RetrieveConnectionDetails(CSteamID steamIDHost, void* pchConnectionDetails, std::int32_t cubConnectionDetails) {
-        return steambridge::slot<std::int32_t>(kCall_200, steamIDHost, pchConnectionDetails, cubConnectionDetails);
+        return steammock::slot<std::int32_t>(kCall_200, steamIDHost, pchConnectionDetails, cubConnectionDetails);
     }
-    virtual std::int32_t EndGameSearch() { return steambridge::slot<std::int32_t>(kCall_201); }
+    virtual std::int32_t EndGameSearch() { return steammock::slot<std::int32_t>(kCall_201); }
     virtual std::int32_t SetGameHostParams(const char* pchKey, const char* pchValue) {
-        return steambridge::slot<std::int32_t>(kCall_202, pchKey, pchValue);
+        return steammock::slot<std::int32_t>(kCall_202, pchKey, pchValue);
     }
     virtual std::int32_t SetConnectionDetails(const char* pchConnectionDetails, std::int32_t cubConnectionDetails) {
-        return steambridge::slot<std::int32_t>(kCall_203, pchConnectionDetails, cubConnectionDetails);
+        return steammock::slot<std::int32_t>(kCall_203, pchConnectionDetails, cubConnectionDetails);
     }
     virtual std::int32_t RequestPlayersForGame(std::int32_t nPlayerMin, std::int32_t nPlayerMax, std::int32_t nMaxTeamSize) {
-        return steambridge::slot<std::int32_t>(kCall_204, nPlayerMin, nPlayerMax, nMaxTeamSize);
+        return steammock::slot<std::int32_t>(kCall_204, nPlayerMin, nPlayerMax, nMaxTeamSize);
     }
     virtual std::int32_t HostConfirmGameStart(std::uint64_t ullUniqueGameID) {
-        return steambridge::slot<std::int32_t>(kCall_205, ullUniqueGameID);
+        return steammock::slot<std::int32_t>(kCall_205, ullUniqueGameID);
     }
     virtual std::int32_t CancelRequestPlayersForGame() {
-        return steambridge::slot<std::int32_t>(kCall_206);
+        return steammock::slot<std::int32_t>(kCall_206);
     }
     virtual std::int32_t SubmitPlayerResult(std::uint64_t ullUniqueGameID, CSteamID steamIDPlayer, std::int32_t EPlayerResult) {
-        return steambridge::slot<std::int32_t>(kCall_207, ullUniqueGameID, steamIDPlayer, EPlayerResult);
+        return steammock::slot<std::int32_t>(kCall_207, ullUniqueGameID, steamIDPlayer, EPlayerResult);
     }
     virtual std::int32_t EndGame(std::uint64_t ullUniqueGameID) {
-        return steambridge::slot<std::int32_t>(kCall_208, ullUniqueGameID);
+        return steammock::slot<std::int32_t>(kCall_208, ullUniqueGameID);
     }
 };
 
@@ -3733,106 +3723,106 @@ Version_SteamMatchGameSearch001 g_SteamMatchGameSearch001;
 class Version_SteamGameServer012 {
 public:
     virtual bool InitGameServer(std::uint32_t unIP, std::uint16_t usGamePort, std::uint16_t usQueryPort, std::uint32_t unFlags, std::uint32_t nGameAppId, const char* pchVersionString) {
-        return steambridge::slot<bool>(kCall_209, unIP, usGamePort, usQueryPort, unFlags, nGameAppId, pchVersionString);
+        return steammock::slot<bool>(kCall_209, unIP, usGamePort, usQueryPort, unFlags, nGameAppId, pchVersionString);
     }
     virtual void SetProduct(const char* pszProduct) {
-        steambridge::slot<void>(kCall_210, pszProduct);
+        steammock::slot<void>(kCall_210, pszProduct);
     }
     virtual void SetGameDescription(const char* pszGameDescription) {
-        steambridge::slot<void>(kCall_211, pszGameDescription);
+        steammock::slot<void>(kCall_211, pszGameDescription);
     }
-    virtual void SetModDir(const char* pszModDir) { steambridge::slot<void>(kCall_212, pszModDir); }
+    virtual void SetModDir(const char* pszModDir) { steammock::slot<void>(kCall_212, pszModDir); }
     virtual void SetDedicatedServer(bool bDedicated) {
-        steambridge::slot<void>(kCall_213, bDedicated);
+        steammock::slot<void>(kCall_213, bDedicated);
     }
-    virtual void LogOn(const char* pszToken) { steambridge::slot<void>(kCall_214, pszToken); }
-    virtual void LogOnAnonymous() { steambridge::slot<void>(kCall_215); }
-    virtual void LogOff() { steambridge::slot<void>(kCall_216); }
-    virtual bool BLoggedOn() { return steambridge::slot<bool>(kCall_217); }
-    virtual bool BSecure() { return steambridge::slot<bool>(kCall_218); }
-    virtual CSteamID GetSteamID() { return steambridge::slot<CSteamID>(kCall_219); }
-    virtual bool WasRestartRequested() { return steambridge::slot<bool>(kCall_220); }
+    virtual void LogOn(const char* pszToken) { steammock::slot<void>(kCall_214, pszToken); }
+    virtual void LogOnAnonymous() { steammock::slot<void>(kCall_215); }
+    virtual void LogOff() { steammock::slot<void>(kCall_216); }
+    virtual bool BLoggedOn() { return steammock::slot<bool>(kCall_217); }
+    virtual bool BSecure() { return steammock::slot<bool>(kCall_218); }
+    virtual CSteamID GetSteamID() { return steammock::slot<CSteamID>(kCall_219); }
+    virtual bool WasRestartRequested() { return steammock::slot<bool>(kCall_220); }
     virtual void SetMaxPlayerCount(std::int32_t cPlayersMax) {
-        steambridge::slot<void>(kCall_221, cPlayersMax);
+        steammock::slot<void>(kCall_221, cPlayersMax);
     }
     virtual void SetBotPlayerCount(std::int32_t cBotplayers) {
-        steambridge::slot<void>(kCall_222, cBotplayers);
+        steammock::slot<void>(kCall_222, cBotplayers);
     }
     virtual void SetServerName(const char* pszServerName) {
-        steambridge::slot<void>(kCall_223, pszServerName);
+        steammock::slot<void>(kCall_223, pszServerName);
     }
     virtual void SetMapName(const char* pszMapName) {
-        steambridge::slot<void>(kCall_224, pszMapName);
+        steammock::slot<void>(kCall_224, pszMapName);
     }
     virtual void SetPasswordProtected(bool bPasswordProtected) {
-        steambridge::slot<void>(kCall_225, bPasswordProtected);
+        steammock::slot<void>(kCall_225, bPasswordProtected);
     }
     virtual void SetSpectatorPort(std::uint16_t unSpectatorPort) {
-        steambridge::slot<void>(kCall_226, unSpectatorPort);
+        steammock::slot<void>(kCall_226, unSpectatorPort);
     }
     virtual void SetSpectatorServerName(const char* pszSpectatorServerName) {
-        steambridge::slot<void>(kCall_227, pszSpectatorServerName);
+        steammock::slot<void>(kCall_227, pszSpectatorServerName);
     }
-    virtual void ClearAllKeyValues() { steambridge::slot<void>(kCall_228); }
+    virtual void ClearAllKeyValues() { steammock::slot<void>(kCall_228); }
     virtual void SetKeyValue(const char* pKey, const char* pValue) {
-        steambridge::slot<void>(kCall_229, pKey, pValue);
+        steammock::slot<void>(kCall_229, pKey, pValue);
     }
     virtual void SetGameTags(const char* pchGameTags) {
-        steambridge::slot<void>(kCall_230, pchGameTags);
+        steammock::slot<void>(kCall_230, pchGameTags);
     }
     virtual void SetGameData(const char* pchGameData) {
-        steambridge::slot<void>(kCall_231, pchGameData);
+        steammock::slot<void>(kCall_231, pchGameData);
     }
-    virtual void SetRegion(const char* pszRegion) { steambridge::slot<void>(kCall_232, pszRegion); }
+    virtual void SetRegion(const char* pszRegion) { steammock::slot<void>(kCall_232, pszRegion); }
     virtual bool SendUserConnectAndAuthenticate(std::uint32_t unIPClient, void* pvAuthBlob, std::uint32_t cubAuthBlobSize, CSteamID* pSteamIDUser) {
-        return steambridge::slot<bool>(kCall_233, unIPClient, pvAuthBlob, cubAuthBlobSize, pSteamIDUser);
+        return steammock::slot<bool>(kCall_233, unIPClient, pvAuthBlob, cubAuthBlobSize, pSteamIDUser);
     }
     virtual CSteamID CreateUnauthenticatedUserConnection() {
-        return steambridge::slot<CSteamID>(kCall_234);
+        return steammock::slot<CSteamID>(kCall_234);
     }
     virtual void SendUserDisconnect(CSteamID steamIDUser) {
-        steambridge::slot<void>(kCall_235, steamIDUser);
+        steammock::slot<void>(kCall_235, steamIDUser);
     }
     virtual bool BUpdateUserData(CSteamID steamIDUser, const char* pchPlayerName, std::uint32_t uScore) {
-        return steambridge::slot<bool>(kCall_236, steamIDUser, pchPlayerName, uScore);
+        return steammock::slot<bool>(kCall_236, steamIDUser, pchPlayerName, uScore);
     }
     virtual std::uint32_t GetAuthSessionTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket) {
-        return steambridge::slot<std::uint32_t>(kCall_237, pTicket, cbMaxTicket, pcbTicket);
+        return steammock::slot<std::uint32_t>(kCall_237, pTicket, cbMaxTicket, pcbTicket);
     }
     virtual std::int32_t BeginAuthSession(void* pAuthTicket, std::int32_t cbAuthTicket, CSteamID steamID) {
-        return steambridge::slot<std::int32_t>(kCall_238, pAuthTicket, cbAuthTicket, steamID);
+        return steammock::slot<std::int32_t>(kCall_238, pAuthTicket, cbAuthTicket, steamID);
     }
-    virtual void EndAuthSession(CSteamID steamID) { steambridge::slot<void>(kCall_239, steamID); }
+    virtual void EndAuthSession(CSteamID steamID) { steammock::slot<void>(kCall_239, steamID); }
     virtual void CancelAuthTicket(std::uint32_t hAuthTicket) {
-        steambridge::slot<void>(kCall_240, hAuthTicket);
+        steammock::slot<void>(kCall_240, hAuthTicket);
     }
     virtual std::int32_t UserHasLicenseForApp(CSteamID steamID, std::uint32_t appID) {
-        return steambridge::slot<std::int32_t>(kCall_241, steamID, appID);
+        return steammock::slot<std::int32_t>(kCall_241, steamID, appID);
     }
     virtual bool RequestUserGroupStatus(CSteamID steamIDUser, CSteamID steamIDGroup) {
-        return steambridge::slot<bool>(kCall_242, steamIDUser, steamIDGroup);
+        return steammock::slot<bool>(kCall_242, steamIDUser, steamIDGroup);
     }
-    virtual void GetGameplayStats() { steambridge::slot<void>(kCall_243); }
+    virtual void GetGameplayStats() { steammock::slot<void>(kCall_243); }
     virtual std::uint64_t GetServerReputation() {
-        return steambridge::slot<std::uint64_t>(kCall_244);
+        return steammock::slot<std::uint64_t>(kCall_244);
     }
-    virtual std::uint32_t GetPublicIP() { return steambridge::slot<std::uint32_t>(kCall_245); }
+    virtual std::uint32_t GetPublicIP() { return steammock::slot<std::uint32_t>(kCall_245); }
     virtual bool HandleIncomingPacket(void* pData, std::int32_t cbData, std::uint32_t srcIP, std::uint16_t srcPort) {
-        return steambridge::slot<bool>(kCall_246, pData, cbData, srcIP, srcPort);
+        return steammock::slot<bool>(kCall_246, pData, cbData, srcIP, srcPort);
     }
     virtual std::int32_t GetNextOutgoingPacket(void* pOut, std::int32_t cbMaxOut, std::uint32_t* pNetAdr, std::uint16_t* pPort) {
-        return steambridge::slot<std::int32_t>(kCall_247, pOut, cbMaxOut, pNetAdr, pPort);
+        return steammock::slot<std::int32_t>(kCall_247, pOut, cbMaxOut, pNetAdr, pPort);
     }
-    virtual void EnableHeartbeats(bool bActive) { steambridge::slot<void>(kCall_248, bActive); }
+    virtual void EnableHeartbeats(bool bActive) { steammock::slot<void>(kCall_248, bActive); }
     virtual void SetHeartbeatInterval(std::int32_t iHeartbeatInterval) {
-        steambridge::slot<void>(kCall_249, iHeartbeatInterval);
+        steammock::slot<void>(kCall_249, iHeartbeatInterval);
     }
-    virtual void ForceHeartbeat() { steambridge::slot<void>(kCall_250); }
+    virtual void ForceHeartbeat() { steammock::slot<void>(kCall_250); }
     virtual std::uint64_t AssociateWithClan(CSteamID steamIDClan) {
-        return steambridge::slot<std::uint64_t>(kCall_251, steamIDClan);
+        return steammock::slot<std::uint64_t>(kCall_251, steamIDClan);
     }
     virtual std::uint64_t ComputeNewPlayerCompatibility(CSteamID steamIDNewPlayer) {
-        return steambridge::slot<std::uint64_t>(kCall_252, steamIDNewPlayer);
+        return steammock::slot<std::uint64_t>(kCall_252, steamIDNewPlayer);
     }
 };
 
@@ -3842,108 +3832,106 @@ Version_SteamGameServer012 g_SteamGameServer012;
 class Version_SteamGameServer013 {
 public:
     virtual bool InitGameServer(std::uint32_t unIP, std::uint16_t usGamePort, std::uint16_t usQueryPort, std::uint32_t unFlags, std::uint32_t nGameAppId, const char* pchVersionString) {
-        return steambridge::slot<bool>(kCall_253, unIP, usGamePort, usQueryPort, unFlags, nGameAppId, pchVersionString);
+        return steammock::slot<bool>(kCall_253, unIP, usGamePort, usQueryPort, unFlags, nGameAppId, pchVersionString);
     }
     virtual void SetProduct(const char* pszProduct) {
-        steambridge::slot<void>(kCall_210, pszProduct);
+        steammock::slot<void>(kCall_210, pszProduct);
     }
     virtual void SetGameDescription(const char* pszGameDescription) {
-        steambridge::slot<void>(kCall_211, pszGameDescription);
+        steammock::slot<void>(kCall_211, pszGameDescription);
     }
-    virtual void SetModDir(const char* pszModDir) { steambridge::slot<void>(kCall_212, pszModDir); }
+    virtual void SetModDir(const char* pszModDir) { steammock::slot<void>(kCall_212, pszModDir); }
     virtual void SetDedicatedServer(bool bDedicated) {
-        steambridge::slot<void>(kCall_213, bDedicated);
+        steammock::slot<void>(kCall_213, bDedicated);
     }
-    virtual void LogOn(const char* pszToken) { steambridge::slot<void>(kCall_214, pszToken); }
-    virtual void LogOnAnonymous() { steambridge::slot<void>(kCall_215); }
-    virtual void LogOff() { steambridge::slot<void>(kCall_216); }
-    virtual bool BLoggedOn() { return steambridge::slot<bool>(kCall_217); }
-    virtual bool BSecure() { return steambridge::slot<bool>(kCall_218); }
-    virtual CSteamID GetSteamID() { return steambridge::slot<CSteamID>(kCall_219); }
-    virtual bool WasRestartRequested() { return steambridge::slot<bool>(kCall_220); }
+    virtual void LogOn(const char* pszToken) { steammock::slot<void>(kCall_214, pszToken); }
+    virtual void LogOnAnonymous() { steammock::slot<void>(kCall_215); }
+    virtual void LogOff() { steammock::slot<void>(kCall_216); }
+    virtual bool BLoggedOn() { return steammock::slot<bool>(kCall_217); }
+    virtual bool BSecure() { return steammock::slot<bool>(kCall_218); }
+    virtual CSteamID GetSteamID() { return steammock::slot<CSteamID>(kCall_219); }
+    virtual bool WasRestartRequested() { return steammock::slot<bool>(kCall_220); }
     virtual void SetMaxPlayerCount(std::int32_t cPlayersMax) {
-        steambridge::slot<void>(kCall_221, cPlayersMax);
+        steammock::slot<void>(kCall_221, cPlayersMax);
     }
     virtual void SetBotPlayerCount(std::int32_t cBotplayers) {
-        steambridge::slot<void>(kCall_222, cBotplayers);
+        steammock::slot<void>(kCall_222, cBotplayers);
     }
     virtual void SetServerName(const char* pszServerName) {
-        steambridge::slot<void>(kCall_223, pszServerName);
+        steammock::slot<void>(kCall_223, pszServerName);
     }
     virtual void SetMapName(const char* pszMapName) {
-        steambridge::slot<void>(kCall_224, pszMapName);
+        steammock::slot<void>(kCall_224, pszMapName);
     }
     virtual void SetPasswordProtected(bool bPasswordProtected) {
-        steambridge::slot<void>(kCall_225, bPasswordProtected);
+        steammock::slot<void>(kCall_225, bPasswordProtected);
     }
     virtual void SetSpectatorPort(std::uint16_t unSpectatorPort) {
-        steambridge::slot<void>(kCall_226, unSpectatorPort);
+        steammock::slot<void>(kCall_226, unSpectatorPort);
     }
     virtual void SetSpectatorServerName(const char* pszSpectatorServerName) {
-        steambridge::slot<void>(kCall_227, pszSpectatorServerName);
+        steammock::slot<void>(kCall_227, pszSpectatorServerName);
     }
-    virtual void ClearAllKeyValues() { steambridge::slot<void>(kCall_228); }
+    virtual void ClearAllKeyValues() { steammock::slot<void>(kCall_228); }
     virtual void SetKeyValue(const char* pKey, const char* pValue) {
-        steambridge::slot<void>(kCall_229, pKey, pValue);
+        steammock::slot<void>(kCall_229, pKey, pValue);
     }
     virtual void SetGameTags(const char* pchGameTags) {
-        steambridge::slot<void>(kCall_230, pchGameTags);
+        steammock::slot<void>(kCall_230, pchGameTags);
     }
     virtual void SetGameData(const char* pchGameData) {
-        steambridge::slot<void>(kCall_231, pchGameData);
+        steammock::slot<void>(kCall_231, pchGameData);
     }
-    virtual void SetRegion(const char* pszRegion) { steambridge::slot<void>(kCall_232, pszRegion); }
+    virtual void SetRegion(const char* pszRegion) { steammock::slot<void>(kCall_232, pszRegion); }
     virtual bool SendUserConnectAndAuthenticate(std::uint32_t unIPClient, void* pvAuthBlob, std::uint32_t cubAuthBlobSize, CSteamID* pSteamIDUser) {
-        return steambridge::slot<bool>(kCall_233, unIPClient, pvAuthBlob, cubAuthBlobSize, pSteamIDUser);
+        return steammock::slot<bool>(kCall_233, unIPClient, pvAuthBlob, cubAuthBlobSize, pSteamIDUser);
     }
     virtual CSteamID CreateUnauthenticatedUserConnection() {
-        return steambridge::slot<CSteamID>(kCall_234);
+        return steammock::slot<CSteamID>(kCall_234);
     }
     virtual void SendUserDisconnect(CSteamID steamIDUser) {
-        steambridge::slot<void>(kCall_235, steamIDUser);
+        steammock::slot<void>(kCall_235, steamIDUser);
     }
     virtual bool BUpdateUserData(CSteamID steamIDUser, const char* pchPlayerName, std::uint32_t uScore) {
-        return steambridge::slot<bool>(kCall_236, steamIDUser, pchPlayerName, uScore);
+        return steammock::slot<bool>(kCall_236, steamIDUser, pchPlayerName, uScore);
     }
     virtual std::uint32_t GetAuthSessionTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket) {
-        return steambridge::slot<std::uint32_t>(kCall_237, pTicket, cbMaxTicket, pcbTicket);
+        return steammock::slot<std::uint32_t>(kCall_237, pTicket, cbMaxTicket, pcbTicket);
     }
     virtual std::int32_t BeginAuthSession(void* pAuthTicket, std::int32_t cbAuthTicket, CSteamID steamID) {
-        return steambridge::slot<std::int32_t>(kCall_238, pAuthTicket, cbAuthTicket, steamID);
+        return steammock::slot<std::int32_t>(kCall_238, pAuthTicket, cbAuthTicket, steamID);
     }
-    virtual void EndAuthSession(CSteamID steamID) { steambridge::slot<void>(kCall_239, steamID); }
+    virtual void EndAuthSession(CSteamID steamID) { steammock::slot<void>(kCall_239, steamID); }
     virtual void CancelAuthTicket(std::uint32_t hAuthTicket) {
-        steambridge::slot<void>(kCall_240, hAuthTicket);
+        steammock::slot<void>(kCall_240, hAuthTicket);
     }
     virtual std::int32_t UserHasLicenseForApp(CSteamID steamID, std::uint32_t appID) {
-        return steambridge::slot<std::int32_t>(kCall_241, steamID, appID);
+        return steammock::slot<std::int32_t>(kCall_241, steamID, appID);
     }
     virtual bool RequestUserGroupStatus(CSteamID steamIDUser, CSteamID steamIDGroup) {
-        return steambridge::slot<bool>(kCall_242, steamIDUser, steamIDGroup);
+        return steammock::slot<bool>(kCall_242, steamIDUser, steamIDGroup);
     }
-    virtual void GetGameplayStats() { steambridge::slot<void>(kCall_243); }
+    virtual void GetGameplayStats() { steammock::slot<void>(kCall_243); }
     virtual std::uint64_t GetServerReputation() {
-        return steambridge::slot<std::uint64_t>(kCall_244);
+        return steammock::slot<std::uint64_t>(kCall_244);
     }
-    virtual SteamIPAddress_t GetPublicIP() {
-        return steambridge::slot<SteamIPAddress_t>(kCall_245);
-    }
+    virtual SteamIPAddress_t GetPublicIP() { return steammock::slot<SteamIPAddress_t>(kCall_245); }
     virtual bool HandleIncomingPacket(void* pData, std::int32_t cbData, std::uint32_t srcIP, std::uint16_t srcPort) {
-        return steambridge::slot<bool>(kCall_246, pData, cbData, srcIP, srcPort);
+        return steammock::slot<bool>(kCall_246, pData, cbData, srcIP, srcPort);
     }
     virtual std::int32_t GetNextOutgoingPacket(void* pOut, std::int32_t cbMaxOut, std::uint32_t* pNetAdr, std::uint16_t* pPort) {
-        return steambridge::slot<std::int32_t>(kCall_247, pOut, cbMaxOut, pNetAdr, pPort);
+        return steammock::slot<std::int32_t>(kCall_247, pOut, cbMaxOut, pNetAdr, pPort);
     }
-    virtual void EnableHeartbeats(bool bActive) { steambridge::slot<void>(kCall_248, bActive); }
+    virtual void EnableHeartbeats(bool bActive) { steammock::slot<void>(kCall_248, bActive); }
     virtual void SetHeartbeatInterval(std::int32_t iHeartbeatInterval) {
-        steambridge::slot<void>(kCall_249, iHeartbeatInterval);
+        steammock::slot<void>(kCall_249, iHeartbeatInterval);
     }
-    virtual void ForceHeartbeat() { steambridge::slot<void>(kCall_250); }
+    virtual void ForceHeartbeat() { steammock::slot<void>(kCall_250); }
     virtual std::uint64_t AssociateWithClan(CSteamID steamIDClan) {
-        return steambridge::slot<std::uint64_t>(kCall_251, steamIDClan);
+        return steammock::slot<std::uint64_t>(kCall_251, steamIDClan);
     }
     virtual std::uint64_t ComputeNewPlayerCompatibility(CSteamID steamIDNewPlayer) {
-        return steambridge::slot<std::uint64_t>(kCall_252, steamIDNewPlayer);
+        return steammock::slot<std::uint64_t>(kCall_252, steamIDNewPlayer);
     }
 };
 
@@ -3953,111 +3941,109 @@ Version_SteamGameServer013 g_SteamGameServer013;
 class Version_SteamGameServer014 {
 public:
     virtual bool InitGameServer(std::uint32_t unIP, std::uint16_t usGamePort, std::uint16_t usQueryPort, std::uint32_t unFlags, std::uint32_t nGameAppId, const char* pchVersionString) {
-        return steambridge::slot<bool>(kCall_253, unIP, usGamePort, usQueryPort, unFlags, nGameAppId, pchVersionString);
+        return steammock::slot<bool>(kCall_253, unIP, usGamePort, usQueryPort, unFlags, nGameAppId, pchVersionString);
     }
     virtual void SetProduct(const char* pszProduct) {
-        steambridge::slot<void>(kCall_210, pszProduct);
+        steammock::slot<void>(kCall_210, pszProduct);
     }
     virtual void SetGameDescription(const char* pszGameDescription) {
-        steambridge::slot<void>(kCall_211, pszGameDescription);
+        steammock::slot<void>(kCall_211, pszGameDescription);
     }
-    virtual void SetModDir(const char* pszModDir) { steambridge::slot<void>(kCall_212, pszModDir); }
+    virtual void SetModDir(const char* pszModDir) { steammock::slot<void>(kCall_212, pszModDir); }
     virtual void SetDedicatedServer(bool bDedicated) {
-        steambridge::slot<void>(kCall_213, bDedicated);
+        steammock::slot<void>(kCall_213, bDedicated);
     }
-    virtual void LogOn(const char* pszToken) { steambridge::slot<void>(kCall_214, pszToken); }
-    virtual void LogOnAnonymous() { steambridge::slot<void>(kCall_215); }
-    virtual void LogOff() { steambridge::slot<void>(kCall_216); }
-    virtual bool BLoggedOn() { return steambridge::slot<bool>(kCall_217); }
-    virtual bool BSecure() { return steambridge::slot<bool>(kCall_218); }
-    virtual CSteamID GetSteamID() { return steambridge::slot<CSteamID>(kCall_219); }
-    virtual bool WasRestartRequested() { return steambridge::slot<bool>(kCall_220); }
+    virtual void LogOn(const char* pszToken) { steammock::slot<void>(kCall_214, pszToken); }
+    virtual void LogOnAnonymous() { steammock::slot<void>(kCall_215); }
+    virtual void LogOff() { steammock::slot<void>(kCall_216); }
+    virtual bool BLoggedOn() { return steammock::slot<bool>(kCall_217); }
+    virtual bool BSecure() { return steammock::slot<bool>(kCall_218); }
+    virtual CSteamID GetSteamID() { return steammock::slot<CSteamID>(kCall_219); }
+    virtual bool WasRestartRequested() { return steammock::slot<bool>(kCall_220); }
     virtual void SetMaxPlayerCount(std::int32_t cPlayersMax) {
-        steambridge::slot<void>(kCall_221, cPlayersMax);
+        steammock::slot<void>(kCall_221, cPlayersMax);
     }
     virtual void SetBotPlayerCount(std::int32_t cBotplayers) {
-        steambridge::slot<void>(kCall_222, cBotplayers);
+        steammock::slot<void>(kCall_222, cBotplayers);
     }
     virtual void SetServerName(const char* pszServerName) {
-        steambridge::slot<void>(kCall_223, pszServerName);
+        steammock::slot<void>(kCall_223, pszServerName);
     }
     virtual void SetMapName(const char* pszMapName) {
-        steambridge::slot<void>(kCall_224, pszMapName);
+        steammock::slot<void>(kCall_224, pszMapName);
     }
     virtual void SetPasswordProtected(bool bPasswordProtected) {
-        steambridge::slot<void>(kCall_225, bPasswordProtected);
+        steammock::slot<void>(kCall_225, bPasswordProtected);
     }
     virtual void SetSpectatorPort(std::uint16_t unSpectatorPort) {
-        steambridge::slot<void>(kCall_226, unSpectatorPort);
+        steammock::slot<void>(kCall_226, unSpectatorPort);
     }
     virtual void SetSpectatorServerName(const char* pszSpectatorServerName) {
-        steambridge::slot<void>(kCall_227, pszSpectatorServerName);
+        steammock::slot<void>(kCall_227, pszSpectatorServerName);
     }
-    virtual void ClearAllKeyValues() { steambridge::slot<void>(kCall_228); }
+    virtual void ClearAllKeyValues() { steammock::slot<void>(kCall_228); }
     virtual void SetKeyValue(const char* pKey, const char* pValue) {
-        steambridge::slot<void>(kCall_229, pKey, pValue);
+        steammock::slot<void>(kCall_229, pKey, pValue);
     }
     virtual void SetGameTags(const char* pchGameTags) {
-        steambridge::slot<void>(kCall_230, pchGameTags);
+        steammock::slot<void>(kCall_230, pchGameTags);
     }
     virtual void SetGameData(const char* pchGameData) {
-        steambridge::slot<void>(kCall_231, pchGameData);
+        steammock::slot<void>(kCall_231, pchGameData);
     }
-    virtual void SetRegion(const char* pszRegion) { steambridge::slot<void>(kCall_232, pszRegion); }
+    virtual void SetRegion(const char* pszRegion) { steammock::slot<void>(kCall_232, pszRegion); }
     virtual void SetAdvertiseServerActive(bool bActive) {
-        steambridge::slot<void>(kCall_254, bActive);
+        steammock::slot<void>(kCall_254, bActive);
     }
     virtual std::uint32_t GetAuthSessionTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket) {
-        return steambridge::slot<std::uint32_t>(kCall_237, pTicket, cbMaxTicket, pcbTicket);
+        return steammock::slot<std::uint32_t>(kCall_237, pTicket, cbMaxTicket, pcbTicket);
     }
     virtual std::int32_t BeginAuthSession(void* pAuthTicket, std::int32_t cbAuthTicket, CSteamID steamID) {
-        return steambridge::slot<std::int32_t>(kCall_238, pAuthTicket, cbAuthTicket, steamID);
+        return steammock::slot<std::int32_t>(kCall_238, pAuthTicket, cbAuthTicket, steamID);
     }
-    virtual void EndAuthSession(CSteamID steamID) { steambridge::slot<void>(kCall_239, steamID); }
+    virtual void EndAuthSession(CSteamID steamID) { steammock::slot<void>(kCall_239, steamID); }
     virtual void CancelAuthTicket(std::uint32_t hAuthTicket) {
-        steambridge::slot<void>(kCall_240, hAuthTicket);
+        steammock::slot<void>(kCall_240, hAuthTicket);
     }
     virtual std::int32_t UserHasLicenseForApp(CSteamID steamID, std::uint32_t appID) {
-        return steambridge::slot<std::int32_t>(kCall_241, steamID, appID);
+        return steammock::slot<std::int32_t>(kCall_241, steamID, appID);
     }
     virtual bool RequestUserGroupStatus(CSteamID steamIDUser, CSteamID steamIDGroup) {
-        return steambridge::slot<bool>(kCall_242, steamIDUser, steamIDGroup);
+        return steammock::slot<bool>(kCall_242, steamIDUser, steamIDGroup);
     }
-    virtual void GetGameplayStats() { steambridge::slot<void>(kCall_243); }
+    virtual void GetGameplayStats() { steammock::slot<void>(kCall_243); }
     virtual std::uint64_t GetServerReputation() {
-        return steambridge::slot<std::uint64_t>(kCall_244);
+        return steammock::slot<std::uint64_t>(kCall_244);
     }
-    virtual SteamIPAddress_t GetPublicIP() {
-        return steambridge::slot<SteamIPAddress_t>(kCall_245);
-    }
+    virtual SteamIPAddress_t GetPublicIP() { return steammock::slot<SteamIPAddress_t>(kCall_245); }
     virtual bool HandleIncomingPacket(void* pData, std::int32_t cbData, std::uint32_t srcIP, std::uint16_t srcPort) {
-        return steambridge::slot<bool>(kCall_246, pData, cbData, srcIP, srcPort);
+        return steammock::slot<bool>(kCall_246, pData, cbData, srcIP, srcPort);
     }
     virtual std::int32_t GetNextOutgoingPacket(void* pOut, std::int32_t cbMaxOut, std::uint32_t* pNetAdr, std::uint16_t* pPort) {
-        return steambridge::slot<std::int32_t>(kCall_247, pOut, cbMaxOut, pNetAdr, pPort);
+        return steammock::slot<std::int32_t>(kCall_247, pOut, cbMaxOut, pNetAdr, pPort);
     }
     virtual std::uint64_t AssociateWithClan(CSteamID steamIDClan) {
-        return steambridge::slot<std::uint64_t>(kCall_251, steamIDClan);
+        return steammock::slot<std::uint64_t>(kCall_251, steamIDClan);
     }
     virtual std::uint64_t ComputeNewPlayerCompatibility(CSteamID steamIDNewPlayer) {
-        return steambridge::slot<std::uint64_t>(kCall_252, steamIDNewPlayer);
+        return steammock::slot<std::uint64_t>(kCall_252, steamIDNewPlayer);
     }
     virtual bool SendUserConnectAndAuthenticate_DEPRECATED(std::uint32_t unIPClient, void* pvAuthBlob, std::uint32_t cubAuthBlobSize, CSteamID* pSteamIDUser) {
-        return steambridge::slot<bool>(kCall_255, unIPClient, pvAuthBlob, cubAuthBlobSize, pSteamIDUser);
+        return steammock::slot<bool>(kCall_255, unIPClient, pvAuthBlob, cubAuthBlobSize, pSteamIDUser);
     }
     virtual CSteamID CreateUnauthenticatedUserConnection() {
-        return steambridge::slot<CSteamID>(kCall_234);
+        return steammock::slot<CSteamID>(kCall_234);
     }
     virtual void SendUserDisconnect_DEPRECATED(CSteamID steamIDUser) {
-        steambridge::slot<void>(kCall_256, steamIDUser);
+        steammock::slot<void>(kCall_256, steamIDUser);
     }
     virtual bool BUpdateUserData(CSteamID steamIDUser, const char* pchPlayerName, std::uint32_t uScore) {
-        return steambridge::slot<bool>(kCall_236, steamIDUser, pchPlayerName, uScore);
+        return steammock::slot<bool>(kCall_236, steamIDUser, pchPlayerName, uScore);
     }
     virtual void SetMasterServerHeartbeatInterval_DEPRECATED(std::int32_t iHeartbeatInterval) {
-        steambridge::slot<void>(kCall_257, iHeartbeatInterval);
+        steammock::slot<void>(kCall_257, iHeartbeatInterval);
     }
-    virtual void ForceMasterServerHeartbeat_DEPRECATED() { steambridge::slot<void>(kCall_258); }
+    virtual void ForceMasterServerHeartbeat_DEPRECATED() { steammock::slot<void>(kCall_258); }
 };
 
 Version_SteamGameServer014 g_SteamGameServer014;
@@ -4066,111 +4052,109 @@ Version_SteamGameServer014 g_SteamGameServer014;
 class Version_SteamGameServer015 {
 public:
     virtual bool InitGameServer(std::uint32_t unIP, std::uint16_t usGamePort, std::uint16_t usQueryPort, std::uint32_t unFlags, std::uint32_t nGameAppId, const char* pchVersionString) {
-        return steambridge::slot<bool>(kCall_253, unIP, usGamePort, usQueryPort, unFlags, nGameAppId, pchVersionString);
+        return steammock::slot<bool>(kCall_253, unIP, usGamePort, usQueryPort, unFlags, nGameAppId, pchVersionString);
     }
     virtual void SetProduct(const char* pszProduct) {
-        steambridge::slot<void>(kCall_210, pszProduct);
+        steammock::slot<void>(kCall_210, pszProduct);
     }
     virtual void SetGameDescription(const char* pszGameDescription) {
-        steambridge::slot<void>(kCall_211, pszGameDescription);
+        steammock::slot<void>(kCall_211, pszGameDescription);
     }
-    virtual void SetModDir(const char* pszModDir) { steambridge::slot<void>(kCall_212, pszModDir); }
+    virtual void SetModDir(const char* pszModDir) { steammock::slot<void>(kCall_212, pszModDir); }
     virtual void SetDedicatedServer(bool bDedicated) {
-        steambridge::slot<void>(kCall_213, bDedicated);
+        steammock::slot<void>(kCall_213, bDedicated);
     }
-    virtual void LogOn(const char* pszToken) { steambridge::slot<void>(kCall_214, pszToken); }
-    virtual void LogOnAnonymous() { steambridge::slot<void>(kCall_215); }
-    virtual void LogOff() { steambridge::slot<void>(kCall_216); }
-    virtual bool BLoggedOn() { return steambridge::slot<bool>(kCall_217); }
-    virtual bool BSecure() { return steambridge::slot<bool>(kCall_218); }
-    virtual CSteamID GetSteamID() { return steambridge::slot<CSteamID>(kCall_219); }
-    virtual bool WasRestartRequested() { return steambridge::slot<bool>(kCall_220); }
+    virtual void LogOn(const char* pszToken) { steammock::slot<void>(kCall_214, pszToken); }
+    virtual void LogOnAnonymous() { steammock::slot<void>(kCall_215); }
+    virtual void LogOff() { steammock::slot<void>(kCall_216); }
+    virtual bool BLoggedOn() { return steammock::slot<bool>(kCall_217); }
+    virtual bool BSecure() { return steammock::slot<bool>(kCall_218); }
+    virtual CSteamID GetSteamID() { return steammock::slot<CSteamID>(kCall_219); }
+    virtual bool WasRestartRequested() { return steammock::slot<bool>(kCall_220); }
     virtual void SetMaxPlayerCount(std::int32_t cPlayersMax) {
-        steambridge::slot<void>(kCall_221, cPlayersMax);
+        steammock::slot<void>(kCall_221, cPlayersMax);
     }
     virtual void SetBotPlayerCount(std::int32_t cBotplayers) {
-        steambridge::slot<void>(kCall_222, cBotplayers);
+        steammock::slot<void>(kCall_222, cBotplayers);
     }
     virtual void SetServerName(const char* pszServerName) {
-        steambridge::slot<void>(kCall_223, pszServerName);
+        steammock::slot<void>(kCall_223, pszServerName);
     }
     virtual void SetMapName(const char* pszMapName) {
-        steambridge::slot<void>(kCall_224, pszMapName);
+        steammock::slot<void>(kCall_224, pszMapName);
     }
     virtual void SetPasswordProtected(bool bPasswordProtected) {
-        steambridge::slot<void>(kCall_225, bPasswordProtected);
+        steammock::slot<void>(kCall_225, bPasswordProtected);
     }
     virtual void SetSpectatorPort(std::uint16_t unSpectatorPort) {
-        steambridge::slot<void>(kCall_226, unSpectatorPort);
+        steammock::slot<void>(kCall_226, unSpectatorPort);
     }
     virtual void SetSpectatorServerName(const char* pszSpectatorServerName) {
-        steambridge::slot<void>(kCall_227, pszSpectatorServerName);
+        steammock::slot<void>(kCall_227, pszSpectatorServerName);
     }
-    virtual void ClearAllKeyValues() { steambridge::slot<void>(kCall_228); }
+    virtual void ClearAllKeyValues() { steammock::slot<void>(kCall_228); }
     virtual void SetKeyValue(const char* pKey, const char* pValue) {
-        steambridge::slot<void>(kCall_229, pKey, pValue);
+        steammock::slot<void>(kCall_229, pKey, pValue);
     }
     virtual void SetGameTags(const char* pchGameTags) {
-        steambridge::slot<void>(kCall_230, pchGameTags);
+        steammock::slot<void>(kCall_230, pchGameTags);
     }
     virtual void SetGameData(const char* pchGameData) {
-        steambridge::slot<void>(kCall_231, pchGameData);
+        steammock::slot<void>(kCall_231, pchGameData);
     }
-    virtual void SetRegion(const char* pszRegion) { steambridge::slot<void>(kCall_232, pszRegion); }
+    virtual void SetRegion(const char* pszRegion) { steammock::slot<void>(kCall_232, pszRegion); }
     virtual void SetAdvertiseServerActive(bool bActive) {
-        steambridge::slot<void>(kCall_254, bActive);
+        steammock::slot<void>(kCall_254, bActive);
     }
     virtual std::uint32_t GetAuthSessionTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket, void* pSnid) {
-        return steambridge::slot<std::uint32_t>(kCall_259, pTicket, cbMaxTicket, pcbTicket, pSnid);
+        return steammock::slot<std::uint32_t>(kCall_259, pTicket, cbMaxTicket, pcbTicket, pSnid);
     }
     virtual std::int32_t BeginAuthSession(void* pAuthTicket, std::int32_t cbAuthTicket, CSteamID steamID) {
-        return steambridge::slot<std::int32_t>(kCall_238, pAuthTicket, cbAuthTicket, steamID);
+        return steammock::slot<std::int32_t>(kCall_238, pAuthTicket, cbAuthTicket, steamID);
     }
-    virtual void EndAuthSession(CSteamID steamID) { steambridge::slot<void>(kCall_239, steamID); }
+    virtual void EndAuthSession(CSteamID steamID) { steammock::slot<void>(kCall_239, steamID); }
     virtual void CancelAuthTicket(std::uint32_t hAuthTicket) {
-        steambridge::slot<void>(kCall_240, hAuthTicket);
+        steammock::slot<void>(kCall_240, hAuthTicket);
     }
     virtual std::int32_t UserHasLicenseForApp(CSteamID steamID, std::uint32_t appID) {
-        return steambridge::slot<std::int32_t>(kCall_241, steamID, appID);
+        return steammock::slot<std::int32_t>(kCall_241, steamID, appID);
     }
     virtual bool RequestUserGroupStatus(CSteamID steamIDUser, CSteamID steamIDGroup) {
-        return steambridge::slot<bool>(kCall_242, steamIDUser, steamIDGroup);
+        return steammock::slot<bool>(kCall_242, steamIDUser, steamIDGroup);
     }
-    virtual void GetGameplayStats() { steambridge::slot<void>(kCall_243); }
+    virtual void GetGameplayStats() { steammock::slot<void>(kCall_243); }
     virtual std::uint64_t GetServerReputation() {
-        return steambridge::slot<std::uint64_t>(kCall_244);
+        return steammock::slot<std::uint64_t>(kCall_244);
     }
-    virtual SteamIPAddress_t GetPublicIP() {
-        return steambridge::slot<SteamIPAddress_t>(kCall_245);
-    }
+    virtual SteamIPAddress_t GetPublicIP() { return steammock::slot<SteamIPAddress_t>(kCall_245); }
     virtual bool HandleIncomingPacket(void* pData, std::int32_t cbData, std::uint32_t srcIP, std::uint16_t srcPort) {
-        return steambridge::slot<bool>(kCall_246, pData, cbData, srcIP, srcPort);
+        return steammock::slot<bool>(kCall_246, pData, cbData, srcIP, srcPort);
     }
     virtual std::int32_t GetNextOutgoingPacket(void* pOut, std::int32_t cbMaxOut, std::uint32_t* pNetAdr, std::uint16_t* pPort) {
-        return steambridge::slot<std::int32_t>(kCall_247, pOut, cbMaxOut, pNetAdr, pPort);
+        return steammock::slot<std::int32_t>(kCall_247, pOut, cbMaxOut, pNetAdr, pPort);
     }
     virtual std::uint64_t AssociateWithClan(CSteamID steamIDClan) {
-        return steambridge::slot<std::uint64_t>(kCall_251, steamIDClan);
+        return steammock::slot<std::uint64_t>(kCall_251, steamIDClan);
     }
     virtual std::uint64_t ComputeNewPlayerCompatibility(CSteamID steamIDNewPlayer) {
-        return steambridge::slot<std::uint64_t>(kCall_252, steamIDNewPlayer);
+        return steammock::slot<std::uint64_t>(kCall_252, steamIDNewPlayer);
     }
     virtual bool SendUserConnectAndAuthenticate_DEPRECATED(std::uint32_t unIPClient, void* pvAuthBlob, std::uint32_t cubAuthBlobSize, CSteamID* pSteamIDUser) {
-        return steambridge::slot<bool>(kCall_255, unIPClient, pvAuthBlob, cubAuthBlobSize, pSteamIDUser);
+        return steammock::slot<bool>(kCall_255, unIPClient, pvAuthBlob, cubAuthBlobSize, pSteamIDUser);
     }
     virtual CSteamID CreateUnauthenticatedUserConnection() {
-        return steambridge::slot<CSteamID>(kCall_234);
+        return steammock::slot<CSteamID>(kCall_234);
     }
     virtual void SendUserDisconnect_DEPRECATED(CSteamID steamIDUser) {
-        steambridge::slot<void>(kCall_256, steamIDUser);
+        steammock::slot<void>(kCall_256, steamIDUser);
     }
     virtual bool BUpdateUserData(CSteamID steamIDUser, const char* pchPlayerName, std::uint32_t uScore) {
-        return steambridge::slot<bool>(kCall_236, steamIDUser, pchPlayerName, uScore);
+        return steammock::slot<bool>(kCall_236, steamIDUser, pchPlayerName, uScore);
     }
     virtual void SetMasterServerHeartbeatInterval_DEPRECATED(std::int32_t iHeartbeatInterval) {
-        steambridge::slot<void>(kCall_257, iHeartbeatInterval);
+        steammock::slot<void>(kCall_257, iHeartbeatInterval);
     }
-    virtual void ForceMasterServerHeartbeat_DEPRECATED() { steambridge::slot<void>(kCall_258); }
+    virtual void ForceMasterServerHeartbeat_DEPRECATED() { steammock::slot<void>(kCall_258); }
 };
 
 Version_SteamGameServer015 g_SteamGameServer015;
@@ -4179,34 +4163,34 @@ Version_SteamGameServer015 g_SteamGameServer015;
 class Version_SteamGameServerStats001 {
 public:
     virtual std::uint64_t RequestUserStats(CSteamID steamIDUser) {
-        return steambridge::slot<std::uint64_t>(kCall_260, steamIDUser);
+        return steammock::slot<std::uint64_t>(kCall_260, steamIDUser);
     }
     virtual bool GetUserStat(CSteamID steamIDUser, const char* pchName, std::int32_t* pData) {
-        return steambridge::slot<bool>(kCall_261, steamIDUser, pchName, pData);
+        return steammock::slot<bool>(kCall_261, steamIDUser, pchName, pData);
     }
     virtual bool GetUserStat(CSteamID steamIDUser, const char* pchName, float* pData) {
-        return steambridge::slot<bool>(kCall_262, steamIDUser, pchName, pData);
+        return steammock::slot<bool>(kCall_262, steamIDUser, pchName, pData);
     }
     virtual bool GetUserAchievement(CSteamID steamIDUser, const char* pchName, bool* pbAchieved) {
-        return steambridge::slot<bool>(kCall_263, steamIDUser, pchName, pbAchieved);
+        return steammock::slot<bool>(kCall_263, steamIDUser, pchName, pbAchieved);
     }
     virtual bool SetUserStat(CSteamID steamIDUser, const char* pchName, std::int32_t nData) {
-        return steambridge::slot<bool>(kCall_264, steamIDUser, pchName, nData);
+        return steammock::slot<bool>(kCall_264, steamIDUser, pchName, nData);
     }
     virtual bool SetUserStat(CSteamID steamIDUser, const char* pchName, float fData) {
-        return steambridge::slot<bool>(kCall_265, steamIDUser, pchName, fData);
+        return steammock::slot<bool>(kCall_265, steamIDUser, pchName, fData);
     }
     virtual bool UpdateUserAvgRateStat(CSteamID steamIDUser, const char* pchName, float flCountThisSession, double dSessionLength) {
-        return steambridge::slot<bool>(kCall_266, steamIDUser, pchName, flCountThisSession, dSessionLength);
+        return steammock::slot<bool>(kCall_266, steamIDUser, pchName, flCountThisSession, dSessionLength);
     }
     virtual bool SetUserAchievement(CSteamID steamIDUser, const char* pchName) {
-        return steambridge::slot<bool>(kCall_267, steamIDUser, pchName);
+        return steammock::slot<bool>(kCall_267, steamIDUser, pchName);
     }
     virtual bool ClearUserAchievement(CSteamID steamIDUser, const char* pchName) {
-        return steambridge::slot<bool>(kCall_268, steamIDUser, pchName);
+        return steammock::slot<bool>(kCall_268, steamIDUser, pchName);
     }
     virtual std::uint64_t StoreUserStats(CSteamID steamIDUser) {
-        return steambridge::slot<std::uint64_t>(kCall_269, steamIDUser);
+        return steammock::slot<std::uint64_t>(kCall_269, steamIDUser);
     }
 };
 
@@ -4216,109 +4200,109 @@ Version_SteamGameServerStats001 g_SteamGameServerStats001;
 class Version_STEAMHTMLSURFACE_INTERFACE_VERSION_004 {
 public:
     virtual ~Version_STEAMHTMLSURFACE_INTERFACE_VERSION_004() {}
-    virtual bool Init() { return steambridge::slot<bool>(kCall_270); }
-    virtual bool Shutdown() { return steambridge::slot<bool>(kCall_271); }
+    virtual bool Init() { return steammock::slot<bool>(kCall_270); }
+    virtual bool Shutdown() { return steammock::slot<bool>(kCall_271); }
     virtual std::uint64_t CreateBrowser(const char* pchUserAgent, const char* pchUserCSS) {
-        return steambridge::slot<std::uint64_t>(kCall_272, pchUserAgent, pchUserCSS);
+        return steammock::slot<std::uint64_t>(kCall_272, pchUserAgent, pchUserCSS);
     }
     virtual void RemoveBrowser(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_273, unBrowserHandle);
+        steammock::slot<void>(kCall_273, unBrowserHandle);
     }
     virtual void LoadURL(std::uint32_t unBrowserHandle, const char* pchURL, const char* pchPostData) {
-        steambridge::slot<void>(kCall_274, unBrowserHandle, pchURL, pchPostData);
+        steammock::slot<void>(kCall_274, unBrowserHandle, pchURL, pchPostData);
     }
     virtual void SetSize(std::uint32_t unBrowserHandle, std::uint32_t unWidth, std::uint32_t unHeight) {
-        steambridge::slot<void>(kCall_275, unBrowserHandle, unWidth, unHeight);
+        steammock::slot<void>(kCall_275, unBrowserHandle, unWidth, unHeight);
     }
     virtual void StopLoad(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_276, unBrowserHandle);
+        steammock::slot<void>(kCall_276, unBrowserHandle);
     }
     virtual void Reload(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_277, unBrowserHandle);
+        steammock::slot<void>(kCall_277, unBrowserHandle);
     }
     virtual void GoBack(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_278, unBrowserHandle);
+        steammock::slot<void>(kCall_278, unBrowserHandle);
     }
     virtual void GoForward(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_279, unBrowserHandle);
+        steammock::slot<void>(kCall_279, unBrowserHandle);
     }
     virtual void AddHeader(std::uint32_t unBrowserHandle, const char* pchKey, const char* pchValue) {
-        steambridge::slot<void>(kCall_280, unBrowserHandle, pchKey, pchValue);
+        steammock::slot<void>(kCall_280, unBrowserHandle, pchKey, pchValue);
     }
     virtual void ExecuteJavascript(std::uint32_t unBrowserHandle, const char* pchScript) {
-        steambridge::slot<void>(kCall_281, unBrowserHandle, pchScript);
+        steammock::slot<void>(kCall_281, unBrowserHandle, pchScript);
     }
     virtual void MouseUp(std::uint32_t unBrowserHandle, std::int32_t eMouseButton) {
-        steambridge::slot<void>(kCall_282, unBrowserHandle, eMouseButton);
+        steammock::slot<void>(kCall_282, unBrowserHandle, eMouseButton);
     }
     virtual void MouseDown(std::uint32_t unBrowserHandle, std::int32_t eMouseButton) {
-        steambridge::slot<void>(kCall_283, unBrowserHandle, eMouseButton);
+        steammock::slot<void>(kCall_283, unBrowserHandle, eMouseButton);
     }
     virtual void MouseDoubleClick(std::uint32_t unBrowserHandle, std::int32_t eMouseButton) {
-        steambridge::slot<void>(kCall_284, unBrowserHandle, eMouseButton);
+        steammock::slot<void>(kCall_284, unBrowserHandle, eMouseButton);
     }
     virtual void MouseMove(std::uint32_t unBrowserHandle, std::int32_t x, std::int32_t y) {
-        steambridge::slot<void>(kCall_285, unBrowserHandle, x, y);
+        steammock::slot<void>(kCall_285, unBrowserHandle, x, y);
     }
     virtual void MouseWheel(std::uint32_t unBrowserHandle, std::int32_t nDelta) {
-        steambridge::slot<void>(kCall_286, unBrowserHandle, nDelta);
+        steammock::slot<void>(kCall_286, unBrowserHandle, nDelta);
     }
     virtual void KeyDown(std::uint32_t unBrowserHandle, std::uint32_t nNativeKeyCode, std::int32_t eHTMLKeyModifiers) {
-        steambridge::slot<void>(kCall_287, unBrowserHandle, nNativeKeyCode, eHTMLKeyModifiers);
+        steammock::slot<void>(kCall_287, unBrowserHandle, nNativeKeyCode, eHTMLKeyModifiers);
     }
     virtual void KeyUp(std::uint32_t unBrowserHandle, std::uint32_t nNativeKeyCode, std::int32_t eHTMLKeyModifiers) {
-        steambridge::slot<void>(kCall_288, unBrowserHandle, nNativeKeyCode, eHTMLKeyModifiers);
+        steammock::slot<void>(kCall_288, unBrowserHandle, nNativeKeyCode, eHTMLKeyModifiers);
     }
     virtual void KeyChar(std::uint32_t unBrowserHandle, std::uint32_t cUnicodeChar, std::int32_t eHTMLKeyModifiers) {
-        steambridge::slot<void>(kCall_289, unBrowserHandle, cUnicodeChar, eHTMLKeyModifiers);
+        steammock::slot<void>(kCall_289, unBrowserHandle, cUnicodeChar, eHTMLKeyModifiers);
     }
     virtual void SetHorizontalScroll(std::uint32_t unBrowserHandle, std::uint32_t nAbsolutePixelScroll) {
-        steambridge::slot<void>(kCall_290, unBrowserHandle, nAbsolutePixelScroll);
+        steammock::slot<void>(kCall_290, unBrowserHandle, nAbsolutePixelScroll);
     }
     virtual void SetVerticalScroll(std::uint32_t unBrowserHandle, std::uint32_t nAbsolutePixelScroll) {
-        steambridge::slot<void>(kCall_291, unBrowserHandle, nAbsolutePixelScroll);
+        steammock::slot<void>(kCall_291, unBrowserHandle, nAbsolutePixelScroll);
     }
     virtual void SetKeyFocus(std::uint32_t unBrowserHandle, bool bHasKeyFocus) {
-        steambridge::slot<void>(kCall_292, unBrowserHandle, bHasKeyFocus);
+        steammock::slot<void>(kCall_292, unBrowserHandle, bHasKeyFocus);
     }
     virtual void ViewSource(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_293, unBrowserHandle);
+        steammock::slot<void>(kCall_293, unBrowserHandle);
     }
     virtual void CopyToClipboard(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_294, unBrowserHandle);
+        steammock::slot<void>(kCall_294, unBrowserHandle);
     }
     virtual void PasteFromClipboard(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_295, unBrowserHandle);
+        steammock::slot<void>(kCall_295, unBrowserHandle);
     }
     virtual void Find(std::uint32_t unBrowserHandle, const char* pchSearchStr, bool bCurrentlyInFind, bool bReverse) {
-        steambridge::slot<void>(kCall_296, unBrowserHandle, pchSearchStr, bCurrentlyInFind, bReverse);
+        steammock::slot<void>(kCall_296, unBrowserHandle, pchSearchStr, bCurrentlyInFind, bReverse);
     }
     virtual void StopFind(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_297, unBrowserHandle);
+        steammock::slot<void>(kCall_297, unBrowserHandle);
     }
     virtual void GetLinkAtPosition(std::uint32_t unBrowserHandle, std::int32_t x, std::int32_t y) {
-        steambridge::slot<void>(kCall_298, unBrowserHandle, x, y);
+        steammock::slot<void>(kCall_298, unBrowserHandle, x, y);
     }
     virtual void SetCookie(const char* pchHostname, const char* pchKey, const char* pchValue, const char* pchPath, std::uint32_t nExpires, bool bSecure, bool bHTTPOnly) {
-        steambridge::slot<void>(kCall_299, pchHostname, pchKey, pchValue, pchPath, nExpires, bSecure, bHTTPOnly);
+        steammock::slot<void>(kCall_299, pchHostname, pchKey, pchValue, pchPath, nExpires, bSecure, bHTTPOnly);
     }
     virtual void SetPageScaleFactor(std::uint32_t unBrowserHandle, float flZoom, std::int32_t nPointX, std::int32_t nPointY) {
-        steambridge::slot<void>(kCall_300, unBrowserHandle, flZoom, nPointX, nPointY);
+        steammock::slot<void>(kCall_300, unBrowserHandle, flZoom, nPointX, nPointY);
     }
     virtual void SetBackgroundMode(std::uint32_t unBrowserHandle, bool bBackgroundMode) {
-        steambridge::slot<void>(kCall_301, unBrowserHandle, bBackgroundMode);
+        steammock::slot<void>(kCall_301, unBrowserHandle, bBackgroundMode);
     }
     virtual void SetDPIScalingFactor(std::uint32_t unBrowserHandle, float flDPIScaling) {
-        steambridge::slot<void>(kCall_302, unBrowserHandle, flDPIScaling);
+        steammock::slot<void>(kCall_302, unBrowserHandle, flDPIScaling);
     }
     virtual void AllowStartRequest(std::uint32_t unBrowserHandle, bool bAllowed) {
-        steambridge::slot<void>(kCall_303, unBrowserHandle, bAllowed);
+        steammock::slot<void>(kCall_303, unBrowserHandle, bAllowed);
     }
     virtual void JSDialogResponse(std::uint32_t unBrowserHandle, bool bResult) {
-        steambridge::slot<void>(kCall_304, unBrowserHandle, bResult);
+        steammock::slot<void>(kCall_304, unBrowserHandle, bResult);
     }
     virtual void FileLoadDialogResponse(std::uint32_t unBrowserHandle, void* pchSelectedFiles) {
-        steambridge::slot<void>(kCall_305, unBrowserHandle, pchSelectedFiles);
+        steammock::slot<void>(kCall_305, unBrowserHandle, pchSelectedFiles);
     }
 };
 
@@ -4328,112 +4312,112 @@ Version_STEAMHTMLSURFACE_INTERFACE_VERSION_004 g_STEAMHTMLSURFACE_INTERFACE_VERS
 class Version_STEAMHTMLSURFACE_INTERFACE_VERSION_005 {
 public:
     virtual ~Version_STEAMHTMLSURFACE_INTERFACE_VERSION_005() {}
-    virtual bool Init() { return steambridge::slot<bool>(kCall_270); }
-    virtual bool Shutdown() { return steambridge::slot<bool>(kCall_271); }
+    virtual bool Init() { return steammock::slot<bool>(kCall_270); }
+    virtual bool Shutdown() { return steammock::slot<bool>(kCall_271); }
     virtual std::uint64_t CreateBrowser(const char* pchUserAgent, const char* pchUserCSS) {
-        return steambridge::slot<std::uint64_t>(kCall_272, pchUserAgent, pchUserCSS);
+        return steammock::slot<std::uint64_t>(kCall_272, pchUserAgent, pchUserCSS);
     }
     virtual void RemoveBrowser(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_273, unBrowserHandle);
+        steammock::slot<void>(kCall_273, unBrowserHandle);
     }
     virtual void LoadURL(std::uint32_t unBrowserHandle, const char* pchURL, const char* pchPostData) {
-        steambridge::slot<void>(kCall_274, unBrowserHandle, pchURL, pchPostData);
+        steammock::slot<void>(kCall_274, unBrowserHandle, pchURL, pchPostData);
     }
     virtual void SetSize(std::uint32_t unBrowserHandle, std::uint32_t unWidth, std::uint32_t unHeight) {
-        steambridge::slot<void>(kCall_275, unBrowserHandle, unWidth, unHeight);
+        steammock::slot<void>(kCall_275, unBrowserHandle, unWidth, unHeight);
     }
     virtual void StopLoad(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_276, unBrowserHandle);
+        steammock::slot<void>(kCall_276, unBrowserHandle);
     }
     virtual void Reload(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_277, unBrowserHandle);
+        steammock::slot<void>(kCall_277, unBrowserHandle);
     }
     virtual void GoBack(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_278, unBrowserHandle);
+        steammock::slot<void>(kCall_278, unBrowserHandle);
     }
     virtual void GoForward(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_279, unBrowserHandle);
+        steammock::slot<void>(kCall_279, unBrowserHandle);
     }
     virtual void AddHeader(std::uint32_t unBrowserHandle, const char* pchKey, const char* pchValue) {
-        steambridge::slot<void>(kCall_280, unBrowserHandle, pchKey, pchValue);
+        steammock::slot<void>(kCall_280, unBrowserHandle, pchKey, pchValue);
     }
     virtual void ExecuteJavascript(std::uint32_t unBrowserHandle, const char* pchScript) {
-        steambridge::slot<void>(kCall_281, unBrowserHandle, pchScript);
+        steammock::slot<void>(kCall_281, unBrowserHandle, pchScript);
     }
     virtual void MouseUp(std::uint32_t unBrowserHandle, std::int32_t eMouseButton) {
-        steambridge::slot<void>(kCall_282, unBrowserHandle, eMouseButton);
+        steammock::slot<void>(kCall_282, unBrowserHandle, eMouseButton);
     }
     virtual void MouseDown(std::uint32_t unBrowserHandle, std::int32_t eMouseButton) {
-        steambridge::slot<void>(kCall_283, unBrowserHandle, eMouseButton);
+        steammock::slot<void>(kCall_283, unBrowserHandle, eMouseButton);
     }
     virtual void MouseDoubleClick(std::uint32_t unBrowserHandle, std::int32_t eMouseButton) {
-        steambridge::slot<void>(kCall_284, unBrowserHandle, eMouseButton);
+        steammock::slot<void>(kCall_284, unBrowserHandle, eMouseButton);
     }
     virtual void MouseMove(std::uint32_t unBrowserHandle, std::int32_t x, std::int32_t y) {
-        steambridge::slot<void>(kCall_285, unBrowserHandle, x, y);
+        steammock::slot<void>(kCall_285, unBrowserHandle, x, y);
     }
     virtual void MouseWheel(std::uint32_t unBrowserHandle, std::int32_t nDelta) {
-        steambridge::slot<void>(kCall_286, unBrowserHandle, nDelta);
+        steammock::slot<void>(kCall_286, unBrowserHandle, nDelta);
     }
     virtual void KeyDown(std::uint32_t unBrowserHandle, std::uint32_t nNativeKeyCode, std::int32_t eHTMLKeyModifiers, bool bIsSystemKey) {
-        steambridge::slot<void>(kCall_306, unBrowserHandle, nNativeKeyCode, eHTMLKeyModifiers, bIsSystemKey);
+        steammock::slot<void>(kCall_306, unBrowserHandle, nNativeKeyCode, eHTMLKeyModifiers, bIsSystemKey);
     }
     virtual void KeyUp(std::uint32_t unBrowserHandle, std::uint32_t nNativeKeyCode, std::int32_t eHTMLKeyModifiers) {
-        steambridge::slot<void>(kCall_288, unBrowserHandle, nNativeKeyCode, eHTMLKeyModifiers);
+        steammock::slot<void>(kCall_288, unBrowserHandle, nNativeKeyCode, eHTMLKeyModifiers);
     }
     virtual void KeyChar(std::uint32_t unBrowserHandle, std::uint32_t cUnicodeChar, std::int32_t eHTMLKeyModifiers) {
-        steambridge::slot<void>(kCall_289, unBrowserHandle, cUnicodeChar, eHTMLKeyModifiers);
+        steammock::slot<void>(kCall_289, unBrowserHandle, cUnicodeChar, eHTMLKeyModifiers);
     }
     virtual void SetHorizontalScroll(std::uint32_t unBrowserHandle, std::uint32_t nAbsolutePixelScroll) {
-        steambridge::slot<void>(kCall_290, unBrowserHandle, nAbsolutePixelScroll);
+        steammock::slot<void>(kCall_290, unBrowserHandle, nAbsolutePixelScroll);
     }
     virtual void SetVerticalScroll(std::uint32_t unBrowserHandle, std::uint32_t nAbsolutePixelScroll) {
-        steambridge::slot<void>(kCall_291, unBrowserHandle, nAbsolutePixelScroll);
+        steammock::slot<void>(kCall_291, unBrowserHandle, nAbsolutePixelScroll);
     }
     virtual void SetKeyFocus(std::uint32_t unBrowserHandle, bool bHasKeyFocus) {
-        steambridge::slot<void>(kCall_292, unBrowserHandle, bHasKeyFocus);
+        steammock::slot<void>(kCall_292, unBrowserHandle, bHasKeyFocus);
     }
     virtual void ViewSource(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_293, unBrowserHandle);
+        steammock::slot<void>(kCall_293, unBrowserHandle);
     }
     virtual void CopyToClipboard(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_294, unBrowserHandle);
+        steammock::slot<void>(kCall_294, unBrowserHandle);
     }
     virtual void PasteFromClipboard(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_295, unBrowserHandle);
+        steammock::slot<void>(kCall_295, unBrowserHandle);
     }
     virtual void Find(std::uint32_t unBrowserHandle, const char* pchSearchStr, bool bCurrentlyInFind, bool bReverse) {
-        steambridge::slot<void>(kCall_296, unBrowserHandle, pchSearchStr, bCurrentlyInFind, bReverse);
+        steammock::slot<void>(kCall_296, unBrowserHandle, pchSearchStr, bCurrentlyInFind, bReverse);
     }
     virtual void StopFind(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_297, unBrowserHandle);
+        steammock::slot<void>(kCall_297, unBrowserHandle);
     }
     virtual void GetLinkAtPosition(std::uint32_t unBrowserHandle, std::int32_t x, std::int32_t y) {
-        steambridge::slot<void>(kCall_298, unBrowserHandle, x, y);
+        steammock::slot<void>(kCall_298, unBrowserHandle, x, y);
     }
     virtual void SetCookie(const char* pchHostname, const char* pchKey, const char* pchValue, const char* pchPath, std::uint32_t nExpires, bool bSecure, bool bHTTPOnly) {
-        steambridge::slot<void>(kCall_299, pchHostname, pchKey, pchValue, pchPath, nExpires, bSecure, bHTTPOnly);
+        steammock::slot<void>(kCall_299, pchHostname, pchKey, pchValue, pchPath, nExpires, bSecure, bHTTPOnly);
     }
     virtual void SetPageScaleFactor(std::uint32_t unBrowserHandle, float flZoom, std::int32_t nPointX, std::int32_t nPointY) {
-        steambridge::slot<void>(kCall_300, unBrowserHandle, flZoom, nPointX, nPointY);
+        steammock::slot<void>(kCall_300, unBrowserHandle, flZoom, nPointX, nPointY);
     }
     virtual void SetBackgroundMode(std::uint32_t unBrowserHandle, bool bBackgroundMode) {
-        steambridge::slot<void>(kCall_301, unBrowserHandle, bBackgroundMode);
+        steammock::slot<void>(kCall_301, unBrowserHandle, bBackgroundMode);
     }
     virtual void SetDPIScalingFactor(std::uint32_t unBrowserHandle, float flDPIScaling) {
-        steambridge::slot<void>(kCall_302, unBrowserHandle, flDPIScaling);
+        steammock::slot<void>(kCall_302, unBrowserHandle, flDPIScaling);
     }
     virtual void OpenDeveloperTools(std::uint32_t unBrowserHandle) {
-        steambridge::slot<void>(kCall_307, unBrowserHandle);
+        steammock::slot<void>(kCall_307, unBrowserHandle);
     }
     virtual void AllowStartRequest(std::uint32_t unBrowserHandle, bool bAllowed) {
-        steambridge::slot<void>(kCall_303, unBrowserHandle, bAllowed);
+        steammock::slot<void>(kCall_303, unBrowserHandle, bAllowed);
     }
     virtual void JSDialogResponse(std::uint32_t unBrowserHandle, bool bResult) {
-        steambridge::slot<void>(kCall_304, unBrowserHandle, bResult);
+        steammock::slot<void>(kCall_304, unBrowserHandle, bResult);
     }
     virtual void FileLoadDialogResponse(std::uint32_t unBrowserHandle, void* pchSelectedFiles) {
-        steambridge::slot<void>(kCall_308, unBrowserHandle, pchSelectedFiles);
+        steammock::slot<void>(kCall_308, unBrowserHandle, pchSelectedFiles);
     }
 };
 
@@ -4443,79 +4427,79 @@ Version_STEAMHTMLSURFACE_INTERFACE_VERSION_005 g_STEAMHTMLSURFACE_INTERFACE_VERS
 class Version_STEAMHTTP_INTERFACE_VERSION002 {
 public:
     virtual std::uint32_t CreateHTTPRequest(std::int32_t eHTTPRequestMethod, const char* pchAbsoluteURL) {
-        return steambridge::slot<std::uint32_t>(kCall_309, eHTTPRequestMethod, pchAbsoluteURL);
+        return steammock::slot<std::uint32_t>(kCall_309, eHTTPRequestMethod, pchAbsoluteURL);
     }
     virtual bool SetHTTPRequestContextValue(std::uint32_t hRequest, std::uint64_t ulContextValue) {
-        return steambridge::slot<bool>(kCall_310, hRequest, ulContextValue);
+        return steammock::slot<bool>(kCall_310, hRequest, ulContextValue);
     }
     virtual bool SetHTTPRequestNetworkActivityTimeout(std::uint32_t hRequest, std::uint32_t unTimeoutSeconds) {
-        return steambridge::slot<bool>(kCall_311, hRequest, unTimeoutSeconds);
+        return steammock::slot<bool>(kCall_311, hRequest, unTimeoutSeconds);
     }
     virtual bool SetHTTPRequestHeaderValue(std::uint32_t hRequest, const char* pchHeaderName, const char* pchHeaderValue) {
-        return steambridge::slot<bool>(kCall_312, hRequest, pchHeaderName, pchHeaderValue);
+        return steammock::slot<bool>(kCall_312, hRequest, pchHeaderName, pchHeaderValue);
     }
     virtual bool SetHTTPRequestGetOrPostParameter(std::uint32_t hRequest, const char* pchParamName, const char* pchParamValue) {
-        return steambridge::slot<bool>(kCall_313, hRequest, pchParamName, pchParamValue);
+        return steammock::slot<bool>(kCall_313, hRequest, pchParamName, pchParamValue);
     }
     virtual bool SendHTTPRequest(std::uint32_t hRequest, std::uint64_t* pCallHandle) {
-        return steambridge::slot<bool>(kCall_314, hRequest, pCallHandle);
+        return steammock::slot<bool>(kCall_314, hRequest, pCallHandle);
     }
     virtual bool SendHTTPRequestAndStreamResponse(std::uint32_t hRequest, std::uint64_t* pCallHandle) {
-        return steambridge::slot<bool>(kCall_315, hRequest, pCallHandle);
+        return steammock::slot<bool>(kCall_315, hRequest, pCallHandle);
     }
     virtual bool DeferHTTPRequest(std::uint32_t hRequest) {
-        return steambridge::slot<bool>(kCall_316, hRequest);
+        return steammock::slot<bool>(kCall_316, hRequest);
     }
     virtual bool PrioritizeHTTPRequest(std::uint32_t hRequest) {
-        return steambridge::slot<bool>(kCall_317, hRequest);
+        return steammock::slot<bool>(kCall_317, hRequest);
     }
     virtual bool GetHTTPResponseHeaderSize(std::uint32_t hRequest, const char* pchHeaderName, std::uint32_t* unResponseHeaderSize) {
-        return steambridge::slot<bool>(kCall_318, hRequest, pchHeaderName, unResponseHeaderSize);
+        return steammock::slot<bool>(kCall_318, hRequest, pchHeaderName, unResponseHeaderSize);
     }
     virtual bool GetHTTPResponseHeaderValue(std::uint32_t hRequest, const char* pchHeaderName, std::uint8_t* pHeaderValueBuffer, std::uint32_t unBufferSize) {
-        return steambridge::slot<bool>(kCall_319, hRequest, pchHeaderName, pHeaderValueBuffer, unBufferSize);
+        return steammock::slot<bool>(kCall_319, hRequest, pchHeaderName, pHeaderValueBuffer, unBufferSize);
     }
     virtual bool GetHTTPResponseBodySize(std::uint32_t hRequest, std::uint32_t* unBodySize) {
-        return steambridge::slot<bool>(kCall_320, hRequest, unBodySize);
+        return steammock::slot<bool>(kCall_320, hRequest, unBodySize);
     }
     virtual bool GetHTTPResponseBodyData(std::uint32_t hRequest, std::uint8_t* pBodyDataBuffer, std::uint32_t unBufferSize) {
-        return steambridge::slot<bool>(kCall_321, hRequest, pBodyDataBuffer, unBufferSize);
+        return steammock::slot<bool>(kCall_321, hRequest, pBodyDataBuffer, unBufferSize);
     }
     virtual bool GetHTTPStreamingResponseBodyData(std::uint32_t hRequest, std::uint32_t cOffset, std::uint8_t* pBodyDataBuffer, std::uint32_t unBufferSize) {
-        return steambridge::slot<bool>(kCall_322, hRequest, cOffset, pBodyDataBuffer, unBufferSize);
+        return steammock::slot<bool>(kCall_322, hRequest, cOffset, pBodyDataBuffer, unBufferSize);
     }
     virtual bool ReleaseHTTPRequest(std::uint32_t hRequest) {
-        return steambridge::slot<bool>(kCall_323, hRequest);
+        return steammock::slot<bool>(kCall_323, hRequest);
     }
     virtual bool GetHTTPDownloadProgressPct(std::uint32_t hRequest, float* pflPercentOut) {
-        return steambridge::slot<bool>(kCall_324, hRequest, pflPercentOut);
+        return steammock::slot<bool>(kCall_324, hRequest, pflPercentOut);
     }
     virtual bool SetHTTPRequestRawPostBody(std::uint32_t hRequest, const char* pchContentType, std::uint8_t* pubBody, std::uint32_t unBodyLen) {
-        return steambridge::slot<bool>(kCall_325, hRequest, pchContentType, pubBody, unBodyLen);
+        return steammock::slot<bool>(kCall_325, hRequest, pchContentType, pubBody, unBodyLen);
     }
     virtual std::uint32_t CreateCookieContainer(bool bAllowResponsesToModify) {
-        return steambridge::slot<std::uint32_t>(kCall_326, bAllowResponsesToModify);
+        return steammock::slot<std::uint32_t>(kCall_326, bAllowResponsesToModify);
     }
     virtual bool ReleaseCookieContainer(std::uint32_t hCookieContainer) {
-        return steambridge::slot<bool>(kCall_327, hCookieContainer);
+        return steammock::slot<bool>(kCall_327, hCookieContainer);
     }
     virtual bool SetCookie(std::uint32_t hCookieContainer, const char* pchHost, const char* pchUrl, const char* pchCookie) {
-        return steambridge::slot<bool>(kCall_328, hCookieContainer, pchHost, pchUrl, pchCookie);
+        return steammock::slot<bool>(kCall_328, hCookieContainer, pchHost, pchUrl, pchCookie);
     }
     virtual bool SetHTTPRequestCookieContainer(std::uint32_t hRequest, std::uint32_t hCookieContainer) {
-        return steambridge::slot<bool>(kCall_329, hRequest, hCookieContainer);
+        return steammock::slot<bool>(kCall_329, hRequest, hCookieContainer);
     }
     virtual bool SetHTTPRequestUserAgentInfo(std::uint32_t hRequest, const char* pchUserAgentInfo) {
-        return steambridge::slot<bool>(kCall_330, hRequest, pchUserAgentInfo);
+        return steammock::slot<bool>(kCall_330, hRequest, pchUserAgentInfo);
     }
     virtual bool SetHTTPRequestRequiresVerifiedCertificate(std::uint32_t hRequest, bool bRequireVerifiedCertificate) {
-        return steambridge::slot<bool>(kCall_331, hRequest, bRequireVerifiedCertificate);
+        return steammock::slot<bool>(kCall_331, hRequest, bRequireVerifiedCertificate);
     }
     virtual bool SetHTTPRequestAbsoluteTimeoutMS(std::uint32_t hRequest, std::uint32_t unMilliseconds) {
-        return steambridge::slot<bool>(kCall_332, hRequest, unMilliseconds);
+        return steammock::slot<bool>(kCall_332, hRequest, unMilliseconds);
     }
     virtual bool GetHTTPRequestWasTimedOut(std::uint32_t hRequest, bool* pbWasTimedOut) {
-        return steambridge::slot<bool>(kCall_333, hRequest, pbWasTimedOut);
+        return steammock::slot<bool>(kCall_333, hRequest, pbWasTimedOut);
     }
 };
 
@@ -4525,79 +4509,79 @@ Version_STEAMHTTP_INTERFACE_VERSION002 g_STEAMHTTP_INTERFACE_VERSION002;
 class Version_STEAMHTTP_INTERFACE_VERSION003 {
 public:
     virtual std::uint32_t CreateHTTPRequest(std::int32_t eHTTPRequestMethod, const char* pchAbsoluteURL) {
-        return steambridge::slot<std::uint32_t>(kCall_309, eHTTPRequestMethod, pchAbsoluteURL);
+        return steammock::slot<std::uint32_t>(kCall_309, eHTTPRequestMethod, pchAbsoluteURL);
     }
     virtual bool SetHTTPRequestContextValue(std::uint32_t hRequest, std::uint64_t ulContextValue) {
-        return steambridge::slot<bool>(kCall_310, hRequest, ulContextValue);
+        return steammock::slot<bool>(kCall_310, hRequest, ulContextValue);
     }
     virtual bool SetHTTPRequestNetworkActivityTimeout(std::uint32_t hRequest, std::uint32_t unTimeoutSeconds) {
-        return steambridge::slot<bool>(kCall_311, hRequest, unTimeoutSeconds);
+        return steammock::slot<bool>(kCall_311, hRequest, unTimeoutSeconds);
     }
     virtual bool SetHTTPRequestHeaderValue(std::uint32_t hRequest, const char* pchHeaderName, const char* pchHeaderValue) {
-        return steambridge::slot<bool>(kCall_312, hRequest, pchHeaderName, pchHeaderValue);
+        return steammock::slot<bool>(kCall_312, hRequest, pchHeaderName, pchHeaderValue);
     }
     virtual bool SetHTTPRequestGetOrPostParameter(std::uint32_t hRequest, const char* pchParamName, const char* pchParamValue) {
-        return steambridge::slot<bool>(kCall_313, hRequest, pchParamName, pchParamValue);
+        return steammock::slot<bool>(kCall_313, hRequest, pchParamName, pchParamValue);
     }
     virtual bool SendHTTPRequest(std::uint32_t hRequest, std::uint64_t* pCallHandle) {
-        return steambridge::slot<bool>(kCall_314, hRequest, pCallHandle);
+        return steammock::slot<bool>(kCall_314, hRequest, pCallHandle);
     }
     virtual bool SendHTTPRequestAndStreamResponse(std::uint32_t hRequest, std::uint64_t* pCallHandle) {
-        return steambridge::slot<bool>(kCall_315, hRequest, pCallHandle);
+        return steammock::slot<bool>(kCall_315, hRequest, pCallHandle);
     }
     virtual bool DeferHTTPRequest(std::uint32_t hRequest) {
-        return steambridge::slot<bool>(kCall_316, hRequest);
+        return steammock::slot<bool>(kCall_316, hRequest);
     }
     virtual bool PrioritizeHTTPRequest(std::uint32_t hRequest) {
-        return steambridge::slot<bool>(kCall_317, hRequest);
+        return steammock::slot<bool>(kCall_317, hRequest);
     }
     virtual bool GetHTTPResponseHeaderSize(std::uint32_t hRequest, const char* pchHeaderName, std::uint32_t* unResponseHeaderSize) {
-        return steambridge::slot<bool>(kCall_318, hRequest, pchHeaderName, unResponseHeaderSize);
+        return steammock::slot<bool>(kCall_318, hRequest, pchHeaderName, unResponseHeaderSize);
     }
     virtual bool GetHTTPResponseHeaderValue(std::uint32_t hRequest, const char* pchHeaderName, std::uint8_t* pHeaderValueBuffer, std::uint32_t unBufferSize) {
-        return steambridge::slot<bool>(kCall_319, hRequest, pchHeaderName, pHeaderValueBuffer, unBufferSize);
+        return steammock::slot<bool>(kCall_319, hRequest, pchHeaderName, pHeaderValueBuffer, unBufferSize);
     }
     virtual bool GetHTTPResponseBodySize(std::uint32_t hRequest, std::uint32_t* unBodySize) {
-        return steambridge::slot<bool>(kCall_320, hRequest, unBodySize);
+        return steammock::slot<bool>(kCall_320, hRequest, unBodySize);
     }
     virtual bool GetHTTPResponseBodyData(std::uint32_t hRequest, std::uint8_t* pBodyDataBuffer, std::uint32_t unBufferSize) {
-        return steambridge::slot<bool>(kCall_321, hRequest, pBodyDataBuffer, unBufferSize);
+        return steammock::slot<bool>(kCall_321, hRequest, pBodyDataBuffer, unBufferSize);
     }
     virtual bool GetHTTPStreamingResponseBodyData(std::uint32_t hRequest, std::uint32_t cOffset, std::uint8_t* pBodyDataBuffer, std::uint32_t unBufferSize) {
-        return steambridge::slot<bool>(kCall_322, hRequest, cOffset, pBodyDataBuffer, unBufferSize);
+        return steammock::slot<bool>(kCall_322, hRequest, cOffset, pBodyDataBuffer, unBufferSize);
     }
     virtual bool ReleaseHTTPRequest(std::uint32_t hRequest) {
-        return steambridge::slot<bool>(kCall_323, hRequest);
+        return steammock::slot<bool>(kCall_323, hRequest);
     }
     virtual bool GetHTTPDownloadProgressPct(std::uint32_t hRequest, float* pflPercentOut) {
-        return steambridge::slot<bool>(kCall_324, hRequest, pflPercentOut);
+        return steammock::slot<bool>(kCall_324, hRequest, pflPercentOut);
     }
     virtual bool SetHTTPRequestRawPostBody(std::uint32_t hRequest, const char* pchContentType, std::uint8_t* pubBody, std::uint32_t unBodyLen) {
-        return steambridge::slot<bool>(kCall_325, hRequest, pchContentType, pubBody, unBodyLen);
+        return steammock::slot<bool>(kCall_325, hRequest, pchContentType, pubBody, unBodyLen);
     }
     virtual std::uint32_t CreateCookieContainer(bool bAllowResponsesToModify) {
-        return steambridge::slot<std::uint32_t>(kCall_326, bAllowResponsesToModify);
+        return steammock::slot<std::uint32_t>(kCall_326, bAllowResponsesToModify);
     }
     virtual bool ReleaseCookieContainer(std::uint32_t hCookieContainer) {
-        return steambridge::slot<bool>(kCall_327, hCookieContainer);
+        return steammock::slot<bool>(kCall_327, hCookieContainer);
     }
     virtual bool SetCookie(std::uint32_t hCookieContainer, const char* pchHost, const char* pchUrl, const char* pchCookie) {
-        return steambridge::slot<bool>(kCall_328, hCookieContainer, pchHost, pchUrl, pchCookie);
+        return steammock::slot<bool>(kCall_328, hCookieContainer, pchHost, pchUrl, pchCookie);
     }
     virtual bool SetHTTPRequestCookieContainer(std::uint32_t hRequest, std::uint32_t hCookieContainer) {
-        return steambridge::slot<bool>(kCall_329, hRequest, hCookieContainer);
+        return steammock::slot<bool>(kCall_329, hRequest, hCookieContainer);
     }
     virtual bool SetHTTPRequestUserAgentInfo(std::uint32_t hRequest, const char* pchUserAgentInfo) {
-        return steambridge::slot<bool>(kCall_330, hRequest, pchUserAgentInfo);
+        return steammock::slot<bool>(kCall_330, hRequest, pchUserAgentInfo);
     }
     virtual bool SetHTTPRequestRequiresVerifiedCertificate(std::uint32_t hRequest, bool bRequireVerifiedCertificate) {
-        return steambridge::slot<bool>(kCall_331, hRequest, bRequireVerifiedCertificate);
+        return steammock::slot<bool>(kCall_331, hRequest, bRequireVerifiedCertificate);
     }
     virtual bool SetHTTPRequestAbsoluteTimeoutMS(std::uint32_t hRequest, std::uint32_t unMilliseconds) {
-        return steambridge::slot<bool>(kCall_332, hRequest, unMilliseconds);
+        return steammock::slot<bool>(kCall_332, hRequest, unMilliseconds);
     }
     virtual bool GetHTTPRequestWasTimedOut(std::uint32_t hRequest, bool* pbWasTimedOut) {
-        return steambridge::slot<bool>(kCall_333, hRequest, pbWasTimedOut);
+        return steammock::slot<bool>(kCall_333, hRequest, pbWasTimedOut);
     }
 };
 
@@ -4606,104 +4590,104 @@ Version_STEAMHTTP_INTERFACE_VERSION003 g_STEAMHTTP_INTERFACE_VERSION003;
 // ISteamInput SteamInput001
 class Version_SteamInput001 {
 public:
-    virtual bool Init() { return steambridge::slot<bool>(kCall_334); }
-    virtual bool Shutdown() { return steambridge::slot<bool>(kCall_335); }
-    virtual void RunFrame() { steambridge::slot<void>(kCall_336); }
+    virtual bool Init() { return steammock::slot<bool>(kCall_334); }
+    virtual bool Shutdown() { return steammock::slot<bool>(kCall_335); }
+    virtual void RunFrame() { steammock::slot<void>(kCall_336); }
     virtual std::int32_t GetConnectedControllers(std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_337, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_337, handlesOut);
     }
     virtual std::uint64_t GetActionSetHandle(const char* pszActionSetName) {
-        return steambridge::slot<std::uint64_t>(kCall_338, pszActionSetName);
+        return steammock::slot<std::uint64_t>(kCall_338, pszActionSetName);
     }
     virtual void ActivateActionSet(std::uint64_t inputHandle, std::uint64_t actionSetHandle) {
-        steambridge::slot<void>(kCall_339, inputHandle, actionSetHandle);
+        steammock::slot<void>(kCall_339, inputHandle, actionSetHandle);
     }
     virtual std::uint64_t GetCurrentActionSet(std::uint64_t inputHandle) {
-        return steambridge::slot<std::uint64_t>(kCall_340, inputHandle);
+        return steammock::slot<std::uint64_t>(kCall_340, inputHandle);
     }
     virtual void ActivateActionSetLayer(std::uint64_t inputHandle, std::uint64_t actionSetLayerHandle) {
-        steambridge::slot<void>(kCall_341, inputHandle, actionSetLayerHandle);
+        steammock::slot<void>(kCall_341, inputHandle, actionSetLayerHandle);
     }
     virtual void DeactivateActionSetLayer(std::uint64_t inputHandle, std::uint64_t actionSetLayerHandle) {
-        steambridge::slot<void>(kCall_342, inputHandle, actionSetLayerHandle);
+        steammock::slot<void>(kCall_342, inputHandle, actionSetLayerHandle);
     }
     virtual void DeactivateAllActionSetLayers(std::uint64_t inputHandle) {
-        steambridge::slot<void>(kCall_343, inputHandle);
+        steammock::slot<void>(kCall_343, inputHandle);
     }
     virtual std::int32_t GetActiveActionSetLayers(std::uint64_t inputHandle, std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_344, inputHandle, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_344, inputHandle, handlesOut);
     }
     virtual std::uint64_t GetDigitalActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_345, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_345, pszActionName);
     }
     virtual InputDigitalActionData_t GetDigitalActionData(std::uint64_t inputHandle, std::uint64_t digitalActionHandle) {
-        return steambridge::slot<InputDigitalActionData_t>(kCall_346, inputHandle, digitalActionHandle);
+        return steammock::slot<InputDigitalActionData_t>(kCall_346, inputHandle, digitalActionHandle);
     }
     virtual std::int32_t GetDigitalActionOrigins(std::uint64_t inputHandle, std::uint64_t actionSetHandle, std::uint64_t digitalActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_347, inputHandle, actionSetHandle, digitalActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_347, inputHandle, actionSetHandle, digitalActionHandle, originsOut);
     }
     virtual std::uint64_t GetAnalogActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_348, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_348, pszActionName);
     }
     virtual InputAnalogActionData_t GetAnalogActionData(std::uint64_t inputHandle, std::uint64_t analogActionHandle) {
-        return steambridge::slot<InputAnalogActionData_t>(kCall_349, inputHandle, analogActionHandle);
+        return steammock::slot<InputAnalogActionData_t>(kCall_349, inputHandle, analogActionHandle);
     }
     virtual std::int32_t GetAnalogActionOrigins(std::uint64_t inputHandle, std::uint64_t actionSetHandle, std::uint64_t analogActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_350, inputHandle, actionSetHandle, analogActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_350, inputHandle, actionSetHandle, analogActionHandle, originsOut);
     }
     virtual const char* GetGlyphForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_351, eOrigin);
+        return steammock::slot<const char*>(kCall_351, eOrigin);
     }
     virtual const char* GetStringForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_352, eOrigin);
+        return steammock::slot<const char*>(kCall_352, eOrigin);
     }
     virtual void StopAnalogActionMomentum(std::uint64_t inputHandle, std::uint64_t eAction) {
-        steambridge::slot<void>(kCall_353, inputHandle, eAction);
+        steammock::slot<void>(kCall_353, inputHandle, eAction);
     }
     virtual InputMotionData_t GetMotionData(std::uint64_t inputHandle) {
-        return steambridge::slot<InputMotionData_t>(kCall_354, inputHandle);
+        return steammock::slot<InputMotionData_t>(kCall_354, inputHandle);
     }
     virtual void TriggerVibration(std::uint64_t inputHandle, std::uint16_t usLeftSpeed, std::uint16_t usRightSpeed) {
-        steambridge::slot<void>(kCall_355, inputHandle, usLeftSpeed, usRightSpeed);
+        steammock::slot<void>(kCall_355, inputHandle, usLeftSpeed, usRightSpeed);
     }
     virtual void SetLEDColor(std::uint64_t inputHandle, std::uint8_t nColorR, std::uint8_t nColorG, std::uint8_t nColorB, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_356, inputHandle, nColorR, nColorG, nColorB, nFlags);
+        steammock::slot<void>(kCall_356, inputHandle, nColorR, nColorG, nColorB, nFlags);
     }
     virtual void TriggerHapticPulse(std::uint64_t inputHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec) {
-        steambridge::slot<void>(kCall_357, inputHandle, eTargetPad, usDurationMicroSec);
+        steammock::slot<void>(kCall_357, inputHandle, eTargetPad, usDurationMicroSec);
     }
     virtual void TriggerRepeatedHapticPulse(std::uint64_t inputHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec, std::uint16_t usOffMicroSec, std::uint16_t unRepeat, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_358, inputHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
+        steammock::slot<void>(kCall_358, inputHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
     }
     virtual bool ShowBindingPanel(std::uint64_t inputHandle) {
-        return steambridge::slot<bool>(kCall_359, inputHandle);
+        return steammock::slot<bool>(kCall_359, inputHandle);
     }
     virtual std::int32_t GetInputTypeForHandle(std::uint64_t inputHandle) {
-        return steambridge::slot<std::int32_t>(kCall_360, inputHandle);
+        return steammock::slot<std::int32_t>(kCall_360, inputHandle);
     }
     virtual std::uint64_t GetControllerForGamepadIndex(std::int32_t nIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_361, nIndex);
+        return steammock::slot<std::uint64_t>(kCall_361, nIndex);
     }
     virtual std::int32_t GetGamepadIndexForController(std::uint64_t ulinputHandle) {
-        return steambridge::slot<std::int32_t>(kCall_362, ulinputHandle);
+        return steammock::slot<std::int32_t>(kCall_362, ulinputHandle);
     }
     virtual const char* GetStringForXboxOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_363, eOrigin);
+        return steammock::slot<const char*>(kCall_363, eOrigin);
     }
     virtual const char* GetGlyphForXboxOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_364, eOrigin);
+        return steammock::slot<const char*>(kCall_364, eOrigin);
     }
     virtual std::int32_t GetActionOriginFromXboxOrigin(std::uint64_t inputHandle, std::int32_t eOrigin) {
-        return steambridge::slot<std::int32_t>(kCall_365, inputHandle, eOrigin);
+        return steammock::slot<std::int32_t>(kCall_365, inputHandle, eOrigin);
     }
     virtual std::int32_t TranslateActionOrigin(std::int32_t eDestinationInputType, std::int32_t eSourceOrigin) {
-        return steambridge::slot<std::int32_t>(kCall_366, eDestinationInputType, eSourceOrigin);
+        return steammock::slot<std::int32_t>(kCall_366, eDestinationInputType, eSourceOrigin);
     }
     virtual bool GetDeviceBindingRevision(std::uint64_t inputHandle, std::int32_t* pMajor, std::int32_t* pMinor) {
-        return steambridge::slot<bool>(kCall_367, inputHandle, pMajor, pMinor);
+        return steammock::slot<bool>(kCall_367, inputHandle, pMajor, pMinor);
     }
     virtual std::uint32_t GetRemotePlaySessionID(std::uint64_t inputHandle) {
-        return steambridge::slot<std::uint32_t>(kCall_368, inputHandle);
+        return steammock::slot<std::uint32_t>(kCall_368, inputHandle);
     }
 };
 
@@ -4712,104 +4696,104 @@ Version_SteamInput001 g_SteamInput001;
 // ISteamInput SteamInput002
 class Version_SteamInput002 {
 public:
-    virtual bool Init() { return steambridge::slot<bool>(kCall_334); }
-    virtual bool Shutdown() { return steambridge::slot<bool>(kCall_335); }
-    virtual void RunFrame() { steambridge::slot<void>(kCall_336); }
+    virtual bool Init() { return steammock::slot<bool>(kCall_334); }
+    virtual bool Shutdown() { return steammock::slot<bool>(kCall_335); }
+    virtual void RunFrame() { steammock::slot<void>(kCall_336); }
     virtual std::int32_t GetConnectedControllers(std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_337, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_337, handlesOut);
     }
     virtual std::uint64_t GetActionSetHandle(const char* pszActionSetName) {
-        return steambridge::slot<std::uint64_t>(kCall_338, pszActionSetName);
+        return steammock::slot<std::uint64_t>(kCall_338, pszActionSetName);
     }
     virtual void ActivateActionSet(std::uint64_t inputHandle, std::uint64_t actionSetHandle) {
-        steambridge::slot<void>(kCall_339, inputHandle, actionSetHandle);
+        steammock::slot<void>(kCall_339, inputHandle, actionSetHandle);
     }
     virtual std::uint64_t GetCurrentActionSet(std::uint64_t inputHandle) {
-        return steambridge::slot<std::uint64_t>(kCall_340, inputHandle);
+        return steammock::slot<std::uint64_t>(kCall_340, inputHandle);
     }
     virtual void ActivateActionSetLayer(std::uint64_t inputHandle, std::uint64_t actionSetLayerHandle) {
-        steambridge::slot<void>(kCall_341, inputHandle, actionSetLayerHandle);
+        steammock::slot<void>(kCall_341, inputHandle, actionSetLayerHandle);
     }
     virtual void DeactivateActionSetLayer(std::uint64_t inputHandle, std::uint64_t actionSetLayerHandle) {
-        steambridge::slot<void>(kCall_342, inputHandle, actionSetLayerHandle);
+        steammock::slot<void>(kCall_342, inputHandle, actionSetLayerHandle);
     }
     virtual void DeactivateAllActionSetLayers(std::uint64_t inputHandle) {
-        steambridge::slot<void>(kCall_343, inputHandle);
+        steammock::slot<void>(kCall_343, inputHandle);
     }
     virtual std::int32_t GetActiveActionSetLayers(std::uint64_t inputHandle, std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_344, inputHandle, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_344, inputHandle, handlesOut);
     }
     virtual std::uint64_t GetDigitalActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_345, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_345, pszActionName);
     }
     virtual InputDigitalActionData_t GetDigitalActionData(std::uint64_t inputHandle, std::uint64_t digitalActionHandle) {
-        return steambridge::slot<InputDigitalActionData_t>(kCall_346, inputHandle, digitalActionHandle);
+        return steammock::slot<InputDigitalActionData_t>(kCall_346, inputHandle, digitalActionHandle);
     }
     virtual std::int32_t GetDigitalActionOrigins(std::uint64_t inputHandle, std::uint64_t actionSetHandle, std::uint64_t digitalActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_347, inputHandle, actionSetHandle, digitalActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_347, inputHandle, actionSetHandle, digitalActionHandle, originsOut);
     }
     virtual std::uint64_t GetAnalogActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_348, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_348, pszActionName);
     }
     virtual InputAnalogActionData_t GetAnalogActionData(std::uint64_t inputHandle, std::uint64_t analogActionHandle) {
-        return steambridge::slot<InputAnalogActionData_t>(kCall_349, inputHandle, analogActionHandle);
+        return steammock::slot<InputAnalogActionData_t>(kCall_349, inputHandle, analogActionHandle);
     }
     virtual std::int32_t GetAnalogActionOrigins(std::uint64_t inputHandle, std::uint64_t actionSetHandle, std::uint64_t analogActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_350, inputHandle, actionSetHandle, analogActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_350, inputHandle, actionSetHandle, analogActionHandle, originsOut);
     }
     virtual const char* GetGlyphForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_351, eOrigin);
+        return steammock::slot<const char*>(kCall_351, eOrigin);
     }
     virtual const char* GetStringForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_352, eOrigin);
+        return steammock::slot<const char*>(kCall_352, eOrigin);
     }
     virtual void StopAnalogActionMomentum(std::uint64_t inputHandle, std::uint64_t eAction) {
-        steambridge::slot<void>(kCall_353, inputHandle, eAction);
+        steammock::slot<void>(kCall_353, inputHandle, eAction);
     }
     virtual InputMotionData_t GetMotionData(std::uint64_t inputHandle) {
-        return steambridge::slot<InputMotionData_t>(kCall_354, inputHandle);
+        return steammock::slot<InputMotionData_t>(kCall_354, inputHandle);
     }
     virtual void TriggerVibration(std::uint64_t inputHandle, std::uint16_t usLeftSpeed, std::uint16_t usRightSpeed) {
-        steambridge::slot<void>(kCall_355, inputHandle, usLeftSpeed, usRightSpeed);
+        steammock::slot<void>(kCall_355, inputHandle, usLeftSpeed, usRightSpeed);
     }
     virtual void SetLEDColor(std::uint64_t inputHandle, std::uint8_t nColorR, std::uint8_t nColorG, std::uint8_t nColorB, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_356, inputHandle, nColorR, nColorG, nColorB, nFlags);
+        steammock::slot<void>(kCall_356, inputHandle, nColorR, nColorG, nColorB, nFlags);
     }
     virtual void TriggerHapticPulse(std::uint64_t inputHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec) {
-        steambridge::slot<void>(kCall_357, inputHandle, eTargetPad, usDurationMicroSec);
+        steammock::slot<void>(kCall_357, inputHandle, eTargetPad, usDurationMicroSec);
     }
     virtual void TriggerRepeatedHapticPulse(std::uint64_t inputHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec, std::uint16_t usOffMicroSec, std::uint16_t unRepeat, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_358, inputHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
+        steammock::slot<void>(kCall_358, inputHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
     }
     virtual bool ShowBindingPanel(std::uint64_t inputHandle) {
-        return steambridge::slot<bool>(kCall_359, inputHandle);
+        return steammock::slot<bool>(kCall_359, inputHandle);
     }
     virtual std::int32_t GetInputTypeForHandle(std::uint64_t inputHandle) {
-        return steambridge::slot<std::int32_t>(kCall_360, inputHandle);
+        return steammock::slot<std::int32_t>(kCall_360, inputHandle);
     }
     virtual std::uint64_t GetControllerForGamepadIndex(std::int32_t nIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_361, nIndex);
+        return steammock::slot<std::uint64_t>(kCall_361, nIndex);
     }
     virtual std::int32_t GetGamepadIndexForController(std::uint64_t ulinputHandle) {
-        return steambridge::slot<std::int32_t>(kCall_362, ulinputHandle);
+        return steammock::slot<std::int32_t>(kCall_362, ulinputHandle);
     }
     virtual const char* GetStringForXboxOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_363, eOrigin);
+        return steammock::slot<const char*>(kCall_363, eOrigin);
     }
     virtual const char* GetGlyphForXboxOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_364, eOrigin);
+        return steammock::slot<const char*>(kCall_364, eOrigin);
     }
     virtual std::int32_t GetActionOriginFromXboxOrigin(std::uint64_t inputHandle, std::int32_t eOrigin) {
-        return steambridge::slot<std::int32_t>(kCall_365, inputHandle, eOrigin);
+        return steammock::slot<std::int32_t>(kCall_365, inputHandle, eOrigin);
     }
     virtual std::int32_t TranslateActionOrigin(std::int32_t eDestinationInputType, std::int32_t eSourceOrigin) {
-        return steambridge::slot<std::int32_t>(kCall_366, eDestinationInputType, eSourceOrigin);
+        return steammock::slot<std::int32_t>(kCall_366, eDestinationInputType, eSourceOrigin);
     }
     virtual bool GetDeviceBindingRevision(std::uint64_t inputHandle, std::int32_t* pMajor, std::int32_t* pMinor) {
-        return steambridge::slot<bool>(kCall_367, inputHandle, pMajor, pMinor);
+        return steammock::slot<bool>(kCall_367, inputHandle, pMajor, pMinor);
     }
     virtual std::uint32_t GetRemotePlaySessionID(std::uint64_t inputHandle) {
-        return steambridge::slot<std::uint32_t>(kCall_368, inputHandle);
+        return steammock::slot<std::uint32_t>(kCall_368, inputHandle);
     }
 };
 
@@ -4819,142 +4803,140 @@ Version_SteamInput002 g_SteamInput002;
 class Version_SteamInput006 {
 public:
     virtual bool Init(bool bExplicitlyCallRunFrame) {
-        return steambridge::slot<bool>(kCall_369, bExplicitlyCallRunFrame);
+        return steammock::slot<bool>(kCall_369, bExplicitlyCallRunFrame);
     }
-    virtual bool Shutdown() { return steambridge::slot<bool>(kCall_335); }
+    virtual bool Shutdown() { return steammock::slot<bool>(kCall_335); }
     virtual bool SetInputActionManifestFilePath(const char* pchInputActionManifestAbsolutePath) {
-        return steambridge::slot<bool>(kCall_370, pchInputActionManifestAbsolutePath);
+        return steammock::slot<bool>(kCall_370, pchInputActionManifestAbsolutePath);
     }
-    virtual void RunFrame(bool bReservedValue) {
-        steambridge::slot<void>(kCall_371, bReservedValue);
-    }
+    virtual void RunFrame(bool bReservedValue) { steammock::slot<void>(kCall_371, bReservedValue); }
     virtual bool BWaitForData(bool bWaitForever, std::uint32_t unTimeout) {
-        return steambridge::slot<bool>(kCall_372, bWaitForever, unTimeout);
+        return steammock::slot<bool>(kCall_372, bWaitForever, unTimeout);
     }
-    virtual bool BNewDataAvailable() { return steambridge::slot<bool>(kCall_373); }
+    virtual bool BNewDataAvailable() { return steammock::slot<bool>(kCall_373); }
     virtual std::int32_t GetConnectedControllers(std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_337, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_337, handlesOut);
     }
-    virtual void EnableDeviceCallbacks() { steambridge::slot<void>(kCall_374); }
+    virtual void EnableDeviceCallbacks() { steammock::slot<void>(kCall_374); }
     virtual void EnableActionEventCallbacks(void* pCallback) {
-        steambridge::slot<void>(kCall_375, pCallback);
+        steammock::slot<void>(kCall_375, pCallback);
     }
     virtual std::uint64_t GetActionSetHandle(const char* pszActionSetName) {
-        return steambridge::slot<std::uint64_t>(kCall_338, pszActionSetName);
+        return steammock::slot<std::uint64_t>(kCall_338, pszActionSetName);
     }
     virtual void ActivateActionSet(std::uint64_t inputHandle, std::uint64_t actionSetHandle) {
-        steambridge::slot<void>(kCall_339, inputHandle, actionSetHandle);
+        steammock::slot<void>(kCall_339, inputHandle, actionSetHandle);
     }
     virtual std::uint64_t GetCurrentActionSet(std::uint64_t inputHandle) {
-        return steambridge::slot<std::uint64_t>(kCall_340, inputHandle);
+        return steammock::slot<std::uint64_t>(kCall_340, inputHandle);
     }
     virtual void ActivateActionSetLayer(std::uint64_t inputHandle, std::uint64_t actionSetLayerHandle) {
-        steambridge::slot<void>(kCall_341, inputHandle, actionSetLayerHandle);
+        steammock::slot<void>(kCall_341, inputHandle, actionSetLayerHandle);
     }
     virtual void DeactivateActionSetLayer(std::uint64_t inputHandle, std::uint64_t actionSetLayerHandle) {
-        steambridge::slot<void>(kCall_342, inputHandle, actionSetLayerHandle);
+        steammock::slot<void>(kCall_342, inputHandle, actionSetLayerHandle);
     }
     virtual void DeactivateAllActionSetLayers(std::uint64_t inputHandle) {
-        steambridge::slot<void>(kCall_343, inputHandle);
+        steammock::slot<void>(kCall_343, inputHandle);
     }
     virtual std::int32_t GetActiveActionSetLayers(std::uint64_t inputHandle, std::uint64_t* handlesOut) {
-        return steambridge::slot<std::int32_t>(kCall_344, inputHandle, handlesOut);
+        return steammock::slot<std::int32_t>(kCall_344, inputHandle, handlesOut);
     }
     virtual std::uint64_t GetDigitalActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_345, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_345, pszActionName);
     }
     virtual InputDigitalActionData_t GetDigitalActionData(std::uint64_t inputHandle, std::uint64_t digitalActionHandle) {
-        return steambridge::slot<InputDigitalActionData_t>(kCall_346, inputHandle, digitalActionHandle);
+        return steammock::slot<InputDigitalActionData_t>(kCall_346, inputHandle, digitalActionHandle);
     }
     virtual std::int32_t GetDigitalActionOrigins(std::uint64_t inputHandle, std::uint64_t actionSetHandle, std::uint64_t digitalActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_347, inputHandle, actionSetHandle, digitalActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_347, inputHandle, actionSetHandle, digitalActionHandle, originsOut);
     }
     virtual const char* GetStringForDigitalActionName(std::uint64_t eActionHandle) {
-        return steambridge::slot<const char*>(kCall_376, eActionHandle);
+        return steammock::slot<const char*>(kCall_376, eActionHandle);
     }
     virtual std::uint64_t GetAnalogActionHandle(const char* pszActionName) {
-        return steambridge::slot<std::uint64_t>(kCall_348, pszActionName);
+        return steammock::slot<std::uint64_t>(kCall_348, pszActionName);
     }
     virtual InputAnalogActionData_t GetAnalogActionData(std::uint64_t inputHandle, std::uint64_t analogActionHandle) {
-        return steambridge::slot<InputAnalogActionData_t>(kCall_349, inputHandle, analogActionHandle);
+        return steammock::slot<InputAnalogActionData_t>(kCall_349, inputHandle, analogActionHandle);
     }
     virtual std::int32_t GetAnalogActionOrigins(std::uint64_t inputHandle, std::uint64_t actionSetHandle, std::uint64_t analogActionHandle, std::int32_t* originsOut) {
-        return steambridge::slot<std::int32_t>(kCall_350, inputHandle, actionSetHandle, analogActionHandle, originsOut);
+        return steammock::slot<std::int32_t>(kCall_350, inputHandle, actionSetHandle, analogActionHandle, originsOut);
     }
     virtual const char* GetGlyphPNGForActionOrigin(std::int32_t eOrigin, std::int32_t eSize, std::uint32_t unFlags) {
-        return steambridge::slot<const char*>(kCall_377, eOrigin, eSize, unFlags);
+        return steammock::slot<const char*>(kCall_377, eOrigin, eSize, unFlags);
     }
     virtual const char* GetGlyphSVGForActionOrigin(std::int32_t eOrigin, std::uint32_t unFlags) {
-        return steambridge::slot<const char*>(kCall_378, eOrigin, unFlags);
+        return steammock::slot<const char*>(kCall_378, eOrigin, unFlags);
     }
     virtual const char* GetGlyphForActionOrigin_Legacy(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_379, eOrigin);
+        return steammock::slot<const char*>(kCall_379, eOrigin);
     }
     virtual const char* GetStringForActionOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_352, eOrigin);
+        return steammock::slot<const char*>(kCall_352, eOrigin);
     }
     virtual const char* GetStringForAnalogActionName(std::uint64_t eActionHandle) {
-        return steambridge::slot<const char*>(kCall_380, eActionHandle);
+        return steammock::slot<const char*>(kCall_380, eActionHandle);
     }
     virtual void StopAnalogActionMomentum(std::uint64_t inputHandle, std::uint64_t eAction) {
-        steambridge::slot<void>(kCall_353, inputHandle, eAction);
+        steammock::slot<void>(kCall_353, inputHandle, eAction);
     }
     virtual InputMotionData_t GetMotionData(std::uint64_t inputHandle) {
-        return steambridge::slot<InputMotionData_t>(kCall_354, inputHandle);
+        return steammock::slot<InputMotionData_t>(kCall_354, inputHandle);
     }
     virtual void TriggerVibration(std::uint64_t inputHandle, std::uint16_t usLeftSpeed, std::uint16_t usRightSpeed) {
-        steambridge::slot<void>(kCall_355, inputHandle, usLeftSpeed, usRightSpeed);
+        steammock::slot<void>(kCall_355, inputHandle, usLeftSpeed, usRightSpeed);
     }
     virtual void TriggerVibrationExtended(std::uint64_t inputHandle, std::uint16_t usLeftSpeed, std::uint16_t usRightSpeed, std::uint16_t usLeftTriggerSpeed, std::uint16_t usRightTriggerSpeed) {
-        steambridge::slot<void>(kCall_381, inputHandle, usLeftSpeed, usRightSpeed, usLeftTriggerSpeed, usRightTriggerSpeed);
+        steammock::slot<void>(kCall_381, inputHandle, usLeftSpeed, usRightSpeed, usLeftTriggerSpeed, usRightTriggerSpeed);
     }
     virtual void TriggerSimpleHapticEvent(std::uint64_t inputHandle, std::int32_t eHapticLocation, std::uint8_t nIntensity, std::int8_t nGainDB, std::uint8_t nOtherIntensity, std::int8_t nOtherGainDB) {
-        steambridge::slot<void>(kCall_382, inputHandle, eHapticLocation, nIntensity, nGainDB, nOtherIntensity, nOtherGainDB);
+        steammock::slot<void>(kCall_382, inputHandle, eHapticLocation, nIntensity, nGainDB, nOtherIntensity, nOtherGainDB);
     }
     virtual void SetLEDColor(std::uint64_t inputHandle, std::uint8_t nColorR, std::uint8_t nColorG, std::uint8_t nColorB, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_356, inputHandle, nColorR, nColorG, nColorB, nFlags);
+        steammock::slot<void>(kCall_356, inputHandle, nColorR, nColorG, nColorB, nFlags);
     }
     virtual void Legacy_TriggerHapticPulse(std::uint64_t inputHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec) {
-        steambridge::slot<void>(kCall_383, inputHandle, eTargetPad, usDurationMicroSec);
+        steammock::slot<void>(kCall_383, inputHandle, eTargetPad, usDurationMicroSec);
     }
     virtual void Legacy_TriggerRepeatedHapticPulse(std::uint64_t inputHandle, std::int32_t eTargetPad, std::uint16_t usDurationMicroSec, std::uint16_t usOffMicroSec, std::uint16_t unRepeat, std::uint32_t nFlags) {
-        steambridge::slot<void>(kCall_384, inputHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
+        steammock::slot<void>(kCall_384, inputHandle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
     }
     virtual bool ShowBindingPanel(std::uint64_t inputHandle) {
-        return steambridge::slot<bool>(kCall_359, inputHandle);
+        return steammock::slot<bool>(kCall_359, inputHandle);
     }
     virtual std::int32_t GetInputTypeForHandle(std::uint64_t inputHandle) {
-        return steambridge::slot<std::int32_t>(kCall_360, inputHandle);
+        return steammock::slot<std::int32_t>(kCall_360, inputHandle);
     }
     virtual std::uint64_t GetControllerForGamepadIndex(std::int32_t nIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_361, nIndex);
+        return steammock::slot<std::uint64_t>(kCall_361, nIndex);
     }
     virtual std::int32_t GetGamepadIndexForController(std::uint64_t ulinputHandle) {
-        return steambridge::slot<std::int32_t>(kCall_362, ulinputHandle);
+        return steammock::slot<std::int32_t>(kCall_362, ulinputHandle);
     }
     virtual const char* GetStringForXboxOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_363, eOrigin);
+        return steammock::slot<const char*>(kCall_363, eOrigin);
     }
     virtual const char* GetGlyphForXboxOrigin(std::int32_t eOrigin) {
-        return steambridge::slot<const char*>(kCall_364, eOrigin);
+        return steammock::slot<const char*>(kCall_364, eOrigin);
     }
     virtual std::int32_t GetActionOriginFromXboxOrigin(std::uint64_t inputHandle, std::int32_t eOrigin) {
-        return steambridge::slot<std::int32_t>(kCall_365, inputHandle, eOrigin);
+        return steammock::slot<std::int32_t>(kCall_365, inputHandle, eOrigin);
     }
     virtual std::int32_t TranslateActionOrigin(std::int32_t eDestinationInputType, std::int32_t eSourceOrigin) {
-        return steambridge::slot<std::int32_t>(kCall_366, eDestinationInputType, eSourceOrigin);
+        return steammock::slot<std::int32_t>(kCall_366, eDestinationInputType, eSourceOrigin);
     }
     virtual bool GetDeviceBindingRevision(std::uint64_t inputHandle, std::int32_t* pMajor, std::int32_t* pMinor) {
-        return steambridge::slot<bool>(kCall_367, inputHandle, pMajor, pMinor);
+        return steammock::slot<bool>(kCall_367, inputHandle, pMajor, pMinor);
     }
     virtual std::uint32_t GetRemotePlaySessionID(std::uint64_t inputHandle) {
-        return steambridge::slot<std::uint32_t>(kCall_368, inputHandle);
+        return steammock::slot<std::uint32_t>(kCall_368, inputHandle);
     }
     virtual std::uint16_t GetSessionInputConfigurationSettings() {
-        return steambridge::slot<std::uint16_t>(kCall_385);
+        return steammock::slot<std::uint16_t>(kCall_385);
     }
     virtual void SetDualSenseTriggerEffect(std::uint64_t inputHandle, void* pParam) {
-        steambridge::slot<void>(kCall_386, inputHandle, pParam);
+        steammock::slot<void>(kCall_386, inputHandle, pParam);
     }
 };
 
@@ -4964,75 +4946,75 @@ Version_SteamInput006 g_SteamInput006;
 class Version_STEAMINVENTORY_INTERFACE_V002 {
 public:
     virtual std::int32_t GetResultStatus(std::int32_t resultHandle) {
-        return steambridge::slot<std::int32_t>(kCall_387, resultHandle);
+        return steammock::slot<std::int32_t>(kCall_387, resultHandle);
     }
     virtual bool GetResultItems(std::int32_t resultHandle, void* pOutItemsArray, std::uint32_t* punOutItemsArraySize) {
-        return steambridge::slot<bool>(kCall_388, resultHandle, pOutItemsArray, punOutItemsArraySize);
+        return steammock::slot<bool>(kCall_388, resultHandle, pOutItemsArray, punOutItemsArraySize);
     }
     virtual bool GetResultItemProperty(std::int32_t resultHandle, std::uint32_t unItemIndex, const char* pchPropertyName, void* pchValueBuffer, std::uint32_t* punValueBufferSizeOut) {
-        return steambridge::slot<bool>(kCall_389, resultHandle, unItemIndex, pchPropertyName, pchValueBuffer, punValueBufferSizeOut);
+        return steammock::slot<bool>(kCall_389, resultHandle, unItemIndex, pchPropertyName, pchValueBuffer, punValueBufferSizeOut);
     }
     virtual std::uint32_t GetResultTimestamp(std::int32_t resultHandle) {
-        return steambridge::slot<std::uint32_t>(kCall_390, resultHandle);
+        return steammock::slot<std::uint32_t>(kCall_390, resultHandle);
     }
     virtual bool CheckResultSteamID(std::int32_t resultHandle, CSteamID steamIDExpected) {
-        return steambridge::slot<bool>(kCall_391, resultHandle, steamIDExpected);
+        return steammock::slot<bool>(kCall_391, resultHandle, steamIDExpected);
     }
     virtual void DestroyResult(std::int32_t resultHandle) {
-        steambridge::slot<void>(kCall_392, resultHandle);
+        steammock::slot<void>(kCall_392, resultHandle);
     }
     virtual bool GetAllItems(std::int32_t* pResultHandle) {
-        return steambridge::slot<bool>(kCall_393, pResultHandle);
+        return steammock::slot<bool>(kCall_393, pResultHandle);
     }
     virtual bool GetItemsByID(std::int32_t* pResultHandle, void* pInstanceIDs, std::uint32_t unCountInstanceIDs) {
-        return steambridge::slot<bool>(kCall_394, pResultHandle, pInstanceIDs, unCountInstanceIDs);
+        return steammock::slot<bool>(kCall_394, pResultHandle, pInstanceIDs, unCountInstanceIDs);
     }
     virtual bool SerializeResult(std::int32_t resultHandle, void* pOutBuffer, std::uint32_t* punOutBufferSize) {
-        return steambridge::slot<bool>(kCall_395, resultHandle, pOutBuffer, punOutBufferSize);
+        return steammock::slot<bool>(kCall_395, resultHandle, pOutBuffer, punOutBufferSize);
     }
     virtual bool DeserializeResult(std::int32_t* pOutResultHandle, void* pBuffer, std::uint32_t unBufferSize, bool bRESERVED_MUST_BE_FALSE) {
-        return steambridge::slot<bool>(kCall_396, pOutResultHandle, pBuffer, unBufferSize, bRESERVED_MUST_BE_FALSE);
+        return steammock::slot<bool>(kCall_396, pOutResultHandle, pBuffer, unBufferSize, bRESERVED_MUST_BE_FALSE);
     }
     virtual bool GenerateItems(std::int32_t* pResultHandle, void* pArrayItemDefs, void* punArrayQuantity, std::uint32_t unArrayLength) {
-        return steambridge::slot<bool>(kCall_397, pResultHandle, pArrayItemDefs, punArrayQuantity, unArrayLength);
+        return steammock::slot<bool>(kCall_397, pResultHandle, pArrayItemDefs, punArrayQuantity, unArrayLength);
     }
     virtual bool GrantPromoItems(std::int32_t* pResultHandle) {
-        return steambridge::slot<bool>(kCall_398, pResultHandle);
+        return steammock::slot<bool>(kCall_398, pResultHandle);
     }
     virtual bool AddPromoItem(std::int32_t* pResultHandle, std::int32_t itemDef) {
-        return steambridge::slot<bool>(kCall_399, pResultHandle, itemDef);
+        return steammock::slot<bool>(kCall_399, pResultHandle, itemDef);
     }
     virtual bool AddPromoItems(std::int32_t* pResultHandle, void* pArrayItemDefs, std::uint32_t unArrayLength) {
-        return steambridge::slot<bool>(kCall_400, pResultHandle, pArrayItemDefs, unArrayLength);
+        return steammock::slot<bool>(kCall_400, pResultHandle, pArrayItemDefs, unArrayLength);
     }
     virtual bool ConsumeItem(std::int32_t* pResultHandle, std::uint64_t itemConsume, std::uint32_t unQuantity) {
-        return steambridge::slot<bool>(kCall_401, pResultHandle, itemConsume, unQuantity);
+        return steammock::slot<bool>(kCall_401, pResultHandle, itemConsume, unQuantity);
     }
     virtual bool ExchangeItems(std::int32_t* pResultHandle, void* pArrayGenerate, void* punArrayGenerateQuantity, std::uint32_t unArrayGenerateLength, void* pArrayDestroy, void* punArrayDestroyQuantity, std::uint32_t unArrayDestroyLength) {
-        return steambridge::slot<bool>(kCall_402, pResultHandle, pArrayGenerate, punArrayGenerateQuantity, unArrayGenerateLength, pArrayDestroy, punArrayDestroyQuantity, unArrayDestroyLength);
+        return steammock::slot<bool>(kCall_402, pResultHandle, pArrayGenerate, punArrayGenerateQuantity, unArrayGenerateLength, pArrayDestroy, punArrayDestroyQuantity, unArrayDestroyLength);
     }
     virtual bool TransferItemQuantity(std::int32_t* pResultHandle, std::uint64_t itemIdSource, std::uint32_t unQuantity, std::uint64_t itemIdDest) {
-        return steambridge::slot<bool>(kCall_403, pResultHandle, itemIdSource, unQuantity, itemIdDest);
+        return steammock::slot<bool>(kCall_403, pResultHandle, itemIdSource, unQuantity, itemIdDest);
     }
-    virtual void SendItemDropHeartbeat() { steambridge::slot<void>(kCall_404); }
+    virtual void SendItemDropHeartbeat() { steammock::slot<void>(kCall_404); }
     virtual bool TriggerItemDrop(std::int32_t* pResultHandle, std::int32_t dropListDefinition) {
-        return steambridge::slot<bool>(kCall_405, pResultHandle, dropListDefinition);
+        return steammock::slot<bool>(kCall_405, pResultHandle, dropListDefinition);
     }
     virtual bool TradeItems(std::int32_t* pResultHandle, CSteamID steamIDTradePartner, void* pArrayGive, void* pArrayGiveQuantity, std::uint32_t nArrayGiveLength, void* pArrayGet, void* pArrayGetQuantity, std::uint32_t nArrayGetLength) {
-        return steambridge::slot<bool>(kCall_406, pResultHandle, steamIDTradePartner, pArrayGive, pArrayGiveQuantity, nArrayGiveLength, pArrayGet, pArrayGetQuantity, nArrayGetLength);
+        return steammock::slot<bool>(kCall_406, pResultHandle, steamIDTradePartner, pArrayGive, pArrayGiveQuantity, nArrayGiveLength, pArrayGet, pArrayGetQuantity, nArrayGetLength);
     }
-    virtual bool LoadItemDefinitions() { return steambridge::slot<bool>(kCall_407); }
+    virtual bool LoadItemDefinitions() { return steammock::slot<bool>(kCall_407); }
     virtual bool GetItemDefinitionIDs(std::int32_t* pItemDefIDs, std::uint32_t* punItemDefIDsArraySize) {
-        return steambridge::slot<bool>(kCall_408, pItemDefIDs, punItemDefIDsArraySize);
+        return steammock::slot<bool>(kCall_408, pItemDefIDs, punItemDefIDsArraySize);
     }
     virtual bool GetItemDefinitionProperty(std::int32_t iDefinition, const char* pchPropertyName, void* pchValueBuffer, std::uint32_t* punValueBufferSizeOut) {
-        return steambridge::slot<bool>(kCall_409, iDefinition, pchPropertyName, pchValueBuffer, punValueBufferSizeOut);
+        return steammock::slot<bool>(kCall_409, iDefinition, pchPropertyName, pchValueBuffer, punValueBufferSizeOut);
     }
     virtual std::uint64_t RequestEligiblePromoItemDefinitionsIDs(CSteamID steamID) {
-        return steambridge::slot<std::uint64_t>(kCall_410, steamID);
+        return steammock::slot<std::uint64_t>(kCall_410, steamID);
     }
     virtual bool GetEligiblePromoItemDefinitionIDs(CSteamID steamID, std::int32_t* pItemDefIDs, std::uint32_t* punItemDefIDsArraySize) {
-        return steambridge::slot<bool>(kCall_411, steamID, pItemDefIDs, punItemDefIDsArraySize);
+        return steammock::slot<bool>(kCall_411, steamID, pItemDefIDs, punItemDefIDsArraySize);
     }
 };
 
@@ -5042,112 +5024,112 @@ Version_STEAMINVENTORY_INTERFACE_V002 g_STEAMINVENTORY_INTERFACE_V002;
 class Version_STEAMINVENTORY_INTERFACE_V003 {
 public:
     virtual std::int32_t GetResultStatus(std::int32_t resultHandle) {
-        return steambridge::slot<std::int32_t>(kCall_387, resultHandle);
+        return steammock::slot<std::int32_t>(kCall_387, resultHandle);
     }
     virtual bool GetResultItems(std::int32_t resultHandle, void* pOutItemsArray, std::uint32_t* punOutItemsArraySize) {
-        return steambridge::slot<bool>(kCall_388, resultHandle, pOutItemsArray, punOutItemsArraySize);
+        return steammock::slot<bool>(kCall_388, resultHandle, pOutItemsArray, punOutItemsArraySize);
     }
     virtual bool GetResultItemProperty(std::int32_t resultHandle, std::uint32_t unItemIndex, const char* pchPropertyName, void* pchValueBuffer, std::uint32_t* punValueBufferSizeOut) {
-        return steambridge::slot<bool>(kCall_389, resultHandle, unItemIndex, pchPropertyName, pchValueBuffer, punValueBufferSizeOut);
+        return steammock::slot<bool>(kCall_389, resultHandle, unItemIndex, pchPropertyName, pchValueBuffer, punValueBufferSizeOut);
     }
     virtual std::uint32_t GetResultTimestamp(std::int32_t resultHandle) {
-        return steambridge::slot<std::uint32_t>(kCall_390, resultHandle);
+        return steammock::slot<std::uint32_t>(kCall_390, resultHandle);
     }
     virtual bool CheckResultSteamID(std::int32_t resultHandle, CSteamID steamIDExpected) {
-        return steambridge::slot<bool>(kCall_391, resultHandle, steamIDExpected);
+        return steammock::slot<bool>(kCall_391, resultHandle, steamIDExpected);
     }
     virtual void DestroyResult(std::int32_t resultHandle) {
-        steambridge::slot<void>(kCall_392, resultHandle);
+        steammock::slot<void>(kCall_392, resultHandle);
     }
     virtual bool GetAllItems(std::int32_t* pResultHandle) {
-        return steambridge::slot<bool>(kCall_393, pResultHandle);
+        return steammock::slot<bool>(kCall_393, pResultHandle);
     }
     virtual bool GetItemsByID(std::int32_t* pResultHandle, void* pInstanceIDs, std::uint32_t unCountInstanceIDs) {
-        return steambridge::slot<bool>(kCall_394, pResultHandle, pInstanceIDs, unCountInstanceIDs);
+        return steammock::slot<bool>(kCall_394, pResultHandle, pInstanceIDs, unCountInstanceIDs);
     }
     virtual bool SerializeResult(std::int32_t resultHandle, void* pOutBuffer, std::uint32_t* punOutBufferSize) {
-        return steambridge::slot<bool>(kCall_395, resultHandle, pOutBuffer, punOutBufferSize);
+        return steammock::slot<bool>(kCall_395, resultHandle, pOutBuffer, punOutBufferSize);
     }
     virtual bool DeserializeResult(std::int32_t* pOutResultHandle, void* pBuffer, std::uint32_t unBufferSize, bool bRESERVED_MUST_BE_FALSE) {
-        return steambridge::slot<bool>(kCall_396, pOutResultHandle, pBuffer, unBufferSize, bRESERVED_MUST_BE_FALSE);
+        return steammock::slot<bool>(kCall_396, pOutResultHandle, pBuffer, unBufferSize, bRESERVED_MUST_BE_FALSE);
     }
     virtual bool GenerateItems(std::int32_t* pResultHandle, void* pArrayItemDefs, void* punArrayQuantity, std::uint32_t unArrayLength) {
-        return steambridge::slot<bool>(kCall_397, pResultHandle, pArrayItemDefs, punArrayQuantity, unArrayLength);
+        return steammock::slot<bool>(kCall_397, pResultHandle, pArrayItemDefs, punArrayQuantity, unArrayLength);
     }
     virtual bool GrantPromoItems(std::int32_t* pResultHandle) {
-        return steambridge::slot<bool>(kCall_398, pResultHandle);
+        return steammock::slot<bool>(kCall_398, pResultHandle);
     }
     virtual bool AddPromoItem(std::int32_t* pResultHandle, std::int32_t itemDef) {
-        return steambridge::slot<bool>(kCall_399, pResultHandle, itemDef);
+        return steammock::slot<bool>(kCall_399, pResultHandle, itemDef);
     }
     virtual bool AddPromoItems(std::int32_t* pResultHandle, void* pArrayItemDefs, std::uint32_t unArrayLength) {
-        return steambridge::slot<bool>(kCall_400, pResultHandle, pArrayItemDefs, unArrayLength);
+        return steammock::slot<bool>(kCall_400, pResultHandle, pArrayItemDefs, unArrayLength);
     }
     virtual bool ConsumeItem(std::int32_t* pResultHandle, std::uint64_t itemConsume, std::uint32_t unQuantity) {
-        return steambridge::slot<bool>(kCall_401, pResultHandle, itemConsume, unQuantity);
+        return steammock::slot<bool>(kCall_401, pResultHandle, itemConsume, unQuantity);
     }
     virtual bool ExchangeItems(std::int32_t* pResultHandle, void* pArrayGenerate, void* punArrayGenerateQuantity, std::uint32_t unArrayGenerateLength, void* pArrayDestroy, void* punArrayDestroyQuantity, std::uint32_t unArrayDestroyLength) {
-        return steambridge::slot<bool>(kCall_402, pResultHandle, pArrayGenerate, punArrayGenerateQuantity, unArrayGenerateLength, pArrayDestroy, punArrayDestroyQuantity, unArrayDestroyLength);
+        return steammock::slot<bool>(kCall_402, pResultHandle, pArrayGenerate, punArrayGenerateQuantity, unArrayGenerateLength, pArrayDestroy, punArrayDestroyQuantity, unArrayDestroyLength);
     }
     virtual bool TransferItemQuantity(std::int32_t* pResultHandle, std::uint64_t itemIdSource, std::uint32_t unQuantity, std::uint64_t itemIdDest) {
-        return steambridge::slot<bool>(kCall_403, pResultHandle, itemIdSource, unQuantity, itemIdDest);
+        return steammock::slot<bool>(kCall_403, pResultHandle, itemIdSource, unQuantity, itemIdDest);
     }
-    virtual void SendItemDropHeartbeat() { steambridge::slot<void>(kCall_404); }
+    virtual void SendItemDropHeartbeat() { steammock::slot<void>(kCall_404); }
     virtual bool TriggerItemDrop(std::int32_t* pResultHandle, std::int32_t dropListDefinition) {
-        return steambridge::slot<bool>(kCall_405, pResultHandle, dropListDefinition);
+        return steammock::slot<bool>(kCall_405, pResultHandle, dropListDefinition);
     }
     virtual bool TradeItems(std::int32_t* pResultHandle, CSteamID steamIDTradePartner, void* pArrayGive, void* pArrayGiveQuantity, std::uint32_t nArrayGiveLength, void* pArrayGet, void* pArrayGetQuantity, std::uint32_t nArrayGetLength) {
-        return steambridge::slot<bool>(kCall_406, pResultHandle, steamIDTradePartner, pArrayGive, pArrayGiveQuantity, nArrayGiveLength, pArrayGet, pArrayGetQuantity, nArrayGetLength);
+        return steammock::slot<bool>(kCall_406, pResultHandle, steamIDTradePartner, pArrayGive, pArrayGiveQuantity, nArrayGiveLength, pArrayGet, pArrayGetQuantity, nArrayGetLength);
     }
-    virtual bool LoadItemDefinitions() { return steambridge::slot<bool>(kCall_407); }
+    virtual bool LoadItemDefinitions() { return steammock::slot<bool>(kCall_407); }
     virtual bool GetItemDefinitionIDs(std::int32_t* pItemDefIDs, std::uint32_t* punItemDefIDsArraySize) {
-        return steambridge::slot<bool>(kCall_408, pItemDefIDs, punItemDefIDsArraySize);
+        return steammock::slot<bool>(kCall_408, pItemDefIDs, punItemDefIDsArraySize);
     }
     virtual bool GetItemDefinitionProperty(std::int32_t iDefinition, const char* pchPropertyName, void* pchValueBuffer, std::uint32_t* punValueBufferSizeOut) {
-        return steambridge::slot<bool>(kCall_409, iDefinition, pchPropertyName, pchValueBuffer, punValueBufferSizeOut);
+        return steammock::slot<bool>(kCall_409, iDefinition, pchPropertyName, pchValueBuffer, punValueBufferSizeOut);
     }
     virtual std::uint64_t RequestEligiblePromoItemDefinitionsIDs(CSteamID steamID) {
-        return steambridge::slot<std::uint64_t>(kCall_410, steamID);
+        return steammock::slot<std::uint64_t>(kCall_410, steamID);
     }
     virtual bool GetEligiblePromoItemDefinitionIDs(CSteamID steamID, std::int32_t* pItemDefIDs, std::uint32_t* punItemDefIDsArraySize) {
-        return steambridge::slot<bool>(kCall_411, steamID, pItemDefIDs, punItemDefIDsArraySize);
+        return steammock::slot<bool>(kCall_411, steamID, pItemDefIDs, punItemDefIDsArraySize);
     }
     virtual std::uint64_t StartPurchase(void* pArrayItemDefs, void* punArrayQuantity, std::uint32_t unArrayLength) {
-        return steambridge::slot<std::uint64_t>(kCall_412, pArrayItemDefs, punArrayQuantity, unArrayLength);
+        return steammock::slot<std::uint64_t>(kCall_412, pArrayItemDefs, punArrayQuantity, unArrayLength);
     }
-    virtual std::uint64_t RequestPrices() { return steambridge::slot<std::uint64_t>(kCall_413); }
+    virtual std::uint64_t RequestPrices() { return steammock::slot<std::uint64_t>(kCall_413); }
     virtual std::uint32_t GetNumItemsWithPrices() {
-        return steambridge::slot<std::uint32_t>(kCall_414);
+        return steammock::slot<std::uint32_t>(kCall_414);
     }
     virtual bool GetItemsWithPrices(std::int32_t* pArrayItemDefs, std::uint64_t* pCurrentPrices, std::uint64_t* pBasePrices, std::uint32_t unArrayLength) {
-        return steambridge::slot<bool>(kCall_415, pArrayItemDefs, pCurrentPrices, pBasePrices, unArrayLength);
+        return steammock::slot<bool>(kCall_415, pArrayItemDefs, pCurrentPrices, pBasePrices, unArrayLength);
     }
     virtual bool GetItemPrice(std::int32_t iDefinition, std::uint64_t* pCurrentPrice, std::uint64_t* pBasePrice) {
-        return steambridge::slot<bool>(kCall_416, iDefinition, pCurrentPrice, pBasePrice);
+        return steammock::slot<bool>(kCall_416, iDefinition, pCurrentPrice, pBasePrice);
     }
     virtual std::uint64_t StartUpdateProperties() {
-        return steambridge::slot<std::uint64_t>(kCall_417);
+        return steammock::slot<std::uint64_t>(kCall_417);
     }
     virtual bool RemoveProperty(std::uint64_t handle, std::uint64_t nItemID, const char* pchPropertyName) {
-        return steambridge::slot<bool>(kCall_418, handle, nItemID, pchPropertyName);
+        return steammock::slot<bool>(kCall_418, handle, nItemID, pchPropertyName);
     }
     virtual bool SetProperty(std::uint64_t handle, std::uint64_t nItemID, const char* pchPropertyName, const char* pchPropertyValue) {
-        return steambridge::slot<bool>(kCall_419, handle, nItemID, pchPropertyName, pchPropertyValue);
+        return steammock::slot<bool>(kCall_419, handle, nItemID, pchPropertyName, pchPropertyValue);
     }
     virtual bool SetProperty(std::uint64_t handle, std::uint64_t nItemID, const char* pchPropertyName, bool bValue) {
-        return steambridge::slot<bool>(kCall_420, handle, nItemID, pchPropertyName, bValue);
+        return steammock::slot<bool>(kCall_420, handle, nItemID, pchPropertyName, bValue);
     }
     virtual bool SetProperty(std::uint64_t handle, std::uint64_t nItemID, const char* pchPropertyName, std::int64_t nValue) {
-        return steambridge::slot<bool>(kCall_421, handle, nItemID, pchPropertyName, nValue);
+        return steammock::slot<bool>(kCall_421, handle, nItemID, pchPropertyName, nValue);
     }
     virtual bool SetProperty(std::uint64_t handle, std::uint64_t nItemID, const char* pchPropertyName, float flValue) {
-        return steambridge::slot<bool>(kCall_422, handle, nItemID, pchPropertyName, flValue);
+        return steammock::slot<bool>(kCall_422, handle, nItemID, pchPropertyName, flValue);
     }
     virtual bool SubmitUpdateProperties(std::uint64_t handle, std::int32_t* pResultHandle) {
-        return steambridge::slot<bool>(kCall_423, handle, pResultHandle);
+        return steammock::slot<bool>(kCall_423, handle, pResultHandle);
     }
     virtual bool InspectItem(std::int32_t* pResultHandle, const char* pchItemToken) {
-        return steambridge::slot<bool>(kCall_424, pResultHandle, pchItemToken);
+        return steammock::slot<bool>(kCall_424, pResultHandle, pchItemToken);
     }
 };
 
@@ -5156,117 +5138,115 @@ Version_STEAMINVENTORY_INTERFACE_V003 g_STEAMINVENTORY_INTERFACE_V003;
 // ISteamMatchmaking SteamMatchMaking009
 class Version_SteamMatchMaking009 {
 public:
-    virtual std::int32_t GetFavoriteGameCount() {
-        return steambridge::slot<std::int32_t>(kCall_425);
-    }
+    virtual std::int32_t GetFavoriteGameCount() { return steammock::slot<std::int32_t>(kCall_425); }
     virtual bool GetFavoriteGame(std::int32_t iGame, std::uint32_t* pnAppID, std::uint32_t* pnIP, std::uint16_t* pnConnPort, std::uint16_t* pnQueryPort, std::uint32_t* punFlags, std::uint32_t* pRTime32LastPlayedOnServer) {
-        return steambridge::slot<bool>(kCall_426, iGame, pnAppID, pnIP, pnConnPort, pnQueryPort, punFlags, pRTime32LastPlayedOnServer);
+        return steammock::slot<bool>(kCall_426, iGame, pnAppID, pnIP, pnConnPort, pnQueryPort, punFlags, pRTime32LastPlayedOnServer);
     }
     virtual std::int32_t AddFavoriteGame(std::uint32_t nAppID, std::uint32_t nIP, std::uint16_t nConnPort, std::uint16_t nQueryPort, std::uint32_t unFlags, std::uint32_t rTime32LastPlayedOnServer) {
-        return steambridge::slot<std::int32_t>(kCall_427, nAppID, nIP, nConnPort, nQueryPort, unFlags, rTime32LastPlayedOnServer);
+        return steammock::slot<std::int32_t>(kCall_427, nAppID, nIP, nConnPort, nQueryPort, unFlags, rTime32LastPlayedOnServer);
     }
     virtual bool RemoveFavoriteGame(std::uint32_t nAppID, std::uint32_t nIP, std::uint16_t nConnPort, std::uint16_t nQueryPort, std::uint32_t unFlags) {
-        return steambridge::slot<bool>(kCall_428, nAppID, nIP, nConnPort, nQueryPort, unFlags);
+        return steammock::slot<bool>(kCall_428, nAppID, nIP, nConnPort, nQueryPort, unFlags);
     }
-    virtual std::uint64_t RequestLobbyList() { return steambridge::slot<std::uint64_t>(kCall_429); }
+    virtual std::uint64_t RequestLobbyList() { return steammock::slot<std::uint64_t>(kCall_429); }
     virtual void AddRequestLobbyListStringFilter(const char* pchKeyToMatch, const char* pchValueToMatch, std::int32_t eComparisonType) {
-        steambridge::slot<void>(kCall_430, pchKeyToMatch, pchValueToMatch, eComparisonType);
+        steammock::slot<void>(kCall_430, pchKeyToMatch, pchValueToMatch, eComparisonType);
     }
     virtual void AddRequestLobbyListNumericalFilter(const char* pchKeyToMatch, std::int32_t nValueToMatch, std::int32_t eComparisonType) {
-        steambridge::slot<void>(kCall_431, pchKeyToMatch, nValueToMatch, eComparisonType);
+        steammock::slot<void>(kCall_431, pchKeyToMatch, nValueToMatch, eComparisonType);
     }
     virtual void AddRequestLobbyListNearValueFilter(const char* pchKeyToMatch, std::int32_t nValueToBeCloseTo) {
-        steambridge::slot<void>(kCall_432, pchKeyToMatch, nValueToBeCloseTo);
+        steammock::slot<void>(kCall_432, pchKeyToMatch, nValueToBeCloseTo);
     }
     virtual void AddRequestLobbyListFilterSlotsAvailable(std::int32_t nSlotsAvailable) {
-        steambridge::slot<void>(kCall_433, nSlotsAvailable);
+        steammock::slot<void>(kCall_433, nSlotsAvailable);
     }
     virtual void AddRequestLobbyListDistanceFilter(std::int32_t eLobbyDistanceFilter) {
-        steambridge::slot<void>(kCall_434, eLobbyDistanceFilter);
+        steammock::slot<void>(kCall_434, eLobbyDistanceFilter);
     }
     virtual void AddRequestLobbyListResultCountFilter(std::int32_t cMaxResults) {
-        steambridge::slot<void>(kCall_435, cMaxResults);
+        steammock::slot<void>(kCall_435, cMaxResults);
     }
     virtual void AddRequestLobbyListCompatibleMembersFilter(CSteamID steamIDLobby) {
-        steambridge::slot<void>(kCall_436, steamIDLobby);
+        steammock::slot<void>(kCall_436, steamIDLobby);
     }
     virtual CSteamID GetLobbyByIndex(std::int32_t iLobby) {
-        return steambridge::slot<CSteamID>(kCall_437, iLobby);
+        return steammock::slot<CSteamID>(kCall_437, iLobby);
     }
     virtual std::uint64_t CreateLobby(std::int32_t eLobbyType, std::int32_t cMaxMembers) {
-        return steambridge::slot<std::uint64_t>(kCall_438, eLobbyType, cMaxMembers);
+        return steammock::slot<std::uint64_t>(kCall_438, eLobbyType, cMaxMembers);
     }
     virtual std::uint64_t JoinLobby(CSteamID steamIDLobby) {
-        return steambridge::slot<std::uint64_t>(kCall_439, steamIDLobby);
+        return steammock::slot<std::uint64_t>(kCall_439, steamIDLobby);
     }
     virtual void LeaveLobby(CSteamID steamIDLobby) {
-        steambridge::slot<void>(kCall_440, steamIDLobby);
+        steammock::slot<void>(kCall_440, steamIDLobby);
     }
     virtual bool InviteUserToLobby(CSteamID steamIDLobby, CSteamID steamIDInvitee) {
-        return steambridge::slot<bool>(kCall_441, steamIDLobby, steamIDInvitee);
+        return steammock::slot<bool>(kCall_441, steamIDLobby, steamIDInvitee);
     }
     virtual std::int32_t GetNumLobbyMembers(CSteamID steamIDLobby) {
-        return steambridge::slot<std::int32_t>(kCall_442, steamIDLobby);
+        return steammock::slot<std::int32_t>(kCall_442, steamIDLobby);
     }
     virtual CSteamID GetLobbyMemberByIndex(CSteamID steamIDLobby, std::int32_t iMember) {
-        return steambridge::slot<CSteamID>(kCall_443, steamIDLobby, iMember);
+        return steammock::slot<CSteamID>(kCall_443, steamIDLobby, iMember);
     }
     virtual const char* GetLobbyData(CSteamID steamIDLobby, const char* pchKey) {
-        return steambridge::slot<const char*>(kCall_444, steamIDLobby, pchKey);
+        return steammock::slot<const char*>(kCall_444, steamIDLobby, pchKey);
     }
     virtual bool SetLobbyData(CSteamID steamIDLobby, const char* pchKey, const char* pchValue) {
-        return steambridge::slot<bool>(kCall_445, steamIDLobby, pchKey, pchValue);
+        return steammock::slot<bool>(kCall_445, steamIDLobby, pchKey, pchValue);
     }
     virtual std::int32_t GetLobbyDataCount(CSteamID steamIDLobby) {
-        return steambridge::slot<std::int32_t>(kCall_446, steamIDLobby);
+        return steammock::slot<std::int32_t>(kCall_446, steamIDLobby);
     }
     virtual bool GetLobbyDataByIndex(CSteamID steamIDLobby, std::int32_t iLobbyData, void* pchKey, std::int32_t cchKeyBufferSize, void* pchValue, std::int32_t cchValueBufferSize) {
-        return steambridge::slot<bool>(kCall_447, steamIDLobby, iLobbyData, pchKey, cchKeyBufferSize, pchValue, cchValueBufferSize);
+        return steammock::slot<bool>(kCall_447, steamIDLobby, iLobbyData, pchKey, cchKeyBufferSize, pchValue, cchValueBufferSize);
     }
     virtual bool DeleteLobbyData(CSteamID steamIDLobby, const char* pchKey) {
-        return steambridge::slot<bool>(kCall_448, steamIDLobby, pchKey);
+        return steammock::slot<bool>(kCall_448, steamIDLobby, pchKey);
     }
     virtual const char* GetLobbyMemberData(CSteamID steamIDLobby, CSteamID steamIDUser, const char* pchKey) {
-        return steambridge::slot<const char*>(kCall_449, steamIDLobby, steamIDUser, pchKey);
+        return steammock::slot<const char*>(kCall_449, steamIDLobby, steamIDUser, pchKey);
     }
     virtual void SetLobbyMemberData(CSteamID steamIDLobby, const char* pchKey, const char* pchValue) {
-        steambridge::slot<void>(kCall_450, steamIDLobby, pchKey, pchValue);
+        steammock::slot<void>(kCall_450, steamIDLobby, pchKey, pchValue);
     }
     virtual bool SendLobbyChatMsg(CSteamID steamIDLobby, void* pvMsgBody, std::int32_t cubMsgBody) {
-        return steambridge::slot<bool>(kCall_451, steamIDLobby, pvMsgBody, cubMsgBody);
+        return steammock::slot<bool>(kCall_451, steamIDLobby, pvMsgBody, cubMsgBody);
     }
     virtual std::int32_t GetLobbyChatEntry(CSteamID steamIDLobby, std::int32_t iChatID, CSteamID* pSteamIDUser, void* pvData, std::int32_t cubData, std::int32_t* peChatEntryType) {
-        return steambridge::slot<std::int32_t>(kCall_452, steamIDLobby, iChatID, pSteamIDUser, pvData, cubData, peChatEntryType);
+        return steammock::slot<std::int32_t>(kCall_452, steamIDLobby, iChatID, pSteamIDUser, pvData, cubData, peChatEntryType);
     }
     virtual bool RequestLobbyData(CSteamID steamIDLobby) {
-        return steambridge::slot<bool>(kCall_453, steamIDLobby);
+        return steammock::slot<bool>(kCall_453, steamIDLobby);
     }
     virtual void SetLobbyGameServer(CSteamID steamIDLobby, std::uint32_t unGameServerIP, std::uint16_t unGameServerPort, CSteamID steamIDGameServer) {
-        steambridge::slot<void>(kCall_454, steamIDLobby, unGameServerIP, unGameServerPort, steamIDGameServer);
+        steammock::slot<void>(kCall_454, steamIDLobby, unGameServerIP, unGameServerPort, steamIDGameServer);
     }
     virtual bool GetLobbyGameServer(CSteamID steamIDLobby, std::uint32_t* punGameServerIP, std::uint16_t* punGameServerPort, CSteamID* psteamIDGameServer) {
-        return steambridge::slot<bool>(kCall_455, steamIDLobby, punGameServerIP, punGameServerPort, psteamIDGameServer);
+        return steammock::slot<bool>(kCall_455, steamIDLobby, punGameServerIP, punGameServerPort, psteamIDGameServer);
     }
     virtual bool SetLobbyMemberLimit(CSteamID steamIDLobby, std::int32_t cMaxMembers) {
-        return steambridge::slot<bool>(kCall_456, steamIDLobby, cMaxMembers);
+        return steammock::slot<bool>(kCall_456, steamIDLobby, cMaxMembers);
     }
     virtual std::int32_t GetLobbyMemberLimit(CSteamID steamIDLobby) {
-        return steambridge::slot<std::int32_t>(kCall_457, steamIDLobby);
+        return steammock::slot<std::int32_t>(kCall_457, steamIDLobby);
     }
     virtual bool SetLobbyType(CSteamID steamIDLobby, std::int32_t eLobbyType) {
-        return steambridge::slot<bool>(kCall_458, steamIDLobby, eLobbyType);
+        return steammock::slot<bool>(kCall_458, steamIDLobby, eLobbyType);
     }
     virtual bool SetLobbyJoinable(CSteamID steamIDLobby, bool bLobbyJoinable) {
-        return steambridge::slot<bool>(kCall_459, steamIDLobby, bLobbyJoinable);
+        return steammock::slot<bool>(kCall_459, steamIDLobby, bLobbyJoinable);
     }
     virtual CSteamID GetLobbyOwner(CSteamID steamIDLobby) {
-        return steambridge::slot<CSteamID>(kCall_460, steamIDLobby);
+        return steammock::slot<CSteamID>(kCall_460, steamIDLobby);
     }
     virtual bool SetLobbyOwner(CSteamID steamIDLobby, CSteamID steamIDNewOwner) {
-        return steambridge::slot<bool>(kCall_461, steamIDLobby, steamIDNewOwner);
+        return steammock::slot<bool>(kCall_461, steamIDLobby, steamIDNewOwner);
     }
     virtual bool SetLinkedLobby(CSteamID steamIDLobby, CSteamID steamIDLobbyDependent) {
-        return steambridge::slot<bool>(kCall_462, steamIDLobby, steamIDLobbyDependent);
+        return steammock::slot<bool>(kCall_462, steamIDLobby, steamIDLobbyDependent);
     }
 };
 
@@ -5276,51 +5256,49 @@ Version_SteamMatchMaking009 g_SteamMatchMaking009;
 class Version_SteamMatchMakingServers002 {
 public:
     virtual void* RequestInternetServerList(std::uint32_t iApp, void* ppchFilters, std::uint32_t nFilters, void* pRequestServersResponse) {
-        return steambridge::slot<void*>(kCall_463, iApp, ppchFilters, nFilters, pRequestServersResponse);
+        return steammock::slot<void*>(kCall_463, iApp, ppchFilters, nFilters, pRequestServersResponse);
     }
     virtual void* RequestLANServerList(std::uint32_t iApp, void* pRequestServersResponse) {
-        return steambridge::slot<void*>(kCall_464, iApp, pRequestServersResponse);
+        return steammock::slot<void*>(kCall_464, iApp, pRequestServersResponse);
     }
     virtual void* RequestFriendsServerList(std::uint32_t iApp, void* ppchFilters, std::uint32_t nFilters, void* pRequestServersResponse) {
-        return steambridge::slot<void*>(kCall_465, iApp, ppchFilters, nFilters, pRequestServersResponse);
+        return steammock::slot<void*>(kCall_465, iApp, ppchFilters, nFilters, pRequestServersResponse);
     }
     virtual void* RequestFavoritesServerList(std::uint32_t iApp, void* ppchFilters, std::uint32_t nFilters, void* pRequestServersResponse) {
-        return steambridge::slot<void*>(kCall_466, iApp, ppchFilters, nFilters, pRequestServersResponse);
+        return steammock::slot<void*>(kCall_466, iApp, ppchFilters, nFilters, pRequestServersResponse);
     }
     virtual void* RequestHistoryServerList(std::uint32_t iApp, void* ppchFilters, std::uint32_t nFilters, void* pRequestServersResponse) {
-        return steambridge::slot<void*>(kCall_467, iApp, ppchFilters, nFilters, pRequestServersResponse);
+        return steammock::slot<void*>(kCall_467, iApp, ppchFilters, nFilters, pRequestServersResponse);
     }
     virtual void* RequestSpectatorServerList(std::uint32_t iApp, void* ppchFilters, std::uint32_t nFilters, void* pRequestServersResponse) {
-        return steambridge::slot<void*>(kCall_468, iApp, ppchFilters, nFilters, pRequestServersResponse);
+        return steammock::slot<void*>(kCall_468, iApp, ppchFilters, nFilters, pRequestServersResponse);
     }
     virtual void ReleaseRequest(void* hServerListRequest) {
-        steambridge::slot<void>(kCall_469, hServerListRequest);
+        steammock::slot<void>(kCall_469, hServerListRequest);
     }
     virtual void* GetServerDetails(void* hRequest, std::int32_t iServer) {
-        return steambridge::slot<void*>(kCall_470, hRequest, iServer);
+        return steammock::slot<void*>(kCall_470, hRequest, iServer);
     }
-    virtual void CancelQuery(void* hRequest) { steambridge::slot<void>(kCall_471, hRequest); }
-    virtual void RefreshQuery(void* hRequest) { steambridge::slot<void>(kCall_472, hRequest); }
-    virtual bool IsRefreshing(void* hRequest) {
-        return steambridge::slot<bool>(kCall_473, hRequest);
-    }
+    virtual void CancelQuery(void* hRequest) { steammock::slot<void>(kCall_471, hRequest); }
+    virtual void RefreshQuery(void* hRequest) { steammock::slot<void>(kCall_472, hRequest); }
+    virtual bool IsRefreshing(void* hRequest) { return steammock::slot<bool>(kCall_473, hRequest); }
     virtual std::int32_t GetServerCount(void* hRequest) {
-        return steambridge::slot<std::int32_t>(kCall_474, hRequest);
+        return steammock::slot<std::int32_t>(kCall_474, hRequest);
     }
     virtual void RefreshServer(void* hRequest, std::int32_t iServer) {
-        steambridge::slot<void>(kCall_475, hRequest, iServer);
+        steammock::slot<void>(kCall_475, hRequest, iServer);
     }
     virtual std::int32_t PingServer(std::uint32_t unIP, std::uint16_t usPort, void* pRequestServersResponse) {
-        return steambridge::slot<std::int32_t>(kCall_476, unIP, usPort, pRequestServersResponse);
+        return steammock::slot<std::int32_t>(kCall_476, unIP, usPort, pRequestServersResponse);
     }
     virtual std::int32_t PlayerDetails(std::uint32_t unIP, std::uint16_t usPort, void* pRequestServersResponse) {
-        return steambridge::slot<std::int32_t>(kCall_477, unIP, usPort, pRequestServersResponse);
+        return steammock::slot<std::int32_t>(kCall_477, unIP, usPort, pRequestServersResponse);
     }
     virtual std::int32_t ServerRules(std::uint32_t unIP, std::uint16_t usPort, void* pRequestServersResponse) {
-        return steambridge::slot<std::int32_t>(kCall_478, unIP, usPort, pRequestServersResponse);
+        return steammock::slot<std::int32_t>(kCall_478, unIP, usPort, pRequestServersResponse);
     }
     virtual void CancelServerQuery(std::int32_t hServerQuery) {
-        steambridge::slot<void>(kCall_479, hServerQuery);
+        steammock::slot<void>(kCall_479, hServerQuery);
     }
 };
 
@@ -5329,15 +5307,15 @@ Version_SteamMatchMakingServers002 g_SteamMatchMakingServers002;
 // ISteamMusic STEAMMUSIC_INTERFACE_VERSION001
 class Version_STEAMMUSIC_INTERFACE_VERSION001 {
 public:
-    virtual bool BIsEnabled() { return steambridge::slot<bool>(kCall_480); }
-    virtual bool BIsPlaying() { return steambridge::slot<bool>(kCall_481); }
-    virtual std::int32_t GetPlaybackStatus() { return steambridge::slot<std::int32_t>(kCall_482); }
-    virtual void Play() { steambridge::slot<void>(kCall_483); }
-    virtual void Pause() { steambridge::slot<void>(kCall_484); }
-    virtual void PlayPrevious() { steambridge::slot<void>(kCall_485); }
-    virtual void PlayNext() { steambridge::slot<void>(kCall_486); }
-    virtual void SetVolume(float flVolume) { steambridge::slot<void>(kCall_487, flVolume); }
-    virtual float GetVolume() { return steambridge::slot<float>(kCall_488); }
+    virtual bool BIsEnabled() { return steammock::slot<bool>(kCall_480); }
+    virtual bool BIsPlaying() { return steammock::slot<bool>(kCall_481); }
+    virtual std::int32_t GetPlaybackStatus() { return steammock::slot<std::int32_t>(kCall_482); }
+    virtual void Play() { steammock::slot<void>(kCall_483); }
+    virtual void Pause() { steammock::slot<void>(kCall_484); }
+    virtual void PlayPrevious() { steammock::slot<void>(kCall_485); }
+    virtual void PlayNext() { steammock::slot<void>(kCall_486); }
+    virtual void SetVolume(float flVolume) { steammock::slot<void>(kCall_487, flVolume); }
+    virtual float GetVolume() { return steammock::slot<float>(kCall_488); }
 };
 
 Version_STEAMMUSIC_INTERFACE_VERSION001 g_STEAMMUSIC_INTERFACE_VERSION001;
@@ -5346,65 +5324,65 @@ Version_STEAMMUSIC_INTERFACE_VERSION001 g_STEAMMUSIC_INTERFACE_VERSION001;
 class Version_STEAMMUSICREMOTE_INTERFACE_VERSION001 {
 public:
     virtual bool RegisterSteamMusicRemote(const char* pchName) {
-        return steambridge::slot<bool>(kCall_489, pchName);
+        return steammock::slot<bool>(kCall_489, pchName);
     }
-    virtual bool DeregisterSteamMusicRemote() { return steambridge::slot<bool>(kCall_490); }
-    virtual bool BIsCurrentMusicRemote() { return steambridge::slot<bool>(kCall_491); }
+    virtual bool DeregisterSteamMusicRemote() { return steammock::slot<bool>(kCall_490); }
+    virtual bool BIsCurrentMusicRemote() { return steammock::slot<bool>(kCall_491); }
     virtual bool BActivationSuccess(bool bValue) {
-        return steambridge::slot<bool>(kCall_492, bValue);
+        return steammock::slot<bool>(kCall_492, bValue);
     }
     virtual bool SetDisplayName(const char* pchDisplayName) {
-        return steambridge::slot<bool>(kCall_493, pchDisplayName);
+        return steammock::slot<bool>(kCall_493, pchDisplayName);
     }
     virtual bool SetPNGIcon_64x64(void* pvBuffer, std::uint32_t cbBufferLength) {
-        return steambridge::slot<bool>(kCall_494, pvBuffer, cbBufferLength);
+        return steammock::slot<bool>(kCall_494, pvBuffer, cbBufferLength);
     }
     virtual bool EnablePlayPrevious(bool bValue) {
-        return steambridge::slot<bool>(kCall_495, bValue);
+        return steammock::slot<bool>(kCall_495, bValue);
     }
-    virtual bool EnablePlayNext(bool bValue) { return steambridge::slot<bool>(kCall_496, bValue); }
-    virtual bool EnableShuffled(bool bValue) { return steambridge::slot<bool>(kCall_497, bValue); }
-    virtual bool EnableLooped(bool bValue) { return steambridge::slot<bool>(kCall_498, bValue); }
-    virtual bool EnableQueue(bool bValue) { return steambridge::slot<bool>(kCall_499, bValue); }
-    virtual bool EnablePlaylists(bool bValue) { return steambridge::slot<bool>(kCall_500, bValue); }
+    virtual bool EnablePlayNext(bool bValue) { return steammock::slot<bool>(kCall_496, bValue); }
+    virtual bool EnableShuffled(bool bValue) { return steammock::slot<bool>(kCall_497, bValue); }
+    virtual bool EnableLooped(bool bValue) { return steammock::slot<bool>(kCall_498, bValue); }
+    virtual bool EnableQueue(bool bValue) { return steammock::slot<bool>(kCall_499, bValue); }
+    virtual bool EnablePlaylists(bool bValue) { return steammock::slot<bool>(kCall_500, bValue); }
     virtual bool UpdatePlaybackStatus(std::int32_t nStatus) {
-        return steambridge::slot<bool>(kCall_501, nStatus);
+        return steammock::slot<bool>(kCall_501, nStatus);
     }
-    virtual bool UpdateShuffled(bool bValue) { return steambridge::slot<bool>(kCall_502, bValue); }
-    virtual bool UpdateLooped(bool bValue) { return steambridge::slot<bool>(kCall_503, bValue); }
-    virtual bool UpdateVolume(float flValue) { return steambridge::slot<bool>(kCall_504, flValue); }
-    virtual bool CurrentEntryWillChange() { return steambridge::slot<bool>(kCall_505); }
+    virtual bool UpdateShuffled(bool bValue) { return steammock::slot<bool>(kCall_502, bValue); }
+    virtual bool UpdateLooped(bool bValue) { return steammock::slot<bool>(kCall_503, bValue); }
+    virtual bool UpdateVolume(float flValue) { return steammock::slot<bool>(kCall_504, flValue); }
+    virtual bool CurrentEntryWillChange() { return steammock::slot<bool>(kCall_505); }
     virtual bool CurrentEntryIsAvailable(bool bAvailable) {
-        return steambridge::slot<bool>(kCall_506, bAvailable);
+        return steammock::slot<bool>(kCall_506, bAvailable);
     }
     virtual bool UpdateCurrentEntryText(const char* pchText) {
-        return steambridge::slot<bool>(kCall_507, pchText);
+        return steammock::slot<bool>(kCall_507, pchText);
     }
     virtual bool UpdateCurrentEntryElapsedSeconds(std::int32_t nValue) {
-        return steambridge::slot<bool>(kCall_508, nValue);
+        return steammock::slot<bool>(kCall_508, nValue);
     }
     virtual bool UpdateCurrentEntryCoverArt(void* pvBuffer, std::uint32_t cbBufferLength) {
-        return steambridge::slot<bool>(kCall_509, pvBuffer, cbBufferLength);
+        return steammock::slot<bool>(kCall_509, pvBuffer, cbBufferLength);
     }
-    virtual bool CurrentEntryDidChange() { return steambridge::slot<bool>(kCall_510); }
-    virtual bool QueueWillChange() { return steambridge::slot<bool>(kCall_511); }
-    virtual bool ResetQueueEntries() { return steambridge::slot<bool>(kCall_512); }
+    virtual bool CurrentEntryDidChange() { return steammock::slot<bool>(kCall_510); }
+    virtual bool QueueWillChange() { return steammock::slot<bool>(kCall_511); }
+    virtual bool ResetQueueEntries() { return steammock::slot<bool>(kCall_512); }
     virtual bool SetQueueEntry(std::int32_t nID, std::int32_t nPosition, const char* pchEntryText) {
-        return steambridge::slot<bool>(kCall_513, nID, nPosition, pchEntryText);
+        return steammock::slot<bool>(kCall_513, nID, nPosition, pchEntryText);
     }
     virtual bool SetCurrentQueueEntry(std::int32_t nID) {
-        return steambridge::slot<bool>(kCall_514, nID);
+        return steammock::slot<bool>(kCall_514, nID);
     }
-    virtual bool QueueDidChange() { return steambridge::slot<bool>(kCall_515); }
-    virtual bool PlaylistWillChange() { return steambridge::slot<bool>(kCall_516); }
-    virtual bool ResetPlaylistEntries() { return steambridge::slot<bool>(kCall_517); }
+    virtual bool QueueDidChange() { return steammock::slot<bool>(kCall_515); }
+    virtual bool PlaylistWillChange() { return steammock::slot<bool>(kCall_516); }
+    virtual bool ResetPlaylistEntries() { return steammock::slot<bool>(kCall_517); }
     virtual bool SetPlaylistEntry(std::int32_t nID, std::int32_t nPosition, const char* pchEntryText) {
-        return steambridge::slot<bool>(kCall_518, nID, nPosition, pchEntryText);
+        return steammock::slot<bool>(kCall_518, nID, nPosition, pchEntryText);
     }
     virtual bool SetCurrentPlaylistEntry(std::int32_t nID) {
-        return steambridge::slot<bool>(kCall_519, nID);
+        return steammock::slot<bool>(kCall_519, nID);
     }
-    virtual bool PlaylistDidChange() { return steambridge::slot<bool>(kCall_520); }
+    virtual bool PlaylistDidChange() { return steammock::slot<bool>(kCall_520); }
 };
 
 Version_STEAMMUSICREMOTE_INTERFACE_VERSION001 g_STEAMMUSICREMOTE_INTERFACE_VERSION001;
@@ -5413,70 +5391,70 @@ Version_STEAMMUSICREMOTE_INTERFACE_VERSION001 g_STEAMMUSICREMOTE_INTERFACE_VERSI
 class Version_SteamNetworking005 {
 public:
     virtual bool SendP2PPacket(CSteamID steamIDRemote, void* pubData, std::uint32_t cubData, std::int32_t eP2PSendType, std::int32_t nChannel) {
-        return steambridge::slot<bool>(kCall_521, steamIDRemote, pubData, cubData, eP2PSendType, nChannel);
+        return steammock::slot<bool>(kCall_521, steamIDRemote, pubData, cubData, eP2PSendType, nChannel);
     }
     virtual bool IsP2PPacketAvailable(std::uint32_t* pcubMsgSize, std::int32_t nChannel) {
-        return steambridge::slot<bool>(kCall_522, pcubMsgSize, nChannel);
+        return steammock::slot<bool>(kCall_522, pcubMsgSize, nChannel);
     }
     virtual bool ReadP2PPacket(void* pubDest, std::uint32_t cubDest, std::uint32_t* pcubMsgSize, CSteamID* psteamIDRemote, std::int32_t nChannel) {
-        return steambridge::slot<bool>(kCall_523, pubDest, cubDest, pcubMsgSize, psteamIDRemote, nChannel);
+        return steammock::slot<bool>(kCall_523, pubDest, cubDest, pcubMsgSize, psteamIDRemote, nChannel);
     }
     virtual bool AcceptP2PSessionWithUser(CSteamID steamIDRemote) {
-        return steambridge::slot<bool>(kCall_524, steamIDRemote);
+        return steammock::slot<bool>(kCall_524, steamIDRemote);
     }
     virtual bool CloseP2PSessionWithUser(CSteamID steamIDRemote) {
-        return steambridge::slot<bool>(kCall_525, steamIDRemote);
+        return steammock::slot<bool>(kCall_525, steamIDRemote);
     }
     virtual bool CloseP2PChannelWithUser(CSteamID steamIDRemote, std::int32_t nChannel) {
-        return steambridge::slot<bool>(kCall_526, steamIDRemote, nChannel);
+        return steammock::slot<bool>(kCall_526, steamIDRemote, nChannel);
     }
     virtual bool GetP2PSessionState(CSteamID steamIDRemote, void* pConnectionState) {
-        return steambridge::slot<bool>(kCall_527, steamIDRemote, pConnectionState);
+        return steammock::slot<bool>(kCall_527, steamIDRemote, pConnectionState);
     }
     virtual bool AllowP2PPacketRelay(bool bAllow) {
-        return steambridge::slot<bool>(kCall_528, bAllow);
+        return steammock::slot<bool>(kCall_528, bAllow);
     }
     virtual std::uint32_t CreateListenSocket(std::int32_t nVirtualP2PPort, std::uint32_t nIP, std::uint16_t nPort, bool bAllowUseOfPacketRelay) {
-        return steambridge::slot<std::uint32_t>(kCall_529, nVirtualP2PPort, nIP, nPort, bAllowUseOfPacketRelay);
+        return steammock::slot<std::uint32_t>(kCall_529, nVirtualP2PPort, nIP, nPort, bAllowUseOfPacketRelay);
     }
     virtual std::uint32_t CreateP2PConnectionSocket(CSteamID steamIDTarget, std::int32_t nVirtualPort, std::int32_t nTimeoutSec, bool bAllowUseOfPacketRelay) {
-        return steambridge::slot<std::uint32_t>(kCall_530, steamIDTarget, nVirtualPort, nTimeoutSec, bAllowUseOfPacketRelay);
+        return steammock::slot<std::uint32_t>(kCall_530, steamIDTarget, nVirtualPort, nTimeoutSec, bAllowUseOfPacketRelay);
     }
     virtual std::uint32_t CreateConnectionSocket(std::uint32_t nIP, std::uint16_t nPort, std::int32_t nTimeoutSec) {
-        return steambridge::slot<std::uint32_t>(kCall_531, nIP, nPort, nTimeoutSec);
+        return steammock::slot<std::uint32_t>(kCall_531, nIP, nPort, nTimeoutSec);
     }
     virtual bool DestroySocket(std::uint32_t hSocket, bool bNotifyRemoteEnd) {
-        return steambridge::slot<bool>(kCall_532, hSocket, bNotifyRemoteEnd);
+        return steammock::slot<bool>(kCall_532, hSocket, bNotifyRemoteEnd);
     }
     virtual bool DestroyListenSocket(std::uint32_t hSocket, bool bNotifyRemoteEnd) {
-        return steambridge::slot<bool>(kCall_533, hSocket, bNotifyRemoteEnd);
+        return steammock::slot<bool>(kCall_533, hSocket, bNotifyRemoteEnd);
     }
     virtual bool SendDataOnSocket(std::uint32_t hSocket, void* pubData, std::uint32_t cubData, bool bReliable) {
-        return steambridge::slot<bool>(kCall_534, hSocket, pubData, cubData, bReliable);
+        return steammock::slot<bool>(kCall_534, hSocket, pubData, cubData, bReliable);
     }
     virtual bool IsDataAvailableOnSocket(std::uint32_t hSocket, std::uint32_t* pcubMsgSize) {
-        return steambridge::slot<bool>(kCall_535, hSocket, pcubMsgSize);
+        return steammock::slot<bool>(kCall_535, hSocket, pcubMsgSize);
     }
     virtual bool RetrieveDataFromSocket(std::uint32_t hSocket, void* pubDest, std::uint32_t cubDest, std::uint32_t* pcubMsgSize) {
-        return steambridge::slot<bool>(kCall_536, hSocket, pubDest, cubDest, pcubMsgSize);
+        return steammock::slot<bool>(kCall_536, hSocket, pubDest, cubDest, pcubMsgSize);
     }
     virtual bool IsDataAvailable(std::uint32_t hListenSocket, std::uint32_t* pcubMsgSize, std::uint32_t* phSocket) {
-        return steambridge::slot<bool>(kCall_537, hListenSocket, pcubMsgSize, phSocket);
+        return steammock::slot<bool>(kCall_537, hListenSocket, pcubMsgSize, phSocket);
     }
     virtual bool RetrieveData(std::uint32_t hListenSocket, void* pubDest, std::uint32_t cubDest, std::uint32_t* pcubMsgSize, std::uint32_t* phSocket) {
-        return steambridge::slot<bool>(kCall_538, hListenSocket, pubDest, cubDest, pcubMsgSize, phSocket);
+        return steammock::slot<bool>(kCall_538, hListenSocket, pubDest, cubDest, pcubMsgSize, phSocket);
     }
     virtual bool GetSocketInfo(std::uint32_t hSocket, CSteamID* pSteamIDRemote, std::int32_t* peSocketStatus, std::uint32_t* punIPRemote, std::uint16_t* punPortRemote) {
-        return steambridge::slot<bool>(kCall_539, hSocket, pSteamIDRemote, peSocketStatus, punIPRemote, punPortRemote);
+        return steammock::slot<bool>(kCall_539, hSocket, pSteamIDRemote, peSocketStatus, punIPRemote, punPortRemote);
     }
     virtual bool GetListenSocketInfo(std::uint32_t hListenSocket, std::uint32_t* pnIP, std::uint16_t* pnPort) {
-        return steambridge::slot<bool>(kCall_540, hListenSocket, pnIP, pnPort);
+        return steammock::slot<bool>(kCall_540, hListenSocket, pnIP, pnPort);
     }
     virtual std::int32_t GetSocketConnectionType(std::uint32_t hSocket) {
-        return steambridge::slot<std::int32_t>(kCall_541, hSocket);
+        return steammock::slot<std::int32_t>(kCall_541, hSocket);
     }
     virtual std::int32_t GetMaxPacketSize(std::uint32_t hSocket) {
-        return steambridge::slot<std::int32_t>(kCall_542, hSocket);
+        return steammock::slot<std::int32_t>(kCall_542, hSocket);
     }
 };
 
@@ -5486,70 +5464,70 @@ Version_SteamNetworking005 g_SteamNetworking005;
 class Version_SteamNetworking006 {
 public:
     virtual bool SendP2PPacket(CSteamID steamIDRemote, void* pubData, std::uint32_t cubData, std::int32_t eP2PSendType, std::int32_t nChannel) {
-        return steambridge::slot<bool>(kCall_521, steamIDRemote, pubData, cubData, eP2PSendType, nChannel);
+        return steammock::slot<bool>(kCall_521, steamIDRemote, pubData, cubData, eP2PSendType, nChannel);
     }
     virtual bool IsP2PPacketAvailable(std::uint32_t* pcubMsgSize, std::int32_t nChannel) {
-        return steambridge::slot<bool>(kCall_522, pcubMsgSize, nChannel);
+        return steammock::slot<bool>(kCall_522, pcubMsgSize, nChannel);
     }
     virtual bool ReadP2PPacket(void* pubDest, std::uint32_t cubDest, std::uint32_t* pcubMsgSize, CSteamID* psteamIDRemote, std::int32_t nChannel) {
-        return steambridge::slot<bool>(kCall_523, pubDest, cubDest, pcubMsgSize, psteamIDRemote, nChannel);
+        return steammock::slot<bool>(kCall_523, pubDest, cubDest, pcubMsgSize, psteamIDRemote, nChannel);
     }
     virtual bool AcceptP2PSessionWithUser(CSteamID steamIDRemote) {
-        return steambridge::slot<bool>(kCall_524, steamIDRemote);
+        return steammock::slot<bool>(kCall_524, steamIDRemote);
     }
     virtual bool CloseP2PSessionWithUser(CSteamID steamIDRemote) {
-        return steambridge::slot<bool>(kCall_525, steamIDRemote);
+        return steammock::slot<bool>(kCall_525, steamIDRemote);
     }
     virtual bool CloseP2PChannelWithUser(CSteamID steamIDRemote, std::int32_t nChannel) {
-        return steambridge::slot<bool>(kCall_526, steamIDRemote, nChannel);
+        return steammock::slot<bool>(kCall_526, steamIDRemote, nChannel);
     }
     virtual bool GetP2PSessionState(CSteamID steamIDRemote, void* pConnectionState) {
-        return steambridge::slot<bool>(kCall_527, steamIDRemote, pConnectionState);
+        return steammock::slot<bool>(kCall_527, steamIDRemote, pConnectionState);
     }
     virtual bool AllowP2PPacketRelay(bool bAllow) {
-        return steambridge::slot<bool>(kCall_528, bAllow);
+        return steammock::slot<bool>(kCall_528, bAllow);
     }
     virtual std::uint32_t CreateListenSocket(std::int32_t nVirtualP2PPort, SteamIPAddress_t nIP, std::uint16_t nPort, bool bAllowUseOfPacketRelay) {
-        return steambridge::slot<std::uint32_t>(kCall_529, nVirtualP2PPort, nIP, nPort, bAllowUseOfPacketRelay);
+        return steammock::slot<std::uint32_t>(kCall_529, nVirtualP2PPort, nIP, nPort, bAllowUseOfPacketRelay);
     }
     virtual std::uint32_t CreateP2PConnectionSocket(CSteamID steamIDTarget, std::int32_t nVirtualPort, std::int32_t nTimeoutSec, bool bAllowUseOfPacketRelay) {
-        return steambridge::slot<std::uint32_t>(kCall_530, steamIDTarget, nVirtualPort, nTimeoutSec, bAllowUseOfPacketRelay);
+        return steammock::slot<std::uint32_t>(kCall_530, steamIDTarget, nVirtualPort, nTimeoutSec, bAllowUseOfPacketRelay);
     }
     virtual std::uint32_t CreateConnectionSocket(SteamIPAddress_t nIP, std::uint16_t nPort, std::int32_t nTimeoutSec) {
-        return steambridge::slot<std::uint32_t>(kCall_531, nIP, nPort, nTimeoutSec);
+        return steammock::slot<std::uint32_t>(kCall_531, nIP, nPort, nTimeoutSec);
     }
     virtual bool DestroySocket(std::uint32_t hSocket, bool bNotifyRemoteEnd) {
-        return steambridge::slot<bool>(kCall_532, hSocket, bNotifyRemoteEnd);
+        return steammock::slot<bool>(kCall_532, hSocket, bNotifyRemoteEnd);
     }
     virtual bool DestroyListenSocket(std::uint32_t hSocket, bool bNotifyRemoteEnd) {
-        return steambridge::slot<bool>(kCall_533, hSocket, bNotifyRemoteEnd);
+        return steammock::slot<bool>(kCall_533, hSocket, bNotifyRemoteEnd);
     }
     virtual bool SendDataOnSocket(std::uint32_t hSocket, void* pubData, std::uint32_t cubData, bool bReliable) {
-        return steambridge::slot<bool>(kCall_534, hSocket, pubData, cubData, bReliable);
+        return steammock::slot<bool>(kCall_534, hSocket, pubData, cubData, bReliable);
     }
     virtual bool IsDataAvailableOnSocket(std::uint32_t hSocket, std::uint32_t* pcubMsgSize) {
-        return steambridge::slot<bool>(kCall_535, hSocket, pcubMsgSize);
+        return steammock::slot<bool>(kCall_535, hSocket, pcubMsgSize);
     }
     virtual bool RetrieveDataFromSocket(std::uint32_t hSocket, void* pubDest, std::uint32_t cubDest, std::uint32_t* pcubMsgSize) {
-        return steambridge::slot<bool>(kCall_536, hSocket, pubDest, cubDest, pcubMsgSize);
+        return steammock::slot<bool>(kCall_536, hSocket, pubDest, cubDest, pcubMsgSize);
     }
     virtual bool IsDataAvailable(std::uint32_t hListenSocket, std::uint32_t* pcubMsgSize, std::uint32_t* phSocket) {
-        return steambridge::slot<bool>(kCall_537, hListenSocket, pcubMsgSize, phSocket);
+        return steammock::slot<bool>(kCall_537, hListenSocket, pcubMsgSize, phSocket);
     }
     virtual bool RetrieveData(std::uint32_t hListenSocket, void* pubDest, std::uint32_t cubDest, std::uint32_t* pcubMsgSize, std::uint32_t* phSocket) {
-        return steambridge::slot<bool>(kCall_538, hListenSocket, pubDest, cubDest, pcubMsgSize, phSocket);
+        return steammock::slot<bool>(kCall_538, hListenSocket, pubDest, cubDest, pcubMsgSize, phSocket);
     }
     virtual bool GetSocketInfo(std::uint32_t hSocket, CSteamID* pSteamIDRemote, std::int32_t* peSocketStatus, void* punIPRemote, std::uint16_t* punPortRemote) {
-        return steambridge::slot<bool>(kCall_539, hSocket, pSteamIDRemote, peSocketStatus, punIPRemote, punPortRemote);
+        return steammock::slot<bool>(kCall_539, hSocket, pSteamIDRemote, peSocketStatus, punIPRemote, punPortRemote);
     }
     virtual bool GetListenSocketInfo(std::uint32_t hListenSocket, void* pnIP, std::uint16_t* pnPort) {
-        return steambridge::slot<bool>(kCall_540, hListenSocket, pnIP, pnPort);
+        return steammock::slot<bool>(kCall_540, hListenSocket, pnIP, pnPort);
     }
     virtual std::int32_t GetSocketConnectionType(std::uint32_t hSocket) {
-        return steambridge::slot<std::int32_t>(kCall_541, hSocket);
+        return steammock::slot<std::int32_t>(kCall_541, hSocket);
     }
     virtual std::int32_t GetMaxPacketSize(std::uint32_t hSocket) {
-        return steambridge::slot<std::int32_t>(kCall_542, hSocket);
+        return steammock::slot<std::int32_t>(kCall_542, hSocket);
     }
 };
 
@@ -5559,22 +5537,22 @@ Version_SteamNetworking006 g_SteamNetworking006;
 class Version_SteamNetworkingMessages002 {
 public:
     virtual std::int32_t SendMessageToUser(void* identityRemote, void* pubData, std::uint32_t cubData, std::int32_t nSendFlags, std::int32_t nRemoteChannel) {
-        return steambridge::slot<std::int32_t>(kCall_543, identityRemote, pubData, cubData, nSendFlags, nRemoteChannel);
+        return steammock::slot<std::int32_t>(kCall_543, identityRemote, pubData, cubData, nSendFlags, nRemoteChannel);
     }
     virtual std::int32_t ReceiveMessagesOnChannel(std::int32_t nLocalChannel, void* ppOutMessages, std::int32_t nMaxMessages) {
-        return steambridge::slot<std::int32_t>(kCall_544, nLocalChannel, ppOutMessages, nMaxMessages);
+        return steammock::slot<std::int32_t>(kCall_544, nLocalChannel, ppOutMessages, nMaxMessages);
     }
     virtual bool AcceptSessionWithUser(void* identityRemote) {
-        return steambridge::slot<bool>(kCall_545, identityRemote);
+        return steammock::slot<bool>(kCall_545, identityRemote);
     }
     virtual bool CloseSessionWithUser(void* identityRemote) {
-        return steambridge::slot<bool>(kCall_546, identityRemote);
+        return steammock::slot<bool>(kCall_546, identityRemote);
     }
     virtual bool CloseChannelWithUser(void* identityRemote, std::int32_t nLocalChannel) {
-        return steambridge::slot<bool>(kCall_547, identityRemote, nLocalChannel);
+        return steammock::slot<bool>(kCall_547, identityRemote, nLocalChannel);
     }
     virtual std::int32_t GetSessionConnectionInfo(void* identityRemote, void* pConnectionInfo, void* pQuickStatus) {
-        return steambridge::slot<std::int32_t>(kCall_548, identityRemote, pConnectionInfo, pQuickStatus);
+        return steammock::slot<std::int32_t>(kCall_548, identityRemote, pConnectionInfo, pQuickStatus);
     }
 };
 
@@ -5584,119 +5562,119 @@ Version_SteamNetworkingMessages002 g_SteamNetworkingMessages002;
 class Version_SteamNetworkingSockets009 {
 public:
     virtual std::uint32_t CreateListenSocketIP(void* localAddress, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_549, localAddress, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_549, localAddress, nOptions, pOptions);
     }
     virtual std::uint32_t ConnectByIPAddress(void* address, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_550, address, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_550, address, nOptions, pOptions);
     }
     virtual std::uint32_t CreateListenSocketP2P(std::int32_t nLocalVirtualPort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_551, nLocalVirtualPort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_551, nLocalVirtualPort, nOptions, pOptions);
     }
     virtual std::uint32_t ConnectP2P(void* identityRemote, std::int32_t nRemoteVirtualPort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_552, identityRemote, nRemoteVirtualPort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_552, identityRemote, nRemoteVirtualPort, nOptions, pOptions);
     }
     virtual std::int32_t AcceptConnection(std::uint32_t hConn) {
-        return steambridge::slot<std::int32_t>(kCall_553, hConn);
+        return steammock::slot<std::int32_t>(kCall_553, hConn);
     }
     virtual bool CloseConnection(std::uint32_t hPeer, std::int32_t nReason, const char* pszDebug, bool bEnableLinger) {
-        return steambridge::slot<bool>(kCall_554, hPeer, nReason, pszDebug, bEnableLinger);
+        return steammock::slot<bool>(kCall_554, hPeer, nReason, pszDebug, bEnableLinger);
     }
     virtual bool CloseListenSocket(std::uint32_t hSocket) {
-        return steambridge::slot<bool>(kCall_555, hSocket);
+        return steammock::slot<bool>(kCall_555, hSocket);
     }
     virtual bool SetConnectionUserData(std::uint32_t hPeer, std::int64_t nUserData) {
-        return steambridge::slot<bool>(kCall_556, hPeer, nUserData);
+        return steammock::slot<bool>(kCall_556, hPeer, nUserData);
     }
     virtual std::int64_t GetConnectionUserData(std::uint32_t hPeer) {
-        return steambridge::slot<std::int64_t>(kCall_557, hPeer);
+        return steammock::slot<std::int64_t>(kCall_557, hPeer);
     }
     virtual void SetConnectionName(std::uint32_t hPeer, const char* pszName) {
-        steambridge::slot<void>(kCall_558, hPeer, pszName);
+        steammock::slot<void>(kCall_558, hPeer, pszName);
     }
     virtual bool GetConnectionName(std::uint32_t hPeer, void* pszName, std::int32_t nMaxLen) {
-        return steambridge::slot<bool>(kCall_559, hPeer, pszName, nMaxLen);
+        return steammock::slot<bool>(kCall_559, hPeer, pszName, nMaxLen);
     }
     virtual std::int32_t SendMessageToConnection(std::uint32_t hConn, void* pData, std::uint32_t cbData, std::int32_t nSendFlags, std::int64_t* pOutMessageNumber) {
-        return steambridge::slot<std::int32_t>(kCall_560, hConn, pData, cbData, nSendFlags, pOutMessageNumber);
+        return steammock::slot<std::int32_t>(kCall_560, hConn, pData, cbData, nSendFlags, pOutMessageNumber);
     }
     virtual void SendMessages(std::int32_t nMessages, void* pMessages, std::int64_t* pOutMessageNumberOrResult) {
-        steambridge::slot<void>(kCall_561, nMessages, pMessages, pOutMessageNumberOrResult);
+        steammock::slot<void>(kCall_561, nMessages, pMessages, pOutMessageNumberOrResult);
     }
     virtual std::int32_t FlushMessagesOnConnection(std::uint32_t hConn) {
-        return steambridge::slot<std::int32_t>(kCall_562, hConn);
+        return steammock::slot<std::int32_t>(kCall_562, hConn);
     }
     virtual std::int32_t ReceiveMessagesOnConnection(std::uint32_t hConn, void* ppOutMessages, std::int32_t nMaxMessages) {
-        return steambridge::slot<std::int32_t>(kCall_563, hConn, ppOutMessages, nMaxMessages);
+        return steammock::slot<std::int32_t>(kCall_563, hConn, ppOutMessages, nMaxMessages);
     }
     virtual bool GetConnectionInfo(std::uint32_t hConn, void* pInfo) {
-        return steambridge::slot<bool>(kCall_564, hConn, pInfo);
+        return steammock::slot<bool>(kCall_564, hConn, pInfo);
     }
     virtual bool GetQuickConnectionStatus(std::uint32_t hConn, void* pStats) {
-        return steambridge::slot<bool>(kCall_565, hConn, pStats);
+        return steammock::slot<bool>(kCall_565, hConn, pStats);
     }
     virtual std::int32_t GetDetailedConnectionStatus(std::uint32_t hConn, void* pszBuf, std::int32_t cbBuf) {
-        return steambridge::slot<std::int32_t>(kCall_566, hConn, pszBuf, cbBuf);
+        return steammock::slot<std::int32_t>(kCall_566, hConn, pszBuf, cbBuf);
     }
     virtual bool GetListenSocketAddress(std::uint32_t hSocket, void* address) {
-        return steambridge::slot<bool>(kCall_567, hSocket, address);
+        return steammock::slot<bool>(kCall_567, hSocket, address);
     }
     virtual bool CreateSocketPair(std::uint32_t* pOutConnection1, std::uint32_t* pOutConnection2, bool bUseNetworkLoopback, void* pIdentity1, void* pIdentity2) {
-        return steambridge::slot<bool>(kCall_568, pOutConnection1, pOutConnection2, bUseNetworkLoopback, pIdentity1, pIdentity2);
+        return steammock::slot<bool>(kCall_568, pOutConnection1, pOutConnection2, bUseNetworkLoopback, pIdentity1, pIdentity2);
     }
     virtual bool GetIdentity(void* pIdentity) {
-        return steambridge::slot<bool>(kCall_569, pIdentity);
+        return steammock::slot<bool>(kCall_569, pIdentity);
     }
-    virtual std::int32_t InitAuthentication() { return steambridge::slot<std::int32_t>(kCall_570); }
+    virtual std::int32_t InitAuthentication() { return steammock::slot<std::int32_t>(kCall_570); }
     virtual std::int32_t GetAuthenticationStatus(void* pDetails) {
-        return steambridge::slot<std::int32_t>(kCall_571, pDetails);
+        return steammock::slot<std::int32_t>(kCall_571, pDetails);
     }
-    virtual std::uint32_t CreatePollGroup() { return steambridge::slot<std::uint32_t>(kCall_572); }
+    virtual std::uint32_t CreatePollGroup() { return steammock::slot<std::uint32_t>(kCall_572); }
     virtual bool DestroyPollGroup(std::uint32_t hPollGroup) {
-        return steambridge::slot<bool>(kCall_573, hPollGroup);
+        return steammock::slot<bool>(kCall_573, hPollGroup);
     }
     virtual bool SetConnectionPollGroup(std::uint32_t hConn, std::uint32_t hPollGroup) {
-        return steambridge::slot<bool>(kCall_574, hConn, hPollGroup);
+        return steammock::slot<bool>(kCall_574, hConn, hPollGroup);
     }
     virtual std::int32_t ReceiveMessagesOnPollGroup(std::uint32_t hPollGroup, void* ppOutMessages, std::int32_t nMaxMessages) {
-        return steambridge::slot<std::int32_t>(kCall_575, hPollGroup, ppOutMessages, nMaxMessages);
+        return steammock::slot<std::int32_t>(kCall_575, hPollGroup, ppOutMessages, nMaxMessages);
     }
     virtual bool ReceivedRelayAuthTicket(void* pvTicket, std::int32_t cbTicket, void* pOutParsedTicket) {
-        return steambridge::slot<bool>(kCall_576, pvTicket, cbTicket, pOutParsedTicket);
+        return steammock::slot<bool>(kCall_576, pvTicket, cbTicket, pOutParsedTicket);
     }
     virtual std::int32_t FindRelayAuthTicketForServer(void* identityGameServer, std::int32_t nRemoteVirtualPort, void* pOutParsedTicket) {
-        return steambridge::slot<std::int32_t>(kCall_577, identityGameServer, nRemoteVirtualPort, pOutParsedTicket);
+        return steammock::slot<std::int32_t>(kCall_577, identityGameServer, nRemoteVirtualPort, pOutParsedTicket);
     }
     virtual std::uint32_t ConnectToHostedDedicatedServer(void* identityTarget, std::int32_t nRemoteVirtualPort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_578, identityTarget, nRemoteVirtualPort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_578, identityTarget, nRemoteVirtualPort, nOptions, pOptions);
     }
     virtual std::uint16_t GetHostedDedicatedServerPort() {
-        return steambridge::slot<std::uint16_t>(kCall_579);
+        return steammock::slot<std::uint16_t>(kCall_579);
     }
     virtual std::uint32_t GetHostedDedicatedServerPOPID() {
-        return steambridge::slot<std::uint32_t>(kCall_580);
+        return steammock::slot<std::uint32_t>(kCall_580);
     }
     virtual std::int32_t GetHostedDedicatedServerAddress(void* pRouting) {
-        return steambridge::slot<std::int32_t>(kCall_581, pRouting);
+        return steammock::slot<std::int32_t>(kCall_581, pRouting);
     }
     virtual std::uint32_t CreateHostedDedicatedServerListenSocket(std::int32_t nLocalVirtualPort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_582, nLocalVirtualPort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_582, nLocalVirtualPort, nOptions, pOptions);
     }
     virtual std::int32_t GetGameCoordinatorServerLogin(void* pLoginInfo, std::int32_t* pcbSignedBlob, void* pBlob) {
-        return steambridge::slot<std::int32_t>(kCall_583, pLoginInfo, pcbSignedBlob, pBlob);
+        return steammock::slot<std::int32_t>(kCall_583, pLoginInfo, pcbSignedBlob, pBlob);
     }
     virtual std::uint32_t ConnectP2PCustomSignaling(void* pSignaling, void* pPeerIdentity, std::int32_t nRemoteVirtualPort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_584, pSignaling, pPeerIdentity, nRemoteVirtualPort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_584, pSignaling, pPeerIdentity, nRemoteVirtualPort, nOptions, pOptions);
     }
     virtual bool ReceivedP2PCustomSignal(void* pMsg, std::int32_t cbMsg, void* pContext) {
-        return steambridge::slot<bool>(kCall_585, pMsg, cbMsg, pContext);
+        return steammock::slot<bool>(kCall_585, pMsg, cbMsg, pContext);
     }
     virtual bool GetCertificateRequest(std::int32_t* pcbBlob, void* pBlob, void* errMsg) {
-        return steambridge::slot<bool>(kCall_586, pcbBlob, pBlob, errMsg);
+        return steammock::slot<bool>(kCall_586, pcbBlob, pBlob, errMsg);
     }
     virtual bool SetCertificate(void* pCertificate, std::int32_t cbCertificate, void* errMsg) {
-        return steambridge::slot<bool>(kCall_587, pCertificate, cbCertificate, errMsg);
+        return steammock::slot<bool>(kCall_587, pCertificate, cbCertificate, errMsg);
     }
-    virtual void RunCallbacks() { steambridge::slot<void>(kCall_588); }
+    virtual void RunCallbacks() { steammock::slot<void>(kCall_588); }
 };
 
 Version_SteamNetworkingSockets009 g_SteamNetworkingSockets009;
@@ -5705,137 +5683,137 @@ Version_SteamNetworkingSockets009 g_SteamNetworkingSockets009;
 class Version_SteamNetworkingSockets012 {
 public:
     virtual std::uint32_t CreateListenSocketIP(void* localAddress, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_549, localAddress, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_549, localAddress, nOptions, pOptions);
     }
     virtual std::uint32_t ConnectByIPAddress(void* address, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_550, address, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_550, address, nOptions, pOptions);
     }
     virtual std::uint32_t CreateListenSocketP2P(std::int32_t nLocalVirtualPort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_551, nLocalVirtualPort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_551, nLocalVirtualPort, nOptions, pOptions);
     }
     virtual std::uint32_t ConnectP2P(void* identityRemote, std::int32_t nRemoteVirtualPort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_552, identityRemote, nRemoteVirtualPort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_552, identityRemote, nRemoteVirtualPort, nOptions, pOptions);
     }
     virtual std::int32_t AcceptConnection(std::uint32_t hConn) {
-        return steambridge::slot<std::int32_t>(kCall_553, hConn);
+        return steammock::slot<std::int32_t>(kCall_553, hConn);
     }
     virtual bool CloseConnection(std::uint32_t hPeer, std::int32_t nReason, const char* pszDebug, bool bEnableLinger) {
-        return steambridge::slot<bool>(kCall_554, hPeer, nReason, pszDebug, bEnableLinger);
+        return steammock::slot<bool>(kCall_554, hPeer, nReason, pszDebug, bEnableLinger);
     }
     virtual bool CloseListenSocket(std::uint32_t hSocket) {
-        return steambridge::slot<bool>(kCall_555, hSocket);
+        return steammock::slot<bool>(kCall_555, hSocket);
     }
     virtual bool SetConnectionUserData(std::uint32_t hPeer, std::int64_t nUserData) {
-        return steambridge::slot<bool>(kCall_556, hPeer, nUserData);
+        return steammock::slot<bool>(kCall_556, hPeer, nUserData);
     }
     virtual std::int64_t GetConnectionUserData(std::uint32_t hPeer) {
-        return steambridge::slot<std::int64_t>(kCall_557, hPeer);
+        return steammock::slot<std::int64_t>(kCall_557, hPeer);
     }
     virtual void SetConnectionName(std::uint32_t hPeer, const char* pszName) {
-        steambridge::slot<void>(kCall_558, hPeer, pszName);
+        steammock::slot<void>(kCall_558, hPeer, pszName);
     }
     virtual bool GetConnectionName(std::uint32_t hPeer, void* pszName, std::int32_t nMaxLen) {
-        return steambridge::slot<bool>(kCall_559, hPeer, pszName, nMaxLen);
+        return steammock::slot<bool>(kCall_559, hPeer, pszName, nMaxLen);
     }
     virtual std::int32_t SendMessageToConnection(std::uint32_t hConn, void* pData, std::uint32_t cbData, std::int32_t nSendFlags, std::int64_t* pOutMessageNumber) {
-        return steambridge::slot<std::int32_t>(kCall_560, hConn, pData, cbData, nSendFlags, pOutMessageNumber);
+        return steammock::slot<std::int32_t>(kCall_560, hConn, pData, cbData, nSendFlags, pOutMessageNumber);
     }
     virtual void SendMessages(std::int32_t nMessages, void* pMessages, std::int64_t* pOutMessageNumberOrResult) {
-        steambridge::slot<void>(kCall_561, nMessages, pMessages, pOutMessageNumberOrResult);
+        steammock::slot<void>(kCall_561, nMessages, pMessages, pOutMessageNumberOrResult);
     }
     virtual std::int32_t FlushMessagesOnConnection(std::uint32_t hConn) {
-        return steambridge::slot<std::int32_t>(kCall_562, hConn);
+        return steammock::slot<std::int32_t>(kCall_562, hConn);
     }
     virtual std::int32_t ReceiveMessagesOnConnection(std::uint32_t hConn, void* ppOutMessages, std::int32_t nMaxMessages) {
-        return steambridge::slot<std::int32_t>(kCall_563, hConn, ppOutMessages, nMaxMessages);
+        return steammock::slot<std::int32_t>(kCall_563, hConn, ppOutMessages, nMaxMessages);
     }
     virtual bool GetConnectionInfo(std::uint32_t hConn, void* pInfo) {
-        return steambridge::slot<bool>(kCall_564, hConn, pInfo);
+        return steammock::slot<bool>(kCall_564, hConn, pInfo);
     }
     virtual std::int32_t GetConnectionRealTimeStatus(std::uint32_t hConn, void* pStatus, std::int32_t nLanes, void* pLanes) {
-        return steambridge::slot<std::int32_t>(kCall_589, hConn, pStatus, nLanes, pLanes);
+        return steammock::slot<std::int32_t>(kCall_589, hConn, pStatus, nLanes, pLanes);
     }
     virtual std::int32_t GetDetailedConnectionStatus(std::uint32_t hConn, void* pszBuf, std::int32_t cbBuf) {
-        return steambridge::slot<std::int32_t>(kCall_566, hConn, pszBuf, cbBuf);
+        return steammock::slot<std::int32_t>(kCall_566, hConn, pszBuf, cbBuf);
     }
     virtual bool GetListenSocketAddress(std::uint32_t hSocket, void* address) {
-        return steambridge::slot<bool>(kCall_567, hSocket, address);
+        return steammock::slot<bool>(kCall_567, hSocket, address);
     }
     virtual bool CreateSocketPair(std::uint32_t* pOutConnection1, std::uint32_t* pOutConnection2, bool bUseNetworkLoopback, void* pIdentity1, void* pIdentity2) {
-        return steambridge::slot<bool>(kCall_568, pOutConnection1, pOutConnection2, bUseNetworkLoopback, pIdentity1, pIdentity2);
+        return steammock::slot<bool>(kCall_568, pOutConnection1, pOutConnection2, bUseNetworkLoopback, pIdentity1, pIdentity2);
     }
     virtual std::int32_t ConfigureConnectionLanes(std::uint32_t hConn, std::int32_t nNumLanes, void* pLanePriorities, void* pLaneWeights) {
-        return steambridge::slot<std::int32_t>(kCall_590, hConn, nNumLanes, pLanePriorities, pLaneWeights);
+        return steammock::slot<std::int32_t>(kCall_590, hConn, nNumLanes, pLanePriorities, pLaneWeights);
     }
     virtual bool GetIdentity(void* pIdentity) {
-        return steambridge::slot<bool>(kCall_569, pIdentity);
+        return steammock::slot<bool>(kCall_569, pIdentity);
     }
-    virtual std::int32_t InitAuthentication() { return steambridge::slot<std::int32_t>(kCall_570); }
+    virtual std::int32_t InitAuthentication() { return steammock::slot<std::int32_t>(kCall_570); }
     virtual std::int32_t GetAuthenticationStatus(void* pDetails) {
-        return steambridge::slot<std::int32_t>(kCall_571, pDetails);
+        return steammock::slot<std::int32_t>(kCall_571, pDetails);
     }
-    virtual std::uint32_t CreatePollGroup() { return steambridge::slot<std::uint32_t>(kCall_572); }
+    virtual std::uint32_t CreatePollGroup() { return steammock::slot<std::uint32_t>(kCall_572); }
     virtual bool DestroyPollGroup(std::uint32_t hPollGroup) {
-        return steambridge::slot<bool>(kCall_573, hPollGroup);
+        return steammock::slot<bool>(kCall_573, hPollGroup);
     }
     virtual bool SetConnectionPollGroup(std::uint32_t hConn, std::uint32_t hPollGroup) {
-        return steambridge::slot<bool>(kCall_574, hConn, hPollGroup);
+        return steammock::slot<bool>(kCall_574, hConn, hPollGroup);
     }
     virtual std::int32_t ReceiveMessagesOnPollGroup(std::uint32_t hPollGroup, void* ppOutMessages, std::int32_t nMaxMessages) {
-        return steambridge::slot<std::int32_t>(kCall_575, hPollGroup, ppOutMessages, nMaxMessages);
+        return steammock::slot<std::int32_t>(kCall_575, hPollGroup, ppOutMessages, nMaxMessages);
     }
     virtual bool ReceivedRelayAuthTicket(void* pvTicket, std::int32_t cbTicket, void* pOutParsedTicket) {
-        return steambridge::slot<bool>(kCall_576, pvTicket, cbTicket, pOutParsedTicket);
+        return steammock::slot<bool>(kCall_576, pvTicket, cbTicket, pOutParsedTicket);
     }
     virtual std::int32_t FindRelayAuthTicketForServer(void* identityGameServer, std::int32_t nRemoteVirtualPort, void* pOutParsedTicket) {
-        return steambridge::slot<std::int32_t>(kCall_577, identityGameServer, nRemoteVirtualPort, pOutParsedTicket);
+        return steammock::slot<std::int32_t>(kCall_577, identityGameServer, nRemoteVirtualPort, pOutParsedTicket);
     }
     virtual std::uint32_t ConnectToHostedDedicatedServer(void* identityTarget, std::int32_t nRemoteVirtualPort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_578, identityTarget, nRemoteVirtualPort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_578, identityTarget, nRemoteVirtualPort, nOptions, pOptions);
     }
     virtual std::uint16_t GetHostedDedicatedServerPort() {
-        return steambridge::slot<std::uint16_t>(kCall_579);
+        return steammock::slot<std::uint16_t>(kCall_579);
     }
     virtual std::uint32_t GetHostedDedicatedServerPOPID() {
-        return steambridge::slot<std::uint32_t>(kCall_580);
+        return steammock::slot<std::uint32_t>(kCall_580);
     }
     virtual std::int32_t GetHostedDedicatedServerAddress(void* pRouting) {
-        return steambridge::slot<std::int32_t>(kCall_581, pRouting);
+        return steammock::slot<std::int32_t>(kCall_581, pRouting);
     }
     virtual std::uint32_t CreateHostedDedicatedServerListenSocket(std::int32_t nLocalVirtualPort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_582, nLocalVirtualPort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_582, nLocalVirtualPort, nOptions, pOptions);
     }
     virtual std::int32_t GetGameCoordinatorServerLogin(void* pLoginInfo, std::int32_t* pcbSignedBlob, void* pBlob) {
-        return steambridge::slot<std::int32_t>(kCall_583, pLoginInfo, pcbSignedBlob, pBlob);
+        return steammock::slot<std::int32_t>(kCall_583, pLoginInfo, pcbSignedBlob, pBlob);
     }
     virtual std::uint32_t ConnectP2PCustomSignaling(void* pSignaling, void* pPeerIdentity, std::int32_t nRemoteVirtualPort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_584, pSignaling, pPeerIdentity, nRemoteVirtualPort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_584, pSignaling, pPeerIdentity, nRemoteVirtualPort, nOptions, pOptions);
     }
     virtual bool ReceivedP2PCustomSignal(void* pMsg, std::int32_t cbMsg, void* pContext) {
-        return steambridge::slot<bool>(kCall_585, pMsg, cbMsg, pContext);
+        return steammock::slot<bool>(kCall_585, pMsg, cbMsg, pContext);
     }
     virtual bool GetCertificateRequest(std::int32_t* pcbBlob, void* pBlob, void* errMsg) {
-        return steambridge::slot<bool>(kCall_586, pcbBlob, pBlob, errMsg);
+        return steammock::slot<bool>(kCall_586, pcbBlob, pBlob, errMsg);
     }
     virtual bool SetCertificate(void* pCertificate, std::int32_t cbCertificate, void* errMsg) {
-        return steambridge::slot<bool>(kCall_587, pCertificate, cbCertificate, errMsg);
+        return steammock::slot<bool>(kCall_587, pCertificate, cbCertificate, errMsg);
     }
-    virtual void ResetIdentity(void* pIdentity) { steambridge::slot<void>(kCall_591, pIdentity); }
-    virtual void RunCallbacks() { steambridge::slot<void>(kCall_588); }
+    virtual void ResetIdentity(void* pIdentity) { steammock::slot<void>(kCall_591, pIdentity); }
+    virtual void RunCallbacks() { steammock::slot<void>(kCall_588); }
     virtual bool BeginAsyncRequestFakeIP(std::int32_t nNumPorts) {
-        return steambridge::slot<bool>(kCall_592, nNumPorts);
+        return steammock::slot<bool>(kCall_592, nNumPorts);
     }
     virtual void GetFakeIP(std::int32_t idxFirstPort, void* pInfo) {
-        steambridge::slot<void>(kCall_593, idxFirstPort, pInfo);
+        steammock::slot<void>(kCall_593, idxFirstPort, pInfo);
     }
     virtual std::uint32_t CreateListenSocketP2PFakeIP(std::int32_t idxFakePort, std::int32_t nOptions, void* pOptions) {
-        return steambridge::slot<std::uint32_t>(kCall_594, idxFakePort, nOptions, pOptions);
+        return steammock::slot<std::uint32_t>(kCall_594, idxFakePort, nOptions, pOptions);
     }
     virtual std::int32_t GetRemoteFakeIPForConnection(std::uint32_t hConn, void* pOutAddr) {
-        return steambridge::slot<std::int32_t>(kCall_595, hConn, pOutAddr);
+        return steammock::slot<std::int32_t>(kCall_595, hConn, pOutAddr);
     }
     virtual void* CreateFakeUDPPort(std::int32_t idxFakeServerPort) {
-        return steambridge::slot<void*>(kCall_596, idxFakeServerPort);
+        return steammock::slot<void*>(kCall_596, idxFakeServerPort);
     }
 };
 
@@ -5845,66 +5823,64 @@ Version_SteamNetworkingSockets012 g_SteamNetworkingSockets012;
 class Version_SteamNetworkingUtils003 {
 public:
     virtual void* AllocateMessage(std::int32_t cbAllocateBuffer) {
-        return steambridge::slot<void*>(kCall_597, cbAllocateBuffer);
+        return steammock::slot<void*>(kCall_597, cbAllocateBuffer);
     }
     virtual std::int32_t GetRelayNetworkStatus(void* pDetails) {
-        return steambridge::slot<std::int32_t>(kCall_598, pDetails);
+        return steammock::slot<std::int32_t>(kCall_598, pDetails);
     }
     virtual float GetLocalPingLocation(void* result) {
-        return steambridge::slot<float>(kCall_599, result);
+        return steammock::slot<float>(kCall_599, result);
     }
     virtual std::int32_t EstimatePingTimeBetweenTwoLocations(void* location1, void* location2) {
-        return steambridge::slot<std::int32_t>(kCall_600, location1, location2);
+        return steammock::slot<std::int32_t>(kCall_600, location1, location2);
     }
     virtual std::int32_t EstimatePingTimeFromLocalHost(void* remoteLocation) {
-        return steambridge::slot<std::int32_t>(kCall_601, remoteLocation);
+        return steammock::slot<std::int32_t>(kCall_601, remoteLocation);
     }
     virtual void ConvertPingLocationToString(void* location, void* pszBuf, std::int32_t cchBufSize) {
-        steambridge::slot<void>(kCall_602, location, pszBuf, cchBufSize);
+        steammock::slot<void>(kCall_602, location, pszBuf, cchBufSize);
     }
     virtual bool ParsePingLocationString(const char* pszString, void* result) {
-        return steambridge::slot<bool>(kCall_603, pszString, result);
+        return steammock::slot<bool>(kCall_603, pszString, result);
     }
     virtual bool CheckPingDataUpToDate(float flMaxAgeSeconds) {
-        return steambridge::slot<bool>(kCall_604, flMaxAgeSeconds);
+        return steammock::slot<bool>(kCall_604, flMaxAgeSeconds);
     }
     virtual std::int32_t GetPingToDataCenter(std::uint32_t popID, std::uint32_t* pViaRelayPoP) {
-        return steambridge::slot<std::int32_t>(kCall_605, popID, pViaRelayPoP);
+        return steammock::slot<std::int32_t>(kCall_605, popID, pViaRelayPoP);
     }
     virtual std::int32_t GetDirectPingToPOP(std::uint32_t popID) {
-        return steambridge::slot<std::int32_t>(kCall_606, popID);
+        return steammock::slot<std::int32_t>(kCall_606, popID);
     }
-    virtual std::int32_t GetPOPCount() { return steambridge::slot<std::int32_t>(kCall_607); }
+    virtual std::int32_t GetPOPCount() { return steammock::slot<std::int32_t>(kCall_607); }
     virtual std::int32_t GetPOPList(std::uint32_t* list, std::int32_t nListSz) {
-        return steambridge::slot<std::int32_t>(kCall_608, list, nListSz);
+        return steammock::slot<std::int32_t>(kCall_608, list, nListSz);
     }
-    virtual std::int64_t GetLocalTimestamp() { return steambridge::slot<std::int64_t>(kCall_609); }
+    virtual std::int64_t GetLocalTimestamp() { return steammock::slot<std::int64_t>(kCall_609); }
     virtual void SetDebugOutputFunction(std::int32_t eDetailLevel, void* pfnFunc) {
-        steambridge::slot<void>(kCall_610, eDetailLevel, pfnFunc);
+        steammock::slot<void>(kCall_610, eDetailLevel, pfnFunc);
     }
     virtual bool SetConfigValue(std::int32_t eValue, std::int32_t eScopeType, std::intptr_t scopeObj, std::int32_t eDataType, void* pArg) {
-        return steambridge::slot<bool>(kCall_611, eValue, eScopeType, scopeObj, eDataType, pArg);
+        return steammock::slot<bool>(kCall_611, eValue, eScopeType, scopeObj, eDataType, pArg);
     }
     virtual std::int32_t GetConfigValue(std::int32_t eValue, std::int32_t eScopeType, std::intptr_t scopeObj, std::int32_t* pOutDataType, void* pResult, std::size_t* cbResult) {
-        return steambridge::slot<std::int32_t>(kCall_612, eValue, eScopeType, scopeObj, pOutDataType, pResult, cbResult);
+        return steammock::slot<std::int32_t>(kCall_612, eValue, eScopeType, scopeObj, pOutDataType, pResult, cbResult);
     }
     virtual bool GetConfigValueInfo(std::int32_t eValue, void* pOutName, std::int32_t* pOutDataType, std::int32_t* pOutScope, std::int32_t* pOutNextValue) {
-        return steambridge::slot<bool>(kCall_613, eValue, pOutName, pOutDataType, pOutScope, pOutNextValue);
+        return steammock::slot<bool>(kCall_613, eValue, pOutName, pOutDataType, pOutScope, pOutNextValue);
     }
-    virtual std::int32_t GetFirstConfigValue() {
-        return steambridge::slot<std::int32_t>(kCall_614);
-    }
+    virtual std::int32_t GetFirstConfigValue() { return steammock::slot<std::int32_t>(kCall_614); }
     virtual void SteamNetworkingIPAddr_ToString(void* addr, void* buf, std::size_t cbBuf, bool bWithPort) {
-        steambridge::slot<void>(kCall_615, addr, buf, cbBuf, bWithPort);
+        steammock::slot<void>(kCall_615, addr, buf, cbBuf, bWithPort);
     }
     virtual bool SteamNetworkingIPAddr_ParseString(void* pAddr, const char* pszStr) {
-        return steambridge::slot<bool>(kCall_616, pAddr, pszStr);
+        return steammock::slot<bool>(kCall_616, pAddr, pszStr);
     }
     virtual void SteamNetworkingIdentity_ToString(void* identity, void* buf, std::size_t cbBuf) {
-        steambridge::slot<void>(kCall_617, identity, buf, cbBuf);
+        steammock::slot<void>(kCall_617, identity, buf, cbBuf);
     }
     virtual bool SteamNetworkingIdentity_ParseString(void* pIdentity, const char* pszStr) {
-        return steambridge::slot<bool>(kCall_618, pIdentity, pszStr);
+        return steammock::slot<bool>(kCall_618, pIdentity, pszStr);
     }
 };
 
@@ -5914,75 +5890,75 @@ Version_SteamNetworkingUtils003 g_SteamNetworkingUtils003;
 class Version_SteamNetworkingUtils004 {
 public:
     virtual void* AllocateMessage(std::int32_t cbAllocateBuffer) {
-        return steambridge::slot<void*>(kCall_597, cbAllocateBuffer);
+        return steammock::slot<void*>(kCall_597, cbAllocateBuffer);
     }
     virtual std::int32_t GetRelayNetworkStatus(void* pDetails) {
-        return steambridge::slot<std::int32_t>(kCall_598, pDetails);
+        return steammock::slot<std::int32_t>(kCall_598, pDetails);
     }
     virtual float GetLocalPingLocation(void* result) {
-        return steambridge::slot<float>(kCall_599, result);
+        return steammock::slot<float>(kCall_599, result);
     }
     virtual std::int32_t EstimatePingTimeBetweenTwoLocations(void* location1, void* location2) {
-        return steambridge::slot<std::int32_t>(kCall_600, location1, location2);
+        return steammock::slot<std::int32_t>(kCall_600, location1, location2);
     }
     virtual std::int32_t EstimatePingTimeFromLocalHost(void* remoteLocation) {
-        return steambridge::slot<std::int32_t>(kCall_601, remoteLocation);
+        return steammock::slot<std::int32_t>(kCall_601, remoteLocation);
     }
     virtual void ConvertPingLocationToString(void* location, void* pszBuf, std::int32_t cchBufSize) {
-        steambridge::slot<void>(kCall_602, location, pszBuf, cchBufSize);
+        steammock::slot<void>(kCall_602, location, pszBuf, cchBufSize);
     }
     virtual bool ParsePingLocationString(const char* pszString, void* result) {
-        return steambridge::slot<bool>(kCall_603, pszString, result);
+        return steammock::slot<bool>(kCall_603, pszString, result);
     }
     virtual bool CheckPingDataUpToDate(float flMaxAgeSeconds) {
-        return steambridge::slot<bool>(kCall_604, flMaxAgeSeconds);
+        return steammock::slot<bool>(kCall_604, flMaxAgeSeconds);
     }
     virtual std::int32_t GetPingToDataCenter(std::uint32_t popID, std::uint32_t* pViaRelayPoP) {
-        return steambridge::slot<std::int32_t>(kCall_605, popID, pViaRelayPoP);
+        return steammock::slot<std::int32_t>(kCall_605, popID, pViaRelayPoP);
     }
     virtual std::int32_t GetDirectPingToPOP(std::uint32_t popID) {
-        return steambridge::slot<std::int32_t>(kCall_606, popID);
+        return steammock::slot<std::int32_t>(kCall_606, popID);
     }
-    virtual std::int32_t GetPOPCount() { return steambridge::slot<std::int32_t>(kCall_607); }
+    virtual std::int32_t GetPOPCount() { return steammock::slot<std::int32_t>(kCall_607); }
     virtual std::int32_t GetPOPList(std::uint32_t* list, std::int32_t nListSz) {
-        return steambridge::slot<std::int32_t>(kCall_608, list, nListSz);
+        return steammock::slot<std::int32_t>(kCall_608, list, nListSz);
     }
-    virtual std::int64_t GetLocalTimestamp() { return steambridge::slot<std::int64_t>(kCall_609); }
+    virtual std::int64_t GetLocalTimestamp() { return steammock::slot<std::int64_t>(kCall_609); }
     virtual void SetDebugOutputFunction(std::int32_t eDetailLevel, void* pfnFunc) {
-        steambridge::slot<void>(kCall_610, eDetailLevel, pfnFunc);
+        steammock::slot<void>(kCall_610, eDetailLevel, pfnFunc);
     }
     virtual std::int32_t GetIPv4FakeIPType(std::uint32_t nIPv4) {
-        return steambridge::slot<std::int32_t>(kCall_619, nIPv4);
+        return steammock::slot<std::int32_t>(kCall_619, nIPv4);
     }
     virtual std::int32_t GetRealIdentityForFakeIP(void* fakeIP, void* pOutRealIdentity) {
-        return steambridge::slot<std::int32_t>(kCall_620, fakeIP, pOutRealIdentity);
+        return steammock::slot<std::int32_t>(kCall_620, fakeIP, pOutRealIdentity);
     }
     virtual bool SetConfigValue(std::int32_t eValue, std::int32_t eScopeType, std::intptr_t scopeObj, std::int32_t eDataType, void* pArg) {
-        return steambridge::slot<bool>(kCall_611, eValue, eScopeType, scopeObj, eDataType, pArg);
+        return steammock::slot<bool>(kCall_611, eValue, eScopeType, scopeObj, eDataType, pArg);
     }
     virtual std::int32_t GetConfigValue(std::int32_t eValue, std::int32_t eScopeType, std::intptr_t scopeObj, std::int32_t* pOutDataType, void* pResult, std::size_t* cbResult) {
-        return steambridge::slot<std::int32_t>(kCall_612, eValue, eScopeType, scopeObj, pOutDataType, pResult, cbResult);
+        return steammock::slot<std::int32_t>(kCall_612, eValue, eScopeType, scopeObj, pOutDataType, pResult, cbResult);
     }
     virtual const char* GetConfigValueInfo(std::int32_t eValue, std::int32_t* pOutDataType, std::int32_t* pOutScope) {
-        return steambridge::slot<const char*>(kCall_621, eValue, pOutDataType, pOutScope);
+        return steammock::slot<const char*>(kCall_621, eValue, pOutDataType, pOutScope);
     }
     virtual std::int32_t IterateGenericEditableConfigValues(std::int32_t eCurrent, bool bEnumerateDevVars) {
-        return steambridge::slot<std::int32_t>(kCall_622, eCurrent, bEnumerateDevVars);
+        return steammock::slot<std::int32_t>(kCall_622, eCurrent, bEnumerateDevVars);
     }
     virtual void SteamNetworkingIPAddr_ToString(void* addr, void* buf, std::size_t cbBuf, bool bWithPort) {
-        steambridge::slot<void>(kCall_615, addr, buf, cbBuf, bWithPort);
+        steammock::slot<void>(kCall_615, addr, buf, cbBuf, bWithPort);
     }
     virtual bool SteamNetworkingIPAddr_ParseString(void* pAddr, const char* pszStr) {
-        return steambridge::slot<bool>(kCall_616, pAddr, pszStr);
+        return steammock::slot<bool>(kCall_616, pAddr, pszStr);
     }
     virtual std::int32_t SteamNetworkingIPAddr_GetFakeIPType(void* addr) {
-        return steambridge::slot<std::int32_t>(kCall_623, addr);
+        return steammock::slot<std::int32_t>(kCall_623, addr);
     }
     virtual void SteamNetworkingIdentity_ToString(void* identity, void* buf, std::size_t cbBuf) {
-        steambridge::slot<void>(kCall_617, identity, buf, cbBuf);
+        steammock::slot<void>(kCall_617, identity, buf, cbBuf);
     }
     virtual bool SteamNetworkingIdentity_ParseString(void* pIdentity, const char* pszStr) {
-        return steambridge::slot<bool>(kCall_618, pIdentity, pszStr);
+        return steammock::slot<bool>(kCall_618, pIdentity, pszStr);
     }
 };
 
@@ -5991,19 +5967,19 @@ Version_SteamNetworkingUtils004 g_SteamNetworkingUtils004;
 // ISteamParentalSettings STEAMPARENTALSETTINGS_INTERFACE_VERSION001
 class Version_STEAMPARENTALSETTINGS_INTERFACE_VERSION001 {
 public:
-    virtual bool BIsParentalLockEnabled() { return steambridge::slot<bool>(kCall_624); }
-    virtual bool BIsParentalLockLocked() { return steambridge::slot<bool>(kCall_625); }
+    virtual bool BIsParentalLockEnabled() { return steammock::slot<bool>(kCall_624); }
+    virtual bool BIsParentalLockLocked() { return steammock::slot<bool>(kCall_625); }
     virtual bool BIsAppBlocked(std::uint32_t nAppID) {
-        return steambridge::slot<bool>(kCall_626, nAppID);
+        return steammock::slot<bool>(kCall_626, nAppID);
     }
     virtual bool BIsAppInBlockList(std::uint32_t nAppID) {
-        return steambridge::slot<bool>(kCall_627, nAppID);
+        return steammock::slot<bool>(kCall_627, nAppID);
     }
     virtual bool BIsFeatureBlocked(std::int32_t eFeature) {
-        return steambridge::slot<bool>(kCall_628, eFeature);
+        return steammock::slot<bool>(kCall_628, eFeature);
     }
     virtual bool BIsFeatureInBlockList(std::int32_t eFeature) {
-        return steambridge::slot<bool>(kCall_629, eFeature);
+        return steammock::slot<bool>(kCall_629, eFeature);
     }
 };
 
@@ -6013,40 +5989,40 @@ Version_STEAMPARENTALSETTINGS_INTERFACE_VERSION001 g_STEAMPARENTALSETTINGS_INTER
 class Version_SteamParties002 {
 public:
     virtual std::uint32_t GetNumActiveBeacons() {
-        return steambridge::slot<std::uint32_t>(kCall_630);
+        return steammock::slot<std::uint32_t>(kCall_630);
     }
     virtual std::uint64_t GetBeaconByIndex(std::uint32_t unIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_631, unIndex);
+        return steammock::slot<std::uint64_t>(kCall_631, unIndex);
     }
     virtual bool GetBeaconDetails(std::uint64_t ulBeaconID, CSteamID* pSteamIDBeaconOwner, void* pLocation, void* pchMetadata, std::int32_t cchMetadata) {
-        return steambridge::slot<bool>(kCall_632, ulBeaconID, pSteamIDBeaconOwner, pLocation, pchMetadata, cchMetadata);
+        return steammock::slot<bool>(kCall_632, ulBeaconID, pSteamIDBeaconOwner, pLocation, pchMetadata, cchMetadata);
     }
     virtual std::uint64_t JoinParty(std::uint64_t ulBeaconID) {
-        return steambridge::slot<std::uint64_t>(kCall_633, ulBeaconID);
+        return steammock::slot<std::uint64_t>(kCall_633, ulBeaconID);
     }
     virtual bool GetNumAvailableBeaconLocations(std::uint32_t* puNumLocations) {
-        return steambridge::slot<bool>(kCall_634, puNumLocations);
+        return steammock::slot<bool>(kCall_634, puNumLocations);
     }
     virtual bool GetAvailableBeaconLocations(void* pLocationList, std::uint32_t uMaxNumLocations) {
-        return steambridge::slot<bool>(kCall_635, pLocationList, uMaxNumLocations);
+        return steammock::slot<bool>(kCall_635, pLocationList, uMaxNumLocations);
     }
     virtual std::uint64_t CreateBeacon(std::uint32_t unOpenSlots, void* pBeaconLocation, const char* pchConnectString, const char* pchMetadata) {
-        return steambridge::slot<std::uint64_t>(kCall_636, unOpenSlots, pBeaconLocation, pchConnectString, pchMetadata);
+        return steammock::slot<std::uint64_t>(kCall_636, unOpenSlots, pBeaconLocation, pchConnectString, pchMetadata);
     }
     virtual void OnReservationCompleted(std::uint64_t ulBeacon, CSteamID steamIDUser) {
-        steambridge::slot<void>(kCall_637, ulBeacon, steamIDUser);
+        steammock::slot<void>(kCall_637, ulBeacon, steamIDUser);
     }
     virtual void CancelReservation(std::uint64_t ulBeacon, CSteamID steamIDUser) {
-        steambridge::slot<void>(kCall_638, ulBeacon, steamIDUser);
+        steammock::slot<void>(kCall_638, ulBeacon, steamIDUser);
     }
     virtual std::uint64_t ChangeNumOpenSlots(std::uint64_t ulBeacon, std::uint32_t unOpenSlots) {
-        return steambridge::slot<std::uint64_t>(kCall_639, ulBeacon, unOpenSlots);
+        return steammock::slot<std::uint64_t>(kCall_639, ulBeacon, unOpenSlots);
     }
     virtual bool DestroyBeacon(std::uint64_t ulBeacon) {
-        return steambridge::slot<bool>(kCall_640, ulBeacon);
+        return steammock::slot<bool>(kCall_640, ulBeacon);
     }
     virtual bool GetBeaconLocationData(SteamPartyBeaconLocation_t BeaconLocation, std::int32_t eData, void* pchDataStringOut, std::int32_t cchDataStringOut) {
-        return steambridge::slot<bool>(kCall_641, BeaconLocation, eData, pchDataStringOut, cchDataStringOut);
+        return steammock::slot<bool>(kCall_641, BeaconLocation, eData, pchDataStringOut, cchDataStringOut);
     }
 };
 
@@ -6055,24 +6031,24 @@ Version_SteamParties002 g_SteamParties002;
 // ISteamRemotePlay STEAMREMOTEPLAY_INTERFACE_VERSION001
 class Version_STEAMREMOTEPLAY_INTERFACE_VERSION001 {
 public:
-    virtual std::uint32_t GetSessionCount() { return steambridge::slot<std::uint32_t>(kCall_642); }
+    virtual std::uint32_t GetSessionCount() { return steammock::slot<std::uint32_t>(kCall_642); }
     virtual std::uint32_t GetSessionID(std::int32_t iSessionIndex) {
-        return steambridge::slot<std::uint32_t>(kCall_643, iSessionIndex);
+        return steammock::slot<std::uint32_t>(kCall_643, iSessionIndex);
     }
     virtual CSteamID GetSessionSteamID(std::uint32_t unSessionID) {
-        return steambridge::slot<CSteamID>(kCall_644, unSessionID);
+        return steammock::slot<CSteamID>(kCall_644, unSessionID);
     }
     virtual const char* GetSessionClientName(std::uint32_t unSessionID) {
-        return steambridge::slot<const char*>(kCall_645, unSessionID);
+        return steammock::slot<const char*>(kCall_645, unSessionID);
     }
     virtual std::int32_t GetSessionClientFormFactor(std::uint32_t unSessionID) {
-        return steambridge::slot<std::int32_t>(kCall_646, unSessionID);
+        return steammock::slot<std::int32_t>(kCall_646, unSessionID);
     }
     virtual bool BGetSessionClientResolution(std::uint32_t unSessionID, std::int32_t* pnResolutionX, std::int32_t* pnResolutionY) {
-        return steambridge::slot<bool>(kCall_647, unSessionID, pnResolutionX, pnResolutionY);
+        return steammock::slot<bool>(kCall_647, unSessionID, pnResolutionX, pnResolutionY);
     }
     virtual bool BSendRemotePlayTogetherInvite(CSteamID steamIDFriend) {
-        return steambridge::slot<bool>(kCall_648, steamIDFriend);
+        return steammock::slot<bool>(kCall_648, steamIDFriend);
     }
 };
 
@@ -6082,161 +6058,161 @@ Version_STEAMREMOTEPLAY_INTERFACE_VERSION001 g_STEAMREMOTEPLAY_INTERFACE_VERSION
 class Version_STEAMREMOTESTORAGE_INTERFACE_VERSION014 {
 public:
     virtual bool FileWrite(const char* pchFile, void* pvData, std::int32_t cubData) {
-        return steambridge::slot<bool>(kCall_649, pchFile, pvData, cubData);
+        return steammock::slot<bool>(kCall_649, pchFile, pvData, cubData);
     }
     virtual std::int32_t FileRead(const char* pchFile, void* pvData, std::int32_t cubDataToRead) {
-        return steambridge::slot<std::int32_t>(kCall_650, pchFile, pvData, cubDataToRead);
+        return steammock::slot<std::int32_t>(kCall_650, pchFile, pvData, cubDataToRead);
     }
     virtual std::uint64_t FileWriteAsync(const char* pchFile, void* pvData, std::uint32_t cubData) {
-        return steambridge::slot<std::uint64_t>(kCall_651, pchFile, pvData, cubData);
+        return steammock::slot<std::uint64_t>(kCall_651, pchFile, pvData, cubData);
     }
     virtual std::uint64_t FileReadAsync(const char* pchFile, std::uint32_t nOffset, std::uint32_t cubToRead) {
-        return steambridge::slot<std::uint64_t>(kCall_652, pchFile, nOffset, cubToRead);
+        return steammock::slot<std::uint64_t>(kCall_652, pchFile, nOffset, cubToRead);
     }
     virtual bool FileReadAsyncComplete(std::uint64_t hReadCall, void* pvBuffer, std::uint32_t cubToRead) {
-        return steambridge::slot<bool>(kCall_653, hReadCall, pvBuffer, cubToRead);
+        return steammock::slot<bool>(kCall_653, hReadCall, pvBuffer, cubToRead);
     }
     virtual bool FileForget(const char* pchFile) {
-        return steambridge::slot<bool>(kCall_654, pchFile);
+        return steammock::slot<bool>(kCall_654, pchFile);
     }
     virtual bool FileDelete(const char* pchFile) {
-        return steambridge::slot<bool>(kCall_655, pchFile);
+        return steammock::slot<bool>(kCall_655, pchFile);
     }
     virtual std::uint64_t FileShare(const char* pchFile) {
-        return steambridge::slot<std::uint64_t>(kCall_656, pchFile);
+        return steammock::slot<std::uint64_t>(kCall_656, pchFile);
     }
     virtual bool SetSyncPlatforms(const char* pchFile, std::int32_t eRemoteStoragePlatform) {
-        return steambridge::slot<bool>(kCall_657, pchFile, eRemoteStoragePlatform);
+        return steammock::slot<bool>(kCall_657, pchFile, eRemoteStoragePlatform);
     }
     virtual std::uint64_t FileWriteStreamOpen(const char* pchFile) {
-        return steambridge::slot<std::uint64_t>(kCall_658, pchFile);
+        return steammock::slot<std::uint64_t>(kCall_658, pchFile);
     }
     virtual bool FileWriteStreamWriteChunk(std::uint64_t writeHandle, void* pvData, std::int32_t cubData) {
-        return steambridge::slot<bool>(kCall_659, writeHandle, pvData, cubData);
+        return steammock::slot<bool>(kCall_659, writeHandle, pvData, cubData);
     }
     virtual bool FileWriteStreamClose(std::uint64_t writeHandle) {
-        return steambridge::slot<bool>(kCall_660, writeHandle);
+        return steammock::slot<bool>(kCall_660, writeHandle);
     }
     virtual bool FileWriteStreamCancel(std::uint64_t writeHandle) {
-        return steambridge::slot<bool>(kCall_661, writeHandle);
+        return steammock::slot<bool>(kCall_661, writeHandle);
     }
     virtual bool FileExists(const char* pchFile) {
-        return steambridge::slot<bool>(kCall_662, pchFile);
+        return steammock::slot<bool>(kCall_662, pchFile);
     }
     virtual bool FilePersisted(const char* pchFile) {
-        return steambridge::slot<bool>(kCall_663, pchFile);
+        return steammock::slot<bool>(kCall_663, pchFile);
     }
     virtual std::int32_t GetFileSize(const char* pchFile) {
-        return steambridge::slot<std::int32_t>(kCall_664, pchFile);
+        return steammock::slot<std::int32_t>(kCall_664, pchFile);
     }
     virtual std::int64_t GetFileTimestamp(const char* pchFile) {
-        return steambridge::slot<std::int64_t>(kCall_665, pchFile);
+        return steammock::slot<std::int64_t>(kCall_665, pchFile);
     }
     virtual std::int32_t GetSyncPlatforms(const char* pchFile) {
-        return steambridge::slot<std::int32_t>(kCall_666, pchFile);
+        return steammock::slot<std::int32_t>(kCall_666, pchFile);
     }
-    virtual std::int32_t GetFileCount() { return steambridge::slot<std::int32_t>(kCall_667); }
+    virtual std::int32_t GetFileCount() { return steammock::slot<std::int32_t>(kCall_667); }
     virtual const char* GetFileNameAndSize(std::int32_t iFile, std::int32_t* pnFileSizeInBytes) {
-        return steambridge::slot<const char*>(kCall_668, iFile, pnFileSizeInBytes);
+        return steammock::slot<const char*>(kCall_668, iFile, pnFileSizeInBytes);
     }
     virtual bool GetQuota(std::uint64_t* pnTotalBytes, std::uint64_t* puAvailableBytes) {
-        return steambridge::slot<bool>(kCall_669, pnTotalBytes, puAvailableBytes);
+        return steammock::slot<bool>(kCall_669, pnTotalBytes, puAvailableBytes);
     }
-    virtual bool IsCloudEnabledForAccount() { return steambridge::slot<bool>(kCall_670); }
-    virtual bool IsCloudEnabledForApp() { return steambridge::slot<bool>(kCall_671); }
+    virtual bool IsCloudEnabledForAccount() { return steammock::slot<bool>(kCall_670); }
+    virtual bool IsCloudEnabledForApp() { return steammock::slot<bool>(kCall_671); }
     virtual void SetCloudEnabledForApp(bool bEnabled) {
-        steambridge::slot<void>(kCall_672, bEnabled);
+        steammock::slot<void>(kCall_672, bEnabled);
     }
     virtual std::uint64_t UGCDownload(std::uint64_t hContent, std::uint32_t unPriority) {
-        return steambridge::slot<std::uint64_t>(kCall_673, hContent, unPriority);
+        return steammock::slot<std::uint64_t>(kCall_673, hContent, unPriority);
     }
     virtual bool GetUGCDownloadProgress(std::uint64_t hContent, std::int32_t* pnBytesDownloaded, std::int32_t* pnBytesExpected) {
-        return steambridge::slot<bool>(kCall_674, hContent, pnBytesDownloaded, pnBytesExpected);
+        return steammock::slot<bool>(kCall_674, hContent, pnBytesDownloaded, pnBytesExpected);
     }
     virtual bool GetUGCDetails(std::uint64_t hContent, std::uint32_t* pnAppID, void* ppchName, std::int32_t* pnFileSizeInBytes, CSteamID* pSteamIDOwner) {
-        return steambridge::slot<bool>(kCall_675, hContent, pnAppID, ppchName, pnFileSizeInBytes, pSteamIDOwner);
+        return steammock::slot<bool>(kCall_675, hContent, pnAppID, ppchName, pnFileSizeInBytes, pSteamIDOwner);
     }
     virtual std::int32_t UGCRead(std::uint64_t hContent, void* pvData, std::int32_t cubDataToRead, std::uint32_t cOffset, std::int32_t eAction) {
-        return steambridge::slot<std::int32_t>(kCall_676, hContent, pvData, cubDataToRead, cOffset, eAction);
+        return steammock::slot<std::int32_t>(kCall_676, hContent, pvData, cubDataToRead, cOffset, eAction);
     }
-    virtual std::int32_t GetCachedUGCCount() { return steambridge::slot<std::int32_t>(kCall_677); }
+    virtual std::int32_t GetCachedUGCCount() { return steammock::slot<std::int32_t>(kCall_677); }
     virtual std::uint64_t GetCachedUGCHandle(std::int32_t iCachedContent) {
-        return steambridge::slot<std::uint64_t>(kCall_678, iCachedContent);
+        return steammock::slot<std::uint64_t>(kCall_678, iCachedContent);
     }
     virtual std::uint64_t PublishWorkshopFile(const char* pchFile, const char* pchPreviewFile, std::uint32_t nConsumerAppId, const char* pchTitle, const char* pchDescription, std::int32_t eVisibility, void* pTags, std::int32_t eWorkshopFileType) {
-        return steambridge::slot<std::uint64_t>(kCall_679, pchFile, pchPreviewFile, nConsumerAppId, pchTitle, pchDescription, eVisibility, pTags, eWorkshopFileType);
+        return steammock::slot<std::uint64_t>(kCall_679, pchFile, pchPreviewFile, nConsumerAppId, pchTitle, pchDescription, eVisibility, pTags, eWorkshopFileType);
     }
     virtual std::uint64_t CreatePublishedFileUpdateRequest(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_680, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_680, unPublishedFileId);
     }
     virtual bool UpdatePublishedFileFile(std::uint64_t updateHandle, const char* pchFile) {
-        return steambridge::slot<bool>(kCall_681, updateHandle, pchFile);
+        return steammock::slot<bool>(kCall_681, updateHandle, pchFile);
     }
     virtual bool UpdatePublishedFilePreviewFile(std::uint64_t updateHandle, const char* pchPreviewFile) {
-        return steambridge::slot<bool>(kCall_682, updateHandle, pchPreviewFile);
+        return steammock::slot<bool>(kCall_682, updateHandle, pchPreviewFile);
     }
     virtual bool UpdatePublishedFileTitle(std::uint64_t updateHandle, const char* pchTitle) {
-        return steambridge::slot<bool>(kCall_683, updateHandle, pchTitle);
+        return steammock::slot<bool>(kCall_683, updateHandle, pchTitle);
     }
     virtual bool UpdatePublishedFileDescription(std::uint64_t updateHandle, const char* pchDescription) {
-        return steambridge::slot<bool>(kCall_684, updateHandle, pchDescription);
+        return steammock::slot<bool>(kCall_684, updateHandle, pchDescription);
     }
     virtual bool UpdatePublishedFileVisibility(std::uint64_t updateHandle, std::int32_t eVisibility) {
-        return steambridge::slot<bool>(kCall_685, updateHandle, eVisibility);
+        return steammock::slot<bool>(kCall_685, updateHandle, eVisibility);
     }
     virtual bool UpdatePublishedFileTags(std::uint64_t updateHandle, void* pTags) {
-        return steambridge::slot<bool>(kCall_686, updateHandle, pTags);
+        return steammock::slot<bool>(kCall_686, updateHandle, pTags);
     }
     virtual std::uint64_t CommitPublishedFileUpdate(std::uint64_t updateHandle) {
-        return steambridge::slot<std::uint64_t>(kCall_687, updateHandle);
+        return steammock::slot<std::uint64_t>(kCall_687, updateHandle);
     }
     virtual std::uint64_t GetPublishedFileDetails(std::uint64_t unPublishedFileId, std::uint32_t unMaxSecondsOld) {
-        return steambridge::slot<std::uint64_t>(kCall_688, unPublishedFileId, unMaxSecondsOld);
+        return steammock::slot<std::uint64_t>(kCall_688, unPublishedFileId, unMaxSecondsOld);
     }
     virtual std::uint64_t DeletePublishedFile(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_689, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_689, unPublishedFileId);
     }
     virtual std::uint64_t EnumerateUserPublishedFiles(std::uint32_t unStartIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_690, unStartIndex);
+        return steammock::slot<std::uint64_t>(kCall_690, unStartIndex);
     }
     virtual std::uint64_t SubscribePublishedFile(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_691, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_691, unPublishedFileId);
     }
     virtual std::uint64_t EnumerateUserSubscribedFiles(std::uint32_t unStartIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_692, unStartIndex);
+        return steammock::slot<std::uint64_t>(kCall_692, unStartIndex);
     }
     virtual std::uint64_t UnsubscribePublishedFile(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_693, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_693, unPublishedFileId);
     }
     virtual bool UpdatePublishedFileSetChangeDescription(std::uint64_t updateHandle, const char* pchChangeDescription) {
-        return steambridge::slot<bool>(kCall_694, updateHandle, pchChangeDescription);
+        return steammock::slot<bool>(kCall_694, updateHandle, pchChangeDescription);
     }
     virtual std::uint64_t GetPublishedItemVoteDetails(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_695, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_695, unPublishedFileId);
     }
     virtual std::uint64_t UpdateUserPublishedItemVote(std::uint64_t unPublishedFileId, bool bVoteUp) {
-        return steambridge::slot<std::uint64_t>(kCall_696, unPublishedFileId, bVoteUp);
+        return steammock::slot<std::uint64_t>(kCall_696, unPublishedFileId, bVoteUp);
     }
     virtual std::uint64_t GetUserPublishedItemVoteDetails(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_697, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_697, unPublishedFileId);
     }
     virtual std::uint64_t EnumerateUserSharedWorkshopFiles(CSteamID steamId, std::uint32_t unStartIndex, void* pRequiredTags, void* pExcludedTags) {
-        return steambridge::slot<std::uint64_t>(kCall_698, steamId, unStartIndex, pRequiredTags, pExcludedTags);
+        return steammock::slot<std::uint64_t>(kCall_698, steamId, unStartIndex, pRequiredTags, pExcludedTags);
     }
     virtual std::uint64_t PublishVideo(std::int32_t eVideoProvider, const char* pchVideoAccount, const char* pchVideoIdentifier, const char* pchPreviewFile, std::uint32_t nConsumerAppId, const char* pchTitle, const char* pchDescription, std::int32_t eVisibility, void* pTags) {
-        return steambridge::slot<std::uint64_t>(kCall_699, eVideoProvider, pchVideoAccount, pchVideoIdentifier, pchPreviewFile, nConsumerAppId, pchTitle, pchDescription, eVisibility, pTags);
+        return steammock::slot<std::uint64_t>(kCall_699, eVideoProvider, pchVideoAccount, pchVideoIdentifier, pchPreviewFile, nConsumerAppId, pchTitle, pchDescription, eVisibility, pTags);
     }
     virtual std::uint64_t SetUserPublishedFileAction(std::uint64_t unPublishedFileId, std::int32_t eAction) {
-        return steambridge::slot<std::uint64_t>(kCall_700, unPublishedFileId, eAction);
+        return steammock::slot<std::uint64_t>(kCall_700, unPublishedFileId, eAction);
     }
     virtual std::uint64_t EnumeratePublishedFilesByUserAction(std::int32_t eAction, std::uint32_t unStartIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_701, eAction, unStartIndex);
+        return steammock::slot<std::uint64_t>(kCall_701, eAction, unStartIndex);
     }
     virtual std::uint64_t EnumeratePublishedWorkshopFiles(std::int32_t eEnumerationType, std::uint32_t unStartIndex, std::uint32_t unCount, std::uint32_t unDays, void* pTags, void* pUserTags) {
-        return steambridge::slot<std::uint64_t>(kCall_702, eEnumerationType, unStartIndex, unCount, unDays, pTags, pUserTags);
+        return steammock::slot<std::uint64_t>(kCall_702, eEnumerationType, unStartIndex, unCount, unDays, pTags, pUserTags);
     }
     virtual std::uint64_t UGCDownloadToLocation(std::uint64_t hContent, const char* pchLocation, std::uint32_t unPriority) {
-        return steambridge::slot<std::uint64_t>(kCall_703, hContent, pchLocation, unPriority);
+        return steammock::slot<std::uint64_t>(kCall_703, hContent, pchLocation, unPriority);
     }
 };
 
@@ -6246,170 +6222,170 @@ Version_STEAMREMOTESTORAGE_INTERFACE_VERSION014 g_STEAMREMOTESTORAGE_INTERFACE_V
 class Version_STEAMREMOTESTORAGE_INTERFACE_VERSION016 {
 public:
     virtual bool FileWrite(const char* pchFile, void* pvData, std::int32_t cubData) {
-        return steambridge::slot<bool>(kCall_649, pchFile, pvData, cubData);
+        return steammock::slot<bool>(kCall_649, pchFile, pvData, cubData);
     }
     virtual std::int32_t FileRead(const char* pchFile, void* pvData, std::int32_t cubDataToRead) {
-        return steambridge::slot<std::int32_t>(kCall_650, pchFile, pvData, cubDataToRead);
+        return steammock::slot<std::int32_t>(kCall_650, pchFile, pvData, cubDataToRead);
     }
     virtual std::uint64_t FileWriteAsync(const char* pchFile, void* pvData, std::uint32_t cubData) {
-        return steambridge::slot<std::uint64_t>(kCall_651, pchFile, pvData, cubData);
+        return steammock::slot<std::uint64_t>(kCall_651, pchFile, pvData, cubData);
     }
     virtual std::uint64_t FileReadAsync(const char* pchFile, std::uint32_t nOffset, std::uint32_t cubToRead) {
-        return steambridge::slot<std::uint64_t>(kCall_652, pchFile, nOffset, cubToRead);
+        return steammock::slot<std::uint64_t>(kCall_652, pchFile, nOffset, cubToRead);
     }
     virtual bool FileReadAsyncComplete(std::uint64_t hReadCall, void* pvBuffer, std::uint32_t cubToRead) {
-        return steambridge::slot<bool>(kCall_653, hReadCall, pvBuffer, cubToRead);
+        return steammock::slot<bool>(kCall_653, hReadCall, pvBuffer, cubToRead);
     }
     virtual bool FileForget(const char* pchFile) {
-        return steambridge::slot<bool>(kCall_654, pchFile);
+        return steammock::slot<bool>(kCall_654, pchFile);
     }
     virtual bool FileDelete(const char* pchFile) {
-        return steambridge::slot<bool>(kCall_655, pchFile);
+        return steammock::slot<bool>(kCall_655, pchFile);
     }
     virtual std::uint64_t FileShare(const char* pchFile) {
-        return steambridge::slot<std::uint64_t>(kCall_656, pchFile);
+        return steammock::slot<std::uint64_t>(kCall_656, pchFile);
     }
     virtual bool SetSyncPlatforms(const char* pchFile, std::int32_t eRemoteStoragePlatform) {
-        return steambridge::slot<bool>(kCall_657, pchFile, eRemoteStoragePlatform);
+        return steammock::slot<bool>(kCall_657, pchFile, eRemoteStoragePlatform);
     }
     virtual std::uint64_t FileWriteStreamOpen(const char* pchFile) {
-        return steambridge::slot<std::uint64_t>(kCall_658, pchFile);
+        return steammock::slot<std::uint64_t>(kCall_658, pchFile);
     }
     virtual bool FileWriteStreamWriteChunk(std::uint64_t writeHandle, void* pvData, std::int32_t cubData) {
-        return steambridge::slot<bool>(kCall_659, writeHandle, pvData, cubData);
+        return steammock::slot<bool>(kCall_659, writeHandle, pvData, cubData);
     }
     virtual bool FileWriteStreamClose(std::uint64_t writeHandle) {
-        return steambridge::slot<bool>(kCall_660, writeHandle);
+        return steammock::slot<bool>(kCall_660, writeHandle);
     }
     virtual bool FileWriteStreamCancel(std::uint64_t writeHandle) {
-        return steambridge::slot<bool>(kCall_661, writeHandle);
+        return steammock::slot<bool>(kCall_661, writeHandle);
     }
     virtual bool FileExists(const char* pchFile) {
-        return steambridge::slot<bool>(kCall_662, pchFile);
+        return steammock::slot<bool>(kCall_662, pchFile);
     }
     virtual bool FilePersisted(const char* pchFile) {
-        return steambridge::slot<bool>(kCall_663, pchFile);
+        return steammock::slot<bool>(kCall_663, pchFile);
     }
     virtual std::int32_t GetFileSize(const char* pchFile) {
-        return steambridge::slot<std::int32_t>(kCall_664, pchFile);
+        return steammock::slot<std::int32_t>(kCall_664, pchFile);
     }
     virtual std::int64_t GetFileTimestamp(const char* pchFile) {
-        return steambridge::slot<std::int64_t>(kCall_665, pchFile);
+        return steammock::slot<std::int64_t>(kCall_665, pchFile);
     }
     virtual std::int32_t GetSyncPlatforms(const char* pchFile) {
-        return steambridge::slot<std::int32_t>(kCall_666, pchFile);
+        return steammock::slot<std::int32_t>(kCall_666, pchFile);
     }
-    virtual std::int32_t GetFileCount() { return steambridge::slot<std::int32_t>(kCall_667); }
+    virtual std::int32_t GetFileCount() { return steammock::slot<std::int32_t>(kCall_667); }
     virtual const char* GetFileNameAndSize(std::int32_t iFile, std::int32_t* pnFileSizeInBytes) {
-        return steambridge::slot<const char*>(kCall_668, iFile, pnFileSizeInBytes);
+        return steammock::slot<const char*>(kCall_668, iFile, pnFileSizeInBytes);
     }
     virtual bool GetQuota(std::uint64_t* pnTotalBytes, std::uint64_t* puAvailableBytes) {
-        return steambridge::slot<bool>(kCall_669, pnTotalBytes, puAvailableBytes);
+        return steammock::slot<bool>(kCall_669, pnTotalBytes, puAvailableBytes);
     }
-    virtual bool IsCloudEnabledForAccount() { return steambridge::slot<bool>(kCall_670); }
-    virtual bool IsCloudEnabledForApp() { return steambridge::slot<bool>(kCall_671); }
+    virtual bool IsCloudEnabledForAccount() { return steammock::slot<bool>(kCall_670); }
+    virtual bool IsCloudEnabledForApp() { return steammock::slot<bool>(kCall_671); }
     virtual void SetCloudEnabledForApp(bool bEnabled) {
-        steambridge::slot<void>(kCall_672, bEnabled);
+        steammock::slot<void>(kCall_672, bEnabled);
     }
     virtual std::uint64_t UGCDownload(std::uint64_t hContent, std::uint32_t unPriority) {
-        return steambridge::slot<std::uint64_t>(kCall_673, hContent, unPriority);
+        return steammock::slot<std::uint64_t>(kCall_673, hContent, unPriority);
     }
     virtual bool GetUGCDownloadProgress(std::uint64_t hContent, std::int32_t* pnBytesDownloaded, std::int32_t* pnBytesExpected) {
-        return steambridge::slot<bool>(kCall_674, hContent, pnBytesDownloaded, pnBytesExpected);
+        return steammock::slot<bool>(kCall_674, hContent, pnBytesDownloaded, pnBytesExpected);
     }
     virtual bool GetUGCDetails(std::uint64_t hContent, std::uint32_t* pnAppID, void* ppchName, std::int32_t* pnFileSizeInBytes, CSteamID* pSteamIDOwner) {
-        return steambridge::slot<bool>(kCall_675, hContent, pnAppID, ppchName, pnFileSizeInBytes, pSteamIDOwner);
+        return steammock::slot<bool>(kCall_675, hContent, pnAppID, ppchName, pnFileSizeInBytes, pSteamIDOwner);
     }
     virtual std::int32_t UGCRead(std::uint64_t hContent, void* pvData, std::int32_t cubDataToRead, std::uint32_t cOffset, std::int32_t eAction) {
-        return steambridge::slot<std::int32_t>(kCall_676, hContent, pvData, cubDataToRead, cOffset, eAction);
+        return steammock::slot<std::int32_t>(kCall_676, hContent, pvData, cubDataToRead, cOffset, eAction);
     }
-    virtual std::int32_t GetCachedUGCCount() { return steambridge::slot<std::int32_t>(kCall_677); }
+    virtual std::int32_t GetCachedUGCCount() { return steammock::slot<std::int32_t>(kCall_677); }
     virtual std::uint64_t GetCachedUGCHandle(std::int32_t iCachedContent) {
-        return steambridge::slot<std::uint64_t>(kCall_678, iCachedContent);
+        return steammock::slot<std::uint64_t>(kCall_678, iCachedContent);
     }
     virtual std::uint64_t PublishWorkshopFile(const char* pchFile, const char* pchPreviewFile, std::uint32_t nConsumerAppId, const char* pchTitle, const char* pchDescription, std::int32_t eVisibility, void* pTags, std::int32_t eWorkshopFileType) {
-        return steambridge::slot<std::uint64_t>(kCall_679, pchFile, pchPreviewFile, nConsumerAppId, pchTitle, pchDescription, eVisibility, pTags, eWorkshopFileType);
+        return steammock::slot<std::uint64_t>(kCall_679, pchFile, pchPreviewFile, nConsumerAppId, pchTitle, pchDescription, eVisibility, pTags, eWorkshopFileType);
     }
     virtual std::uint64_t CreatePublishedFileUpdateRequest(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_680, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_680, unPublishedFileId);
     }
     virtual bool UpdatePublishedFileFile(std::uint64_t updateHandle, const char* pchFile) {
-        return steambridge::slot<bool>(kCall_681, updateHandle, pchFile);
+        return steammock::slot<bool>(kCall_681, updateHandle, pchFile);
     }
     virtual bool UpdatePublishedFilePreviewFile(std::uint64_t updateHandle, const char* pchPreviewFile) {
-        return steambridge::slot<bool>(kCall_682, updateHandle, pchPreviewFile);
+        return steammock::slot<bool>(kCall_682, updateHandle, pchPreviewFile);
     }
     virtual bool UpdatePublishedFileTitle(std::uint64_t updateHandle, const char* pchTitle) {
-        return steambridge::slot<bool>(kCall_683, updateHandle, pchTitle);
+        return steammock::slot<bool>(kCall_683, updateHandle, pchTitle);
     }
     virtual bool UpdatePublishedFileDescription(std::uint64_t updateHandle, const char* pchDescription) {
-        return steambridge::slot<bool>(kCall_684, updateHandle, pchDescription);
+        return steammock::slot<bool>(kCall_684, updateHandle, pchDescription);
     }
     virtual bool UpdatePublishedFileVisibility(std::uint64_t updateHandle, std::int32_t eVisibility) {
-        return steambridge::slot<bool>(kCall_685, updateHandle, eVisibility);
+        return steammock::slot<bool>(kCall_685, updateHandle, eVisibility);
     }
     virtual bool UpdatePublishedFileTags(std::uint64_t updateHandle, void* pTags) {
-        return steambridge::slot<bool>(kCall_686, updateHandle, pTags);
+        return steammock::slot<bool>(kCall_686, updateHandle, pTags);
     }
     virtual std::uint64_t CommitPublishedFileUpdate(std::uint64_t updateHandle) {
-        return steambridge::slot<std::uint64_t>(kCall_687, updateHandle);
+        return steammock::slot<std::uint64_t>(kCall_687, updateHandle);
     }
     virtual std::uint64_t GetPublishedFileDetails(std::uint64_t unPublishedFileId, std::uint32_t unMaxSecondsOld) {
-        return steambridge::slot<std::uint64_t>(kCall_688, unPublishedFileId, unMaxSecondsOld);
+        return steammock::slot<std::uint64_t>(kCall_688, unPublishedFileId, unMaxSecondsOld);
     }
     virtual std::uint64_t DeletePublishedFile(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_689, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_689, unPublishedFileId);
     }
     virtual std::uint64_t EnumerateUserPublishedFiles(std::uint32_t unStartIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_690, unStartIndex);
+        return steammock::slot<std::uint64_t>(kCall_690, unStartIndex);
     }
     virtual std::uint64_t SubscribePublishedFile(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_691, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_691, unPublishedFileId);
     }
     virtual std::uint64_t EnumerateUserSubscribedFiles(std::uint32_t unStartIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_692, unStartIndex);
+        return steammock::slot<std::uint64_t>(kCall_692, unStartIndex);
     }
     virtual std::uint64_t UnsubscribePublishedFile(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_693, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_693, unPublishedFileId);
     }
     virtual bool UpdatePublishedFileSetChangeDescription(std::uint64_t updateHandle, const char* pchChangeDescription) {
-        return steambridge::slot<bool>(kCall_694, updateHandle, pchChangeDescription);
+        return steammock::slot<bool>(kCall_694, updateHandle, pchChangeDescription);
     }
     virtual std::uint64_t GetPublishedItemVoteDetails(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_695, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_695, unPublishedFileId);
     }
     virtual std::uint64_t UpdateUserPublishedItemVote(std::uint64_t unPublishedFileId, bool bVoteUp) {
-        return steambridge::slot<std::uint64_t>(kCall_696, unPublishedFileId, bVoteUp);
+        return steammock::slot<std::uint64_t>(kCall_696, unPublishedFileId, bVoteUp);
     }
     virtual std::uint64_t GetUserPublishedItemVoteDetails(std::uint64_t unPublishedFileId) {
-        return steambridge::slot<std::uint64_t>(kCall_697, unPublishedFileId);
+        return steammock::slot<std::uint64_t>(kCall_697, unPublishedFileId);
     }
     virtual std::uint64_t EnumerateUserSharedWorkshopFiles(CSteamID steamId, std::uint32_t unStartIndex, void* pRequiredTags, void* pExcludedTags) {
-        return steambridge::slot<std::uint64_t>(kCall_698, steamId, unStartIndex, pRequiredTags, pExcludedTags);
+        return steammock::slot<std::uint64_t>(kCall_698, steamId, unStartIndex, pRequiredTags, pExcludedTags);
     }
     virtual std::uint64_t PublishVideo(std::int32_t eVideoProvider, const char* pchVideoAccount, const char* pchVideoIdentifier, const char* pchPreviewFile, std::uint32_t nConsumerAppId, const char* pchTitle, const char* pchDescription, std::int32_t eVisibility, void* pTags) {
-        return steambridge::slot<std::uint64_t>(kCall_699, eVideoProvider, pchVideoAccount, pchVideoIdentifier, pchPreviewFile, nConsumerAppId, pchTitle, pchDescription, eVisibility, pTags);
+        return steammock::slot<std::uint64_t>(kCall_699, eVideoProvider, pchVideoAccount, pchVideoIdentifier, pchPreviewFile, nConsumerAppId, pchTitle, pchDescription, eVisibility, pTags);
     }
     virtual std::uint64_t SetUserPublishedFileAction(std::uint64_t unPublishedFileId, std::int32_t eAction) {
-        return steambridge::slot<std::uint64_t>(kCall_700, unPublishedFileId, eAction);
+        return steammock::slot<std::uint64_t>(kCall_700, unPublishedFileId, eAction);
     }
     virtual std::uint64_t EnumeratePublishedFilesByUserAction(std::int32_t eAction, std::uint32_t unStartIndex) {
-        return steambridge::slot<std::uint64_t>(kCall_701, eAction, unStartIndex);
+        return steammock::slot<std::uint64_t>(kCall_701, eAction, unStartIndex);
     }
     virtual std::uint64_t EnumeratePublishedWorkshopFiles(std::int32_t eEnumerationType, std::uint32_t unStartIndex, std::uint32_t unCount, std::uint32_t unDays, void* pTags, void* pUserTags) {
-        return steambridge::slot<std::uint64_t>(kCall_702, eEnumerationType, unStartIndex, unCount, unDays, pTags, pUserTags);
+        return steammock::slot<std::uint64_t>(kCall_702, eEnumerationType, unStartIndex, unCount, unDays, pTags, pUserTags);
     }
     virtual std::uint64_t UGCDownloadToLocation(std::uint64_t hContent, const char* pchLocation, std::uint32_t unPriority) {
-        return steambridge::slot<std::uint64_t>(kCall_703, hContent, pchLocation, unPriority);
+        return steammock::slot<std::uint64_t>(kCall_703, hContent, pchLocation, unPriority);
     }
     virtual std::int32_t GetLocalFileChangeCount() {
-        return steambridge::slot<std::int32_t>(kCall_704);
+        return steammock::slot<std::int32_t>(kCall_704);
     }
     virtual const char* GetLocalFileChange(std::int32_t iFile, std::int32_t* pEChangeType, std::int32_t* pEFilePathType) {
-        return steambridge::slot<const char*>(kCall_705, iFile, pEChangeType, pEFilePathType);
+        return steammock::slot<const char*>(kCall_705, iFile, pEChangeType, pEFilePathType);
     }
-    virtual bool BeginFileWriteBatch() { return steambridge::slot<bool>(kCall_706); }
-    virtual bool EndFileWriteBatch() { return steambridge::slot<bool>(kCall_707); }
+    virtual bool BeginFileWriteBatch() { return steammock::slot<bool>(kCall_706); }
+    virtual bool EndFileWriteBatch() { return steammock::slot<bool>(kCall_707); }
 };
 
 Version_STEAMREMOTESTORAGE_INTERFACE_VERSION016 g_STEAMREMOTESTORAGE_INTERFACE_VERSION016;
@@ -6418,25 +6394,25 @@ Version_STEAMREMOTESTORAGE_INTERFACE_VERSION016 g_STEAMREMOTESTORAGE_INTERFACE_V
 class Version_STEAMSCREENSHOTS_INTERFACE_VERSION003 {
 public:
     virtual std::uint32_t WriteScreenshot(void* pubRGB, std::uint32_t cubRGB, std::int32_t nWidth, std::int32_t nHeight) {
-        return steambridge::slot<std::uint32_t>(kCall_708, pubRGB, cubRGB, nWidth, nHeight);
+        return steammock::slot<std::uint32_t>(kCall_708, pubRGB, cubRGB, nWidth, nHeight);
     }
     virtual std::uint32_t AddScreenshotToLibrary(const char* pchFilename, const char* pchThumbnailFilename, std::int32_t nWidth, std::int32_t nHeight) {
-        return steambridge::slot<std::uint32_t>(kCall_709, pchFilename, pchThumbnailFilename, nWidth, nHeight);
+        return steammock::slot<std::uint32_t>(kCall_709, pchFilename, pchThumbnailFilename, nWidth, nHeight);
     }
-    virtual void TriggerScreenshot() { steambridge::slot<void>(kCall_710); }
-    virtual void HookScreenshots(bool bHook) { steambridge::slot<void>(kCall_711, bHook); }
+    virtual void TriggerScreenshot() { steammock::slot<void>(kCall_710); }
+    virtual void HookScreenshots(bool bHook) { steammock::slot<void>(kCall_711, bHook); }
     virtual bool SetLocation(std::uint32_t hScreenshot, const char* pchLocation) {
-        return steambridge::slot<bool>(kCall_712, hScreenshot, pchLocation);
+        return steammock::slot<bool>(kCall_712, hScreenshot, pchLocation);
     }
     virtual bool TagUser(std::uint32_t hScreenshot, CSteamID steamID) {
-        return steambridge::slot<bool>(kCall_713, hScreenshot, steamID);
+        return steammock::slot<bool>(kCall_713, hScreenshot, steamID);
     }
     virtual bool TagPublishedFile(std::uint32_t hScreenshot, std::uint64_t unPublishedFileID) {
-        return steambridge::slot<bool>(kCall_714, hScreenshot, unPublishedFileID);
+        return steammock::slot<bool>(kCall_714, hScreenshot, unPublishedFileID);
     }
-    virtual bool IsScreenshotsHooked() { return steambridge::slot<bool>(kCall_715); }
+    virtual bool IsScreenshotsHooked() { return steammock::slot<bool>(kCall_715); }
     virtual std::uint32_t AddVRScreenshotToLibrary(std::int32_t eType, const char* pchFilename, const char* pchVRFilename) {
-        return steambridge::slot<std::uint32_t>(kCall_716, eType, pchFilename, pchVRFilename);
+        return steammock::slot<std::uint32_t>(kCall_716, eType, pchFilename, pchVRFilename);
     }
 };
 
@@ -6446,224 +6422,224 @@ Version_STEAMSCREENSHOTS_INTERFACE_VERSION003 g_STEAMSCREENSHOTS_INTERFACE_VERSI
 class Version_STEAMUGC_INTERFACE_VERSION010 {
 public:
     virtual std::uint64_t CreateQueryUserUGCRequest(std::uint32_t unAccountID, std::int32_t eListType, std::int32_t eMatchingUGCType, std::int32_t eSortOrder, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryUGCDetailsRequest(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t SendQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<std::uint64_t>(kCall_720, handle);
+        return steammock::slot<std::uint64_t>(kCall_720, handle);
     }
     virtual bool GetQueryUGCResult(std::uint64_t handle, std::uint32_t index, void* pDetails) {
-        return steambridge::slot<bool>(kCall_721, handle, index, pDetails);
+        return steammock::slot<bool>(kCall_721, handle, index, pDetails);
     }
     virtual bool GetQueryUGCPreviewURL(std::uint64_t handle, std::uint32_t index, void* pchURL, std::uint32_t cchURLSize) {
-        return steambridge::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
+        return steammock::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
     }
     virtual bool GetQueryUGCMetadata(std::uint64_t handle, std::uint32_t index, void* pchMetadata, std::uint32_t cchMetadatasize) {
-        return steambridge::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
+        return steammock::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
     }
     virtual bool GetQueryUGCChildren(std::uint64_t handle, std::uint32_t index, std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
     }
     virtual bool GetQueryUGCStatistic(std::uint64_t handle, std::uint32_t index, std::int32_t eStatType, std::uint64_t* pStatValue) {
-        return steambridge::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
+        return steammock::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
     }
     virtual std::uint32_t GetQueryUGCNumAdditionalPreviews(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_726, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_726, handle, index);
     }
     virtual bool GetQueryUGCAdditionalPreview(std::uint64_t handle, std::uint32_t index, std::uint32_t previewIndex, void* pchURLOrVideoID, std::uint32_t cchURLSize, void* pchOriginalFileName, std::uint32_t cchOriginalFileNameSize, std::int32_t* pPreviewType) {
-        return steambridge::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
+        return steammock::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
     }
     virtual std::uint32_t GetQueryUGCNumKeyValueTags(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_728, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_728, handle, index);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, std::uint32_t keyValueTagIndex, void* pchKey, std::uint32_t cchKeySize, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
     }
     virtual bool ReleaseQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_730, handle);
+        return steammock::slot<bool>(kCall_730, handle);
     }
     virtual bool AddRequiredTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_731, handle, pTagName);
+        return steammock::slot<bool>(kCall_731, handle, pTagName);
     }
     virtual bool AddExcludedTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_732, handle, pTagName);
+        return steammock::slot<bool>(kCall_732, handle, pTagName);
     }
     virtual bool SetReturnOnlyIDs(std::uint64_t handle, bool bReturnOnlyIDs) {
-        return steambridge::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
+        return steammock::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
     }
     virtual bool SetReturnKeyValueTags(std::uint64_t handle, bool bReturnKeyValueTags) {
-        return steambridge::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
+        return steammock::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
     }
     virtual bool SetReturnLongDescription(std::uint64_t handle, bool bReturnLongDescription) {
-        return steambridge::slot<bool>(kCall_735, handle, bReturnLongDescription);
+        return steammock::slot<bool>(kCall_735, handle, bReturnLongDescription);
     }
     virtual bool SetReturnMetadata(std::uint64_t handle, bool bReturnMetadata) {
-        return steambridge::slot<bool>(kCall_736, handle, bReturnMetadata);
+        return steammock::slot<bool>(kCall_736, handle, bReturnMetadata);
     }
     virtual bool SetReturnChildren(std::uint64_t handle, bool bReturnChildren) {
-        return steambridge::slot<bool>(kCall_737, handle, bReturnChildren);
+        return steammock::slot<bool>(kCall_737, handle, bReturnChildren);
     }
     virtual bool SetReturnAdditionalPreviews(std::uint64_t handle, bool bReturnAdditionalPreviews) {
-        return steambridge::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
+        return steammock::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
     }
     virtual bool SetReturnTotalOnly(std::uint64_t handle, bool bReturnTotalOnly) {
-        return steambridge::slot<bool>(kCall_739, handle, bReturnTotalOnly);
+        return steammock::slot<bool>(kCall_739, handle, bReturnTotalOnly);
     }
     virtual bool SetReturnPlaytimeStats(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_740, handle, unDays);
+        return steammock::slot<bool>(kCall_740, handle, unDays);
     }
     virtual bool SetLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_741, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_741, handle, pchLanguage);
     }
     virtual bool SetAllowCachedResponse(std::uint64_t handle, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
+        return steammock::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
     }
     virtual bool SetCloudFileNameFilter(std::uint64_t handle, const char* pMatchCloudFileName) {
-        return steambridge::slot<bool>(kCall_743, handle, pMatchCloudFileName);
+        return steammock::slot<bool>(kCall_743, handle, pMatchCloudFileName);
     }
     virtual bool SetMatchAnyTag(std::uint64_t handle, bool bMatchAnyTag) {
-        return steambridge::slot<bool>(kCall_744, handle, bMatchAnyTag);
+        return steammock::slot<bool>(kCall_744, handle, bMatchAnyTag);
     }
     virtual bool SetSearchText(std::uint64_t handle, const char* pSearchText) {
-        return steambridge::slot<bool>(kCall_745, handle, pSearchText);
+        return steammock::slot<bool>(kCall_745, handle, pSearchText);
     }
     virtual bool SetRankedByTrendDays(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_746, handle, unDays);
+        return steammock::slot<bool>(kCall_746, handle, unDays);
     }
     virtual bool AddRequiredKeyValueTag(std::uint64_t handle, const char* pKey, const char* pValue) {
-        return steambridge::slot<bool>(kCall_747, handle, pKey, pValue);
+        return steammock::slot<bool>(kCall_747, handle, pKey, pValue);
     }
     virtual std::uint64_t RequestUGCDetails(std::uint64_t nPublishedFileID, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
+        return steammock::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
     }
     virtual std::uint64_t CreateItem(std::uint32_t nConsumerAppId, std::int32_t eFileType) {
-        return steambridge::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
+        return steammock::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
     }
     virtual std::uint64_t StartItemUpdate(std::uint32_t nConsumerAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
     }
     virtual bool SetItemTitle(std::uint64_t handle, const char* pchTitle) {
-        return steambridge::slot<bool>(kCall_751, handle, pchTitle);
+        return steammock::slot<bool>(kCall_751, handle, pchTitle);
     }
     virtual bool SetItemDescription(std::uint64_t handle, const char* pchDescription) {
-        return steambridge::slot<bool>(kCall_752, handle, pchDescription);
+        return steammock::slot<bool>(kCall_752, handle, pchDescription);
     }
     virtual bool SetItemUpdateLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_753, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_753, handle, pchLanguage);
     }
     virtual bool SetItemMetadata(std::uint64_t handle, const char* pchMetaData) {
-        return steambridge::slot<bool>(kCall_754, handle, pchMetaData);
+        return steammock::slot<bool>(kCall_754, handle, pchMetaData);
     }
     virtual bool SetItemVisibility(std::uint64_t handle, std::int32_t eVisibility) {
-        return steambridge::slot<bool>(kCall_755, handle, eVisibility);
+        return steammock::slot<bool>(kCall_755, handle, eVisibility);
     }
     virtual bool SetItemTags(std::uint64_t updateHandle, void* pTags) {
-        return steambridge::slot<bool>(kCall_756, updateHandle, pTags);
+        return steammock::slot<bool>(kCall_756, updateHandle, pTags);
     }
     virtual bool SetItemContent(std::uint64_t handle, const char* pszContentFolder) {
-        return steambridge::slot<bool>(kCall_757, handle, pszContentFolder);
+        return steammock::slot<bool>(kCall_757, handle, pszContentFolder);
     }
     virtual bool SetItemPreview(std::uint64_t handle, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_758, handle, pszPreviewFile);
+        return steammock::slot<bool>(kCall_758, handle, pszPreviewFile);
     }
     virtual bool RemoveItemKeyValueTags(std::uint64_t handle, const char* pchKey) {
-        return steambridge::slot<bool>(kCall_759, handle, pchKey);
+        return steammock::slot<bool>(kCall_759, handle, pchKey);
     }
     virtual bool AddItemKeyValueTag(std::uint64_t handle, const char* pchKey, const char* pchValue) {
-        return steambridge::slot<bool>(kCall_760, handle, pchKey, pchValue);
+        return steammock::slot<bool>(kCall_760, handle, pchKey, pchValue);
     }
     virtual bool AddItemPreviewFile(std::uint64_t handle, const char* pszPreviewFile, std::int32_t type) {
-        return steambridge::slot<bool>(kCall_761, handle, pszPreviewFile, type);
+        return steammock::slot<bool>(kCall_761, handle, pszPreviewFile, type);
     }
     virtual bool AddItemPreviewVideo(std::uint64_t handle, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_762, handle, pszVideoID);
+        return steammock::slot<bool>(kCall_762, handle, pszVideoID);
     }
     virtual bool UpdateItemPreviewFile(std::uint64_t handle, std::uint32_t index, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_763, handle, index, pszPreviewFile);
+        return steammock::slot<bool>(kCall_763, handle, index, pszPreviewFile);
     }
     virtual bool UpdateItemPreviewVideo(std::uint64_t handle, std::uint32_t index, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_764, handle, index, pszVideoID);
+        return steammock::slot<bool>(kCall_764, handle, index, pszVideoID);
     }
     virtual bool RemoveItemPreview(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<bool>(kCall_765, handle, index);
+        return steammock::slot<bool>(kCall_765, handle, index);
     }
     virtual std::uint64_t SubmitItemUpdate(std::uint64_t handle, const char* pchChangeNote) {
-        return steambridge::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
+        return steammock::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
     }
     virtual std::int32_t GetItemUpdateProgress(std::uint64_t handle, std::uint64_t* punBytesProcessed, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
+        return steammock::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
     }
     virtual std::uint64_t SetUserItemVote(std::uint64_t nPublishedFileID, bool bVoteUp) {
-        return steambridge::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
+        return steammock::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
     }
     virtual std::uint64_t GetUserItemVote(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_769, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_769, nPublishedFileID);
     }
     virtual std::uint64_t AddItemToFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t RemoveItemFromFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t SubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_772, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_772, nPublishedFileID);
     }
     virtual std::uint64_t UnsubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_773, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_773, nPublishedFileID);
     }
     virtual std::uint32_t GetNumSubscribedItems() {
-        return steambridge::slot<std::uint32_t>(kCall_774);
+        return steammock::slot<std::uint32_t>(kCall_774);
     }
     virtual std::uint32_t GetSubscribedItems(std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
     }
     virtual std::uint32_t GetItemState(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint32_t>(kCall_776, nPublishedFileID);
+        return steammock::slot<std::uint32_t>(kCall_776, nPublishedFileID);
     }
     virtual bool GetItemInstallInfo(std::uint64_t nPublishedFileID, std::uint64_t* punSizeOnDisk, void* pchFolder, std::uint32_t cchFolderSize, std::uint32_t* punTimeStamp) {
-        return steambridge::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
+        return steammock::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
     }
     virtual bool GetItemDownloadInfo(std::uint64_t nPublishedFileID, std::uint64_t* punBytesDownloaded, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
+        return steammock::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
     }
     virtual bool DownloadItem(std::uint64_t nPublishedFileID, bool bHighPriority) {
-        return steambridge::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
+        return steammock::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
     }
     virtual bool BInitWorkshopForGameServer(std::uint32_t unWorkshopDepotID, const char* pszFolder) {
-        return steambridge::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
+        return steammock::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
     }
-    virtual void SuspendDownloads(bool bSuspend) { steambridge::slot<void>(kCall_781, bSuspend); }
+    virtual void SuspendDownloads(bool bSuspend) { steammock::slot<void>(kCall_781, bSuspend); }
     virtual std::uint64_t StartPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTrackingForAllItems() {
-        return steambridge::slot<std::uint64_t>(kCall_784);
+        return steammock::slot<std::uint64_t>(kCall_784);
     }
     virtual std::uint64_t AddDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t RemoveDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t AddAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t RemoveAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t GetAppDependencies(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_789, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_789, nPublishedFileID);
     }
     virtual std::uint64_t DeleteItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_790, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_790, nPublishedFileID);
     }
 };
 
@@ -6673,236 +6649,236 @@ Version_STEAMUGC_INTERFACE_VERSION010 g_STEAMUGC_INTERFACE_VERSION010;
 class Version_STEAMUGC_INTERFACE_VERSION013 {
 public:
     virtual std::uint64_t CreateQueryUserUGCRequest(std::uint32_t unAccountID, std::int32_t eListType, std::int32_t eMatchingUGCType, std::int32_t eSortOrder, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, const char* pchCursor) {
-        return steambridge::slot<std::uint64_t>(kCall_791, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, pchCursor);
+        return steammock::slot<std::uint64_t>(kCall_791, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, pchCursor);
     }
     virtual std::uint64_t CreateQueryUGCDetailsRequest(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t SendQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<std::uint64_t>(kCall_720, handle);
+        return steammock::slot<std::uint64_t>(kCall_720, handle);
     }
     virtual bool GetQueryUGCResult(std::uint64_t handle, std::uint32_t index, void* pDetails) {
-        return steambridge::slot<bool>(kCall_721, handle, index, pDetails);
+        return steammock::slot<bool>(kCall_721, handle, index, pDetails);
     }
     virtual bool GetQueryUGCPreviewURL(std::uint64_t handle, std::uint32_t index, void* pchURL, std::uint32_t cchURLSize) {
-        return steambridge::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
+        return steammock::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
     }
     virtual bool GetQueryUGCMetadata(std::uint64_t handle, std::uint32_t index, void* pchMetadata, std::uint32_t cchMetadatasize) {
-        return steambridge::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
+        return steammock::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
     }
     virtual bool GetQueryUGCChildren(std::uint64_t handle, std::uint32_t index, std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
     }
     virtual bool GetQueryUGCStatistic(std::uint64_t handle, std::uint32_t index, std::int32_t eStatType, std::uint64_t* pStatValue) {
-        return steambridge::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
+        return steammock::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
     }
     virtual std::uint32_t GetQueryUGCNumAdditionalPreviews(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_726, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_726, handle, index);
     }
     virtual bool GetQueryUGCAdditionalPreview(std::uint64_t handle, std::uint32_t index, std::uint32_t previewIndex, void* pchURLOrVideoID, std::uint32_t cchURLSize, void* pchOriginalFileName, std::uint32_t cchOriginalFileNameSize, std::int32_t* pPreviewType) {
-        return steambridge::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
+        return steammock::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
     }
     virtual std::uint32_t GetQueryUGCNumKeyValueTags(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_728, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_728, handle, index);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, std::uint32_t keyValueTagIndex, void* pchKey, std::uint32_t cchKeySize, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, const char* pchKey, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_792, handle, index, pchKey, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_792, handle, index, pchKey, pchValue, cchValueSize);
     }
     virtual bool ReleaseQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_730, handle);
+        return steammock::slot<bool>(kCall_730, handle);
     }
     virtual bool AddRequiredTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_731, handle, pTagName);
+        return steammock::slot<bool>(kCall_731, handle, pTagName);
     }
     virtual bool AddExcludedTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_732, handle, pTagName);
+        return steammock::slot<bool>(kCall_732, handle, pTagName);
     }
     virtual bool SetReturnOnlyIDs(std::uint64_t handle, bool bReturnOnlyIDs) {
-        return steambridge::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
+        return steammock::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
     }
     virtual bool SetReturnKeyValueTags(std::uint64_t handle, bool bReturnKeyValueTags) {
-        return steambridge::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
+        return steammock::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
     }
     virtual bool SetReturnLongDescription(std::uint64_t handle, bool bReturnLongDescription) {
-        return steambridge::slot<bool>(kCall_735, handle, bReturnLongDescription);
+        return steammock::slot<bool>(kCall_735, handle, bReturnLongDescription);
     }
     virtual bool SetReturnMetadata(std::uint64_t handle, bool bReturnMetadata) {
-        return steambridge::slot<bool>(kCall_736, handle, bReturnMetadata);
+        return steammock::slot<bool>(kCall_736, handle, bReturnMetadata);
     }
     virtual bool SetReturnChildren(std::uint64_t handle, bool bReturnChildren) {
-        return steambridge::slot<bool>(kCall_737, handle, bReturnChildren);
+        return steammock::slot<bool>(kCall_737, handle, bReturnChildren);
     }
     virtual bool SetReturnAdditionalPreviews(std::uint64_t handle, bool bReturnAdditionalPreviews) {
-        return steambridge::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
+        return steammock::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
     }
     virtual bool SetReturnTotalOnly(std::uint64_t handle, bool bReturnTotalOnly) {
-        return steambridge::slot<bool>(kCall_739, handle, bReturnTotalOnly);
+        return steammock::slot<bool>(kCall_739, handle, bReturnTotalOnly);
     }
     virtual bool SetReturnPlaytimeStats(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_740, handle, unDays);
+        return steammock::slot<bool>(kCall_740, handle, unDays);
     }
     virtual bool SetLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_741, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_741, handle, pchLanguage);
     }
     virtual bool SetAllowCachedResponse(std::uint64_t handle, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
+        return steammock::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
     }
     virtual bool SetCloudFileNameFilter(std::uint64_t handle, const char* pMatchCloudFileName) {
-        return steambridge::slot<bool>(kCall_743, handle, pMatchCloudFileName);
+        return steammock::slot<bool>(kCall_743, handle, pMatchCloudFileName);
     }
     virtual bool SetMatchAnyTag(std::uint64_t handle, bool bMatchAnyTag) {
-        return steambridge::slot<bool>(kCall_744, handle, bMatchAnyTag);
+        return steammock::slot<bool>(kCall_744, handle, bMatchAnyTag);
     }
     virtual bool SetSearchText(std::uint64_t handle, const char* pSearchText) {
-        return steambridge::slot<bool>(kCall_745, handle, pSearchText);
+        return steammock::slot<bool>(kCall_745, handle, pSearchText);
     }
     virtual bool SetRankedByTrendDays(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_746, handle, unDays);
+        return steammock::slot<bool>(kCall_746, handle, unDays);
     }
     virtual bool AddRequiredKeyValueTag(std::uint64_t handle, const char* pKey, const char* pValue) {
-        return steambridge::slot<bool>(kCall_747, handle, pKey, pValue);
+        return steammock::slot<bool>(kCall_747, handle, pKey, pValue);
     }
     virtual std::uint64_t RequestUGCDetails(std::uint64_t nPublishedFileID, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
+        return steammock::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
     }
     virtual std::uint64_t CreateItem(std::uint32_t nConsumerAppId, std::int32_t eFileType) {
-        return steambridge::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
+        return steammock::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
     }
     virtual std::uint64_t StartItemUpdate(std::uint32_t nConsumerAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
     }
     virtual bool SetItemTitle(std::uint64_t handle, const char* pchTitle) {
-        return steambridge::slot<bool>(kCall_751, handle, pchTitle);
+        return steammock::slot<bool>(kCall_751, handle, pchTitle);
     }
     virtual bool SetItemDescription(std::uint64_t handle, const char* pchDescription) {
-        return steambridge::slot<bool>(kCall_752, handle, pchDescription);
+        return steammock::slot<bool>(kCall_752, handle, pchDescription);
     }
     virtual bool SetItemUpdateLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_753, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_753, handle, pchLanguage);
     }
     virtual bool SetItemMetadata(std::uint64_t handle, const char* pchMetaData) {
-        return steambridge::slot<bool>(kCall_754, handle, pchMetaData);
+        return steammock::slot<bool>(kCall_754, handle, pchMetaData);
     }
     virtual bool SetItemVisibility(std::uint64_t handle, std::int32_t eVisibility) {
-        return steambridge::slot<bool>(kCall_755, handle, eVisibility);
+        return steammock::slot<bool>(kCall_755, handle, eVisibility);
     }
     virtual bool SetItemTags(std::uint64_t updateHandle, void* pTags) {
-        return steambridge::slot<bool>(kCall_756, updateHandle, pTags);
+        return steammock::slot<bool>(kCall_756, updateHandle, pTags);
     }
     virtual bool SetItemContent(std::uint64_t handle, const char* pszContentFolder) {
-        return steambridge::slot<bool>(kCall_757, handle, pszContentFolder);
+        return steammock::slot<bool>(kCall_757, handle, pszContentFolder);
     }
     virtual bool SetItemPreview(std::uint64_t handle, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_758, handle, pszPreviewFile);
+        return steammock::slot<bool>(kCall_758, handle, pszPreviewFile);
     }
     virtual bool SetAllowLegacyUpload(std::uint64_t handle, bool bAllowLegacyUpload) {
-        return steambridge::slot<bool>(kCall_793, handle, bAllowLegacyUpload);
+        return steammock::slot<bool>(kCall_793, handle, bAllowLegacyUpload);
     }
     virtual bool RemoveAllItemKeyValueTags(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_794, handle);
+        return steammock::slot<bool>(kCall_794, handle);
     }
     virtual bool RemoveItemKeyValueTags(std::uint64_t handle, const char* pchKey) {
-        return steambridge::slot<bool>(kCall_759, handle, pchKey);
+        return steammock::slot<bool>(kCall_759, handle, pchKey);
     }
     virtual bool AddItemKeyValueTag(std::uint64_t handle, const char* pchKey, const char* pchValue) {
-        return steambridge::slot<bool>(kCall_760, handle, pchKey, pchValue);
+        return steammock::slot<bool>(kCall_760, handle, pchKey, pchValue);
     }
     virtual bool AddItemPreviewFile(std::uint64_t handle, const char* pszPreviewFile, std::int32_t type) {
-        return steambridge::slot<bool>(kCall_761, handle, pszPreviewFile, type);
+        return steammock::slot<bool>(kCall_761, handle, pszPreviewFile, type);
     }
     virtual bool AddItemPreviewVideo(std::uint64_t handle, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_762, handle, pszVideoID);
+        return steammock::slot<bool>(kCall_762, handle, pszVideoID);
     }
     virtual bool UpdateItemPreviewFile(std::uint64_t handle, std::uint32_t index, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_763, handle, index, pszPreviewFile);
+        return steammock::slot<bool>(kCall_763, handle, index, pszPreviewFile);
     }
     virtual bool UpdateItemPreviewVideo(std::uint64_t handle, std::uint32_t index, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_764, handle, index, pszVideoID);
+        return steammock::slot<bool>(kCall_764, handle, index, pszVideoID);
     }
     virtual bool RemoveItemPreview(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<bool>(kCall_765, handle, index);
+        return steammock::slot<bool>(kCall_765, handle, index);
     }
     virtual std::uint64_t SubmitItemUpdate(std::uint64_t handle, const char* pchChangeNote) {
-        return steambridge::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
+        return steammock::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
     }
     virtual std::int32_t GetItemUpdateProgress(std::uint64_t handle, std::uint64_t* punBytesProcessed, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
+        return steammock::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
     }
     virtual std::uint64_t SetUserItemVote(std::uint64_t nPublishedFileID, bool bVoteUp) {
-        return steambridge::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
+        return steammock::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
     }
     virtual std::uint64_t GetUserItemVote(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_769, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_769, nPublishedFileID);
     }
     virtual std::uint64_t AddItemToFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t RemoveItemFromFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t SubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_772, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_772, nPublishedFileID);
     }
     virtual std::uint64_t UnsubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_773, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_773, nPublishedFileID);
     }
     virtual std::uint32_t GetNumSubscribedItems() {
-        return steambridge::slot<std::uint32_t>(kCall_774);
+        return steammock::slot<std::uint32_t>(kCall_774);
     }
     virtual std::uint32_t GetSubscribedItems(std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
     }
     virtual std::uint32_t GetItemState(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint32_t>(kCall_776, nPublishedFileID);
+        return steammock::slot<std::uint32_t>(kCall_776, nPublishedFileID);
     }
     virtual bool GetItemInstallInfo(std::uint64_t nPublishedFileID, std::uint64_t* punSizeOnDisk, void* pchFolder, std::uint32_t cchFolderSize, std::uint32_t* punTimeStamp) {
-        return steambridge::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
+        return steammock::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
     }
     virtual bool GetItemDownloadInfo(std::uint64_t nPublishedFileID, std::uint64_t* punBytesDownloaded, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
+        return steammock::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
     }
     virtual bool DownloadItem(std::uint64_t nPublishedFileID, bool bHighPriority) {
-        return steambridge::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
+        return steammock::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
     }
     virtual bool BInitWorkshopForGameServer(std::uint32_t unWorkshopDepotID, const char* pszFolder) {
-        return steambridge::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
+        return steammock::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
     }
-    virtual void SuspendDownloads(bool bSuspend) { steambridge::slot<void>(kCall_781, bSuspend); }
+    virtual void SuspendDownloads(bool bSuspend) { steammock::slot<void>(kCall_781, bSuspend); }
     virtual std::uint64_t StartPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTrackingForAllItems() {
-        return steambridge::slot<std::uint64_t>(kCall_784);
+        return steammock::slot<std::uint64_t>(kCall_784);
     }
     virtual std::uint64_t AddDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t RemoveDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t AddAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t RemoveAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t GetAppDependencies(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_789, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_789, nPublishedFileID);
     }
     virtual std::uint64_t DeleteItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_790, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_790, nPublishedFileID);
     }
 };
 
@@ -6912,239 +6888,239 @@ Version_STEAMUGC_INTERFACE_VERSION013 g_STEAMUGC_INTERFACE_VERSION013;
 class Version_STEAMUGC_INTERFACE_VERSION014 {
 public:
     virtual std::uint64_t CreateQueryUserUGCRequest(std::uint32_t unAccountID, std::int32_t eListType, std::int32_t eMatchingUGCType, std::int32_t eSortOrder, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, const char* pchCursor) {
-        return steambridge::slot<std::uint64_t>(kCall_791, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, pchCursor);
+        return steammock::slot<std::uint64_t>(kCall_791, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, pchCursor);
     }
     virtual std::uint64_t CreateQueryUGCDetailsRequest(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t SendQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<std::uint64_t>(kCall_720, handle);
+        return steammock::slot<std::uint64_t>(kCall_720, handle);
     }
     virtual bool GetQueryUGCResult(std::uint64_t handle, std::uint32_t index, void* pDetails) {
-        return steambridge::slot<bool>(kCall_721, handle, index, pDetails);
+        return steammock::slot<bool>(kCall_721, handle, index, pDetails);
     }
     virtual bool GetQueryUGCPreviewURL(std::uint64_t handle, std::uint32_t index, void* pchURL, std::uint32_t cchURLSize) {
-        return steambridge::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
+        return steammock::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
     }
     virtual bool GetQueryUGCMetadata(std::uint64_t handle, std::uint32_t index, void* pchMetadata, std::uint32_t cchMetadatasize) {
-        return steambridge::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
+        return steammock::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
     }
     virtual bool GetQueryUGCChildren(std::uint64_t handle, std::uint32_t index, std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
     }
     virtual bool GetQueryUGCStatistic(std::uint64_t handle, std::uint32_t index, std::int32_t eStatType, std::uint64_t* pStatValue) {
-        return steambridge::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
+        return steammock::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
     }
     virtual std::uint32_t GetQueryUGCNumAdditionalPreviews(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_726, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_726, handle, index);
     }
     virtual bool GetQueryUGCAdditionalPreview(std::uint64_t handle, std::uint32_t index, std::uint32_t previewIndex, void* pchURLOrVideoID, std::uint32_t cchURLSize, void* pchOriginalFileName, std::uint32_t cchOriginalFileNameSize, std::int32_t* pPreviewType) {
-        return steambridge::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
+        return steammock::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
     }
     virtual std::uint32_t GetQueryUGCNumKeyValueTags(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_728, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_728, handle, index);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, std::uint32_t keyValueTagIndex, void* pchKey, std::uint32_t cchKeySize, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, const char* pchKey, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_792, handle, index, pchKey, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_792, handle, index, pchKey, pchValue, cchValueSize);
     }
     virtual bool ReleaseQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_730, handle);
+        return steammock::slot<bool>(kCall_730, handle);
     }
     virtual bool AddRequiredTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_731, handle, pTagName);
+        return steammock::slot<bool>(kCall_731, handle, pTagName);
     }
     virtual bool AddRequiredTagGroup(std::uint64_t handle, void* pTagGroups) {
-        return steambridge::slot<bool>(kCall_795, handle, pTagGroups);
+        return steammock::slot<bool>(kCall_795, handle, pTagGroups);
     }
     virtual bool AddExcludedTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_732, handle, pTagName);
+        return steammock::slot<bool>(kCall_732, handle, pTagName);
     }
     virtual bool SetReturnOnlyIDs(std::uint64_t handle, bool bReturnOnlyIDs) {
-        return steambridge::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
+        return steammock::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
     }
     virtual bool SetReturnKeyValueTags(std::uint64_t handle, bool bReturnKeyValueTags) {
-        return steambridge::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
+        return steammock::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
     }
     virtual bool SetReturnLongDescription(std::uint64_t handle, bool bReturnLongDescription) {
-        return steambridge::slot<bool>(kCall_735, handle, bReturnLongDescription);
+        return steammock::slot<bool>(kCall_735, handle, bReturnLongDescription);
     }
     virtual bool SetReturnMetadata(std::uint64_t handle, bool bReturnMetadata) {
-        return steambridge::slot<bool>(kCall_736, handle, bReturnMetadata);
+        return steammock::slot<bool>(kCall_736, handle, bReturnMetadata);
     }
     virtual bool SetReturnChildren(std::uint64_t handle, bool bReturnChildren) {
-        return steambridge::slot<bool>(kCall_737, handle, bReturnChildren);
+        return steammock::slot<bool>(kCall_737, handle, bReturnChildren);
     }
     virtual bool SetReturnAdditionalPreviews(std::uint64_t handle, bool bReturnAdditionalPreviews) {
-        return steambridge::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
+        return steammock::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
     }
     virtual bool SetReturnTotalOnly(std::uint64_t handle, bool bReturnTotalOnly) {
-        return steambridge::slot<bool>(kCall_739, handle, bReturnTotalOnly);
+        return steammock::slot<bool>(kCall_739, handle, bReturnTotalOnly);
     }
     virtual bool SetReturnPlaytimeStats(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_740, handle, unDays);
+        return steammock::slot<bool>(kCall_740, handle, unDays);
     }
     virtual bool SetLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_741, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_741, handle, pchLanguage);
     }
     virtual bool SetAllowCachedResponse(std::uint64_t handle, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
+        return steammock::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
     }
     virtual bool SetCloudFileNameFilter(std::uint64_t handle, const char* pMatchCloudFileName) {
-        return steambridge::slot<bool>(kCall_743, handle, pMatchCloudFileName);
+        return steammock::slot<bool>(kCall_743, handle, pMatchCloudFileName);
     }
     virtual bool SetMatchAnyTag(std::uint64_t handle, bool bMatchAnyTag) {
-        return steambridge::slot<bool>(kCall_744, handle, bMatchAnyTag);
+        return steammock::slot<bool>(kCall_744, handle, bMatchAnyTag);
     }
     virtual bool SetSearchText(std::uint64_t handle, const char* pSearchText) {
-        return steambridge::slot<bool>(kCall_745, handle, pSearchText);
+        return steammock::slot<bool>(kCall_745, handle, pSearchText);
     }
     virtual bool SetRankedByTrendDays(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_746, handle, unDays);
+        return steammock::slot<bool>(kCall_746, handle, unDays);
     }
     virtual bool AddRequiredKeyValueTag(std::uint64_t handle, const char* pKey, const char* pValue) {
-        return steambridge::slot<bool>(kCall_747, handle, pKey, pValue);
+        return steammock::slot<bool>(kCall_747, handle, pKey, pValue);
     }
     virtual std::uint64_t RequestUGCDetails(std::uint64_t nPublishedFileID, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
+        return steammock::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
     }
     virtual std::uint64_t CreateItem(std::uint32_t nConsumerAppId, std::int32_t eFileType) {
-        return steambridge::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
+        return steammock::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
     }
     virtual std::uint64_t StartItemUpdate(std::uint32_t nConsumerAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
     }
     virtual bool SetItemTitle(std::uint64_t handle, const char* pchTitle) {
-        return steambridge::slot<bool>(kCall_751, handle, pchTitle);
+        return steammock::slot<bool>(kCall_751, handle, pchTitle);
     }
     virtual bool SetItemDescription(std::uint64_t handle, const char* pchDescription) {
-        return steambridge::slot<bool>(kCall_752, handle, pchDescription);
+        return steammock::slot<bool>(kCall_752, handle, pchDescription);
     }
     virtual bool SetItemUpdateLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_753, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_753, handle, pchLanguage);
     }
     virtual bool SetItemMetadata(std::uint64_t handle, const char* pchMetaData) {
-        return steambridge::slot<bool>(kCall_754, handle, pchMetaData);
+        return steammock::slot<bool>(kCall_754, handle, pchMetaData);
     }
     virtual bool SetItemVisibility(std::uint64_t handle, std::int32_t eVisibility) {
-        return steambridge::slot<bool>(kCall_755, handle, eVisibility);
+        return steammock::slot<bool>(kCall_755, handle, eVisibility);
     }
     virtual bool SetItemTags(std::uint64_t updateHandle, void* pTags) {
-        return steambridge::slot<bool>(kCall_756, updateHandle, pTags);
+        return steammock::slot<bool>(kCall_756, updateHandle, pTags);
     }
     virtual bool SetItemContent(std::uint64_t handle, const char* pszContentFolder) {
-        return steambridge::slot<bool>(kCall_757, handle, pszContentFolder);
+        return steammock::slot<bool>(kCall_757, handle, pszContentFolder);
     }
     virtual bool SetItemPreview(std::uint64_t handle, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_758, handle, pszPreviewFile);
+        return steammock::slot<bool>(kCall_758, handle, pszPreviewFile);
     }
     virtual bool SetAllowLegacyUpload(std::uint64_t handle, bool bAllowLegacyUpload) {
-        return steambridge::slot<bool>(kCall_793, handle, bAllowLegacyUpload);
+        return steammock::slot<bool>(kCall_793, handle, bAllowLegacyUpload);
     }
     virtual bool RemoveAllItemKeyValueTags(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_794, handle);
+        return steammock::slot<bool>(kCall_794, handle);
     }
     virtual bool RemoveItemKeyValueTags(std::uint64_t handle, const char* pchKey) {
-        return steambridge::slot<bool>(kCall_759, handle, pchKey);
+        return steammock::slot<bool>(kCall_759, handle, pchKey);
     }
     virtual bool AddItemKeyValueTag(std::uint64_t handle, const char* pchKey, const char* pchValue) {
-        return steambridge::slot<bool>(kCall_760, handle, pchKey, pchValue);
+        return steammock::slot<bool>(kCall_760, handle, pchKey, pchValue);
     }
     virtual bool AddItemPreviewFile(std::uint64_t handle, const char* pszPreviewFile, std::int32_t type) {
-        return steambridge::slot<bool>(kCall_761, handle, pszPreviewFile, type);
+        return steammock::slot<bool>(kCall_761, handle, pszPreviewFile, type);
     }
     virtual bool AddItemPreviewVideo(std::uint64_t handle, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_762, handle, pszVideoID);
+        return steammock::slot<bool>(kCall_762, handle, pszVideoID);
     }
     virtual bool UpdateItemPreviewFile(std::uint64_t handle, std::uint32_t index, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_763, handle, index, pszPreviewFile);
+        return steammock::slot<bool>(kCall_763, handle, index, pszPreviewFile);
     }
     virtual bool UpdateItemPreviewVideo(std::uint64_t handle, std::uint32_t index, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_764, handle, index, pszVideoID);
+        return steammock::slot<bool>(kCall_764, handle, index, pszVideoID);
     }
     virtual bool RemoveItemPreview(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<bool>(kCall_765, handle, index);
+        return steammock::slot<bool>(kCall_765, handle, index);
     }
     virtual std::uint64_t SubmitItemUpdate(std::uint64_t handle, const char* pchChangeNote) {
-        return steambridge::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
+        return steammock::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
     }
     virtual std::int32_t GetItemUpdateProgress(std::uint64_t handle, std::uint64_t* punBytesProcessed, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
+        return steammock::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
     }
     virtual std::uint64_t SetUserItemVote(std::uint64_t nPublishedFileID, bool bVoteUp) {
-        return steambridge::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
+        return steammock::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
     }
     virtual std::uint64_t GetUserItemVote(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_769, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_769, nPublishedFileID);
     }
     virtual std::uint64_t AddItemToFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t RemoveItemFromFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t SubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_772, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_772, nPublishedFileID);
     }
     virtual std::uint64_t UnsubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_773, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_773, nPublishedFileID);
     }
     virtual std::uint32_t GetNumSubscribedItems() {
-        return steambridge::slot<std::uint32_t>(kCall_774);
+        return steammock::slot<std::uint32_t>(kCall_774);
     }
     virtual std::uint32_t GetSubscribedItems(std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
     }
     virtual std::uint32_t GetItemState(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint32_t>(kCall_776, nPublishedFileID);
+        return steammock::slot<std::uint32_t>(kCall_776, nPublishedFileID);
     }
     virtual bool GetItemInstallInfo(std::uint64_t nPublishedFileID, std::uint64_t* punSizeOnDisk, void* pchFolder, std::uint32_t cchFolderSize, std::uint32_t* punTimeStamp) {
-        return steambridge::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
+        return steammock::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
     }
     virtual bool GetItemDownloadInfo(std::uint64_t nPublishedFileID, std::uint64_t* punBytesDownloaded, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
+        return steammock::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
     }
     virtual bool DownloadItem(std::uint64_t nPublishedFileID, bool bHighPriority) {
-        return steambridge::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
+        return steammock::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
     }
     virtual bool BInitWorkshopForGameServer(std::uint32_t unWorkshopDepotID, const char* pszFolder) {
-        return steambridge::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
+        return steammock::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
     }
-    virtual void SuspendDownloads(bool bSuspend) { steambridge::slot<void>(kCall_781, bSuspend); }
+    virtual void SuspendDownloads(bool bSuspend) { steammock::slot<void>(kCall_781, bSuspend); }
     virtual std::uint64_t StartPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTrackingForAllItems() {
-        return steambridge::slot<std::uint64_t>(kCall_784);
+        return steammock::slot<std::uint64_t>(kCall_784);
     }
     virtual std::uint64_t AddDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t RemoveDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t AddAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t RemoveAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t GetAppDependencies(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_789, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_789, nPublishedFileID);
     }
     virtual std::uint64_t DeleteItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_790, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_790, nPublishedFileID);
     }
 };
 
@@ -7154,248 +7130,248 @@ Version_STEAMUGC_INTERFACE_VERSION014 g_STEAMUGC_INTERFACE_VERSION014;
 class Version_STEAMUGC_INTERFACE_VERSION015 {
 public:
     virtual std::uint64_t CreateQueryUserUGCRequest(std::uint32_t unAccountID, std::int32_t eListType, std::int32_t eMatchingUGCType, std::int32_t eSortOrder, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, const char* pchCursor) {
-        return steambridge::slot<std::uint64_t>(kCall_791, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, pchCursor);
+        return steammock::slot<std::uint64_t>(kCall_791, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, pchCursor);
     }
     virtual std::uint64_t CreateQueryUGCDetailsRequest(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t SendQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<std::uint64_t>(kCall_720, handle);
+        return steammock::slot<std::uint64_t>(kCall_720, handle);
     }
     virtual bool GetQueryUGCResult(std::uint64_t handle, std::uint32_t index, void* pDetails) {
-        return steambridge::slot<bool>(kCall_721, handle, index, pDetails);
+        return steammock::slot<bool>(kCall_721, handle, index, pDetails);
     }
     virtual std::uint32_t GetQueryUGCNumTags(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_796, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_796, handle, index);
     }
     virtual bool GetQueryUGCTag(std::uint64_t handle, std::uint32_t index, std::uint32_t indexTag, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_797, handle, index, indexTag, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_797, handle, index, indexTag, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCTagDisplayName(std::uint64_t handle, std::uint32_t index, std::uint32_t indexTag, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_798, handle, index, indexTag, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_798, handle, index, indexTag, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCPreviewURL(std::uint64_t handle, std::uint32_t index, void* pchURL, std::uint32_t cchURLSize) {
-        return steambridge::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
+        return steammock::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
     }
     virtual bool GetQueryUGCMetadata(std::uint64_t handle, std::uint32_t index, void* pchMetadata, std::uint32_t cchMetadatasize) {
-        return steambridge::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
+        return steammock::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
     }
     virtual bool GetQueryUGCChildren(std::uint64_t handle, std::uint32_t index, std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
     }
     virtual bool GetQueryUGCStatistic(std::uint64_t handle, std::uint32_t index, std::int32_t eStatType, std::uint64_t* pStatValue) {
-        return steambridge::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
+        return steammock::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
     }
     virtual std::uint32_t GetQueryUGCNumAdditionalPreviews(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_726, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_726, handle, index);
     }
     virtual bool GetQueryUGCAdditionalPreview(std::uint64_t handle, std::uint32_t index, std::uint32_t previewIndex, void* pchURLOrVideoID, std::uint32_t cchURLSize, void* pchOriginalFileName, std::uint32_t cchOriginalFileNameSize, std::int32_t* pPreviewType) {
-        return steambridge::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
+        return steammock::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
     }
     virtual std::uint32_t GetQueryUGCNumKeyValueTags(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_728, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_728, handle, index);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, std::uint32_t keyValueTagIndex, void* pchKey, std::uint32_t cchKeySize, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, const char* pchKey, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_792, handle, index, pchKey, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_792, handle, index, pchKey, pchValue, cchValueSize);
     }
     virtual bool ReleaseQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_730, handle);
+        return steammock::slot<bool>(kCall_730, handle);
     }
     virtual bool AddRequiredTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_731, handle, pTagName);
+        return steammock::slot<bool>(kCall_731, handle, pTagName);
     }
     virtual bool AddRequiredTagGroup(std::uint64_t handle, void* pTagGroups) {
-        return steambridge::slot<bool>(kCall_795, handle, pTagGroups);
+        return steammock::slot<bool>(kCall_795, handle, pTagGroups);
     }
     virtual bool AddExcludedTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_732, handle, pTagName);
+        return steammock::slot<bool>(kCall_732, handle, pTagName);
     }
     virtual bool SetReturnOnlyIDs(std::uint64_t handle, bool bReturnOnlyIDs) {
-        return steambridge::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
+        return steammock::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
     }
     virtual bool SetReturnKeyValueTags(std::uint64_t handle, bool bReturnKeyValueTags) {
-        return steambridge::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
+        return steammock::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
     }
     virtual bool SetReturnLongDescription(std::uint64_t handle, bool bReturnLongDescription) {
-        return steambridge::slot<bool>(kCall_735, handle, bReturnLongDescription);
+        return steammock::slot<bool>(kCall_735, handle, bReturnLongDescription);
     }
     virtual bool SetReturnMetadata(std::uint64_t handle, bool bReturnMetadata) {
-        return steambridge::slot<bool>(kCall_736, handle, bReturnMetadata);
+        return steammock::slot<bool>(kCall_736, handle, bReturnMetadata);
     }
     virtual bool SetReturnChildren(std::uint64_t handle, bool bReturnChildren) {
-        return steambridge::slot<bool>(kCall_737, handle, bReturnChildren);
+        return steammock::slot<bool>(kCall_737, handle, bReturnChildren);
     }
     virtual bool SetReturnAdditionalPreviews(std::uint64_t handle, bool bReturnAdditionalPreviews) {
-        return steambridge::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
+        return steammock::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
     }
     virtual bool SetReturnTotalOnly(std::uint64_t handle, bool bReturnTotalOnly) {
-        return steambridge::slot<bool>(kCall_739, handle, bReturnTotalOnly);
+        return steammock::slot<bool>(kCall_739, handle, bReturnTotalOnly);
     }
     virtual bool SetReturnPlaytimeStats(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_740, handle, unDays);
+        return steammock::slot<bool>(kCall_740, handle, unDays);
     }
     virtual bool SetLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_741, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_741, handle, pchLanguage);
     }
     virtual bool SetAllowCachedResponse(std::uint64_t handle, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
+        return steammock::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
     }
     virtual bool SetCloudFileNameFilter(std::uint64_t handle, const char* pMatchCloudFileName) {
-        return steambridge::slot<bool>(kCall_743, handle, pMatchCloudFileName);
+        return steammock::slot<bool>(kCall_743, handle, pMatchCloudFileName);
     }
     virtual bool SetMatchAnyTag(std::uint64_t handle, bool bMatchAnyTag) {
-        return steambridge::slot<bool>(kCall_744, handle, bMatchAnyTag);
+        return steammock::slot<bool>(kCall_744, handle, bMatchAnyTag);
     }
     virtual bool SetSearchText(std::uint64_t handle, const char* pSearchText) {
-        return steambridge::slot<bool>(kCall_745, handle, pSearchText);
+        return steammock::slot<bool>(kCall_745, handle, pSearchText);
     }
     virtual bool SetRankedByTrendDays(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_746, handle, unDays);
+        return steammock::slot<bool>(kCall_746, handle, unDays);
     }
     virtual bool AddRequiredKeyValueTag(std::uint64_t handle, const char* pKey, const char* pValue) {
-        return steambridge::slot<bool>(kCall_747, handle, pKey, pValue);
+        return steammock::slot<bool>(kCall_747, handle, pKey, pValue);
     }
     virtual std::uint64_t RequestUGCDetails(std::uint64_t nPublishedFileID, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
+        return steammock::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
     }
     virtual std::uint64_t CreateItem(std::uint32_t nConsumerAppId, std::int32_t eFileType) {
-        return steambridge::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
+        return steammock::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
     }
     virtual std::uint64_t StartItemUpdate(std::uint32_t nConsumerAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
     }
     virtual bool SetItemTitle(std::uint64_t handle, const char* pchTitle) {
-        return steambridge::slot<bool>(kCall_751, handle, pchTitle);
+        return steammock::slot<bool>(kCall_751, handle, pchTitle);
     }
     virtual bool SetItemDescription(std::uint64_t handle, const char* pchDescription) {
-        return steambridge::slot<bool>(kCall_752, handle, pchDescription);
+        return steammock::slot<bool>(kCall_752, handle, pchDescription);
     }
     virtual bool SetItemUpdateLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_753, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_753, handle, pchLanguage);
     }
     virtual bool SetItemMetadata(std::uint64_t handle, const char* pchMetaData) {
-        return steambridge::slot<bool>(kCall_754, handle, pchMetaData);
+        return steammock::slot<bool>(kCall_754, handle, pchMetaData);
     }
     virtual bool SetItemVisibility(std::uint64_t handle, std::int32_t eVisibility) {
-        return steambridge::slot<bool>(kCall_755, handle, eVisibility);
+        return steammock::slot<bool>(kCall_755, handle, eVisibility);
     }
     virtual bool SetItemTags(std::uint64_t updateHandle, void* pTags) {
-        return steambridge::slot<bool>(kCall_756, updateHandle, pTags);
+        return steammock::slot<bool>(kCall_756, updateHandle, pTags);
     }
     virtual bool SetItemContent(std::uint64_t handle, const char* pszContentFolder) {
-        return steambridge::slot<bool>(kCall_757, handle, pszContentFolder);
+        return steammock::slot<bool>(kCall_757, handle, pszContentFolder);
     }
     virtual bool SetItemPreview(std::uint64_t handle, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_758, handle, pszPreviewFile);
+        return steammock::slot<bool>(kCall_758, handle, pszPreviewFile);
     }
     virtual bool SetAllowLegacyUpload(std::uint64_t handle, bool bAllowLegacyUpload) {
-        return steambridge::slot<bool>(kCall_793, handle, bAllowLegacyUpload);
+        return steammock::slot<bool>(kCall_793, handle, bAllowLegacyUpload);
     }
     virtual bool RemoveAllItemKeyValueTags(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_794, handle);
+        return steammock::slot<bool>(kCall_794, handle);
     }
     virtual bool RemoveItemKeyValueTags(std::uint64_t handle, const char* pchKey) {
-        return steambridge::slot<bool>(kCall_759, handle, pchKey);
+        return steammock::slot<bool>(kCall_759, handle, pchKey);
     }
     virtual bool AddItemKeyValueTag(std::uint64_t handle, const char* pchKey, const char* pchValue) {
-        return steambridge::slot<bool>(kCall_760, handle, pchKey, pchValue);
+        return steammock::slot<bool>(kCall_760, handle, pchKey, pchValue);
     }
     virtual bool AddItemPreviewFile(std::uint64_t handle, const char* pszPreviewFile, std::int32_t type) {
-        return steambridge::slot<bool>(kCall_761, handle, pszPreviewFile, type);
+        return steammock::slot<bool>(kCall_761, handle, pszPreviewFile, type);
     }
     virtual bool AddItemPreviewVideo(std::uint64_t handle, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_762, handle, pszVideoID);
+        return steammock::slot<bool>(kCall_762, handle, pszVideoID);
     }
     virtual bool UpdateItemPreviewFile(std::uint64_t handle, std::uint32_t index, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_763, handle, index, pszPreviewFile);
+        return steammock::slot<bool>(kCall_763, handle, index, pszPreviewFile);
     }
     virtual bool UpdateItemPreviewVideo(std::uint64_t handle, std::uint32_t index, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_764, handle, index, pszVideoID);
+        return steammock::slot<bool>(kCall_764, handle, index, pszVideoID);
     }
     virtual bool RemoveItemPreview(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<bool>(kCall_765, handle, index);
+        return steammock::slot<bool>(kCall_765, handle, index);
     }
     virtual std::uint64_t SubmitItemUpdate(std::uint64_t handle, const char* pchChangeNote) {
-        return steambridge::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
+        return steammock::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
     }
     virtual std::int32_t GetItemUpdateProgress(std::uint64_t handle, std::uint64_t* punBytesProcessed, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
+        return steammock::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
     }
     virtual std::uint64_t SetUserItemVote(std::uint64_t nPublishedFileID, bool bVoteUp) {
-        return steambridge::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
+        return steammock::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
     }
     virtual std::uint64_t GetUserItemVote(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_769, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_769, nPublishedFileID);
     }
     virtual std::uint64_t AddItemToFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t RemoveItemFromFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t SubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_772, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_772, nPublishedFileID);
     }
     virtual std::uint64_t UnsubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_773, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_773, nPublishedFileID);
     }
     virtual std::uint32_t GetNumSubscribedItems() {
-        return steambridge::slot<std::uint32_t>(kCall_774);
+        return steammock::slot<std::uint32_t>(kCall_774);
     }
     virtual std::uint32_t GetSubscribedItems(std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
     }
     virtual std::uint32_t GetItemState(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint32_t>(kCall_776, nPublishedFileID);
+        return steammock::slot<std::uint32_t>(kCall_776, nPublishedFileID);
     }
     virtual bool GetItemInstallInfo(std::uint64_t nPublishedFileID, std::uint64_t* punSizeOnDisk, void* pchFolder, std::uint32_t cchFolderSize, std::uint32_t* punTimeStamp) {
-        return steambridge::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
+        return steammock::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
     }
     virtual bool GetItemDownloadInfo(std::uint64_t nPublishedFileID, std::uint64_t* punBytesDownloaded, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
+        return steammock::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
     }
     virtual bool DownloadItem(std::uint64_t nPublishedFileID, bool bHighPriority) {
-        return steambridge::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
+        return steammock::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
     }
     virtual bool BInitWorkshopForGameServer(std::uint32_t unWorkshopDepotID, const char* pszFolder) {
-        return steambridge::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
+        return steammock::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
     }
-    virtual void SuspendDownloads(bool bSuspend) { steambridge::slot<void>(kCall_781, bSuspend); }
+    virtual void SuspendDownloads(bool bSuspend) { steammock::slot<void>(kCall_781, bSuspend); }
     virtual std::uint64_t StartPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTrackingForAllItems() {
-        return steambridge::slot<std::uint64_t>(kCall_784);
+        return steammock::slot<std::uint64_t>(kCall_784);
     }
     virtual std::uint64_t AddDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t RemoveDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t AddAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t RemoveAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t GetAppDependencies(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_789, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_789, nPublishedFileID);
     }
     virtual std::uint64_t DeleteItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_790, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_790, nPublishedFileID);
     }
 };
 
@@ -7405,258 +7381,258 @@ Version_STEAMUGC_INTERFACE_VERSION015 g_STEAMUGC_INTERFACE_VERSION015;
 class Version_STEAMUGC_INTERFACE_VERSION016 {
 public:
     virtual std::uint64_t CreateQueryUserUGCRequest(std::uint32_t unAccountID, std::int32_t eListType, std::int32_t eMatchingUGCType, std::int32_t eSortOrder, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, const char* pchCursor) {
-        return steambridge::slot<std::uint64_t>(kCall_791, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, pchCursor);
+        return steammock::slot<std::uint64_t>(kCall_791, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, pchCursor);
     }
     virtual std::uint64_t CreateQueryUGCDetailsRequest(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t SendQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<std::uint64_t>(kCall_720, handle);
+        return steammock::slot<std::uint64_t>(kCall_720, handle);
     }
     virtual bool GetQueryUGCResult(std::uint64_t handle, std::uint32_t index, void* pDetails) {
-        return steambridge::slot<bool>(kCall_721, handle, index, pDetails);
+        return steammock::slot<bool>(kCall_721, handle, index, pDetails);
     }
     virtual std::uint32_t GetQueryUGCNumTags(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_796, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_796, handle, index);
     }
     virtual bool GetQueryUGCTag(std::uint64_t handle, std::uint32_t index, std::uint32_t indexTag, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_797, handle, index, indexTag, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_797, handle, index, indexTag, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCTagDisplayName(std::uint64_t handle, std::uint32_t index, std::uint32_t indexTag, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_798, handle, index, indexTag, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_798, handle, index, indexTag, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCPreviewURL(std::uint64_t handle, std::uint32_t index, void* pchURL, std::uint32_t cchURLSize) {
-        return steambridge::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
+        return steammock::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
     }
     virtual bool GetQueryUGCMetadata(std::uint64_t handle, std::uint32_t index, void* pchMetadata, std::uint32_t cchMetadatasize) {
-        return steambridge::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
+        return steammock::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
     }
     virtual bool GetQueryUGCChildren(std::uint64_t handle, std::uint32_t index, std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
     }
     virtual bool GetQueryUGCStatistic(std::uint64_t handle, std::uint32_t index, std::int32_t eStatType, std::uint64_t* pStatValue) {
-        return steambridge::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
+        return steammock::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
     }
     virtual std::uint32_t GetQueryUGCNumAdditionalPreviews(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_726, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_726, handle, index);
     }
     virtual bool GetQueryUGCAdditionalPreview(std::uint64_t handle, std::uint32_t index, std::uint32_t previewIndex, void* pchURLOrVideoID, std::uint32_t cchURLSize, void* pchOriginalFileName, std::uint32_t cchOriginalFileNameSize, std::int32_t* pPreviewType) {
-        return steambridge::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
+        return steammock::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
     }
     virtual std::uint32_t GetQueryUGCNumKeyValueTags(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_728, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_728, handle, index);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, std::uint32_t keyValueTagIndex, void* pchKey, std::uint32_t cchKeySize, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, const char* pchKey, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_792, handle, index, pchKey, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_792, handle, index, pchKey, pchValue, cchValueSize);
     }
     virtual bool ReleaseQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_730, handle);
+        return steammock::slot<bool>(kCall_730, handle);
     }
     virtual bool AddRequiredTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_731, handle, pTagName);
+        return steammock::slot<bool>(kCall_731, handle, pTagName);
     }
     virtual bool AddRequiredTagGroup(std::uint64_t handle, void* pTagGroups) {
-        return steambridge::slot<bool>(kCall_795, handle, pTagGroups);
+        return steammock::slot<bool>(kCall_795, handle, pTagGroups);
     }
     virtual bool AddExcludedTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_732, handle, pTagName);
+        return steammock::slot<bool>(kCall_732, handle, pTagName);
     }
     virtual bool SetReturnOnlyIDs(std::uint64_t handle, bool bReturnOnlyIDs) {
-        return steambridge::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
+        return steammock::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
     }
     virtual bool SetReturnKeyValueTags(std::uint64_t handle, bool bReturnKeyValueTags) {
-        return steambridge::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
+        return steammock::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
     }
     virtual bool SetReturnLongDescription(std::uint64_t handle, bool bReturnLongDescription) {
-        return steambridge::slot<bool>(kCall_735, handle, bReturnLongDescription);
+        return steammock::slot<bool>(kCall_735, handle, bReturnLongDescription);
     }
     virtual bool SetReturnMetadata(std::uint64_t handle, bool bReturnMetadata) {
-        return steambridge::slot<bool>(kCall_736, handle, bReturnMetadata);
+        return steammock::slot<bool>(kCall_736, handle, bReturnMetadata);
     }
     virtual bool SetReturnChildren(std::uint64_t handle, bool bReturnChildren) {
-        return steambridge::slot<bool>(kCall_737, handle, bReturnChildren);
+        return steammock::slot<bool>(kCall_737, handle, bReturnChildren);
     }
     virtual bool SetReturnAdditionalPreviews(std::uint64_t handle, bool bReturnAdditionalPreviews) {
-        return steambridge::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
+        return steammock::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
     }
     virtual bool SetReturnTotalOnly(std::uint64_t handle, bool bReturnTotalOnly) {
-        return steambridge::slot<bool>(kCall_739, handle, bReturnTotalOnly);
+        return steammock::slot<bool>(kCall_739, handle, bReturnTotalOnly);
     }
     virtual bool SetReturnPlaytimeStats(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_740, handle, unDays);
+        return steammock::slot<bool>(kCall_740, handle, unDays);
     }
     virtual bool SetLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_741, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_741, handle, pchLanguage);
     }
     virtual bool SetAllowCachedResponse(std::uint64_t handle, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
+        return steammock::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
     }
     virtual bool SetCloudFileNameFilter(std::uint64_t handle, const char* pMatchCloudFileName) {
-        return steambridge::slot<bool>(kCall_743, handle, pMatchCloudFileName);
+        return steammock::slot<bool>(kCall_743, handle, pMatchCloudFileName);
     }
     virtual bool SetMatchAnyTag(std::uint64_t handle, bool bMatchAnyTag) {
-        return steambridge::slot<bool>(kCall_744, handle, bMatchAnyTag);
+        return steammock::slot<bool>(kCall_744, handle, bMatchAnyTag);
     }
     virtual bool SetSearchText(std::uint64_t handle, const char* pSearchText) {
-        return steambridge::slot<bool>(kCall_745, handle, pSearchText);
+        return steammock::slot<bool>(kCall_745, handle, pSearchText);
     }
     virtual bool SetRankedByTrendDays(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_746, handle, unDays);
+        return steammock::slot<bool>(kCall_746, handle, unDays);
     }
     virtual bool SetTimeCreatedDateRange(std::uint64_t handle, std::uint32_t rtStart, std::uint32_t rtEnd) {
-        return steambridge::slot<bool>(kCall_799, handle, rtStart, rtEnd);
+        return steammock::slot<bool>(kCall_799, handle, rtStart, rtEnd);
     }
     virtual bool SetTimeUpdatedDateRange(std::uint64_t handle, std::uint32_t rtStart, std::uint32_t rtEnd) {
-        return steambridge::slot<bool>(kCall_800, handle, rtStart, rtEnd);
+        return steammock::slot<bool>(kCall_800, handle, rtStart, rtEnd);
     }
     virtual bool AddRequiredKeyValueTag(std::uint64_t handle, const char* pKey, const char* pValue) {
-        return steambridge::slot<bool>(kCall_747, handle, pKey, pValue);
+        return steammock::slot<bool>(kCall_747, handle, pKey, pValue);
     }
     virtual std::uint64_t RequestUGCDetails(std::uint64_t nPublishedFileID, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
+        return steammock::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
     }
     virtual std::uint64_t CreateItem(std::uint32_t nConsumerAppId, std::int32_t eFileType) {
-        return steambridge::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
+        return steammock::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
     }
     virtual std::uint64_t StartItemUpdate(std::uint32_t nConsumerAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
     }
     virtual bool SetItemTitle(std::uint64_t handle, const char* pchTitle) {
-        return steambridge::slot<bool>(kCall_751, handle, pchTitle);
+        return steammock::slot<bool>(kCall_751, handle, pchTitle);
     }
     virtual bool SetItemDescription(std::uint64_t handle, const char* pchDescription) {
-        return steambridge::slot<bool>(kCall_752, handle, pchDescription);
+        return steammock::slot<bool>(kCall_752, handle, pchDescription);
     }
     virtual bool SetItemUpdateLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_753, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_753, handle, pchLanguage);
     }
     virtual bool SetItemMetadata(std::uint64_t handle, const char* pchMetaData) {
-        return steambridge::slot<bool>(kCall_754, handle, pchMetaData);
+        return steammock::slot<bool>(kCall_754, handle, pchMetaData);
     }
     virtual bool SetItemVisibility(std::uint64_t handle, std::int32_t eVisibility) {
-        return steambridge::slot<bool>(kCall_755, handle, eVisibility);
+        return steammock::slot<bool>(kCall_755, handle, eVisibility);
     }
     virtual bool SetItemTags(std::uint64_t updateHandle, void* pTags) {
-        return steambridge::slot<bool>(kCall_756, updateHandle, pTags);
+        return steammock::slot<bool>(kCall_756, updateHandle, pTags);
     }
     virtual bool SetItemContent(std::uint64_t handle, const char* pszContentFolder) {
-        return steambridge::slot<bool>(kCall_757, handle, pszContentFolder);
+        return steammock::slot<bool>(kCall_757, handle, pszContentFolder);
     }
     virtual bool SetItemPreview(std::uint64_t handle, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_758, handle, pszPreviewFile);
+        return steammock::slot<bool>(kCall_758, handle, pszPreviewFile);
     }
     virtual bool SetAllowLegacyUpload(std::uint64_t handle, bool bAllowLegacyUpload) {
-        return steambridge::slot<bool>(kCall_793, handle, bAllowLegacyUpload);
+        return steammock::slot<bool>(kCall_793, handle, bAllowLegacyUpload);
     }
     virtual bool RemoveAllItemKeyValueTags(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_794, handle);
+        return steammock::slot<bool>(kCall_794, handle);
     }
     virtual bool RemoveItemKeyValueTags(std::uint64_t handle, const char* pchKey) {
-        return steambridge::slot<bool>(kCall_759, handle, pchKey);
+        return steammock::slot<bool>(kCall_759, handle, pchKey);
     }
     virtual bool AddItemKeyValueTag(std::uint64_t handle, const char* pchKey, const char* pchValue) {
-        return steambridge::slot<bool>(kCall_760, handle, pchKey, pchValue);
+        return steammock::slot<bool>(kCall_760, handle, pchKey, pchValue);
     }
     virtual bool AddItemPreviewFile(std::uint64_t handle, const char* pszPreviewFile, std::int32_t type) {
-        return steambridge::slot<bool>(kCall_761, handle, pszPreviewFile, type);
+        return steammock::slot<bool>(kCall_761, handle, pszPreviewFile, type);
     }
     virtual bool AddItemPreviewVideo(std::uint64_t handle, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_762, handle, pszVideoID);
+        return steammock::slot<bool>(kCall_762, handle, pszVideoID);
     }
     virtual bool UpdateItemPreviewFile(std::uint64_t handle, std::uint32_t index, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_763, handle, index, pszPreviewFile);
+        return steammock::slot<bool>(kCall_763, handle, index, pszPreviewFile);
     }
     virtual bool UpdateItemPreviewVideo(std::uint64_t handle, std::uint32_t index, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_764, handle, index, pszVideoID);
+        return steammock::slot<bool>(kCall_764, handle, index, pszVideoID);
     }
     virtual bool RemoveItemPreview(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<bool>(kCall_765, handle, index);
+        return steammock::slot<bool>(kCall_765, handle, index);
     }
     virtual std::uint64_t SubmitItemUpdate(std::uint64_t handle, const char* pchChangeNote) {
-        return steambridge::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
+        return steammock::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
     }
     virtual std::int32_t GetItemUpdateProgress(std::uint64_t handle, std::uint64_t* punBytesProcessed, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
+        return steammock::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
     }
     virtual std::uint64_t SetUserItemVote(std::uint64_t nPublishedFileID, bool bVoteUp) {
-        return steambridge::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
+        return steammock::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
     }
     virtual std::uint64_t GetUserItemVote(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_769, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_769, nPublishedFileID);
     }
     virtual std::uint64_t AddItemToFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t RemoveItemFromFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t SubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_772, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_772, nPublishedFileID);
     }
     virtual std::uint64_t UnsubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_773, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_773, nPublishedFileID);
     }
     virtual std::uint32_t GetNumSubscribedItems() {
-        return steambridge::slot<std::uint32_t>(kCall_774);
+        return steammock::slot<std::uint32_t>(kCall_774);
     }
     virtual std::uint32_t GetSubscribedItems(std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
     }
     virtual std::uint32_t GetItemState(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint32_t>(kCall_776, nPublishedFileID);
+        return steammock::slot<std::uint32_t>(kCall_776, nPublishedFileID);
     }
     virtual bool GetItemInstallInfo(std::uint64_t nPublishedFileID, std::uint64_t* punSizeOnDisk, void* pchFolder, std::uint32_t cchFolderSize, std::uint32_t* punTimeStamp) {
-        return steambridge::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
+        return steammock::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
     }
     virtual bool GetItemDownloadInfo(std::uint64_t nPublishedFileID, std::uint64_t* punBytesDownloaded, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
+        return steammock::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
     }
     virtual bool DownloadItem(std::uint64_t nPublishedFileID, bool bHighPriority) {
-        return steambridge::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
+        return steammock::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
     }
     virtual bool BInitWorkshopForGameServer(std::uint32_t unWorkshopDepotID, const char* pszFolder) {
-        return steambridge::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
+        return steammock::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
     }
-    virtual void SuspendDownloads(bool bSuspend) { steambridge::slot<void>(kCall_781, bSuspend); }
+    virtual void SuspendDownloads(bool bSuspend) { steammock::slot<void>(kCall_781, bSuspend); }
     virtual std::uint64_t StartPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTrackingForAllItems() {
-        return steambridge::slot<std::uint64_t>(kCall_784);
+        return steammock::slot<std::uint64_t>(kCall_784);
     }
     virtual std::uint64_t AddDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t RemoveDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t AddAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t RemoveAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t GetAppDependencies(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_789, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_789, nPublishedFileID);
     }
     virtual std::uint64_t DeleteItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_790, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_790, nPublishedFileID);
     }
-    virtual bool ShowWorkshopEULA() { return steambridge::slot<bool>(kCall_801); }
+    virtual bool ShowWorkshopEULA() { return steammock::slot<bool>(kCall_801); }
     virtual std::uint64_t GetWorkshopEULAStatus() {
-        return steambridge::slot<std::uint64_t>(kCall_802);
+        return steammock::slot<std::uint64_t>(kCall_802);
     }
 };
 
@@ -7666,267 +7642,267 @@ Version_STEAMUGC_INTERFACE_VERSION016 g_STEAMUGC_INTERFACE_VERSION016;
 class Version_STEAMUGC_INTERFACE_VERSION017 {
 public:
     virtual std::uint64_t CreateQueryUserUGCRequest(std::uint32_t unAccountID, std::int32_t eListType, std::int32_t eMatchingUGCType, std::int32_t eSortOrder, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_717, unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, std::uint32_t unPage) {
-        return steambridge::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
+        return steammock::slot<std::uint64_t>(kCall_718, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, unPage);
     }
     virtual std::uint64_t CreateQueryAllUGCRequest(std::int32_t eQueryType, std::int32_t eMatchingeMatchingUGCTypeFileType, std::uint32_t nCreatorAppID, std::uint32_t nConsumerAppID, const char* pchCursor) {
-        return steambridge::slot<std::uint64_t>(kCall_791, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, pchCursor);
+        return steammock::slot<std::uint64_t>(kCall_791, eQueryType, eMatchingeMatchingUGCTypeFileType, nCreatorAppID, nConsumerAppID, pchCursor);
     }
     virtual std::uint64_t CreateQueryUGCDetailsRequest(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_719, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t SendQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<std::uint64_t>(kCall_720, handle);
+        return steammock::slot<std::uint64_t>(kCall_720, handle);
     }
     virtual bool GetQueryUGCResult(std::uint64_t handle, std::uint32_t index, void* pDetails) {
-        return steambridge::slot<bool>(kCall_721, handle, index, pDetails);
+        return steammock::slot<bool>(kCall_721, handle, index, pDetails);
     }
     virtual std::uint32_t GetQueryUGCNumTags(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_796, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_796, handle, index);
     }
     virtual bool GetQueryUGCTag(std::uint64_t handle, std::uint32_t index, std::uint32_t indexTag, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_797, handle, index, indexTag, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_797, handle, index, indexTag, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCTagDisplayName(std::uint64_t handle, std::uint32_t index, std::uint32_t indexTag, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_798, handle, index, indexTag, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_798, handle, index, indexTag, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCPreviewURL(std::uint64_t handle, std::uint32_t index, void* pchURL, std::uint32_t cchURLSize) {
-        return steambridge::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
+        return steammock::slot<bool>(kCall_722, handle, index, pchURL, cchURLSize);
     }
     virtual bool GetQueryUGCMetadata(std::uint64_t handle, std::uint32_t index, void* pchMetadata, std::uint32_t cchMetadatasize) {
-        return steambridge::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
+        return steammock::slot<bool>(kCall_723, handle, index, pchMetadata, cchMetadatasize);
     }
     virtual bool GetQueryUGCChildren(std::uint64_t handle, std::uint32_t index, std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<bool>(kCall_724, handle, index, pvecPublishedFileID, cMaxEntries);
     }
     virtual bool GetQueryUGCStatistic(std::uint64_t handle, std::uint32_t index, std::int32_t eStatType, std::uint64_t* pStatValue) {
-        return steambridge::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
+        return steammock::slot<bool>(kCall_725, handle, index, eStatType, pStatValue);
     }
     virtual std::uint32_t GetQueryUGCNumAdditionalPreviews(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_726, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_726, handle, index);
     }
     virtual bool GetQueryUGCAdditionalPreview(std::uint64_t handle, std::uint32_t index, std::uint32_t previewIndex, void* pchURLOrVideoID, std::uint32_t cchURLSize, void* pchOriginalFileName, std::uint32_t cchOriginalFileNameSize, std::int32_t* pPreviewType) {
-        return steambridge::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
+        return steammock::slot<bool>(kCall_727, handle, index, previewIndex, pchURLOrVideoID, cchURLSize, pchOriginalFileName, cchOriginalFileNameSize, pPreviewType);
     }
     virtual std::uint32_t GetQueryUGCNumKeyValueTags(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<std::uint32_t>(kCall_728, handle, index);
+        return steammock::slot<std::uint32_t>(kCall_728, handle, index);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, std::uint32_t keyValueTagIndex, void* pchKey, std::uint32_t cchKeySize, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_729, handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
     }
     virtual bool GetQueryUGCKeyValueTag(std::uint64_t handle, std::uint32_t index, const char* pchKey, void* pchValue, std::uint32_t cchValueSize) {
-        return steambridge::slot<bool>(kCall_792, handle, index, pchKey, pchValue, cchValueSize);
+        return steammock::slot<bool>(kCall_792, handle, index, pchKey, pchValue, cchValueSize);
     }
     virtual std::uint32_t GetQueryUGCContentDescriptors(std::uint64_t handle, std::uint32_t index, std::int32_t* pvecDescriptors, std::uint32_t cMaxEntries) {
-        return steambridge::slot<std::uint32_t>(kCall_803, handle, index, pvecDescriptors, cMaxEntries);
+        return steammock::slot<std::uint32_t>(kCall_803, handle, index, pvecDescriptors, cMaxEntries);
     }
     virtual bool ReleaseQueryUGCRequest(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_730, handle);
+        return steammock::slot<bool>(kCall_730, handle);
     }
     virtual bool AddRequiredTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_731, handle, pTagName);
+        return steammock::slot<bool>(kCall_731, handle, pTagName);
     }
     virtual bool AddRequiredTagGroup(std::uint64_t handle, void* pTagGroups) {
-        return steambridge::slot<bool>(kCall_795, handle, pTagGroups);
+        return steammock::slot<bool>(kCall_795, handle, pTagGroups);
     }
     virtual bool AddExcludedTag(std::uint64_t handle, const char* pTagName) {
-        return steambridge::slot<bool>(kCall_732, handle, pTagName);
+        return steammock::slot<bool>(kCall_732, handle, pTagName);
     }
     virtual bool SetReturnOnlyIDs(std::uint64_t handle, bool bReturnOnlyIDs) {
-        return steambridge::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
+        return steammock::slot<bool>(kCall_733, handle, bReturnOnlyIDs);
     }
     virtual bool SetReturnKeyValueTags(std::uint64_t handle, bool bReturnKeyValueTags) {
-        return steambridge::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
+        return steammock::slot<bool>(kCall_734, handle, bReturnKeyValueTags);
     }
     virtual bool SetReturnLongDescription(std::uint64_t handle, bool bReturnLongDescription) {
-        return steambridge::slot<bool>(kCall_735, handle, bReturnLongDescription);
+        return steammock::slot<bool>(kCall_735, handle, bReturnLongDescription);
     }
     virtual bool SetReturnMetadata(std::uint64_t handle, bool bReturnMetadata) {
-        return steambridge::slot<bool>(kCall_736, handle, bReturnMetadata);
+        return steammock::slot<bool>(kCall_736, handle, bReturnMetadata);
     }
     virtual bool SetReturnChildren(std::uint64_t handle, bool bReturnChildren) {
-        return steambridge::slot<bool>(kCall_737, handle, bReturnChildren);
+        return steammock::slot<bool>(kCall_737, handle, bReturnChildren);
     }
     virtual bool SetReturnAdditionalPreviews(std::uint64_t handle, bool bReturnAdditionalPreviews) {
-        return steambridge::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
+        return steammock::slot<bool>(kCall_738, handle, bReturnAdditionalPreviews);
     }
     virtual bool SetReturnTotalOnly(std::uint64_t handle, bool bReturnTotalOnly) {
-        return steambridge::slot<bool>(kCall_739, handle, bReturnTotalOnly);
+        return steammock::slot<bool>(kCall_739, handle, bReturnTotalOnly);
     }
     virtual bool SetReturnPlaytimeStats(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_740, handle, unDays);
+        return steammock::slot<bool>(kCall_740, handle, unDays);
     }
     virtual bool SetLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_741, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_741, handle, pchLanguage);
     }
     virtual bool SetAllowCachedResponse(std::uint64_t handle, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
+        return steammock::slot<bool>(kCall_742, handle, unMaxAgeSeconds);
     }
     virtual bool SetCloudFileNameFilter(std::uint64_t handle, const char* pMatchCloudFileName) {
-        return steambridge::slot<bool>(kCall_743, handle, pMatchCloudFileName);
+        return steammock::slot<bool>(kCall_743, handle, pMatchCloudFileName);
     }
     virtual bool SetMatchAnyTag(std::uint64_t handle, bool bMatchAnyTag) {
-        return steambridge::slot<bool>(kCall_744, handle, bMatchAnyTag);
+        return steammock::slot<bool>(kCall_744, handle, bMatchAnyTag);
     }
     virtual bool SetSearchText(std::uint64_t handle, const char* pSearchText) {
-        return steambridge::slot<bool>(kCall_745, handle, pSearchText);
+        return steammock::slot<bool>(kCall_745, handle, pSearchText);
     }
     virtual bool SetRankedByTrendDays(std::uint64_t handle, std::uint32_t unDays) {
-        return steambridge::slot<bool>(kCall_746, handle, unDays);
+        return steammock::slot<bool>(kCall_746, handle, unDays);
     }
     virtual bool SetTimeCreatedDateRange(std::uint64_t handle, std::uint32_t rtStart, std::uint32_t rtEnd) {
-        return steambridge::slot<bool>(kCall_799, handle, rtStart, rtEnd);
+        return steammock::slot<bool>(kCall_799, handle, rtStart, rtEnd);
     }
     virtual bool SetTimeUpdatedDateRange(std::uint64_t handle, std::uint32_t rtStart, std::uint32_t rtEnd) {
-        return steambridge::slot<bool>(kCall_800, handle, rtStart, rtEnd);
+        return steammock::slot<bool>(kCall_800, handle, rtStart, rtEnd);
     }
     virtual bool AddRequiredKeyValueTag(std::uint64_t handle, const char* pKey, const char* pValue) {
-        return steambridge::slot<bool>(kCall_747, handle, pKey, pValue);
+        return steammock::slot<bool>(kCall_747, handle, pKey, pValue);
     }
     virtual std::uint64_t RequestUGCDetails(std::uint64_t nPublishedFileID, std::uint32_t unMaxAgeSeconds) {
-        return steambridge::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
+        return steammock::slot<std::uint64_t>(kCall_748, nPublishedFileID, unMaxAgeSeconds);
     }
     virtual std::uint64_t CreateItem(std::uint32_t nConsumerAppId, std::int32_t eFileType) {
-        return steambridge::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
+        return steammock::slot<std::uint64_t>(kCall_749, nConsumerAppId, eFileType);
     }
     virtual std::uint64_t StartItemUpdate(std::uint32_t nConsumerAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_750, nConsumerAppId, nPublishedFileID);
     }
     virtual bool SetItemTitle(std::uint64_t handle, const char* pchTitle) {
-        return steambridge::slot<bool>(kCall_751, handle, pchTitle);
+        return steammock::slot<bool>(kCall_751, handle, pchTitle);
     }
     virtual bool SetItemDescription(std::uint64_t handle, const char* pchDescription) {
-        return steambridge::slot<bool>(kCall_752, handle, pchDescription);
+        return steammock::slot<bool>(kCall_752, handle, pchDescription);
     }
     virtual bool SetItemUpdateLanguage(std::uint64_t handle, const char* pchLanguage) {
-        return steambridge::slot<bool>(kCall_753, handle, pchLanguage);
+        return steammock::slot<bool>(kCall_753, handle, pchLanguage);
     }
     virtual bool SetItemMetadata(std::uint64_t handle, const char* pchMetaData) {
-        return steambridge::slot<bool>(kCall_754, handle, pchMetaData);
+        return steammock::slot<bool>(kCall_754, handle, pchMetaData);
     }
     virtual bool SetItemVisibility(std::uint64_t handle, std::int32_t eVisibility) {
-        return steambridge::slot<bool>(kCall_755, handle, eVisibility);
+        return steammock::slot<bool>(kCall_755, handle, eVisibility);
     }
     virtual bool SetItemTags(std::uint64_t updateHandle, void* pTags) {
-        return steambridge::slot<bool>(kCall_756, updateHandle, pTags);
+        return steammock::slot<bool>(kCall_756, updateHandle, pTags);
     }
     virtual bool SetItemContent(std::uint64_t handle, const char* pszContentFolder) {
-        return steambridge::slot<bool>(kCall_757, handle, pszContentFolder);
+        return steammock::slot<bool>(kCall_757, handle, pszContentFolder);
     }
     virtual bool SetItemPreview(std::uint64_t handle, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_758, handle, pszPreviewFile);
+        return steammock::slot<bool>(kCall_758, handle, pszPreviewFile);
     }
     virtual bool SetAllowLegacyUpload(std::uint64_t handle, bool bAllowLegacyUpload) {
-        return steambridge::slot<bool>(kCall_793, handle, bAllowLegacyUpload);
+        return steammock::slot<bool>(kCall_793, handle, bAllowLegacyUpload);
     }
     virtual bool RemoveAllItemKeyValueTags(std::uint64_t handle) {
-        return steambridge::slot<bool>(kCall_794, handle);
+        return steammock::slot<bool>(kCall_794, handle);
     }
     virtual bool RemoveItemKeyValueTags(std::uint64_t handle, const char* pchKey) {
-        return steambridge::slot<bool>(kCall_759, handle, pchKey);
+        return steammock::slot<bool>(kCall_759, handle, pchKey);
     }
     virtual bool AddItemKeyValueTag(std::uint64_t handle, const char* pchKey, const char* pchValue) {
-        return steambridge::slot<bool>(kCall_760, handle, pchKey, pchValue);
+        return steammock::slot<bool>(kCall_760, handle, pchKey, pchValue);
     }
     virtual bool AddItemPreviewFile(std::uint64_t handle, const char* pszPreviewFile, std::int32_t type) {
-        return steambridge::slot<bool>(kCall_761, handle, pszPreviewFile, type);
+        return steammock::slot<bool>(kCall_761, handle, pszPreviewFile, type);
     }
     virtual bool AddItemPreviewVideo(std::uint64_t handle, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_762, handle, pszVideoID);
+        return steammock::slot<bool>(kCall_762, handle, pszVideoID);
     }
     virtual bool UpdateItemPreviewFile(std::uint64_t handle, std::uint32_t index, const char* pszPreviewFile) {
-        return steambridge::slot<bool>(kCall_763, handle, index, pszPreviewFile);
+        return steammock::slot<bool>(kCall_763, handle, index, pszPreviewFile);
     }
     virtual bool UpdateItemPreviewVideo(std::uint64_t handle, std::uint32_t index, const char* pszVideoID) {
-        return steambridge::slot<bool>(kCall_764, handle, index, pszVideoID);
+        return steammock::slot<bool>(kCall_764, handle, index, pszVideoID);
     }
     virtual bool RemoveItemPreview(std::uint64_t handle, std::uint32_t index) {
-        return steambridge::slot<bool>(kCall_765, handle, index);
+        return steammock::slot<bool>(kCall_765, handle, index);
     }
     virtual bool AddContentDescriptor(std::uint64_t handle, std::int32_t descid) {
-        return steambridge::slot<bool>(kCall_804, handle, descid);
+        return steammock::slot<bool>(kCall_804, handle, descid);
     }
     virtual bool RemoveContentDescriptor(std::uint64_t handle, std::int32_t descid) {
-        return steambridge::slot<bool>(kCall_805, handle, descid);
+        return steammock::slot<bool>(kCall_805, handle, descid);
     }
     virtual std::uint64_t SubmitItemUpdate(std::uint64_t handle, const char* pchChangeNote) {
-        return steambridge::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
+        return steammock::slot<std::uint64_t>(kCall_766, handle, pchChangeNote);
     }
     virtual std::int32_t GetItemUpdateProgress(std::uint64_t handle, std::uint64_t* punBytesProcessed, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
+        return steammock::slot<std::int32_t>(kCall_767, handle, punBytesProcessed, punBytesTotal);
     }
     virtual std::uint64_t SetUserItemVote(std::uint64_t nPublishedFileID, bool bVoteUp) {
-        return steambridge::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
+        return steammock::slot<std::uint64_t>(kCall_768, nPublishedFileID, bVoteUp);
     }
     virtual std::uint64_t GetUserItemVote(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_769, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_769, nPublishedFileID);
     }
     virtual std::uint64_t AddItemToFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_770, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t RemoveItemFromFavorites(std::uint32_t nAppId, std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_771, nAppId, nPublishedFileID);
     }
     virtual std::uint64_t SubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_772, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_772, nPublishedFileID);
     }
     virtual std::uint64_t UnsubscribeItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_773, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_773, nPublishedFileID);
     }
     virtual std::uint32_t GetNumSubscribedItems() {
-        return steambridge::slot<std::uint32_t>(kCall_774);
+        return steammock::slot<std::uint32_t>(kCall_774);
     }
     virtual std::uint32_t GetSubscribedItems(std::uint64_t* pvecPublishedFileID, std::uint32_t cMaxEntries) {
-        return steambridge::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
+        return steammock::slot<std::uint32_t>(kCall_775, pvecPublishedFileID, cMaxEntries);
     }
     virtual std::uint32_t GetItemState(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint32_t>(kCall_776, nPublishedFileID);
+        return steammock::slot<std::uint32_t>(kCall_776, nPublishedFileID);
     }
     virtual bool GetItemInstallInfo(std::uint64_t nPublishedFileID, std::uint64_t* punSizeOnDisk, void* pchFolder, std::uint32_t cchFolderSize, std::uint32_t* punTimeStamp) {
-        return steambridge::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
+        return steammock::slot<bool>(kCall_777, nPublishedFileID, punSizeOnDisk, pchFolder, cchFolderSize, punTimeStamp);
     }
     virtual bool GetItemDownloadInfo(std::uint64_t nPublishedFileID, std::uint64_t* punBytesDownloaded, std::uint64_t* punBytesTotal) {
-        return steambridge::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
+        return steammock::slot<bool>(kCall_778, nPublishedFileID, punBytesDownloaded, punBytesTotal);
     }
     virtual bool DownloadItem(std::uint64_t nPublishedFileID, bool bHighPriority) {
-        return steambridge::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
+        return steammock::slot<bool>(kCall_779, nPublishedFileID, bHighPriority);
     }
     virtual bool BInitWorkshopForGameServer(std::uint32_t unWorkshopDepotID, const char* pszFolder) {
-        return steambridge::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
+        return steammock::slot<bool>(kCall_780, unWorkshopDepotID, pszFolder);
     }
-    virtual void SuspendDownloads(bool bSuspend) { steambridge::slot<void>(kCall_781, bSuspend); }
+    virtual void SuspendDownloads(bool bSuspend) { steammock::slot<void>(kCall_781, bSuspend); }
     virtual std::uint64_t StartPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_782, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTracking(std::uint64_t* pvecPublishedFileID, std::uint32_t unNumPublishedFileIDs) {
-        return steambridge::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
+        return steammock::slot<std::uint64_t>(kCall_783, pvecPublishedFileID, unNumPublishedFileIDs);
     }
     virtual std::uint64_t StopPlaytimeTrackingForAllItems() {
-        return steambridge::slot<std::uint64_t>(kCall_784);
+        return steammock::slot<std::uint64_t>(kCall_784);
     }
     virtual std::uint64_t AddDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_785, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t RemoveDependency(std::uint64_t nParentPublishedFileID, std::uint64_t nChildPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_786, nParentPublishedFileID, nChildPublishedFileID);
     }
     virtual std::uint64_t AddAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_787, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t RemoveAppDependency(std::uint64_t nPublishedFileID, std::uint32_t nAppID) {
-        return steambridge::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
+        return steammock::slot<std::uint64_t>(kCall_788, nPublishedFileID, nAppID);
     }
     virtual std::uint64_t GetAppDependencies(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_789, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_789, nPublishedFileID);
     }
     virtual std::uint64_t DeleteItem(std::uint64_t nPublishedFileID) {
-        return steambridge::slot<std::uint64_t>(kCall_790, nPublishedFileID);
+        return steammock::slot<std::uint64_t>(kCall_790, nPublishedFileID);
     }
-    virtual bool ShowWorkshopEULA() { return steambridge::slot<bool>(kCall_801); }
+    virtual bool ShowWorkshopEULA() { return steammock::slot<bool>(kCall_801); }
     virtual std::uint64_t GetWorkshopEULAStatus() {
-        return steambridge::slot<std::uint64_t>(kCall_802);
+        return steammock::slot<std::uint64_t>(kCall_802);
     }
 };
 
@@ -7936,19 +7912,19 @@ Version_STEAMUGC_INTERFACE_VERSION017 g_STEAMUGC_INTERFACE_VERSION017;
 class Version_STEAMUNIFIEDMESSAGES_INTERFACE_VERSION001 {
 public:
     virtual std::uint64_t SendMethod(const char* pchServiceMethod, void* pRequestBuffer, std::uint32_t unRequestBufferSize, std::uint64_t unContext) {
-        return steambridge::slot<std::uint64_t>(kCall_806, pchServiceMethod, pRequestBuffer, unRequestBufferSize, unContext);
+        return steammock::slot<std::uint64_t>(kCall_806, pchServiceMethod, pRequestBuffer, unRequestBufferSize, unContext);
     }
     virtual bool GetMethodResponseInfo(std::uint64_t hHandle, std::uint32_t* punResponseSize, std::int32_t* peResult) {
-        return steambridge::slot<bool>(kCall_807, hHandle, punResponseSize, peResult);
+        return steammock::slot<bool>(kCall_807, hHandle, punResponseSize, peResult);
     }
     virtual bool GetMethodResponseData(std::uint64_t hHandle, void* pResponseBuffer, std::uint32_t unResponseBufferSize, bool bAutoRelease) {
-        return steambridge::slot<bool>(kCall_808, hHandle, pResponseBuffer, unResponseBufferSize, bAutoRelease);
+        return steammock::slot<bool>(kCall_808, hHandle, pResponseBuffer, unResponseBufferSize, bAutoRelease);
     }
     virtual bool ReleaseMethod(std::uint64_t hHandle) {
-        return steambridge::slot<bool>(kCall_809, hHandle);
+        return steammock::slot<bool>(kCall_809, hHandle);
     }
     virtual bool SendNotification(const char* pchServiceNotification, void* pNotificationBuffer, std::uint32_t unNotificationBufferSize) {
-        return steambridge::slot<bool>(kCall_810, pchServiceNotification, pNotificationBuffer, unNotificationBufferSize);
+        return steammock::slot<bool>(kCall_810, pchServiceNotification, pNotificationBuffer, unNotificationBufferSize);
     }
 };
 
@@ -7957,71 +7933,69 @@ Version_STEAMUNIFIEDMESSAGES_INTERFACE_VERSION001 g_STEAMUNIFIEDMESSAGES_INTERFA
 // ISteamUser SteamUser019
 class Version_SteamUser019 {
 public:
-    virtual std::int32_t GetHSteamUser() { return steambridge::slot<std::int32_t>(kCall_811); }
-    virtual bool BLoggedOn() { return steambridge::slot<bool>(kCall_812); }
-    virtual CSteamID GetSteamID() { return steambridge::slot<CSteamID>(kCall_813); }
+    virtual std::int32_t GetHSteamUser() { return steammock::slot<std::int32_t>(kCall_811); }
+    virtual bool BLoggedOn() { return steammock::slot<bool>(kCall_812); }
+    virtual CSteamID GetSteamID() { return steammock::slot<CSteamID>(kCall_813); }
     virtual std::int32_t InitiateGameConnection(void* pAuthBlob, std::int32_t cbMaxAuthBlob, CSteamID steamIDGameServer, std::uint32_t unIPServer, std::uint16_t usPortServer, bool bSecure) {
-        return steambridge::slot<std::int32_t>(kCall_814, pAuthBlob, cbMaxAuthBlob, steamIDGameServer, unIPServer, usPortServer, bSecure);
+        return steammock::slot<std::int32_t>(kCall_814, pAuthBlob, cbMaxAuthBlob, steamIDGameServer, unIPServer, usPortServer, bSecure);
     }
     virtual void TerminateGameConnection(std::uint32_t unIPServer, std::uint16_t usPortServer) {
-        steambridge::slot<void>(kCall_815, unIPServer, usPortServer);
+        steammock::slot<void>(kCall_815, unIPServer, usPortServer);
     }
     virtual void TrackAppUsageEvent(CGameID gameID, std::int32_t eAppUsageEvent, const char* pchExtraInfo) {
-        steambridge::slot<void>(kCall_816, gameID, eAppUsageEvent, pchExtraInfo);
+        steammock::slot<void>(kCall_816, gameID, eAppUsageEvent, pchExtraInfo);
     }
     virtual bool GetUserDataFolder(void* pchBuffer, std::int32_t cubBuffer) {
-        return steambridge::slot<bool>(kCall_817, pchBuffer, cubBuffer);
+        return steammock::slot<bool>(kCall_817, pchBuffer, cubBuffer);
     }
-    virtual void StartVoiceRecording() { steambridge::slot<void>(kCall_818); }
-    virtual void StopVoiceRecording() { steambridge::slot<void>(kCall_819); }
+    virtual void StartVoiceRecording() { steammock::slot<void>(kCall_818); }
+    virtual void StopVoiceRecording() { steammock::slot<void>(kCall_819); }
     virtual std::int32_t GetAvailableVoice(std::uint32_t* pcbCompressed, std::uint32_t* pcbUncompressed_Deprecated, std::uint32_t nUncompressedVoiceDesiredSampleRate_Deprecated) {
-        return steambridge::slot<std::int32_t>(kCall_820, pcbCompressed, pcbUncompressed_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
+        return steammock::slot<std::int32_t>(kCall_820, pcbCompressed, pcbUncompressed_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
     }
     virtual std::int32_t GetVoice(bool bWantCompressed, void* pDestBuffer, std::uint32_t cbDestBufferSize, std::uint32_t* nBytesWritten, bool bWantUncompressed_Deprecated, void* pUncompressedDestBuffer_Deprecated, std::uint32_t cbUncompressedDestBufferSize_Deprecated, std::uint32_t* nUncompressBytesWritten_Deprecated, std::uint32_t nUncompressedVoiceDesiredSampleRate_Deprecated) {
-        return steambridge::slot<std::int32_t>(kCall_821, bWantCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, bWantUncompressed_Deprecated, pUncompressedDestBuffer_Deprecated, cbUncompressedDestBufferSize_Deprecated, nUncompressBytesWritten_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
+        return steammock::slot<std::int32_t>(kCall_821, bWantCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, bWantUncompressed_Deprecated, pUncompressedDestBuffer_Deprecated, cbUncompressedDestBufferSize_Deprecated, nUncompressBytesWritten_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
     }
     virtual std::int32_t DecompressVoice(void* pCompressed, std::uint32_t cbCompressed, void* pDestBuffer, std::uint32_t cbDestBufferSize, std::uint32_t* nBytesWritten, std::uint32_t nDesiredSampleRate) {
-        return steambridge::slot<std::int32_t>(kCall_822, pCompressed, cbCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, nDesiredSampleRate);
+        return steammock::slot<std::int32_t>(kCall_822, pCompressed, cbCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, nDesiredSampleRate);
     }
     virtual std::uint32_t GetVoiceOptimalSampleRate() {
-        return steambridge::slot<std::uint32_t>(kCall_823);
+        return steammock::slot<std::uint32_t>(kCall_823);
     }
     virtual std::uint32_t GetAuthSessionTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket) {
-        return steambridge::slot<std::uint32_t>(kCall_824, pTicket, cbMaxTicket, pcbTicket);
+        return steammock::slot<std::uint32_t>(kCall_824, pTicket, cbMaxTicket, pcbTicket);
     }
     virtual std::int32_t BeginAuthSession(void* pAuthTicket, std::int32_t cbAuthTicket, CSteamID steamID) {
-        return steambridge::slot<std::int32_t>(kCall_825, pAuthTicket, cbAuthTicket, steamID);
+        return steammock::slot<std::int32_t>(kCall_825, pAuthTicket, cbAuthTicket, steamID);
     }
-    virtual void EndAuthSession(CSteamID steamID) { steambridge::slot<void>(kCall_826, steamID); }
+    virtual void EndAuthSession(CSteamID steamID) { steammock::slot<void>(kCall_826, steamID); }
     virtual void CancelAuthTicket(std::uint32_t hAuthTicket) {
-        steambridge::slot<void>(kCall_827, hAuthTicket);
+        steammock::slot<void>(kCall_827, hAuthTicket);
     }
     virtual std::int32_t UserHasLicenseForApp(CSteamID steamID, std::uint32_t appID) {
-        return steambridge::slot<std::int32_t>(kCall_828, steamID, appID);
+        return steammock::slot<std::int32_t>(kCall_828, steamID, appID);
     }
-    virtual bool BIsBehindNAT() { return steambridge::slot<bool>(kCall_829); }
+    virtual bool BIsBehindNAT() { return steammock::slot<bool>(kCall_829); }
     virtual void AdvertiseGame(CSteamID steamIDGameServer, std::uint32_t unIPServer, std::uint16_t usPortServer) {
-        steambridge::slot<void>(kCall_830, steamIDGameServer, unIPServer, usPortServer);
+        steammock::slot<void>(kCall_830, steamIDGameServer, unIPServer, usPortServer);
     }
     virtual std::uint64_t RequestEncryptedAppTicket(void* pDataToInclude, std::int32_t cbDataToInclude) {
-        return steambridge::slot<std::uint64_t>(kCall_831, pDataToInclude, cbDataToInclude);
+        return steammock::slot<std::uint64_t>(kCall_831, pDataToInclude, cbDataToInclude);
     }
     virtual bool GetEncryptedAppTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket) {
-        return steambridge::slot<bool>(kCall_832, pTicket, cbMaxTicket, pcbTicket);
+        return steammock::slot<bool>(kCall_832, pTicket, cbMaxTicket, pcbTicket);
     }
     virtual std::int32_t GetGameBadgeLevel(std::int32_t nSeries, bool bFoil) {
-        return steambridge::slot<std::int32_t>(kCall_833, nSeries, bFoil);
+        return steammock::slot<std::int32_t>(kCall_833, nSeries, bFoil);
     }
-    virtual std::int32_t GetPlayerSteamLevel() {
-        return steambridge::slot<std::int32_t>(kCall_834);
-    }
+    virtual std::int32_t GetPlayerSteamLevel() { return steammock::slot<std::int32_t>(kCall_834); }
     virtual std::uint64_t RequestStoreAuthURL(const char* pchRedirectURL) {
-        return steambridge::slot<std::uint64_t>(kCall_835, pchRedirectURL);
+        return steammock::slot<std::uint64_t>(kCall_835, pchRedirectURL);
     }
-    virtual bool BIsPhoneVerified() { return steambridge::slot<bool>(kCall_836); }
-    virtual bool BIsTwoFactorEnabled() { return steambridge::slot<bool>(kCall_837); }
-    virtual bool BIsPhoneIdentifying() { return steambridge::slot<bool>(kCall_838); }
-    virtual bool BIsPhoneRequiringVerification() { return steambridge::slot<bool>(kCall_839); }
+    virtual bool BIsPhoneVerified() { return steammock::slot<bool>(kCall_836); }
+    virtual bool BIsTwoFactorEnabled() { return steammock::slot<bool>(kCall_837); }
+    virtual bool BIsPhoneIdentifying() { return steammock::slot<bool>(kCall_838); }
+    virtual bool BIsPhoneRequiringVerification() { return steammock::slot<bool>(kCall_839); }
 };
 
 Version_SteamUser019 g_SteamUser019;
@@ -8029,77 +8003,73 @@ Version_SteamUser019 g_SteamUser019;
 // ISteamUser SteamUser020
 class Version_SteamUser020 {
 public:
-    virtual std::int32_t GetHSteamUser() { return steambridge::slot<std::int32_t>(kCall_811); }
-    virtual bool BLoggedOn() { return steambridge::slot<bool>(kCall_812); }
-    virtual CSteamID GetSteamID() { return steambridge::slot<CSteamID>(kCall_813); }
+    virtual std::int32_t GetHSteamUser() { return steammock::slot<std::int32_t>(kCall_811); }
+    virtual bool BLoggedOn() { return steammock::slot<bool>(kCall_812); }
+    virtual CSteamID GetSteamID() { return steammock::slot<CSteamID>(kCall_813); }
     virtual std::int32_t InitiateGameConnection(void* pAuthBlob, std::int32_t cbMaxAuthBlob, CSteamID steamIDGameServer, std::uint32_t unIPServer, std::uint16_t usPortServer, bool bSecure) {
-        return steambridge::slot<std::int32_t>(kCall_814, pAuthBlob, cbMaxAuthBlob, steamIDGameServer, unIPServer, usPortServer, bSecure);
+        return steammock::slot<std::int32_t>(kCall_814, pAuthBlob, cbMaxAuthBlob, steamIDGameServer, unIPServer, usPortServer, bSecure);
     }
     virtual void TerminateGameConnection(std::uint32_t unIPServer, std::uint16_t usPortServer) {
-        steambridge::slot<void>(kCall_815, unIPServer, usPortServer);
+        steammock::slot<void>(kCall_815, unIPServer, usPortServer);
     }
     virtual void TrackAppUsageEvent(CGameID gameID, std::int32_t eAppUsageEvent, const char* pchExtraInfo) {
-        steambridge::slot<void>(kCall_816, gameID, eAppUsageEvent, pchExtraInfo);
+        steammock::slot<void>(kCall_816, gameID, eAppUsageEvent, pchExtraInfo);
     }
     virtual bool GetUserDataFolder(void* pchBuffer, std::int32_t cubBuffer) {
-        return steambridge::slot<bool>(kCall_817, pchBuffer, cubBuffer);
+        return steammock::slot<bool>(kCall_817, pchBuffer, cubBuffer);
     }
-    virtual void StartVoiceRecording() { steambridge::slot<void>(kCall_818); }
-    virtual void StopVoiceRecording() { steambridge::slot<void>(kCall_819); }
+    virtual void StartVoiceRecording() { steammock::slot<void>(kCall_818); }
+    virtual void StopVoiceRecording() { steammock::slot<void>(kCall_819); }
     virtual std::int32_t GetAvailableVoice(std::uint32_t* pcbCompressed, std::uint32_t* pcbUncompressed_Deprecated, std::uint32_t nUncompressedVoiceDesiredSampleRate_Deprecated) {
-        return steambridge::slot<std::int32_t>(kCall_820, pcbCompressed, pcbUncompressed_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
+        return steammock::slot<std::int32_t>(kCall_820, pcbCompressed, pcbUncompressed_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
     }
     virtual std::int32_t GetVoice(bool bWantCompressed, void* pDestBuffer, std::uint32_t cbDestBufferSize, std::uint32_t* nBytesWritten, bool bWantUncompressed_Deprecated, void* pUncompressedDestBuffer_Deprecated, std::uint32_t cbUncompressedDestBufferSize_Deprecated, std::uint32_t* nUncompressBytesWritten_Deprecated, std::uint32_t nUncompressedVoiceDesiredSampleRate_Deprecated) {
-        return steambridge::slot<std::int32_t>(kCall_821, bWantCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, bWantUncompressed_Deprecated, pUncompressedDestBuffer_Deprecated, cbUncompressedDestBufferSize_Deprecated, nUncompressBytesWritten_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
+        return steammock::slot<std::int32_t>(kCall_821, bWantCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, bWantUncompressed_Deprecated, pUncompressedDestBuffer_Deprecated, cbUncompressedDestBufferSize_Deprecated, nUncompressBytesWritten_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
     }
     virtual std::int32_t DecompressVoice(void* pCompressed, std::uint32_t cbCompressed, void* pDestBuffer, std::uint32_t cbDestBufferSize, std::uint32_t* nBytesWritten, std::uint32_t nDesiredSampleRate) {
-        return steambridge::slot<std::int32_t>(kCall_822, pCompressed, cbCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, nDesiredSampleRate);
+        return steammock::slot<std::int32_t>(kCall_822, pCompressed, cbCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, nDesiredSampleRate);
     }
     virtual std::uint32_t GetVoiceOptimalSampleRate() {
-        return steambridge::slot<std::uint32_t>(kCall_823);
+        return steammock::slot<std::uint32_t>(kCall_823);
     }
     virtual std::uint32_t GetAuthSessionTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket) {
-        return steambridge::slot<std::uint32_t>(kCall_824, pTicket, cbMaxTicket, pcbTicket);
+        return steammock::slot<std::uint32_t>(kCall_824, pTicket, cbMaxTicket, pcbTicket);
     }
     virtual std::int32_t BeginAuthSession(void* pAuthTicket, std::int32_t cbAuthTicket, CSteamID steamID) {
-        return steambridge::slot<std::int32_t>(kCall_825, pAuthTicket, cbAuthTicket, steamID);
+        return steammock::slot<std::int32_t>(kCall_825, pAuthTicket, cbAuthTicket, steamID);
     }
-    virtual void EndAuthSession(CSteamID steamID) { steambridge::slot<void>(kCall_826, steamID); }
+    virtual void EndAuthSession(CSteamID steamID) { steammock::slot<void>(kCall_826, steamID); }
     virtual void CancelAuthTicket(std::uint32_t hAuthTicket) {
-        steambridge::slot<void>(kCall_827, hAuthTicket);
+        steammock::slot<void>(kCall_827, hAuthTicket);
     }
     virtual std::int32_t UserHasLicenseForApp(CSteamID steamID, std::uint32_t appID) {
-        return steambridge::slot<std::int32_t>(kCall_828, steamID, appID);
+        return steammock::slot<std::int32_t>(kCall_828, steamID, appID);
     }
-    virtual bool BIsBehindNAT() { return steambridge::slot<bool>(kCall_829); }
+    virtual bool BIsBehindNAT() { return steammock::slot<bool>(kCall_829); }
     virtual void AdvertiseGame(CSteamID steamIDGameServer, std::uint32_t unIPServer, std::uint16_t usPortServer) {
-        steambridge::slot<void>(kCall_830, steamIDGameServer, unIPServer, usPortServer);
+        steammock::slot<void>(kCall_830, steamIDGameServer, unIPServer, usPortServer);
     }
     virtual std::uint64_t RequestEncryptedAppTicket(void* pDataToInclude, std::int32_t cbDataToInclude) {
-        return steambridge::slot<std::uint64_t>(kCall_831, pDataToInclude, cbDataToInclude);
+        return steammock::slot<std::uint64_t>(kCall_831, pDataToInclude, cbDataToInclude);
     }
     virtual bool GetEncryptedAppTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket) {
-        return steambridge::slot<bool>(kCall_832, pTicket, cbMaxTicket, pcbTicket);
+        return steammock::slot<bool>(kCall_832, pTicket, cbMaxTicket, pcbTicket);
     }
     virtual std::int32_t GetGameBadgeLevel(std::int32_t nSeries, bool bFoil) {
-        return steambridge::slot<std::int32_t>(kCall_833, nSeries, bFoil);
+        return steammock::slot<std::int32_t>(kCall_833, nSeries, bFoil);
     }
-    virtual std::int32_t GetPlayerSteamLevel() {
-        return steambridge::slot<std::int32_t>(kCall_834);
-    }
+    virtual std::int32_t GetPlayerSteamLevel() { return steammock::slot<std::int32_t>(kCall_834); }
     virtual std::uint64_t RequestStoreAuthURL(const char* pchRedirectURL) {
-        return steambridge::slot<std::uint64_t>(kCall_835, pchRedirectURL);
+        return steammock::slot<std::uint64_t>(kCall_835, pchRedirectURL);
     }
-    virtual bool BIsPhoneVerified() { return steambridge::slot<bool>(kCall_836); }
-    virtual bool BIsTwoFactorEnabled() { return steambridge::slot<bool>(kCall_837); }
-    virtual bool BIsPhoneIdentifying() { return steambridge::slot<bool>(kCall_838); }
-    virtual bool BIsPhoneRequiringVerification() { return steambridge::slot<bool>(kCall_839); }
+    virtual bool BIsPhoneVerified() { return steammock::slot<bool>(kCall_836); }
+    virtual bool BIsTwoFactorEnabled() { return steammock::slot<bool>(kCall_837); }
+    virtual bool BIsPhoneIdentifying() { return steammock::slot<bool>(kCall_838); }
+    virtual bool BIsPhoneRequiringVerification() { return steammock::slot<bool>(kCall_839); }
     virtual std::uint64_t GetMarketEligibility() {
-        return steambridge::slot<std::uint64_t>(kCall_840);
+        return steammock::slot<std::uint64_t>(kCall_840);
     }
-    virtual std::uint64_t GetDurationControl() {
-        return steambridge::slot<std::uint64_t>(kCall_841);
-    }
+    virtual std::uint64_t GetDurationControl() { return steammock::slot<std::uint64_t>(kCall_841); }
 };
 
 Version_SteamUser020 g_SteamUser020;
@@ -8107,79 +8077,75 @@ Version_SteamUser020 g_SteamUser020;
 // ISteamUser SteamUser021
 class Version_SteamUser021 {
 public:
-    virtual std::int32_t GetHSteamUser() { return steambridge::slot<std::int32_t>(kCall_811); }
-    virtual bool BLoggedOn() { return steambridge::slot<bool>(kCall_812); }
-    virtual CSteamID GetSteamID() { return steambridge::slot<CSteamID>(kCall_813); }
+    virtual std::int32_t GetHSteamUser() { return steammock::slot<std::int32_t>(kCall_811); }
+    virtual bool BLoggedOn() { return steammock::slot<bool>(kCall_812); }
+    virtual CSteamID GetSteamID() { return steammock::slot<CSteamID>(kCall_813); }
     virtual std::int32_t InitiateGameConnection_DEPRECATED(void* pAuthBlob, std::int32_t cbMaxAuthBlob, CSteamID steamIDGameServer, std::uint32_t unIPServer, std::uint16_t usPortServer, bool bSecure) {
-        return steambridge::slot<std::int32_t>(kCall_842, pAuthBlob, cbMaxAuthBlob, steamIDGameServer, unIPServer, usPortServer, bSecure);
+        return steammock::slot<std::int32_t>(kCall_842, pAuthBlob, cbMaxAuthBlob, steamIDGameServer, unIPServer, usPortServer, bSecure);
     }
     virtual void TerminateGameConnection_DEPRECATED(std::uint32_t unIPServer, std::uint16_t usPortServer) {
-        steambridge::slot<void>(kCall_843, unIPServer, usPortServer);
+        steammock::slot<void>(kCall_843, unIPServer, usPortServer);
     }
     virtual void TrackAppUsageEvent(CGameID gameID, std::int32_t eAppUsageEvent, const char* pchExtraInfo) {
-        steambridge::slot<void>(kCall_816, gameID, eAppUsageEvent, pchExtraInfo);
+        steammock::slot<void>(kCall_816, gameID, eAppUsageEvent, pchExtraInfo);
     }
     virtual bool GetUserDataFolder(void* pchBuffer, std::int32_t cubBuffer) {
-        return steambridge::slot<bool>(kCall_817, pchBuffer, cubBuffer);
+        return steammock::slot<bool>(kCall_817, pchBuffer, cubBuffer);
     }
-    virtual void StartVoiceRecording() { steambridge::slot<void>(kCall_818); }
-    virtual void StopVoiceRecording() { steambridge::slot<void>(kCall_819); }
+    virtual void StartVoiceRecording() { steammock::slot<void>(kCall_818); }
+    virtual void StopVoiceRecording() { steammock::slot<void>(kCall_819); }
     virtual std::int32_t GetAvailableVoice(std::uint32_t* pcbCompressed, std::uint32_t* pcbUncompressed_Deprecated, std::uint32_t nUncompressedVoiceDesiredSampleRate_Deprecated) {
-        return steambridge::slot<std::int32_t>(kCall_820, pcbCompressed, pcbUncompressed_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
+        return steammock::slot<std::int32_t>(kCall_820, pcbCompressed, pcbUncompressed_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
     }
     virtual std::int32_t GetVoice(bool bWantCompressed, void* pDestBuffer, std::uint32_t cbDestBufferSize, std::uint32_t* nBytesWritten, bool bWantUncompressed_Deprecated, void* pUncompressedDestBuffer_Deprecated, std::uint32_t cbUncompressedDestBufferSize_Deprecated, std::uint32_t* nUncompressBytesWritten_Deprecated, std::uint32_t nUncompressedVoiceDesiredSampleRate_Deprecated) {
-        return steambridge::slot<std::int32_t>(kCall_821, bWantCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, bWantUncompressed_Deprecated, pUncompressedDestBuffer_Deprecated, cbUncompressedDestBufferSize_Deprecated, nUncompressBytesWritten_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
+        return steammock::slot<std::int32_t>(kCall_821, bWantCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, bWantUncompressed_Deprecated, pUncompressedDestBuffer_Deprecated, cbUncompressedDestBufferSize_Deprecated, nUncompressBytesWritten_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
     }
     virtual std::int32_t DecompressVoice(void* pCompressed, std::uint32_t cbCompressed, void* pDestBuffer, std::uint32_t cbDestBufferSize, std::uint32_t* nBytesWritten, std::uint32_t nDesiredSampleRate) {
-        return steambridge::slot<std::int32_t>(kCall_822, pCompressed, cbCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, nDesiredSampleRate);
+        return steammock::slot<std::int32_t>(kCall_822, pCompressed, cbCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, nDesiredSampleRate);
     }
     virtual std::uint32_t GetVoiceOptimalSampleRate() {
-        return steambridge::slot<std::uint32_t>(kCall_823);
+        return steammock::slot<std::uint32_t>(kCall_823);
     }
     virtual std::uint32_t GetAuthSessionTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket) {
-        return steambridge::slot<std::uint32_t>(kCall_824, pTicket, cbMaxTicket, pcbTicket);
+        return steammock::slot<std::uint32_t>(kCall_824, pTicket, cbMaxTicket, pcbTicket);
     }
     virtual std::int32_t BeginAuthSession(void* pAuthTicket, std::int32_t cbAuthTicket, CSteamID steamID) {
-        return steambridge::slot<std::int32_t>(kCall_825, pAuthTicket, cbAuthTicket, steamID);
+        return steammock::slot<std::int32_t>(kCall_825, pAuthTicket, cbAuthTicket, steamID);
     }
-    virtual void EndAuthSession(CSteamID steamID) { steambridge::slot<void>(kCall_826, steamID); }
+    virtual void EndAuthSession(CSteamID steamID) { steammock::slot<void>(kCall_826, steamID); }
     virtual void CancelAuthTicket(std::uint32_t hAuthTicket) {
-        steambridge::slot<void>(kCall_827, hAuthTicket);
+        steammock::slot<void>(kCall_827, hAuthTicket);
     }
     virtual std::int32_t UserHasLicenseForApp(CSteamID steamID, std::uint32_t appID) {
-        return steambridge::slot<std::int32_t>(kCall_828, steamID, appID);
+        return steammock::slot<std::int32_t>(kCall_828, steamID, appID);
     }
-    virtual bool BIsBehindNAT() { return steambridge::slot<bool>(kCall_829); }
+    virtual bool BIsBehindNAT() { return steammock::slot<bool>(kCall_829); }
     virtual void AdvertiseGame(CSteamID steamIDGameServer, std::uint32_t unIPServer, std::uint16_t usPortServer) {
-        steambridge::slot<void>(kCall_830, steamIDGameServer, unIPServer, usPortServer);
+        steammock::slot<void>(kCall_830, steamIDGameServer, unIPServer, usPortServer);
     }
     virtual std::uint64_t RequestEncryptedAppTicket(void* pDataToInclude, std::int32_t cbDataToInclude) {
-        return steambridge::slot<std::uint64_t>(kCall_831, pDataToInclude, cbDataToInclude);
+        return steammock::slot<std::uint64_t>(kCall_831, pDataToInclude, cbDataToInclude);
     }
     virtual bool GetEncryptedAppTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket) {
-        return steambridge::slot<bool>(kCall_832, pTicket, cbMaxTicket, pcbTicket);
+        return steammock::slot<bool>(kCall_832, pTicket, cbMaxTicket, pcbTicket);
     }
     virtual std::int32_t GetGameBadgeLevel(std::int32_t nSeries, bool bFoil) {
-        return steambridge::slot<std::int32_t>(kCall_833, nSeries, bFoil);
+        return steammock::slot<std::int32_t>(kCall_833, nSeries, bFoil);
     }
-    virtual std::int32_t GetPlayerSteamLevel() {
-        return steambridge::slot<std::int32_t>(kCall_834);
-    }
+    virtual std::int32_t GetPlayerSteamLevel() { return steammock::slot<std::int32_t>(kCall_834); }
     virtual std::uint64_t RequestStoreAuthURL(const char* pchRedirectURL) {
-        return steambridge::slot<std::uint64_t>(kCall_835, pchRedirectURL);
+        return steammock::slot<std::uint64_t>(kCall_835, pchRedirectURL);
     }
-    virtual bool BIsPhoneVerified() { return steambridge::slot<bool>(kCall_836); }
-    virtual bool BIsTwoFactorEnabled() { return steambridge::slot<bool>(kCall_837); }
-    virtual bool BIsPhoneIdentifying() { return steambridge::slot<bool>(kCall_838); }
-    virtual bool BIsPhoneRequiringVerification() { return steambridge::slot<bool>(kCall_839); }
+    virtual bool BIsPhoneVerified() { return steammock::slot<bool>(kCall_836); }
+    virtual bool BIsTwoFactorEnabled() { return steammock::slot<bool>(kCall_837); }
+    virtual bool BIsPhoneIdentifying() { return steammock::slot<bool>(kCall_838); }
+    virtual bool BIsPhoneRequiringVerification() { return steammock::slot<bool>(kCall_839); }
     virtual std::uint64_t GetMarketEligibility() {
-        return steambridge::slot<std::uint64_t>(kCall_840);
+        return steammock::slot<std::uint64_t>(kCall_840);
     }
-    virtual std::uint64_t GetDurationControl() {
-        return steambridge::slot<std::uint64_t>(kCall_841);
-    }
+    virtual std::uint64_t GetDurationControl() { return steammock::slot<std::uint64_t>(kCall_841); }
     virtual bool BSetDurationControlOnlineState(std::int32_t eNewState) {
-        return steambridge::slot<bool>(kCall_844, eNewState);
+        return steammock::slot<bool>(kCall_844, eNewState);
     }
 };
 
@@ -8188,82 +8154,78 @@ Version_SteamUser021 g_SteamUser021;
 // ISteamUser SteamUser023
 class Version_SteamUser023 {
 public:
-    virtual std::int32_t GetHSteamUser() { return steambridge::slot<std::int32_t>(kCall_811); }
-    virtual bool BLoggedOn() { return steambridge::slot<bool>(kCall_812); }
-    virtual CSteamID GetSteamID() { return steambridge::slot<CSteamID>(kCall_813); }
+    virtual std::int32_t GetHSteamUser() { return steammock::slot<std::int32_t>(kCall_811); }
+    virtual bool BLoggedOn() { return steammock::slot<bool>(kCall_812); }
+    virtual CSteamID GetSteamID() { return steammock::slot<CSteamID>(kCall_813); }
     virtual std::int32_t InitiateGameConnection_DEPRECATED(void* pAuthBlob, std::int32_t cbMaxAuthBlob, CSteamID steamIDGameServer, std::uint32_t unIPServer, std::uint16_t usPortServer, bool bSecure) {
-        return steambridge::slot<std::int32_t>(kCall_842, pAuthBlob, cbMaxAuthBlob, steamIDGameServer, unIPServer, usPortServer, bSecure);
+        return steammock::slot<std::int32_t>(kCall_842, pAuthBlob, cbMaxAuthBlob, steamIDGameServer, unIPServer, usPortServer, bSecure);
     }
     virtual void TerminateGameConnection_DEPRECATED(std::uint32_t unIPServer, std::uint16_t usPortServer) {
-        steambridge::slot<void>(kCall_843, unIPServer, usPortServer);
+        steammock::slot<void>(kCall_843, unIPServer, usPortServer);
     }
     virtual void TrackAppUsageEvent(CGameID gameID, std::int32_t eAppUsageEvent, const char* pchExtraInfo) {
-        steambridge::slot<void>(kCall_816, gameID, eAppUsageEvent, pchExtraInfo);
+        steammock::slot<void>(kCall_816, gameID, eAppUsageEvent, pchExtraInfo);
     }
     virtual bool GetUserDataFolder(void* pchBuffer, std::int32_t cubBuffer) {
-        return steambridge::slot<bool>(kCall_817, pchBuffer, cubBuffer);
+        return steammock::slot<bool>(kCall_817, pchBuffer, cubBuffer);
     }
-    virtual void StartVoiceRecording() { steambridge::slot<void>(kCall_818); }
-    virtual void StopVoiceRecording() { steambridge::slot<void>(kCall_819); }
+    virtual void StartVoiceRecording() { steammock::slot<void>(kCall_818); }
+    virtual void StopVoiceRecording() { steammock::slot<void>(kCall_819); }
     virtual std::int32_t GetAvailableVoice(std::uint32_t* pcbCompressed, std::uint32_t* pcbUncompressed_Deprecated, std::uint32_t nUncompressedVoiceDesiredSampleRate_Deprecated) {
-        return steambridge::slot<std::int32_t>(kCall_820, pcbCompressed, pcbUncompressed_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
+        return steammock::slot<std::int32_t>(kCall_820, pcbCompressed, pcbUncompressed_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
     }
     virtual std::int32_t GetVoice(bool bWantCompressed, void* pDestBuffer, std::uint32_t cbDestBufferSize, std::uint32_t* nBytesWritten, bool bWantUncompressed_Deprecated, void* pUncompressedDestBuffer_Deprecated, std::uint32_t cbUncompressedDestBufferSize_Deprecated, std::uint32_t* nUncompressBytesWritten_Deprecated, std::uint32_t nUncompressedVoiceDesiredSampleRate_Deprecated) {
-        return steambridge::slot<std::int32_t>(kCall_821, bWantCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, bWantUncompressed_Deprecated, pUncompressedDestBuffer_Deprecated, cbUncompressedDestBufferSize_Deprecated, nUncompressBytesWritten_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
+        return steammock::slot<std::int32_t>(kCall_821, bWantCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, bWantUncompressed_Deprecated, pUncompressedDestBuffer_Deprecated, cbUncompressedDestBufferSize_Deprecated, nUncompressBytesWritten_Deprecated, nUncompressedVoiceDesiredSampleRate_Deprecated);
     }
     virtual std::int32_t DecompressVoice(void* pCompressed, std::uint32_t cbCompressed, void* pDestBuffer, std::uint32_t cbDestBufferSize, std::uint32_t* nBytesWritten, std::uint32_t nDesiredSampleRate) {
-        return steambridge::slot<std::int32_t>(kCall_822, pCompressed, cbCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, nDesiredSampleRate);
+        return steammock::slot<std::int32_t>(kCall_822, pCompressed, cbCompressed, pDestBuffer, cbDestBufferSize, nBytesWritten, nDesiredSampleRate);
     }
     virtual std::uint32_t GetVoiceOptimalSampleRate() {
-        return steambridge::slot<std::uint32_t>(kCall_823);
+        return steammock::slot<std::uint32_t>(kCall_823);
     }
     virtual std::uint32_t GetAuthSessionTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket, void* pSteamNetworkingIdentity) {
-        return steambridge::slot<std::uint32_t>(kCall_845, pTicket, cbMaxTicket, pcbTicket, pSteamNetworkingIdentity);
+        return steammock::slot<std::uint32_t>(kCall_845, pTicket, cbMaxTicket, pcbTicket, pSteamNetworkingIdentity);
     }
     virtual std::uint32_t GetAuthTicketForWebApi(const char* pchIdentity) {
-        return steambridge::slot<std::uint32_t>(kCall_846, pchIdentity);
+        return steammock::slot<std::uint32_t>(kCall_846, pchIdentity);
     }
     virtual std::int32_t BeginAuthSession(void* pAuthTicket, std::int32_t cbAuthTicket, CSteamID steamID) {
-        return steambridge::slot<std::int32_t>(kCall_825, pAuthTicket, cbAuthTicket, steamID);
+        return steammock::slot<std::int32_t>(kCall_825, pAuthTicket, cbAuthTicket, steamID);
     }
-    virtual void EndAuthSession(CSteamID steamID) { steambridge::slot<void>(kCall_826, steamID); }
+    virtual void EndAuthSession(CSteamID steamID) { steammock::slot<void>(kCall_826, steamID); }
     virtual void CancelAuthTicket(std::uint32_t hAuthTicket) {
-        steambridge::slot<void>(kCall_827, hAuthTicket);
+        steammock::slot<void>(kCall_827, hAuthTicket);
     }
     virtual std::int32_t UserHasLicenseForApp(CSteamID steamID, std::uint32_t appID) {
-        return steambridge::slot<std::int32_t>(kCall_828, steamID, appID);
+        return steammock::slot<std::int32_t>(kCall_828, steamID, appID);
     }
-    virtual bool BIsBehindNAT() { return steambridge::slot<bool>(kCall_829); }
+    virtual bool BIsBehindNAT() { return steammock::slot<bool>(kCall_829); }
     virtual void AdvertiseGame(CSteamID steamIDGameServer, std::uint32_t unIPServer, std::uint16_t usPortServer) {
-        steambridge::slot<void>(kCall_830, steamIDGameServer, unIPServer, usPortServer);
+        steammock::slot<void>(kCall_830, steamIDGameServer, unIPServer, usPortServer);
     }
     virtual std::uint64_t RequestEncryptedAppTicket(void* pDataToInclude, std::int32_t cbDataToInclude) {
-        return steambridge::slot<std::uint64_t>(kCall_831, pDataToInclude, cbDataToInclude);
+        return steammock::slot<std::uint64_t>(kCall_831, pDataToInclude, cbDataToInclude);
     }
     virtual bool GetEncryptedAppTicket(void* pTicket, std::int32_t cbMaxTicket, std::uint32_t* pcbTicket) {
-        return steambridge::slot<bool>(kCall_832, pTicket, cbMaxTicket, pcbTicket);
+        return steammock::slot<bool>(kCall_832, pTicket, cbMaxTicket, pcbTicket);
     }
     virtual std::int32_t GetGameBadgeLevel(std::int32_t nSeries, bool bFoil) {
-        return steambridge::slot<std::int32_t>(kCall_833, nSeries, bFoil);
+        return steammock::slot<std::int32_t>(kCall_833, nSeries, bFoil);
     }
-    virtual std::int32_t GetPlayerSteamLevel() {
-        return steambridge::slot<std::int32_t>(kCall_834);
-    }
+    virtual std::int32_t GetPlayerSteamLevel() { return steammock::slot<std::int32_t>(kCall_834); }
     virtual std::uint64_t RequestStoreAuthURL(const char* pchRedirectURL) {
-        return steambridge::slot<std::uint64_t>(kCall_835, pchRedirectURL);
+        return steammock::slot<std::uint64_t>(kCall_835, pchRedirectURL);
     }
-    virtual bool BIsPhoneVerified() { return steambridge::slot<bool>(kCall_836); }
-    virtual bool BIsTwoFactorEnabled() { return steambridge::slot<bool>(kCall_837); }
-    virtual bool BIsPhoneIdentifying() { return steambridge::slot<bool>(kCall_838); }
-    virtual bool BIsPhoneRequiringVerification() { return steambridge::slot<bool>(kCall_839); }
+    virtual bool BIsPhoneVerified() { return steammock::slot<bool>(kCall_836); }
+    virtual bool BIsTwoFactorEnabled() { return steammock::slot<bool>(kCall_837); }
+    virtual bool BIsPhoneIdentifying() { return steammock::slot<bool>(kCall_838); }
+    virtual bool BIsPhoneRequiringVerification() { return steammock::slot<bool>(kCall_839); }
     virtual std::uint64_t GetMarketEligibility() {
-        return steambridge::slot<std::uint64_t>(kCall_840);
+        return steammock::slot<std::uint64_t>(kCall_840);
     }
-    virtual std::uint64_t GetDurationControl() {
-        return steambridge::slot<std::uint64_t>(kCall_841);
-    }
+    virtual std::uint64_t GetDurationControl() { return steammock::slot<std::uint64_t>(kCall_841); }
     virtual bool BSetDurationControlOnlineState(std::int32_t eNewState) {
-        return steambridge::slot<bool>(kCall_844, eNewState);
+        return steammock::slot<bool>(kCall_844, eNewState);
     }
 };
 
@@ -8272,130 +8234,128 @@ Version_SteamUser023 g_SteamUser023;
 // ISteamUserStats STEAMUSERSTATS_INTERFACE_VERSION011
 class Version_STEAMUSERSTATS_INTERFACE_VERSION011 {
 public:
-    virtual bool RequestCurrentStats() { return steambridge::slot<bool>(kCall_847); }
+    virtual bool RequestCurrentStats() { return steammock::slot<bool>(kCall_847); }
     virtual bool GetStat(const char* pchName, std::int32_t* pData) {
-        return steambridge::slot<bool>(kCall_848, pchName, pData);
+        return steammock::slot<bool>(kCall_848, pchName, pData);
     }
     virtual bool GetStat(const char* pchName, float* pData) {
-        return steambridge::slot<bool>(kCall_849, pchName, pData);
+        return steammock::slot<bool>(kCall_849, pchName, pData);
     }
     virtual bool SetStat(const char* pchName, std::int32_t nData) {
-        return steambridge::slot<bool>(kCall_850, pchName, nData);
+        return steammock::slot<bool>(kCall_850, pchName, nData);
     }
     virtual bool SetStat(const char* pchName, float fData) {
-        return steambridge::slot<bool>(kCall_851, pchName, fData);
+        return steammock::slot<bool>(kCall_851, pchName, fData);
     }
     virtual bool UpdateAvgRateStat(const char* pchName, float flCountThisSession, double dSessionLength) {
-        return steambridge::slot<bool>(kCall_852, pchName, flCountThisSession, dSessionLength);
+        return steammock::slot<bool>(kCall_852, pchName, flCountThisSession, dSessionLength);
     }
     virtual bool GetAchievement(const char* pchName, bool* pbAchieved) {
-        return steambridge::slot<bool>(kCall_853, pchName, pbAchieved);
+        return steammock::slot<bool>(kCall_853, pchName, pbAchieved);
     }
     virtual bool SetAchievement(const char* pchName) {
-        return steambridge::slot<bool>(kCall_854, pchName);
+        return steammock::slot<bool>(kCall_854, pchName);
     }
     virtual bool ClearAchievement(const char* pchName) {
-        return steambridge::slot<bool>(kCall_855, pchName);
+        return steammock::slot<bool>(kCall_855, pchName);
     }
     virtual bool GetAchievementAndUnlockTime(const char* pchName, bool* pbAchieved, std::uint32_t* punUnlockTime) {
-        return steambridge::slot<bool>(kCall_856, pchName, pbAchieved, punUnlockTime);
+        return steammock::slot<bool>(kCall_856, pchName, pbAchieved, punUnlockTime);
     }
-    virtual bool StoreStats() { return steambridge::slot<bool>(kCall_857); }
+    virtual bool StoreStats() { return steammock::slot<bool>(kCall_857); }
     virtual std::int32_t GetAchievementIcon(const char* pchName) {
-        return steambridge::slot<std::int32_t>(kCall_858, pchName);
+        return steammock::slot<std::int32_t>(kCall_858, pchName);
     }
     virtual const char* GetAchievementDisplayAttribute(const char* pchName, const char* pchKey) {
-        return steambridge::slot<const char*>(kCall_859, pchName, pchKey);
+        return steammock::slot<const char*>(kCall_859, pchName, pchKey);
     }
     virtual bool IndicateAchievementProgress(const char* pchName, std::uint32_t nCurProgress, std::uint32_t nMaxProgress) {
-        return steambridge::slot<bool>(kCall_860, pchName, nCurProgress, nMaxProgress);
+        return steammock::slot<bool>(kCall_860, pchName, nCurProgress, nMaxProgress);
     }
-    virtual std::uint32_t GetNumAchievements() {
-        return steambridge::slot<std::uint32_t>(kCall_861);
-    }
+    virtual std::uint32_t GetNumAchievements() { return steammock::slot<std::uint32_t>(kCall_861); }
     virtual const char* GetAchievementName(std::uint32_t iAchievement) {
-        return steambridge::slot<const char*>(kCall_862, iAchievement);
+        return steammock::slot<const char*>(kCall_862, iAchievement);
     }
     virtual std::uint64_t RequestUserStats(CSteamID steamIDUser) {
-        return steambridge::slot<std::uint64_t>(kCall_863, steamIDUser);
+        return steammock::slot<std::uint64_t>(kCall_863, steamIDUser);
     }
     virtual bool GetUserStat(CSteamID steamIDUser, const char* pchName, std::int32_t* pData) {
-        return steambridge::slot<bool>(kCall_864, steamIDUser, pchName, pData);
+        return steammock::slot<bool>(kCall_864, steamIDUser, pchName, pData);
     }
     virtual bool GetUserStat(CSteamID steamIDUser, const char* pchName, float* pData) {
-        return steambridge::slot<bool>(kCall_865, steamIDUser, pchName, pData);
+        return steammock::slot<bool>(kCall_865, steamIDUser, pchName, pData);
     }
     virtual bool GetUserAchievement(CSteamID steamIDUser, const char* pchName, bool* pbAchieved) {
-        return steambridge::slot<bool>(kCall_866, steamIDUser, pchName, pbAchieved);
+        return steammock::slot<bool>(kCall_866, steamIDUser, pchName, pbAchieved);
     }
     virtual bool GetUserAchievementAndUnlockTime(CSteamID steamIDUser, const char* pchName, bool* pbAchieved, std::uint32_t* punUnlockTime) {
-        return steambridge::slot<bool>(kCall_867, steamIDUser, pchName, pbAchieved, punUnlockTime);
+        return steammock::slot<bool>(kCall_867, steamIDUser, pchName, pbAchieved, punUnlockTime);
     }
     virtual bool ResetAllStats(bool bAchievementsToo) {
-        return steambridge::slot<bool>(kCall_868, bAchievementsToo);
+        return steammock::slot<bool>(kCall_868, bAchievementsToo);
     }
     virtual std::uint64_t FindOrCreateLeaderboard(const char* pchLeaderboardName, std::int32_t eLeaderboardSortMethod, std::int32_t eLeaderboardDisplayType) {
-        return steambridge::slot<std::uint64_t>(kCall_869, pchLeaderboardName, eLeaderboardSortMethod, eLeaderboardDisplayType);
+        return steammock::slot<std::uint64_t>(kCall_869, pchLeaderboardName, eLeaderboardSortMethod, eLeaderboardDisplayType);
     }
     virtual std::uint64_t FindLeaderboard(const char* pchLeaderboardName) {
-        return steambridge::slot<std::uint64_t>(kCall_870, pchLeaderboardName);
+        return steammock::slot<std::uint64_t>(kCall_870, pchLeaderboardName);
     }
     virtual const char* GetLeaderboardName(std::uint64_t hSteamLeaderboard) {
-        return steambridge::slot<const char*>(kCall_871, hSteamLeaderboard);
+        return steammock::slot<const char*>(kCall_871, hSteamLeaderboard);
     }
     virtual std::int32_t GetLeaderboardEntryCount(std::uint64_t hSteamLeaderboard) {
-        return steambridge::slot<std::int32_t>(kCall_872, hSteamLeaderboard);
+        return steammock::slot<std::int32_t>(kCall_872, hSteamLeaderboard);
     }
     virtual std::int32_t GetLeaderboardSortMethod(std::uint64_t hSteamLeaderboard) {
-        return steambridge::slot<std::int32_t>(kCall_873, hSteamLeaderboard);
+        return steammock::slot<std::int32_t>(kCall_873, hSteamLeaderboard);
     }
     virtual std::int32_t GetLeaderboardDisplayType(std::uint64_t hSteamLeaderboard) {
-        return steambridge::slot<std::int32_t>(kCall_874, hSteamLeaderboard);
+        return steammock::slot<std::int32_t>(kCall_874, hSteamLeaderboard);
     }
     virtual std::uint64_t DownloadLeaderboardEntries(std::uint64_t hSteamLeaderboard, std::int32_t eLeaderboardDataRequest, std::int32_t nRangeStart, std::int32_t nRangeEnd) {
-        return steambridge::slot<std::uint64_t>(kCall_875, hSteamLeaderboard, eLeaderboardDataRequest, nRangeStart, nRangeEnd);
+        return steammock::slot<std::uint64_t>(kCall_875, hSteamLeaderboard, eLeaderboardDataRequest, nRangeStart, nRangeEnd);
     }
     virtual std::uint64_t DownloadLeaderboardEntriesForUsers(std::uint64_t hSteamLeaderboard, CSteamID* prgUsers, std::int32_t cUsers) {
-        return steambridge::slot<std::uint64_t>(kCall_876, hSteamLeaderboard, prgUsers, cUsers);
+        return steammock::slot<std::uint64_t>(kCall_876, hSteamLeaderboard, prgUsers, cUsers);
     }
     virtual bool GetDownloadedLeaderboardEntry(std::uint64_t hSteamLeaderboardEntries, std::int32_t index, void* pLeaderboardEntry, std::int32_t* pDetails, std::int32_t cDetailsMax) {
-        return steambridge::slot<bool>(kCall_877, hSteamLeaderboardEntries, index, pLeaderboardEntry, pDetails, cDetailsMax);
+        return steammock::slot<bool>(kCall_877, hSteamLeaderboardEntries, index, pLeaderboardEntry, pDetails, cDetailsMax);
     }
     virtual std::uint64_t UploadLeaderboardScore(std::uint64_t hSteamLeaderboard, std::int32_t eLeaderboardUploadScoreMethod, std::int32_t nScore, void* pScoreDetails, std::int32_t cScoreDetailsCount) {
-        return steambridge::slot<std::uint64_t>(kCall_878, hSteamLeaderboard, eLeaderboardUploadScoreMethod, nScore, pScoreDetails, cScoreDetailsCount);
+        return steammock::slot<std::uint64_t>(kCall_878, hSteamLeaderboard, eLeaderboardUploadScoreMethod, nScore, pScoreDetails, cScoreDetailsCount);
     }
     virtual std::uint64_t AttachLeaderboardUGC(std::uint64_t hSteamLeaderboard, std::uint64_t hUGC) {
-        return steambridge::slot<std::uint64_t>(kCall_879, hSteamLeaderboard, hUGC);
+        return steammock::slot<std::uint64_t>(kCall_879, hSteamLeaderboard, hUGC);
     }
     virtual std::uint64_t GetNumberOfCurrentPlayers() {
-        return steambridge::slot<std::uint64_t>(kCall_880);
+        return steammock::slot<std::uint64_t>(kCall_880);
     }
     virtual std::uint64_t RequestGlobalAchievementPercentages() {
-        return steambridge::slot<std::uint64_t>(kCall_881);
+        return steammock::slot<std::uint64_t>(kCall_881);
     }
     virtual std::int32_t GetMostAchievedAchievementInfo(void* pchName, std::uint32_t unNameBufLen, float* pflPercent, bool* pbAchieved) {
-        return steambridge::slot<std::int32_t>(kCall_882, pchName, unNameBufLen, pflPercent, pbAchieved);
+        return steammock::slot<std::int32_t>(kCall_882, pchName, unNameBufLen, pflPercent, pbAchieved);
     }
     virtual std::int32_t GetNextMostAchievedAchievementInfo(std::int32_t iIteratorPrevious, void* pchName, std::uint32_t unNameBufLen, float* pflPercent, bool* pbAchieved) {
-        return steambridge::slot<std::int32_t>(kCall_883, iIteratorPrevious, pchName, unNameBufLen, pflPercent, pbAchieved);
+        return steammock::slot<std::int32_t>(kCall_883, iIteratorPrevious, pchName, unNameBufLen, pflPercent, pbAchieved);
     }
     virtual bool GetAchievementAchievedPercent(const char* pchName, float* pflPercent) {
-        return steambridge::slot<bool>(kCall_884, pchName, pflPercent);
+        return steammock::slot<bool>(kCall_884, pchName, pflPercent);
     }
     virtual std::uint64_t RequestGlobalStats(std::int32_t nHistoryDays) {
-        return steambridge::slot<std::uint64_t>(kCall_885, nHistoryDays);
+        return steammock::slot<std::uint64_t>(kCall_885, nHistoryDays);
     }
     virtual bool GetGlobalStat(const char* pchStatName, std::int64_t* pData) {
-        return steambridge::slot<bool>(kCall_886, pchStatName, pData);
+        return steammock::slot<bool>(kCall_886, pchStatName, pData);
     }
     virtual bool GetGlobalStat(const char* pchStatName, double* pData) {
-        return steambridge::slot<bool>(kCall_887, pchStatName, pData);
+        return steammock::slot<bool>(kCall_887, pchStatName, pData);
     }
     virtual std::int32_t GetGlobalStatHistory(const char* pchStatName, std::int64_t* pData, std::uint32_t cubData) {
-        return steambridge::slot<std::int32_t>(kCall_888, pchStatName, pData, cubData);
+        return steammock::slot<std::int32_t>(kCall_888, pchStatName, pData, cubData);
     }
     virtual std::int32_t GetGlobalStatHistory(const char* pchStatName, double* pData, std::uint32_t cubData) {
-        return steambridge::slot<std::int32_t>(kCall_889, pchStatName, pData, cubData);
+        return steammock::slot<std::int32_t>(kCall_889, pchStatName, pData, cubData);
     }
 };
 
@@ -8404,136 +8364,134 @@ Version_STEAMUSERSTATS_INTERFACE_VERSION011 g_STEAMUSERSTATS_INTERFACE_VERSION01
 // ISteamUserStats STEAMUSERSTATS_INTERFACE_VERSION012
 class Version_STEAMUSERSTATS_INTERFACE_VERSION012 {
 public:
-    virtual bool RequestCurrentStats() { return steambridge::slot<bool>(kCall_847); }
+    virtual bool RequestCurrentStats() { return steammock::slot<bool>(kCall_847); }
     virtual bool GetStat(const char* pchName, std::int32_t* pData) {
-        return steambridge::slot<bool>(kCall_848, pchName, pData);
+        return steammock::slot<bool>(kCall_848, pchName, pData);
     }
     virtual bool GetStat(const char* pchName, float* pData) {
-        return steambridge::slot<bool>(kCall_849, pchName, pData);
+        return steammock::slot<bool>(kCall_849, pchName, pData);
     }
     virtual bool SetStat(const char* pchName, std::int32_t nData) {
-        return steambridge::slot<bool>(kCall_850, pchName, nData);
+        return steammock::slot<bool>(kCall_850, pchName, nData);
     }
     virtual bool SetStat(const char* pchName, float fData) {
-        return steambridge::slot<bool>(kCall_851, pchName, fData);
+        return steammock::slot<bool>(kCall_851, pchName, fData);
     }
     virtual bool UpdateAvgRateStat(const char* pchName, float flCountThisSession, double dSessionLength) {
-        return steambridge::slot<bool>(kCall_852, pchName, flCountThisSession, dSessionLength);
+        return steammock::slot<bool>(kCall_852, pchName, flCountThisSession, dSessionLength);
     }
     virtual bool GetAchievement(const char* pchName, bool* pbAchieved) {
-        return steambridge::slot<bool>(kCall_853, pchName, pbAchieved);
+        return steammock::slot<bool>(kCall_853, pchName, pbAchieved);
     }
     virtual bool SetAchievement(const char* pchName) {
-        return steambridge::slot<bool>(kCall_854, pchName);
+        return steammock::slot<bool>(kCall_854, pchName);
     }
     virtual bool ClearAchievement(const char* pchName) {
-        return steambridge::slot<bool>(kCall_855, pchName);
+        return steammock::slot<bool>(kCall_855, pchName);
     }
     virtual bool GetAchievementAndUnlockTime(const char* pchName, bool* pbAchieved, std::uint32_t* punUnlockTime) {
-        return steambridge::slot<bool>(kCall_856, pchName, pbAchieved, punUnlockTime);
+        return steammock::slot<bool>(kCall_856, pchName, pbAchieved, punUnlockTime);
     }
-    virtual bool StoreStats() { return steambridge::slot<bool>(kCall_857); }
+    virtual bool StoreStats() { return steammock::slot<bool>(kCall_857); }
     virtual std::int32_t GetAchievementIcon(const char* pchName) {
-        return steambridge::slot<std::int32_t>(kCall_858, pchName);
+        return steammock::slot<std::int32_t>(kCall_858, pchName);
     }
     virtual const char* GetAchievementDisplayAttribute(const char* pchName, const char* pchKey) {
-        return steambridge::slot<const char*>(kCall_859, pchName, pchKey);
+        return steammock::slot<const char*>(kCall_859, pchName, pchKey);
     }
     virtual bool IndicateAchievementProgress(const char* pchName, std::uint32_t nCurProgress, std::uint32_t nMaxProgress) {
-        return steambridge::slot<bool>(kCall_860, pchName, nCurProgress, nMaxProgress);
+        return steammock::slot<bool>(kCall_860, pchName, nCurProgress, nMaxProgress);
     }
-    virtual std::uint32_t GetNumAchievements() {
-        return steambridge::slot<std::uint32_t>(kCall_861);
-    }
+    virtual std::uint32_t GetNumAchievements() { return steammock::slot<std::uint32_t>(kCall_861); }
     virtual const char* GetAchievementName(std::uint32_t iAchievement) {
-        return steambridge::slot<const char*>(kCall_862, iAchievement);
+        return steammock::slot<const char*>(kCall_862, iAchievement);
     }
     virtual std::uint64_t RequestUserStats(CSteamID steamIDUser) {
-        return steambridge::slot<std::uint64_t>(kCall_863, steamIDUser);
+        return steammock::slot<std::uint64_t>(kCall_863, steamIDUser);
     }
     virtual bool GetUserStat(CSteamID steamIDUser, const char* pchName, std::int32_t* pData) {
-        return steambridge::slot<bool>(kCall_864, steamIDUser, pchName, pData);
+        return steammock::slot<bool>(kCall_864, steamIDUser, pchName, pData);
     }
     virtual bool GetUserStat(CSteamID steamIDUser, const char* pchName, float* pData) {
-        return steambridge::slot<bool>(kCall_865, steamIDUser, pchName, pData);
+        return steammock::slot<bool>(kCall_865, steamIDUser, pchName, pData);
     }
     virtual bool GetUserAchievement(CSteamID steamIDUser, const char* pchName, bool* pbAchieved) {
-        return steambridge::slot<bool>(kCall_866, steamIDUser, pchName, pbAchieved);
+        return steammock::slot<bool>(kCall_866, steamIDUser, pchName, pbAchieved);
     }
     virtual bool GetUserAchievementAndUnlockTime(CSteamID steamIDUser, const char* pchName, bool* pbAchieved, std::uint32_t* punUnlockTime) {
-        return steambridge::slot<bool>(kCall_867, steamIDUser, pchName, pbAchieved, punUnlockTime);
+        return steammock::slot<bool>(kCall_867, steamIDUser, pchName, pbAchieved, punUnlockTime);
     }
     virtual bool ResetAllStats(bool bAchievementsToo) {
-        return steambridge::slot<bool>(kCall_868, bAchievementsToo);
+        return steammock::slot<bool>(kCall_868, bAchievementsToo);
     }
     virtual std::uint64_t FindOrCreateLeaderboard(const char* pchLeaderboardName, std::int32_t eLeaderboardSortMethod, std::int32_t eLeaderboardDisplayType) {
-        return steambridge::slot<std::uint64_t>(kCall_869, pchLeaderboardName, eLeaderboardSortMethod, eLeaderboardDisplayType);
+        return steammock::slot<std::uint64_t>(kCall_869, pchLeaderboardName, eLeaderboardSortMethod, eLeaderboardDisplayType);
     }
     virtual std::uint64_t FindLeaderboard(const char* pchLeaderboardName) {
-        return steambridge::slot<std::uint64_t>(kCall_870, pchLeaderboardName);
+        return steammock::slot<std::uint64_t>(kCall_870, pchLeaderboardName);
     }
     virtual const char* GetLeaderboardName(std::uint64_t hSteamLeaderboard) {
-        return steambridge::slot<const char*>(kCall_871, hSteamLeaderboard);
+        return steammock::slot<const char*>(kCall_871, hSteamLeaderboard);
     }
     virtual std::int32_t GetLeaderboardEntryCount(std::uint64_t hSteamLeaderboard) {
-        return steambridge::slot<std::int32_t>(kCall_872, hSteamLeaderboard);
+        return steammock::slot<std::int32_t>(kCall_872, hSteamLeaderboard);
     }
     virtual std::int32_t GetLeaderboardSortMethod(std::uint64_t hSteamLeaderboard) {
-        return steambridge::slot<std::int32_t>(kCall_873, hSteamLeaderboard);
+        return steammock::slot<std::int32_t>(kCall_873, hSteamLeaderboard);
     }
     virtual std::int32_t GetLeaderboardDisplayType(std::uint64_t hSteamLeaderboard) {
-        return steambridge::slot<std::int32_t>(kCall_874, hSteamLeaderboard);
+        return steammock::slot<std::int32_t>(kCall_874, hSteamLeaderboard);
     }
     virtual std::uint64_t DownloadLeaderboardEntries(std::uint64_t hSteamLeaderboard, std::int32_t eLeaderboardDataRequest, std::int32_t nRangeStart, std::int32_t nRangeEnd) {
-        return steambridge::slot<std::uint64_t>(kCall_875, hSteamLeaderboard, eLeaderboardDataRequest, nRangeStart, nRangeEnd);
+        return steammock::slot<std::uint64_t>(kCall_875, hSteamLeaderboard, eLeaderboardDataRequest, nRangeStart, nRangeEnd);
     }
     virtual std::uint64_t DownloadLeaderboardEntriesForUsers(std::uint64_t hSteamLeaderboard, CSteamID* prgUsers, std::int32_t cUsers) {
-        return steambridge::slot<std::uint64_t>(kCall_876, hSteamLeaderboard, prgUsers, cUsers);
+        return steammock::slot<std::uint64_t>(kCall_876, hSteamLeaderboard, prgUsers, cUsers);
     }
     virtual bool GetDownloadedLeaderboardEntry(std::uint64_t hSteamLeaderboardEntries, std::int32_t index, void* pLeaderboardEntry, std::int32_t* pDetails, std::int32_t cDetailsMax) {
-        return steambridge::slot<bool>(kCall_877, hSteamLeaderboardEntries, index, pLeaderboardEntry, pDetails, cDetailsMax);
+        return steammock::slot<bool>(kCall_877, hSteamLeaderboardEntries, index, pLeaderboardEntry, pDetails, cDetailsMax);
     }
     virtual std::uint64_t UploadLeaderboardScore(std::uint64_t hSteamLeaderboard, std::int32_t eLeaderboardUploadScoreMethod, std::int32_t nScore, void* pScoreDetails, std::int32_t cScoreDetailsCount) {
-        return steambridge::slot<std::uint64_t>(kCall_878, hSteamLeaderboard, eLeaderboardUploadScoreMethod, nScore, pScoreDetails, cScoreDetailsCount);
+        return steammock::slot<std::uint64_t>(kCall_878, hSteamLeaderboard, eLeaderboardUploadScoreMethod, nScore, pScoreDetails, cScoreDetailsCount);
     }
     virtual std::uint64_t AttachLeaderboardUGC(std::uint64_t hSteamLeaderboard, std::uint64_t hUGC) {
-        return steambridge::slot<std::uint64_t>(kCall_879, hSteamLeaderboard, hUGC);
+        return steammock::slot<std::uint64_t>(kCall_879, hSteamLeaderboard, hUGC);
     }
     virtual std::uint64_t GetNumberOfCurrentPlayers() {
-        return steambridge::slot<std::uint64_t>(kCall_880);
+        return steammock::slot<std::uint64_t>(kCall_880);
     }
     virtual std::uint64_t RequestGlobalAchievementPercentages() {
-        return steambridge::slot<std::uint64_t>(kCall_881);
+        return steammock::slot<std::uint64_t>(kCall_881);
     }
     virtual std::int32_t GetMostAchievedAchievementInfo(void* pchName, std::uint32_t unNameBufLen, float* pflPercent, bool* pbAchieved) {
-        return steambridge::slot<std::int32_t>(kCall_882, pchName, unNameBufLen, pflPercent, pbAchieved);
+        return steammock::slot<std::int32_t>(kCall_882, pchName, unNameBufLen, pflPercent, pbAchieved);
     }
     virtual std::int32_t GetNextMostAchievedAchievementInfo(std::int32_t iIteratorPrevious, void* pchName, std::uint32_t unNameBufLen, float* pflPercent, bool* pbAchieved) {
-        return steambridge::slot<std::int32_t>(kCall_883, iIteratorPrevious, pchName, unNameBufLen, pflPercent, pbAchieved);
+        return steammock::slot<std::int32_t>(kCall_883, iIteratorPrevious, pchName, unNameBufLen, pflPercent, pbAchieved);
     }
     virtual bool GetAchievementAchievedPercent(const char* pchName, float* pflPercent) {
-        return steambridge::slot<bool>(kCall_884, pchName, pflPercent);
+        return steammock::slot<bool>(kCall_884, pchName, pflPercent);
     }
     virtual std::uint64_t RequestGlobalStats(std::int32_t nHistoryDays) {
-        return steambridge::slot<std::uint64_t>(kCall_885, nHistoryDays);
+        return steammock::slot<std::uint64_t>(kCall_885, nHistoryDays);
     }
     virtual bool GetGlobalStat(const char* pchStatName, std::int64_t* pData) {
-        return steambridge::slot<bool>(kCall_886, pchStatName, pData);
+        return steammock::slot<bool>(kCall_886, pchStatName, pData);
     }
     virtual bool GetGlobalStat(const char* pchStatName, double* pData) {
-        return steambridge::slot<bool>(kCall_887, pchStatName, pData);
+        return steammock::slot<bool>(kCall_887, pchStatName, pData);
     }
     virtual std::int32_t GetGlobalStatHistory(const char* pchStatName, std::int64_t* pData, std::uint32_t cubData) {
-        return steambridge::slot<std::int32_t>(kCall_888, pchStatName, pData, cubData);
+        return steammock::slot<std::int32_t>(kCall_888, pchStatName, pData, cubData);
     }
     virtual std::int32_t GetGlobalStatHistory(const char* pchStatName, double* pData, std::uint32_t cubData) {
-        return steambridge::slot<std::int32_t>(kCall_889, pchStatName, pData, cubData);
+        return steammock::slot<std::int32_t>(kCall_889, pchStatName, pData, cubData);
     }
     virtual bool GetAchievementProgressLimits(const char* pchName, std::int32_t* pnMinProgress, std::int32_t* pnMaxProgress) {
-        return steambridge::slot<bool>(kCall_890, pchName, pnMinProgress, pnMaxProgress);
+        return steammock::slot<bool>(kCall_890, pchName, pnMinProgress, pnMaxProgress);
     }
     virtual bool GetAchievementProgressLimits(const char* pchName, float* pfMinProgress, float* pfMaxProgress) {
-        return steambridge::slot<bool>(kCall_891, pchName, pfMinProgress, pfMaxProgress);
+        return steammock::slot<bool>(kCall_891, pchName, pfMinProgress, pfMaxProgress);
     }
 };
 
@@ -8543,80 +8501,76 @@ Version_STEAMUSERSTATS_INTERFACE_VERSION012 g_STEAMUSERSTATS_INTERFACE_VERSION01
 class Version_SteamUtils009 {
 public:
     virtual std::uint32_t GetSecondsSinceAppActive() {
-        return steambridge::slot<std::uint32_t>(kCall_892);
+        return steammock::slot<std::uint32_t>(kCall_892);
     }
     virtual std::uint32_t GetSecondsSinceComputerActive() {
-        return steambridge::slot<std::uint32_t>(kCall_893);
+        return steammock::slot<std::uint32_t>(kCall_893);
     }
-    virtual std::int32_t GetConnectedUniverse() {
-        return steambridge::slot<std::int32_t>(kCall_894);
-    }
-    virtual std::uint32_t GetServerRealTime() {
-        return steambridge::slot<std::uint32_t>(kCall_895);
-    }
-    virtual const char* GetIPCountry() { return steambridge::slot<const char*>(kCall_896); }
+    virtual std::int32_t GetConnectedUniverse() { return steammock::slot<std::int32_t>(kCall_894); }
+    virtual std::uint32_t GetServerRealTime() { return steammock::slot<std::uint32_t>(kCall_895); }
+    virtual const char* GetIPCountry() { return steammock::slot<const char*>(kCall_896); }
     virtual bool GetImageSize(std::int32_t iImage, std::uint32_t* pnWidth, std::uint32_t* pnHeight) {
-        return steambridge::slot<bool>(kCall_897, iImage, pnWidth, pnHeight);
+        return steammock::slot<bool>(kCall_897, iImage, pnWidth, pnHeight);
     }
     virtual bool GetImageRGBA(std::int32_t iImage, std::uint8_t* pubDest, std::int32_t nDestBufferSize) {
-        return steambridge::slot<bool>(kCall_898, iImage, pubDest, nDestBufferSize);
+        return steammock::slot<bool>(kCall_898, iImage, pubDest, nDestBufferSize);
     }
     virtual bool GetCSERIPPort(std::uint32_t* unIP, std::uint16_t* usPort) {
-        return steambridge::slot<bool>(kCall_899, unIP, usPort);
+        return steammock::slot<bool>(kCall_899, unIP, usPort);
     }
     virtual std::uint8_t GetCurrentBatteryPower() {
-        return steambridge::slot<std::uint8_t>(kCall_900);
+        return steammock::slot<std::uint8_t>(kCall_900);
     }
-    virtual std::uint32_t GetAppID() { return steambridge::slot<std::uint32_t>(kCall_901); }
+    virtual std::uint32_t GetAppID() { return steammock::slot<std::uint32_t>(kCall_901); }
     virtual void SetOverlayNotificationPosition(std::int32_t eNotificationPosition) {
-        steambridge::slot<void>(kCall_902, eNotificationPosition);
+        steammock::slot<void>(kCall_902, eNotificationPosition);
     }
     virtual bool IsAPICallCompleted(std::uint64_t hSteamAPICall, bool* pbFailed) {
-        return steambridge::slot<bool>(kCall_903, hSteamAPICall, pbFailed);
+        return steammock::slot<bool>(kCall_903, hSteamAPICall, pbFailed);
     }
     virtual std::int32_t GetAPICallFailureReason(std::uint64_t hSteamAPICall) {
-        return steambridge::slot<std::int32_t>(kCall_904, hSteamAPICall);
+        return steammock::slot<std::int32_t>(kCall_904, hSteamAPICall);
     }
     virtual bool GetAPICallResult(std::uint64_t hSteamAPICall, void* pCallback, std::int32_t cubCallback, std::int32_t iCallbackExpected, bool* pbFailed) {
-        return steambridge::slot<bool>(kCall_905, hSteamAPICall, pCallback, cubCallback, iCallbackExpected, pbFailed);
+        return steammock::slot<bool>(kCall_905, hSteamAPICall, pCallback, cubCallback, iCallbackExpected, pbFailed);
     }
-    virtual void RunFrame() { steambridge::slot<void>(kCall_906); }
-    virtual std::uint32_t GetIPCCallCount() { return steambridge::slot<std::uint32_t>(kCall_907); }
+    virtual void RunFrame() { steammock::slot<void>(kCall_906); }
+    virtual std::uint32_t GetIPCCallCount() { return steammock::slot<std::uint32_t>(kCall_907); }
     virtual void SetWarningMessageHook(void* pFunction) {
-        steambridge::slot<void>(kCall_908, pFunction);
+        steammock::slot<void>(kCall_908, pFunction);
     }
-    virtual bool IsOverlayEnabled() { return steambridge::slot<bool>(kCall_909); }
-    virtual bool BOverlayNeedsPresent() { return steambridge::slot<bool>(kCall_910); }
+    virtual bool IsOverlayEnabled() { return steammock::slot<bool>(kCall_909); }
+    virtual bool BOverlayNeedsPresent() { return steammock::slot<bool>(kCall_910); }
     virtual std::uint64_t CheckFileSignature(const char* szFileName) {
-        return steambridge::slot<std::uint64_t>(kCall_911, szFileName);
+        return steammock::slot<std::uint64_t>(kCall_911, szFileName);
     }
     virtual bool ShowGamepadTextInput(std::int32_t eInputMode, std::int32_t eLineInputMode, const char* pchDescription, std::uint32_t unCharMax, const char* pchExistingText) {
-        return steambridge::slot<bool>(kCall_912, eInputMode, eLineInputMode, pchDescription, unCharMax, pchExistingText);
+        return steammock::slot<bool>(kCall_912, eInputMode, eLineInputMode, pchDescription, unCharMax, pchExistingText);
     }
     virtual std::uint32_t GetEnteredGamepadTextLength() {
-        return steambridge::slot<std::uint32_t>(kCall_913);
+        return steammock::slot<std::uint32_t>(kCall_913);
     }
     virtual bool GetEnteredGamepadTextInput(void* pchText, std::uint32_t cchText) {
-        return steambridge::slot<bool>(kCall_914, pchText, cchText);
+        return steammock::slot<bool>(kCall_914, pchText, cchText);
     }
-    virtual const char* GetSteamUILanguage() { return steambridge::slot<const char*>(kCall_915); }
-    virtual bool IsSteamRunningInVR() { return steambridge::slot<bool>(kCall_916); }
+    virtual const char* GetSteamUILanguage() { return steammock::slot<const char*>(kCall_915); }
+    virtual bool IsSteamRunningInVR() { return steammock::slot<bool>(kCall_916); }
     virtual void SetOverlayNotificationInset(std::int32_t nHorizontalInset, std::int32_t nVerticalInset) {
-        steambridge::slot<void>(kCall_917, nHorizontalInset, nVerticalInset);
+        steammock::slot<void>(kCall_917, nHorizontalInset, nVerticalInset);
     }
-    virtual bool IsSteamInBigPictureMode() { return steambridge::slot<bool>(kCall_918); }
-    virtual void StartVRDashboard() { steambridge::slot<void>(kCall_919); }
-    virtual bool IsVRHeadsetStreamingEnabled() { return steambridge::slot<bool>(kCall_920); }
+    virtual bool IsSteamInBigPictureMode() { return steammock::slot<bool>(kCall_918); }
+    virtual void StartVRDashboard() { steammock::slot<void>(kCall_919); }
+    virtual bool IsVRHeadsetStreamingEnabled() { return steammock::slot<bool>(kCall_920); }
     virtual void SetVRHeadsetStreamingEnabled(bool bEnabled) {
-        steambridge::slot<void>(kCall_921, bEnabled);
+        steammock::slot<void>(kCall_921, bEnabled);
     }
-    virtual bool IsSteamChinaLauncher() { return steambridge::slot<bool>(kCall_922); }
-    virtual bool InitFilterText() { return steambridge::slot<bool>(kCall_923); }
+    virtual bool IsSteamChinaLauncher() { return steammock::slot<bool>(kCall_922); }
+    virtual bool InitFilterText() { return steammock::slot<bool>(kCall_923); }
     virtual std::int32_t FilterText(void* pchOutFilteredText, std::uint32_t nByteSizeOutFilteredText, const char* pchInputMessage, bool bLegalOnly) {
-        return steambridge::slot<std::int32_t>(kCall_924, pchOutFilteredText, nByteSizeOutFilteredText, pchInputMessage, bLegalOnly);
+        return steammock::slot<std::int32_t>(kCall_924, pchOutFilteredText, nByteSizeOutFilteredText, pchInputMessage, bLegalOnly);
     }
     virtual std::int32_t GetIPv6ConnectivityState(std::int32_t eProtocol) {
-        return steambridge::slot<std::int32_t>(kCall_925, eProtocol);
+        return steammock::slot<std::int32_t>(kCall_925, eProtocol);
     }
 };
 
@@ -8626,91 +8580,87 @@ Version_SteamUtils009 g_SteamUtils009;
 class Version_SteamUtils010 {
 public:
     virtual std::uint32_t GetSecondsSinceAppActive() {
-        return steambridge::slot<std::uint32_t>(kCall_892);
+        return steammock::slot<std::uint32_t>(kCall_892);
     }
     virtual std::uint32_t GetSecondsSinceComputerActive() {
-        return steambridge::slot<std::uint32_t>(kCall_893);
+        return steammock::slot<std::uint32_t>(kCall_893);
     }
-    virtual std::int32_t GetConnectedUniverse() {
-        return steambridge::slot<std::int32_t>(kCall_894);
-    }
-    virtual std::uint32_t GetServerRealTime() {
-        return steambridge::slot<std::uint32_t>(kCall_895);
-    }
-    virtual const char* GetIPCountry() { return steambridge::slot<const char*>(kCall_896); }
+    virtual std::int32_t GetConnectedUniverse() { return steammock::slot<std::int32_t>(kCall_894); }
+    virtual std::uint32_t GetServerRealTime() { return steammock::slot<std::uint32_t>(kCall_895); }
+    virtual const char* GetIPCountry() { return steammock::slot<const char*>(kCall_896); }
     virtual bool GetImageSize(std::int32_t iImage, std::uint32_t* pnWidth, std::uint32_t* pnHeight) {
-        return steambridge::slot<bool>(kCall_897, iImage, pnWidth, pnHeight);
+        return steammock::slot<bool>(kCall_897, iImage, pnWidth, pnHeight);
     }
     virtual bool GetImageRGBA(std::int32_t iImage, std::uint8_t* pubDest, std::int32_t nDestBufferSize) {
-        return steambridge::slot<bool>(kCall_898, iImage, pubDest, nDestBufferSize);
+        return steammock::slot<bool>(kCall_898, iImage, pubDest, nDestBufferSize);
     }
     virtual bool GetCSERIPPort(std::uint32_t* unIP, std::uint16_t* usPort) {
-        return steambridge::slot<bool>(kCall_926, unIP, usPort);
+        return steammock::slot<bool>(kCall_926, unIP, usPort);
     }
     virtual std::uint8_t GetCurrentBatteryPower() {
-        return steambridge::slot<std::uint8_t>(kCall_900);
+        return steammock::slot<std::uint8_t>(kCall_900);
     }
-    virtual std::uint32_t GetAppID() { return steambridge::slot<std::uint32_t>(kCall_901); }
+    virtual std::uint32_t GetAppID() { return steammock::slot<std::uint32_t>(kCall_901); }
     virtual void SetOverlayNotificationPosition(std::int32_t eNotificationPosition) {
-        steambridge::slot<void>(kCall_902, eNotificationPosition);
+        steammock::slot<void>(kCall_902, eNotificationPosition);
     }
     virtual bool IsAPICallCompleted(std::uint64_t hSteamAPICall, bool* pbFailed) {
-        return steambridge::slot<bool>(kCall_903, hSteamAPICall, pbFailed);
+        return steammock::slot<bool>(kCall_903, hSteamAPICall, pbFailed);
     }
     virtual std::int32_t GetAPICallFailureReason(std::uint64_t hSteamAPICall) {
-        return steambridge::slot<std::int32_t>(kCall_904, hSteamAPICall);
+        return steammock::slot<std::int32_t>(kCall_904, hSteamAPICall);
     }
     virtual bool GetAPICallResult(std::uint64_t hSteamAPICall, void* pCallback, std::int32_t cubCallback, std::int32_t iCallbackExpected, bool* pbFailed) {
-        return steambridge::slot<bool>(kCall_905, hSteamAPICall, pCallback, cubCallback, iCallbackExpected, pbFailed);
+        return steammock::slot<bool>(kCall_905, hSteamAPICall, pCallback, cubCallback, iCallbackExpected, pbFailed);
     }
-    virtual void RunFrame() { steambridge::slot<void>(kCall_906); }
-    virtual std::uint32_t GetIPCCallCount() { return steambridge::slot<std::uint32_t>(kCall_907); }
+    virtual void RunFrame() { steammock::slot<void>(kCall_906); }
+    virtual std::uint32_t GetIPCCallCount() { return steammock::slot<std::uint32_t>(kCall_907); }
     virtual void SetWarningMessageHook(void* pFunction) {
-        steambridge::slot<void>(kCall_908, pFunction);
+        steammock::slot<void>(kCall_908, pFunction);
     }
-    virtual bool IsOverlayEnabled() { return steambridge::slot<bool>(kCall_909); }
-    virtual bool BOverlayNeedsPresent() { return steambridge::slot<bool>(kCall_910); }
+    virtual bool IsOverlayEnabled() { return steammock::slot<bool>(kCall_909); }
+    virtual bool BOverlayNeedsPresent() { return steammock::slot<bool>(kCall_910); }
     virtual std::uint64_t CheckFileSignature(const char* szFileName) {
-        return steambridge::slot<std::uint64_t>(kCall_911, szFileName);
+        return steammock::slot<std::uint64_t>(kCall_911, szFileName);
     }
     virtual bool ShowGamepadTextInput(std::int32_t eInputMode, std::int32_t eLineInputMode, const char* pchDescription, std::uint32_t unCharMax, const char* pchExistingText) {
-        return steambridge::slot<bool>(kCall_912, eInputMode, eLineInputMode, pchDescription, unCharMax, pchExistingText);
+        return steammock::slot<bool>(kCall_912, eInputMode, eLineInputMode, pchDescription, unCharMax, pchExistingText);
     }
     virtual std::uint32_t GetEnteredGamepadTextLength() {
-        return steambridge::slot<std::uint32_t>(kCall_913);
+        return steammock::slot<std::uint32_t>(kCall_913);
     }
     virtual bool GetEnteredGamepadTextInput(void* pchText, std::uint32_t cchText) {
-        return steambridge::slot<bool>(kCall_914, pchText, cchText);
+        return steammock::slot<bool>(kCall_914, pchText, cchText);
     }
-    virtual const char* GetSteamUILanguage() { return steambridge::slot<const char*>(kCall_915); }
-    virtual bool IsSteamRunningInVR() { return steambridge::slot<bool>(kCall_916); }
+    virtual const char* GetSteamUILanguage() { return steammock::slot<const char*>(kCall_915); }
+    virtual bool IsSteamRunningInVR() { return steammock::slot<bool>(kCall_916); }
     virtual void SetOverlayNotificationInset(std::int32_t nHorizontalInset, std::int32_t nVerticalInset) {
-        steambridge::slot<void>(kCall_917, nHorizontalInset, nVerticalInset);
+        steammock::slot<void>(kCall_917, nHorizontalInset, nVerticalInset);
     }
-    virtual bool IsSteamInBigPictureMode() { return steambridge::slot<bool>(kCall_918); }
-    virtual void StartVRDashboard() { steambridge::slot<void>(kCall_919); }
-    virtual bool IsVRHeadsetStreamingEnabled() { return steambridge::slot<bool>(kCall_920); }
+    virtual bool IsSteamInBigPictureMode() { return steammock::slot<bool>(kCall_918); }
+    virtual void StartVRDashboard() { steammock::slot<void>(kCall_919); }
+    virtual bool IsVRHeadsetStreamingEnabled() { return steammock::slot<bool>(kCall_920); }
     virtual void SetVRHeadsetStreamingEnabled(bool bEnabled) {
-        steambridge::slot<void>(kCall_921, bEnabled);
+        steammock::slot<void>(kCall_921, bEnabled);
     }
-    virtual bool IsSteamChinaLauncher() { return steambridge::slot<bool>(kCall_922); }
+    virtual bool IsSteamChinaLauncher() { return steammock::slot<bool>(kCall_922); }
     virtual bool InitFilterText(std::uint32_t unFilterOptions) {
-        return steambridge::slot<bool>(kCall_927, unFilterOptions);
+        return steammock::slot<bool>(kCall_927, unFilterOptions);
     }
     virtual std::int32_t FilterText(std::int32_t eContext, CSteamID sourceSteamID, const char* pchInputMessage, void* pchOutFilteredText, std::uint32_t nByteSizeOutFilteredText) {
-        return steambridge::slot<std::int32_t>(kCall_928, eContext, sourceSteamID, pchInputMessage, pchOutFilteredText, nByteSizeOutFilteredText);
+        return steammock::slot<std::int32_t>(kCall_928, eContext, sourceSteamID, pchInputMessage, pchOutFilteredText, nByteSizeOutFilteredText);
     }
     virtual std::int32_t GetIPv6ConnectivityState(std::int32_t eProtocol) {
-        return steambridge::slot<std::int32_t>(kCall_925, eProtocol);
+        return steammock::slot<std::int32_t>(kCall_925, eProtocol);
     }
-    virtual bool IsSteamRunningOnSteamDeck() { return steambridge::slot<bool>(kCall_929); }
+    virtual bool IsSteamRunningOnSteamDeck() { return steammock::slot<bool>(kCall_929); }
     virtual bool ShowFloatingGamepadTextInput(std::int32_t eKeyboardMode, std::int32_t nTextFieldXPosition, std::int32_t nTextFieldYPosition, std::int32_t nTextFieldWidth, std::int32_t nTextFieldHeight) {
-        return steambridge::slot<bool>(kCall_930, eKeyboardMode, nTextFieldXPosition, nTextFieldYPosition, nTextFieldWidth, nTextFieldHeight);
+        return steammock::slot<bool>(kCall_930, eKeyboardMode, nTextFieldXPosition, nTextFieldYPosition, nTextFieldWidth, nTextFieldHeight);
     }
     virtual void SetGameLauncherMode(bool bLauncherMode) {
-        steambridge::slot<void>(kCall_931, bLauncherMode);
+        steammock::slot<void>(kCall_931, bLauncherMode);
     }
-    virtual bool DismissFloatingGamepadTextInput() { return steambridge::slot<bool>(kCall_932); }
+    virtual bool DismissFloatingGamepadTextInput() { return steammock::slot<bool>(kCall_932); }
 };
 
 Version_SteamUtils010 g_SteamUtils010;
@@ -8719,22 +8669,22 @@ Version_SteamUtils010 g_SteamUtils010;
 class Version_STEAMVIDEO_INTERFACE_V002 {
 public:
     virtual void GetVideoURL(std::uint32_t unVideoAppID) {
-        steambridge::slot<void>(kCall_933, unVideoAppID);
+        steammock::slot<void>(kCall_933, unVideoAppID);
     }
     virtual bool IsBroadcasting(std::int32_t* pnNumViewers) {
-        return steambridge::slot<bool>(kCall_934, pnNumViewers);
+        return steammock::slot<bool>(kCall_934, pnNumViewers);
     }
     virtual void GetOPFSettings(std::uint32_t unVideoAppID) {
-        steambridge::slot<void>(kCall_935, unVideoAppID);
+        steammock::slot<void>(kCall_935, unVideoAppID);
     }
     virtual bool GetOPFStringForApp(std::uint32_t unVideoAppID, void* pchBuffer, std::int32_t* pnBufferSize) {
-        return steambridge::slot<bool>(kCall_936, unVideoAppID, pchBuffer, pnBufferSize);
+        return steammock::slot<bool>(kCall_936, unVideoAppID, pchBuffer, pnBufferSize);
     }
 };
 
 Version_STEAMVIDEO_INTERFACE_V002 g_STEAMVIDEO_INTERFACE_V002;
 
-const steambridge::InterfaceVersion kVersions[] = {
+const steammock::InterfaceVersion kVersions[] = {
     {"STEAMAPPLIST_INTERFACE_VERSION001", &g_STEAMAPPLIST_INTERFACE_VERSION001},
     {"STEAMAPPS_INTERFACE_VERSION008", &g_STEAMAPPS_INTERFACE_VERSION008},
     {"SteamClient017", &g_SteamClient017},
@@ -8816,4 +8766,4 @@ const InterfaceVersion* interface_versions(std::size_t& count) noexcept {
     return kVersions;
 }
 
-}  // namespace steambridge
+}  // namespace steammock

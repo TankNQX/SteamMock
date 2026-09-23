@@ -34,7 +34,7 @@ ReflowComments: false
 # rather than merged into one sorted list.
 IncludeBlocks: Preserve
 
-# Two spaces before a trailing comment, matching `}  // namespace steambridge`.
+# Two spaces before a trailing comment, matching `}  // namespace steammock`.
 SpacesBeforeTrailingComments: 2
 
 # One-statement functions stay on one line, which is the tree's own idiom: the

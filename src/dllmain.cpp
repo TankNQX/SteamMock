@@ -32,16 +32,16 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
 //  reach the backend?" without guessing from logs.
 // ---------------------------------------------------------------------------
 
-STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamBridge_Version(void) {
+STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamMock_Version(void) {
     // The same CMake project version the backend prints, so they cannot drift.
-    return STEAMBRIDGE_VERSION;
+    return STEAMMOCK_VERSION;
 }
 
 // Empty until the handshake has succeeded. The pointer stays valid for the life
 // of the process (the session string outlives the call), which is fine for a
 // diagnostic.
-STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamBridge_SessionId(void) {
-    steambridge::Client& client = steambridge::Client::instance();
+STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamMock_SessionId(void) {
+    steammock::Client& client = steammock::Client::instance();
     if (!client.backend_connected()) {
         return "";
     }
@@ -50,8 +50,8 @@ STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamBridge_SessionId(void) {
 
 // Returns the number of calls the stub has forwarded, and writes the number the
 // backend declined to answer through `out_unhandled`.
-STEAMBRIDGE_EXPORT unsigned long STEAMBRIDGE_CALL SteamBridge_Stats(unsigned long* out_unhandled) {
-    steambridge::Client& client = steambridge::Client::instance();
+STEAMMOCK_EXPORT unsigned long STEAMMOCK_CALL SteamMock_Stats(unsigned long* out_unhandled) {
+    steammock::Client& client = steammock::Client::instance();
     if (out_unhandled != nullptr) {
         *out_unhandled = client.unhandled_count();
     }

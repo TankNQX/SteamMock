@@ -16,7 +16,7 @@
 //  per-call code in the generated file means the stub carries no runtime
 //  description of the API and pays nothing per call for one.
 
-namespace steambridge {
+namespace steammock {
 
 inline Json arg_bool(bool value) noexcept { return Json::boolean(value); }
 
@@ -91,4 +91,4 @@ inline const Json* reply_out(const Json& reply, const char* name) noexcept {
     return out != nullptr ? out->find(name) : nullptr;
 }
 
-}  // namespace steambridge
+}  // namespace steammock

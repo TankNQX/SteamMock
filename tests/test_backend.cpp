@@ -26,17 +26,17 @@
 #include "bridge/session.hpp"
 #include "bridge/surface.hpp"
 
-#ifndef STEAMBRIDGE_SCENARIO_PATH
-#    error "STEAMBRIDGE_SCENARIO_PATH must name the example scenario"
+#ifndef STEAMMOCK_SCENARIO_PATH
+#    error "STEAMMOCK_SCENARIO_PATH must name the example scenario"
 #endif
 
 namespace {
 
-using steambridge::Answer;
-using steambridge::Dispatcher;
-using steambridge::Json;
-using steambridge::Profile;
-using steambridge::Session;
+using steammock::Answer;
+using steammock::Dispatcher;
+using steammock::Json;
+using steammock::Profile;
+using steammock::Session;
 
 int g_failures = 0;
 
@@ -67,7 +67,7 @@ std::int64_t out_int(const Answer& answer, const char* key) {
     return value != nullptr ? value->as_int64() : 0;
 }
 
-bool has_out(const Answer& answer) { return steambridge::carries_out(answer.out); }
+bool has_out(const Answer& answer) { return steammock::carries_out(answer.out); }
 
 // The same fixture the Python tests used, so the ported expectations still mean
 // something: one game, one known stat, one locked achievement.
@@ -103,19 +103,19 @@ Json name_argument(const char* name) {
 void test_replies() {
     std::printf("[:] replies\n");
 
-    const Json unanswered = steambridge::make_reply(7, false, Json::null(), Json::null());
+    const Json unanswered = steammock::make_reply(7, false, Json::null(), Json::null());
     check("an unanswered reply says default", text_of(unanswered, "answer") == "default");
     check("an unanswered reply carries no return value", unanswered.find("ret") == nullptr);
     check("an unanswered reply carries no out parameters", unanswered.find("out") == nullptr);
     check("a reply echoes the sequence", int_of(unanswered, "seq") == 7);
     check("a reply carries the protocol version",
-          int_of(unanswered, "v") == steambridge::kProtocolVersion);
+          int_of(unanswered, "v") == steammock::kProtocolVersion);
     check("ping: the frame cap is still the one the stub mirrors",
-          steambridge::kMaxFrameBytes == 4u * 1024u * 1024u);
+          steammock::kMaxFrameBytes == 4u * 1024u * 1024u);
 
     Json out = Json::object();
     out.set("pData", Json::integer(42));
-    const Json answered = steambridge::make_reply(8, true, Json::boolean(true), out);
+    const Json answered = steammock::make_reply(8, true, Json::boolean(true), out);
     check("an answered reply says handled", text_of(answered, "answer") == "handled");
     check("an answered reply carries the value",
           answered.find("ret") != nullptr && answered.find("ret")->as_bool());
@@ -124,15 +124,14 @@ void test_replies() {
               answered.find("out")->find("pData")->as_int64() == 42);
 
     check("an answer without out parameters omits out",
-          steambridge::make_reply(9, true, Json::integer(3), Json::null()).find("out") == nullptr);
+          steammock::make_reply(9, true, Json::integer(3), Json::null()).find("out") == nullptr);
     check("an empty out object is not carried",
-          steambridge::make_reply(10, true, Json::integer(3), Json::object()).find("out") ==
-              nullptr);
+          steammock::make_reply(10, true, Json::integer(3), Json::object()).find("out") == nullptr);
 
     // A scenario that scripts a call without saying what it returns means "the
     // zero of your type", not "no opinion" - and that distinction is the whole
     // point of the protocol.
-    const Json bare = steambridge::make_reply(11, true, Json::null(), Json::null());
+    const Json bare = steammock::make_reply(11, true, Json::null(), Json::null());
     check("an answered reply with no value still has ret", bare.find("ret") != nullptr);
     check("and that ret is null", bare.find("ret")->is_null());
 }
@@ -317,7 +316,7 @@ void test_scenarios() {
 
     Dispatcher loaded;
     std::string error;
-    const bool ok = Dispatcher::load_file(STEAMBRIDGE_SCENARIO_PATH, loaded, error);
+    const bool ok = Dispatcher::load_file(STEAMMOCK_SCENARIO_PATH, loaded, error);
     check("the bundled example scenario loads", ok);
     if (!ok) {
         std::printf("        %s\n", error.c_str());
@@ -371,14 +370,14 @@ void test_surface_matches_the_idl() {
     std::printf("[:] the generated surface\n");
 
     std::size_t count = 0;
-    const steambridge::SurfaceCall* calls = steambridge::api_surface_calls(count);
+    const steammock::SurfaceCall* calls = steammock::api_surface_calls(count);
     std::set<std::string> names;
     for (std::size_t index = 0; index < count; ++index) {
         names.insert(calls[index].name);
     }
     check("the surface has calls", count > 0u);
-    check("it names the surface", std::string(steambridge::api_surface_name()) == "seed");
-    check("it is the revision the IDL says", steambridge::api_surface_revision() == 2);
+    check("it names the surface", std::string(steammock::api_surface_name()) == "seed");
+    check("it is the revision the IDL says", steammock::api_surface_revision() == 2);
     check("a policy call is listed", names.count("SteamAPI_Init") == 1u);
     check("an out-parameter call is listed",
           names.count("SteamAPI_ISteamUserStats_GetStatInt32") == 1u);
@@ -391,7 +390,7 @@ void test_surface_matches_the_idl() {
     // Every call the state machine answers has to be in the surface, or the stub
     // and the backend have drifted apart.
     std::vector<std::string> missing;
-    for (const std::string& handled : steambridge::state_handled_calls()) {
+    for (const std::string& handled : steammock::state_handled_calls()) {
         if (names.count(handled) == 0u) {
             missing.push_back(handled);
         }
@@ -418,18 +417,18 @@ void test_numbers() {
     std::printf("[:] numbers in a transcript\n");
 
     // Readability: a transcript is meant to be read by a person.
-    check("a fraction survives", steambridge::Json::real(0.5).dump() == "0.5");
-    check("a duration reads as a duration", steambridge::Json::real(0.164).dump() == "0.164");
-    check("a whole second stays plain", steambridge::Json::real(1500.0).dump() == "1500");
-    check("zero is zero", steambridge::Json::real(0.0).dump() == "0");
+    check("a fraction survives", steammock::Json::real(0.5).dump() == "0.5");
+    check("a duration reads as a duration", steammock::Json::real(0.164).dump() == "0.164");
+    check("a whole second stays plain", steammock::Json::real(1500.0).dump() == "1500");
+    check("zero is zero", steammock::Json::real(0.0).dump() == "0");
     check("a whole number is written without a decimal point",
-          steambridge::Json::real(-12.0).dump() == "-12");
+          steammock::Json::real(-12.0).dump() == "-12");
 
     // Exactness: the writer only shortens when the text still denotes the very
     // same double, which is what the C library reading it back proves.
     for (const double value :
          {0.164, 1500.0, 0.1, 1.0 / 3.0, -2.5, 3.141592653589793, 1e-300, 1e300}) {
-        const std::string text = steambridge::Json::real(value).dump();
+        const std::string text = steammock::Json::real(value).dump();
         if (std::strtod(text.c_str(), nullptr) != value) {
             std::printf("        %s is not the same double as the value written\n", text.c_str());
         }
@@ -445,18 +444,17 @@ void test_numbers() {
     Json back;
     for (const double value : {0.5, -2.5, 1500.0, 0.0}) {
         check("a binary-exact double is read back unchanged",
-              Json::parse(steambridge::Json::real(value).dump(), back) &&
-                  back.as_double() == value);
+              Json::parse(steammock::Json::real(value).dump(), back) && back.as_double() == value);
     }
     check("a fraction is read back to within a rounding step",
-          Json::parse(steambridge::Json::real(0.164).dump(), back) &&
+          Json::parse(steammock::Json::real(0.164).dump(), back) &&
               std::fabs(back.as_double() - 0.164) < 1e-15);
 }
 
 }  // namespace
 
 int main() {
-    std::printf("[+] SteamApiBridge backend tests\n\n");
+    std::printf("[+] SteamMock backend tests\n\n");
     test_replies();
     test_relabelling();
     test_identity();

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-//  steambridge_gui - the live view.
+//  steammock_gui - the live view.
 // ---------------------------------------------------------------------------
 //  The backend with a window on it: which games are attached, what they are
 //  asking, what they were told, and - next - what they should be told instead.
@@ -20,7 +20,7 @@
 //  the sequence. "by function" counts what the game asks for, most-called first;
 //  "live" is the call-by-call list it scrolls past.
 //
-//  Build it with -DSTEAMBRIDGE_BUILD_GUI=ON (see README, "The live view").
+//  Build it with -DSTEAMMOCK_BUILD_GUI=ON (see README, "The live view").
 // ---------------------------------------------------------------------------
 
 #include <algorithm>
@@ -46,11 +46,11 @@
 
 namespace {
 
-using steambridge::CallRecord;
-using steambridge::LogLevel;
-using steambridge::Server;
-using steambridge::ServerOptions;
-using steambridge::SessionSnapshot;
+using steammock::CallRecord;
+using steammock::LogLevel;
+using steammock::Server;
+using steammock::ServerOptions;
+using steammock::SessionSnapshot;
 
 // Enough log to see what happened, not enough to grow without bound while a
 // game runs for hours.
@@ -166,7 +166,7 @@ private:
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus |
             ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-        ImGui::Begin("steambridge", nullptr, host);
+        ImGui::Begin("steammock", nullptr, host);
 
         // Placed, not stacked: children flow, so each panel is given the corner
         // it belongs in rather than left to follow the one before it.
@@ -196,9 +196,9 @@ private:
     // -- the server --------------------------------------------------------
 
     bool start() {
-        steambridge::Dispatcher dispatcher;
+        steammock::Dispatcher dispatcher;
         std::string error;
-        if (!steambridge::Dispatcher::load_file(_scenario, dispatcher, error)) {
+        if (!steammock::Dispatcher::load_file(_scenario, dispatcher, error)) {
             _status = error;
             return false;
         }
@@ -537,7 +537,7 @@ private:
             ImGui::TableSetupColumn("achievement");
             ImGui::TableSetupColumn("unlocked");
             ImGui::TableHeadersRow();
-            for (const steambridge::Achievement& achievement : game->achievements) {
+            for (const steammock::Achievement& achievement : game->achievements) {
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::TextUnformatted(achievement.name.c_str());
@@ -647,7 +647,7 @@ int main(int argc, char** argv) {
 
     if (glfwInit() != GLFW_TRUE) {
         std::fprintf(stderr,
-                     "steambridge_gui: cannot open a window (is a GPU and driver present?)\n");
+                     "steammock_gui: cannot open a window (is a GPU and driver present?)\n");
         return 2;
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -657,9 +657,9 @@ int main(int argc, char** argv) {
     int window_w = 0;
     int window_h = 0;
     window_size_for_display(window_w, window_h);
-    GLFWwindow* window = glfwCreateWindow(window_w, window_h, "SteamApiBridge", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(window_w, window_h, "SteamMock", nullptr, nullptr);
     if (window == nullptr) {
-        std::fprintf(stderr, "steambridge_gui: cannot create the window\n");
+        std::fprintf(stderr, "steammock_gui: cannot create the window\n");
         glfwTerminate();
         return 2;
     }

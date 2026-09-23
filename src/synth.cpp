@@ -15,7 +15,7 @@
 
 #include "bridge/synth.hpp"
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 // One packed argument as the request carries it. The names travel with the
@@ -55,4 +55,4 @@ bool run_slot(const SlotInfo& info, const Arg* args, std::size_t count, Json& re
     }
 }
 
-}  // namespace steambridge
+}  // namespace steammock

@@ -10,7 +10,7 @@
 #include "bridge/client.hpp"
 #include "bridge/json.hpp"
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  The interfaces the stub hands out itself.
@@ -127,7 +127,7 @@ inline Arg wire_cstring(const char* value) noexcept {
 template <class T, class = void> struct Kind {
     static_assert(std::is_arithmetic_v<T>,
                   "no wire kind for this type: the generated file has to specialize "
-                  "steambridge::Kind for it");
+                  "steammock::Kind for it");
 
     static constexpr bool out() noexcept { return false; }
 
@@ -341,4 +341,4 @@ inline void* context_init(void* p_context_init_data, const char* call) noexcept 
     return &context->value;
 }
 
-}  // namespace steambridge
+}  // namespace steammock

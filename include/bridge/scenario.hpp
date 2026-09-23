@@ -8,7 +8,7 @@
 #include "bridge/json.hpp"
 #include "bridge/session.hpp"
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  Turning a scenario file plus a session into an answer.
@@ -80,4 +80,4 @@ private:
     std::string _default_profile = "default";
 };
 
-}  // namespace steambridge
+}  // namespace steammock

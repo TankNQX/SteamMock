@@ -9,17 +9,17 @@
 #include "bridge/json.hpp"
 #include "bridge/transport.hpp"
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  The process-wide bridge client behind every exported stub.
 // ---------------------------------------------------------------------------
 //  Configuration comes from the environment, read once on first use:
 //
-//    STEAMBRIDGE_HOST        default 127.0.0.1
-//    STEAMBRIDGE_PORT        default 50990
-//    STEAMBRIDGE_TIMEOUT_MS  default 2000 - a game is never blocked for longer
-//    STEAMBRIDGE_OFF         1 disables the bridge entirely
+//    STEAMMOCK_HOST        default 127.0.0.1
+//    STEAMMOCK_PORT        default 50990
+//    STEAMMOCK_TIMEOUT_MS  default 2000 - a game is never blocked for longer
+//    STEAMMOCK_OFF         1 disables the bridge entirely
 //
 //  The connection is lazy and retried, so a backend started after the game gets
 //  picked up on the next call. When no backend answers, the call reports "not
@@ -75,4 +75,4 @@ private:
 // The one call a generated trampoline makes.
 bool invoke(std::string_view name, const Json& args, Json& reply) noexcept;
 
-}  // namespace steambridge
+}  // namespace steammock

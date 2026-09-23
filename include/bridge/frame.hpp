@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  The wire format: a 4 byte little-endian length, then the payload.
@@ -29,4 +29,4 @@ inline std::uint32_t read_frame_length(const char header[4]) noexcept {
            (static_cast<std::uint32_t>(static_cast<unsigned char>(header[3])) << 24);
 }
 
-}  // namespace steambridge
+}  // namespace steammock

@@ -5,7 +5,7 @@
 
 #include "bridge/json.hpp"
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  The messages both ends agree on.
@@ -13,7 +13,7 @@ namespace steambridge {
 //  The framing itself is in bridge/frame.hpp. This is the layer above it: the
 //  version stamp, the reply to a call and the handshake's answer.
 //
-//  There used to be a Python mirror of this file (python/steambridge/protocol.py)
+//  There used to be a Python mirror of this file (python/steammock/protocol.py)
 //  and the two were kept in step by hand. Now the stub and the backend link the
 //  same translation unit, so they cannot drift.
 
@@ -36,4 +36,4 @@ Json make_reply(std::int64_t seq, bool answered, const Json& ret, const Json& ou
 // matched to, so a game's log can say which debugging identity it got.
 Json make_welcome(const std::string& session_id, const std::string& profile_name);
 
-}  // namespace steambridge
+}  // namespace steammock

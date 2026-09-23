@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 // ---------------------------------------------------------------------------
@@ -27,30 +27,30 @@ struct TypeInfo {
 };
 
 constexpr TypeInfo kTypes[] = {
-    {"bool", "bool", "arg_bool", "false", "steambridge::reply_bool(reply)",
+    {"bool", "bool", "arg_bool", "false", "steammock::reply_bool(reply)",
      "static_cast<bool>(value->as_bool())"},
     {"int32", "std::int32_t", "arg_int", "0",
-     "static_cast<std::int32_t>(steambridge::reply_int(reply))",
+     "static_cast<std::int32_t>(steammock::reply_int(reply))",
      "static_cast<std::int32_t>(value->as_int64())"},
     {"uint32", "std::uint32_t", "arg_uint", "0",
-     "static_cast<std::uint32_t>(steambridge::reply_uint(reply))",
+     "static_cast<std::uint32_t>(steammock::reply_uint(reply))",
      "static_cast<std::uint32_t>(value->as_uint64())"},
     // A port number is a uint16 in the real headers and stays one here: read as
     // a wider type it would carry whatever the caller left in the top half.
     {"uint16", "std::uint16_t", "arg_uint", "0",
-     "static_cast<std::uint16_t>(steambridge::reply_uint(reply))",
+     "static_cast<std::uint16_t>(steammock::reply_uint(reply))",
      "static_cast<std::uint16_t>(value->as_uint64())"},
-    {"int64", "std::int64_t", "arg_int", "0", "steambridge::reply_int(reply)", "value->as_int64()"},
-    {"uint64", "std::uint64_t", "arg_uint", "0", "steambridge::reply_uint(reply)",
+    {"int64", "std::int64_t", "arg_int", "0", "steammock::reply_int(reply)", "value->as_int64()"},
+    {"uint64", "std::uint64_t", "arg_uint", "0", "steammock::reply_uint(reply)",
      "value->as_uint64()"},
-    {"float", "float", "arg_real", "0.0f", "static_cast<float>(steambridge::reply_real(reply))",
+    {"float", "float", "arg_real", "0.0f", "static_cast<float>(steammock::reply_real(reply))",
      "static_cast<float>(value->as_double())"},
-    {"double", "double", "arg_real", "0.0", "steambridge::reply_real(reply)", "value->as_double()"},
+    {"double", "double", "arg_real", "0.0", "steammock::reply_real(reply)", "value->as_double()"},
     // A returned string is copied by the stub before the reply dies with the
     // call, so the game gets its own text (see bridge/call.hpp).
     {"cstring", "const char*", "arg_cstring", "kEmptyString",
-     "steambridge::reply_cstring(reply, kEmptyString)", nullptr},
-    {"opaque_ptr", "void*", "arg_pointer", "nullptr", "steambridge::reply_pointer(reply)", nullptr},
+     "steammock::reply_cstring(reply, kEmptyString)", nullptr},
+    {"opaque_ptr", "void*", "arg_pointer", "nullptr", "steammock::reply_pointer(reply)", nullptr},
 };
 
 const TypeInfo* find_type(const std::string& name) noexcept {
@@ -64,14 +64,14 @@ const TypeInfo* find_type(const std::string& name) noexcept {
 
 // The stub's own exports, which are not Steam API calls: they exist so the
 // harness can be asked which build is loaded and whether it reached a backend.
-const char* const kDiagnosticExports[] = {"SteamBridge_SessionId", "SteamBridge_Stats",
-                                          "SteamBridge_Version"};
+const char* const kDiagnosticExports[] = {"SteamMock_SessionId", "SteamMock_Stats",
+                                          "SteamMock_Version"};
 constexpr std::size_t kDiagnosticExportCount =
     sizeof(kDiagnosticExports) / sizeof(kDiagnosticExports[0]);
 
 constexpr const char* kGeneratedNote = "//  GENERATED FILE - do not edit by hand.";
-constexpr const char* kRegenerate = "//  Regenerate: steambridge_codegen";
-constexpr const char* kRegenerateDef = "; Regenerate: steambridge_codegen";
+constexpr const char* kRegenerate = "//  Regenerate: steammock_codegen";
+constexpr const char* kRegenerateDef = "; Regenerate: steammock_codegen";
 
 std::string joined(const std::vector<std::string>& lines) {
     std::string text;
@@ -124,7 +124,7 @@ std::string signature(const IdlCall& call) {
         params = "void";
     }
     const std::string returns = call.returns == "void" ? "void" : find_type(call.returns)->cpp;
-    return returns + " STEAMBRIDGE_CALL " + call.name + "(" + params + ")";
+    return returns + " STEAMMOCK_CALL " + call.name + "(" + params + ")";
 }
 
 // The body of one trampoline: build the arguments, ask, fall back.
@@ -145,7 +145,7 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
         // for a game that polls - Spacewar's own loop asked 26,228 times in
         // fourteen seconds - so the call reaches the backend from the initialiser
         // inside, once, and nowhere else.
-        out.push_back(std::string("        result = steambridge::context_init(") +
+        out.push_back(std::string("        result = steammock::context_init(") +
                       call.params[0].name + ", \"" + call.name + "\");");
         out.push_back("    } catch (...) {");
         out.push_back("        // Never let an exception cross into the game.");
@@ -154,27 +154,27 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
         return;
     }
 
-    out.push_back("        steambridge::Json args = steambridge::Json::object();");
+    out.push_back("        steammock::Json args = steammock::Json::object();");
     for (const IdlParam& param : call.params) {
         const TypeInfo& type = *find_type(param.type);
         if (param.out) {
             // Send what the caller passed in, so the backend can see the current
             // value; a null pointer is reported as null and never dereferenced.
             out.push_back("        args.set(\"" + param.name + "\", " + param.name + " != nullptr");
-            out.push_back(std::string("                                  ? steambridge::") +
+            out.push_back(std::string("                                  ? steammock::") +
                           type.arg_helper + "(static_cast<" + type.cpp + ">(*" + param.name + "))");
-            out.push_back("                                  : steambridge::Json::null());");
+            out.push_back("                                  : steammock::Json::null());");
         } else if (std::string(param.type) == "cstring") {
-            out.push_back("        args.set(\"" + param.name + "\", steambridge::arg_cstring(" +
+            out.push_back("        args.set(\"" + param.name + "\", steammock::arg_cstring(" +
                           param.name + "));");
         } else {
             out.push_back(std::string("        args.set(\"") + param.name +
-                          "\", steambridge::" + type.arg_helper + "(" + param.name + "));");
+                          "\", steammock::" + type.arg_helper + "(" + param.name + "));");
         }
     }
     out.push_back("");
-    out.push_back("        steambridge::Json reply;");
-    const std::string invoke = "steambridge::invoke(\"" + call.name + "\", args, reply)";
+    out.push_back("        steammock::Json reply;");
+    const std::string invoke = "steammock::invoke(\"" + call.name + "\", args, reply)";
 
     bool has_out = false;
     for (const IdlParam& param : call.params) {
@@ -190,8 +190,8 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
                 continue;
             }
             out.push_back("            if (" + param.name + " != nullptr) {");
-            out.push_back(std::string("                const steambridge::Json* value = "
-                                      "steambridge::reply_out(reply, \"") +
+            out.push_back(std::string("                const steammock::Json* value = "
+                                      "steammock::reply_out(reply, \"") +
                           param.name + "\");");
             out.push_back("                if (value != nullptr && !value->is_null()) {");
             out.push_back(std::string("                    *") + param.name + " = " +
@@ -212,10 +212,10 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
         // lazy accessor is answered here, and tells the backend when it does.
         out.push_back("        if (result == nullptr) {");
         if (call.fallback == "interface") {
-            out.push_back(std::string("            result = steambridge::interface_object(") +
+            out.push_back(std::string("            result = steammock::interface_object(") +
                           call.fallback_param + ");");
         } else {
-            out.push_back(std::string("            result = steambridge::context_init(") +
+            out.push_back(std::string("            result = steammock::context_init(") +
                           call.params[0].name + ", \"" + call.name + "\");");
         }
         out.push_back("        }");
@@ -445,7 +445,7 @@ std::string render_api_stub(const Idl& idl) {
 
     for (const IdlCall& call : idl.calls()) {
         out.push_back("// " + call.name);
-        out.push_back("STEAMBRIDGE_EXPORT " + signature(call) + " {");
+        out.push_back("STEAMMOCK_EXPORT " + signature(call) + " {");
         render_body(call, out);
         out.push_back("}");
         out.push_back("");
@@ -487,7 +487,7 @@ std::string render_api_surface(const Idl& idl) {
     out.push_back("");
     out.push_back("#include \"bridge/surface.hpp\"");
     out.push_back("");
-    out.push_back("namespace steambridge {");
+    out.push_back("namespace steammock {");
     out.push_back("namespace {");
 
     for (const IdlCall& call : calls) {
@@ -530,8 +530,8 @@ std::string render_api_surface(const Idl& idl) {
     out.push_back("    return kCalls;");
     out.push_back("}");
     out.push_back("");
-    out.push_back("}  // namespace steambridge");
+    out.push_back("}  // namespace steammock");
     return joined(out) + "\n";
 }
 
-}  // namespace steambridge
+}  // namespace steammock

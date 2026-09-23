@@ -16,7 +16,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 using socket_t = SOCKET;
@@ -581,4 +581,4 @@ void Server::write_transcript(const CallRecord& record) {
     std::fflush(_transcript);
 }
 
-}  // namespace steambridge
+}  // namespace steammock

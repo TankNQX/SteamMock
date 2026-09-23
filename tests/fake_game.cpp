@@ -2,7 +2,7 @@
 //  tests/fake_game.cpp - a stand-in for a game.
 // ----------------------------------------------------------------------------
 //  It loads the stub the way a game's import table would (by name, from the path
-//  in STEAMBRIDGE_STUB), calls a slice of the flat API through GetProcAddress,
+//  in STEAMMOCK_STUB), calls a slice of the flat API through GetProcAddress,
 //  and prints every result as one `key=value` line so the end-to-end test can
 //  check them without parsing prose.
 //
@@ -125,9 +125,9 @@ std::string bounded(const char* text) {
 }  // namespace
 
 int main() {
-    const char* stub_path = std::getenv("STEAMBRIDGE_STUB");
+    const char* stub_path = std::getenv("STEAMMOCK_STUB");
     if (stub_path == nullptr || stub_path[0] == '\0') {
-        std::printf("STEAMBRIDGE_STUB is not set\n");
+        std::printf("STEAMMOCK_STUB is not set\n");
         return 2;
     }
 
@@ -165,8 +165,8 @@ int main() {
     const auto achievement_name =
         resolve<achievement_name_fn>(stub, "SteamAPI_ISteamUserStats_GetAchievementName");
     const auto store_stats = resolve<bool_self_fn>(stub, "SteamAPI_ISteamUserStats_StoreStats");
-    const auto session_id = resolve<session_fn>(stub, "SteamBridge_SessionId");
-    const auto bridge_stats = resolve<stats_fn>(stub, "SteamBridge_Stats");
+    const auto session_id = resolve<session_fn>(stub, "SteamMock_SessionId");
+    const auto bridge_stats = resolve<stats_fn>(stub, "SteamMock_Stats");
     const auto create_interface =
         resolve<create_interface_fn>(stub, "SteamInternal_CreateInterface");
 

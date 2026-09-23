@@ -8,7 +8,7 @@
 //  mistakes it has to catch rather than pass through.
 //
 //  The real file is read by `generated_files_are_current` (through
-//  steambridge_codegen --check), which is what says these rules still fit it.
+//  steammock_codegen --check), which is what says these rules still fit it.
 //
 //  Exits non-zero if a check fails.
 // ============================================================================
@@ -42,19 +42,19 @@ std::string document(const std::string& slots) {
            slots + "]}]}";
 }
 
-bool reads(const std::string& text, steambridge::Interfaces& out, std::string& error) {
-    steambridge::Json parsed;
-    if (!steambridge::Json::parse(text, parsed)) {
+bool reads(const std::string& text, steammock::Interfaces& out, std::string& error) {
+    steammock::Json parsed;
+    if (!steammock::Json::parse(text, parsed)) {
         error = "the test's own JSON does not parse";
         return false;
     }
-    return steambridge::Interfaces::from_json(parsed, out, error);
+    return steammock::Interfaces::from_json(parsed, out, error);
 }
 
 // Whether the one version in `document(slots)` reads, and what the first slot
 // came out as.
-bool reads_slots(const std::string& slots, steambridge::InterfaceSlot& first, std::string& error) {
-    steambridge::Interfaces layouts;
+bool reads_slots(const std::string& slots, steammock::InterfaceSlot& first, std::string& error) {
+    steammock::Interfaces layouts;
     if (!reads(document(slots), layouts, error)) {
         return false;
     }
@@ -67,14 +67,14 @@ bool reads_slots(const std::string& slots, steambridge::InterfaceSlot& first, st
 }
 
 bool refuses(const std::string& slots, std::string& error) {
-    steambridge::InterfaceSlot slot;
+    steammock::InterfaceSlot slot;
     return !reads_slots(slots, slot, error);
 }
 
 void test_rows() {
     std::printf("[:] a row\n");
 
-    steambridge::InterfaceSlot slot;
+    steammock::InterfaceSlot slot;
     std::string error;
 
     check("a method and a kind read", reads_slots("[\"GetSteamID\", \"uint64\"]", slot, error) &&
@@ -119,7 +119,7 @@ void test_rows() {
 void test_notes() {
     std::printf("[:] the notes a row may carry\n");
 
-    steambridge::InterfaceSlot slot;
+    steammock::InterfaceSlot slot;
     std::string error;
 
     check("a recorded call wins over the derived one",
@@ -173,7 +173,7 @@ void test_refusals() {
 void test_document() {
     std::printf("[:] the document\n");
 
-    steambridge::Interfaces layouts;
+    steammock::Interfaces layouts;
     std::string error;
 
     check("something that is not an object is refused", !reads("[1, 2]", layouts, error));
@@ -209,7 +209,7 @@ void test_document() {
 }  // namespace
 
 int main() {
-    std::printf("[+] SteamApiBridge interface-layout tests\n\n");
+    std::printf("[+] SteamMock interface-layout tests\n\n");
     test_rows();
     test_notes();
     test_refusals();

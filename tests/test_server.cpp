@@ -28,7 +28,7 @@
 
 namespace {
 
-using steambridge::Json;
+using steammock::Json;
 
 int g_failures = 0;
 
@@ -58,7 +58,7 @@ template <typename Predicate> bool wait_until(Predicate ready, double seconds) {
 Json hello_message() {
     Json message = Json::object();
     message.set("type", Json::string("hello"));
-    message.set("v", Json::integer(steambridge::kProtocolVersion));
+    message.set("v", Json::integer(steammock::kProtocolVersion));
     message.set("exe", Json::string("game.exe"));
     message.set("arch", Json::string("x64"));
     message.set("pid", Json::integer(1234));
@@ -68,7 +68,7 @@ Json hello_message() {
 Json call_message(const char* name, std::int64_t seq) {
     Json message = Json::object();
     message.set("type", Json::string("call"));
-    message.set("v", Json::integer(steambridge::kProtocolVersion));
+    message.set("v", Json::integer(steammock::kProtocolVersion));
     message.set("seq", Json::integer(seq));
     message.set("name", Json::string(name));
     message.set("args", Json::object());
@@ -81,7 +81,7 @@ std::string answer_of(const Json& reply) {
 }
 
 // One framed message out, one framed answer back: exactly what a stub does.
-bool exchange(steambridge::TcpTransport& client, const Json& message, Json& reply) {
+bool exchange(steammock::TcpTransport& client, const Json& message, Json& reply) {
     std::string text;
     if (!client.exchange(message.dump(), text)) {
         return false;
@@ -103,10 +103,10 @@ void test_what_the_server_saw() {
         return;
     }
 
-    steambridge::ServerOptions options;
+    steammock::ServerOptions options;
     options.port = 0;  // let the OS pick, so the test can run beside anything else
-    options.log_level = steambridge::LogLevel::error;  // keep the test output clean
-    steambridge::Server server(steambridge::Dispatcher(scenario), options);
+    options.log_level = steammock::LogLevel::error;  // keep the test output clean
+    steammock::Server server(steammock::Dispatcher(scenario), options);
 
     std::string error;
     check("the server binds a free port", server.start(error));
@@ -119,7 +119,7 @@ void test_what_the_server_saw() {
     check("a fresh server has no calls", server.call_count() == 0u);
     check("a fresh server has nothing unanswered", server.unanswered_count() == 0u);
 
-    steambridge::TcpTransport client;
+    steammock::TcpTransport client;
     check("a client connects through the transport a stub uses",
           client.connect("127.0.0.1", server.port()));
 
@@ -143,7 +143,7 @@ void test_what_the_server_saw() {
     check("the live session is listed",
           wait_until([&server] { return server.sessions().size() == 1u; }, 5.0));
     {
-        const std::vector<steambridge::SessionSnapshot> sessions = server.sessions();
+        const std::vector<steammock::SessionSnapshot> sessions = server.sessions();
         if (sessions.size() == 1u) {
             check("the snapshot names the game", sessions[0].exe == "game.exe");
             check("the snapshot carries the process id", sessions[0].pid == 1234);
@@ -173,7 +173,7 @@ void test_what_the_server_saw() {
     check("every call was counted", server.call_count() == 3u);
     check("the declined one is counted as unanswered", server.unanswered_count() == 1u);
 
-    const std::vector<steambridge::CallRecord> records = server.records();
+    const std::vector<steammock::CallRecord> records = server.records();
     check("every call is in the history", records.size() == 3u);
     if (records.size() == 3u) {
         check("the history keeps the order the game called in",
@@ -189,7 +189,7 @@ void test_what_the_server_saw() {
     }
 
     {
-        const std::vector<steambridge::SessionSnapshot> sessions = server.sessions();
+        const std::vector<steammock::SessionSnapshot> sessions = server.sessions();
         check("the snapshot keeps the session id",
               sessions.size() == 1u && sessions[0].id == session_id);
         check("the snapshot counts that session's calls",
@@ -214,7 +214,7 @@ void test_what_the_server_saw() {
 }  // namespace
 
 int main() {
-    std::printf("[+] SteamApiBridge server tests\n\n");
+    std::printf("[+] SteamMock server tests\n\n");
     test_what_the_server_saw();
 
     if (g_failures == 0) {

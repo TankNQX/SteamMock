@@ -2,7 +2,7 @@
 //  GENERATED FILE - do not edit by hand.
 //
 //  Source:   gen/steam_api.idl.json (surface 'seed', revision 2, 43 calls)
-//  Regenerate: steambridge_codegen
+//  Regenerate: steammock_codegen
 // ============================================================================
 
 #include "bridge/call.hpp"
@@ -18,14 +18,14 @@ const char kEmptyString[] = "";
 }  // namespace
 
 // SteamAPI_GetHSteamPipe
-STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_GetHSteamPipe(void) {
+STEAMMOCK_EXPORT std::uint32_t STEAMMOCK_CALL SteamAPI_GetHSteamPipe(void) {
     std::uint32_t result = 0;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_GetHSteamPipe", args, reply)) {
-            result = static_cast<std::uint32_t>(steambridge::reply_uint(reply));
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_GetHSteamPipe", args, reply)) {
+            result = static_cast<std::uint32_t>(steammock::reply_uint(reply));
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -34,14 +34,14 @@ STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_GetHSteamPipe(void) {
 }
 
 // SteamAPI_GetHSteamUser
-STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_GetHSteamUser(void) {
+STEAMMOCK_EXPORT std::uint32_t STEAMMOCK_CALL SteamAPI_GetHSteamUser(void) {
     std::uint32_t result = 0;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_GetHSteamUser", args, reply)) {
-            result = static_cast<std::uint32_t>(steambridge::reply_uint(reply));
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_GetHSteamUser", args, reply)) {
+            result = static_cast<std::uint32_t>(steammock::reply_uint(reply));
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -50,14 +50,14 @@ STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_GetHSteamUser(void) {
 }
 
 // SteamAPI_GetSteamInstallPath
-STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamAPI_GetSteamInstallPath(void) {
+STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamAPI_GetSteamInstallPath(void) {
     const char* result = kEmptyString;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_GetSteamInstallPath", args, reply)) {
-            result = steambridge::reply_cstring(reply, kEmptyString);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_GetSteamInstallPath", args, reply)) {
+            result = steammock::reply_cstring(reply, kEmptyString);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -66,14 +66,14 @@ STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamAPI_GetSteamInstallPath(voi
 }
 
 // SteamAPI_ISteamApps
-STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamAPI_ISteamApps(void) {
+STEAMMOCK_EXPORT void* STEAMMOCK_CALL SteamAPI_ISteamApps(void) {
     void* result = nullptr;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamApps", args, reply)) {
-            result = steambridge::reply_pointer(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamApps", args, reply)) {
+            result = steammock::reply_pointer(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -82,15 +82,15 @@ STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamAPI_ISteamApps(void) {
 }
 
 // SteamAPI_ISteamApps_GetAppBuildId
-STEAMBRIDGE_EXPORT std::int32_t STEAMBRIDGE_CALL SteamAPI_ISteamApps_GetAppBuildId(void* self) {
+STEAMMOCK_EXPORT std::int32_t STEAMMOCK_CALL SteamAPI_ISteamApps_GetAppBuildId(void* self) {
     std::int32_t result = 0;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamApps_GetAppBuildId", args, reply)) {
-            result = static_cast<std::int32_t>(steambridge::reply_int(reply));
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamApps_GetAppBuildId", args, reply)) {
+            result = static_cast<std::int32_t>(steammock::reply_int(reply));
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -99,15 +99,15 @@ STEAMBRIDGE_EXPORT std::int32_t STEAMBRIDGE_CALL SteamAPI_ISteamApps_GetAppBuild
 }
 
 // SteamAPI_ISteamFriends_GetPersonaName
-STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamAPI_ISteamFriends_GetPersonaName(void* self) {
+STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamAPI_ISteamFriends_GetPersonaName(void* self) {
     const char* result = kEmptyString;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamFriends_GetPersonaName", args, reply)) {
-            result = steambridge::reply_cstring(reply, kEmptyString);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamFriends_GetPersonaName", args, reply)) {
+            result = steammock::reply_cstring(reply, kEmptyString);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -116,14 +116,14 @@ STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamAPI_ISteamFriends_GetPerson
 }
 
 // SteamAPI_ISteamUser
-STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamAPI_ISteamUser(void) {
+STEAMMOCK_EXPORT void* STEAMMOCK_CALL SteamAPI_ISteamUser(void) {
     void* result = nullptr;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUser", args, reply)) {
-            result = steambridge::reply_pointer(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUser", args, reply)) {
+            result = steammock::reply_pointer(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -132,14 +132,14 @@ STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamAPI_ISteamUser(void) {
 }
 
 // SteamAPI_ISteamUserStats
-STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamAPI_ISteamUserStats(void) {
+STEAMMOCK_EXPORT void* STEAMMOCK_CALL SteamAPI_ISteamUserStats(void) {
     void* result = nullptr;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUserStats", args, reply)) {
-            result = steambridge::reply_pointer(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUserStats", args, reply)) {
+            result = steammock::reply_pointer(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -148,25 +148,25 @@ STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamAPI_ISteamUserStats(void) {
 }
 
 // SteamAPI_ISteamUserStats_GetAchievement
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetAchievement(void* self, const char* pchName, bool* pbAchieved) {
+STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_ISteamUserStats_GetAchievement(void* self, const char* pchName, bool* pbAchieved) {
     bool result = false;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
-        args.set("pchName", steambridge::arg_cstring(pchName));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
+        args.set("pchName", steammock::arg_cstring(pchName));
         args.set("pbAchieved", pbAchieved != nullptr
-                                  ? steambridge::arg_bool(static_cast<bool>(*pbAchieved))
-                                  : steambridge::Json::null());
+                                  ? steammock::arg_bool(static_cast<bool>(*pbAchieved))
+                                  : steammock::Json::null());
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUserStats_GetAchievement", args, reply)) {
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUserStats_GetAchievement", args, reply)) {
             if (pbAchieved != nullptr) {
-                const steambridge::Json* value = steambridge::reply_out(reply, "pbAchieved");
+                const steammock::Json* value = steammock::reply_out(reply, "pbAchieved");
                 if (value != nullptr && !value->is_null()) {
                     *pbAchieved = static_cast<bool>(value->as_bool());
                 }
             }
-            result = steambridge::reply_bool(reply);
+            result = steammock::reply_bool(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -175,16 +175,16 @@ STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetAchievement
 }
 
 // SteamAPI_ISteamUserStats_GetAchievementName
-STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetAchievementName(void* self, std::uint32_t iAchievement) {
+STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamAPI_ISteamUserStats_GetAchievementName(void* self, std::uint32_t iAchievement) {
     const char* result = kEmptyString;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
-        args.set("iAchievement", steambridge::arg_uint(iAchievement));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
+        args.set("iAchievement", steammock::arg_uint(iAchievement));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUserStats_GetAchievementName", args, reply)) {
-            result = steambridge::reply_cstring(reply, kEmptyString);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUserStats_GetAchievementName", args, reply)) {
+            result = steammock::reply_cstring(reply, kEmptyString);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -193,15 +193,15 @@ STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetAchi
 }
 
 // SteamAPI_ISteamUserStats_GetNumAchievements
-STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetNumAchievements(void* self) {
+STEAMMOCK_EXPORT std::uint32_t STEAMMOCK_CALL SteamAPI_ISteamUserStats_GetNumAchievements(void* self) {
     std::uint32_t result = 0;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUserStats_GetNumAchievements", args, reply)) {
-            result = static_cast<std::uint32_t>(steambridge::reply_uint(reply));
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUserStats_GetNumAchievements", args, reply)) {
+            result = static_cast<std::uint32_t>(steammock::reply_uint(reply));
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -210,25 +210,25 @@ STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetNu
 }
 
 // SteamAPI_ISteamUserStats_GetStatInt32
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetStatInt32(void* self, const char* pchName, std::int32_t* pData) {
+STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_ISteamUserStats_GetStatInt32(void* self, const char* pchName, std::int32_t* pData) {
     bool result = false;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
-        args.set("pchName", steambridge::arg_cstring(pchName));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
+        args.set("pchName", steammock::arg_cstring(pchName));
         args.set("pData", pData != nullptr
-                                  ? steambridge::arg_int(static_cast<std::int32_t>(*pData))
-                                  : steambridge::Json::null());
+                                  ? steammock::arg_int(static_cast<std::int32_t>(*pData))
+                                  : steammock::Json::null());
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUserStats_GetStatInt32", args, reply)) {
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUserStats_GetStatInt32", args, reply)) {
             if (pData != nullptr) {
-                const steambridge::Json* value = steambridge::reply_out(reply, "pData");
+                const steammock::Json* value = steammock::reply_out(reply, "pData");
                 if (value != nullptr && !value->is_null()) {
                     *pData = static_cast<std::int32_t>(value->as_int64());
                 }
             }
-            result = steambridge::reply_bool(reply);
+            result = steammock::reply_bool(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -237,15 +237,15 @@ STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_GetStatInt32(v
 }
 
 // SteamAPI_ISteamUserStats_RequestCurrentStats
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_RequestCurrentStats(void* self) {
+STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_ISteamUserStats_RequestCurrentStats(void* self) {
     bool result = false;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUserStats_RequestCurrentStats", args, reply)) {
-            result = steambridge::reply_bool(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUserStats_RequestCurrentStats", args, reply)) {
+            result = steammock::reply_bool(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -254,16 +254,16 @@ STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_RequestCurrent
 }
 
 // SteamAPI_ISteamUserStats_SetAchievement
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_SetAchievement(void* self, const char* pchName) {
+STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_ISteamUserStats_SetAchievement(void* self, const char* pchName) {
     bool result = false;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
-        args.set("pchName", steambridge::arg_cstring(pchName));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
+        args.set("pchName", steammock::arg_cstring(pchName));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUserStats_SetAchievement", args, reply)) {
-            result = steambridge::reply_bool(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUserStats_SetAchievement", args, reply)) {
+            result = steammock::reply_bool(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -272,17 +272,17 @@ STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_SetAchievement
 }
 
 // SteamAPI_ISteamUserStats_SetStatInt32
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_SetStatInt32(void* self, const char* pchName, std::int32_t nData) {
+STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_ISteamUserStats_SetStatInt32(void* self, const char* pchName, std::int32_t nData) {
     bool result = false;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
-        args.set("pchName", steambridge::arg_cstring(pchName));
-        args.set("nData", steambridge::arg_int(nData));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
+        args.set("pchName", steammock::arg_cstring(pchName));
+        args.set("nData", steammock::arg_int(nData));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUserStats_SetStatInt32", args, reply)) {
-            result = steambridge::reply_bool(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUserStats_SetStatInt32", args, reply)) {
+            result = steammock::reply_bool(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -291,15 +291,15 @@ STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_SetStatInt32(v
 }
 
 // SteamAPI_ISteamUserStats_StoreStats
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_StoreStats(void* self) {
+STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_ISteamUserStats_StoreStats(void* self) {
     bool result = false;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUserStats_StoreStats", args, reply)) {
-            result = steambridge::reply_bool(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUserStats_StoreStats", args, reply)) {
+            result = steammock::reply_bool(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -308,15 +308,15 @@ STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_ISteamUserStats_StoreStats(voi
 }
 
 // SteamAPI_ISteamUser_GetSteamID
-STEAMBRIDGE_EXPORT std::uint64_t STEAMBRIDGE_CALL SteamAPI_ISteamUser_GetSteamID(void* self) {
+STEAMMOCK_EXPORT std::uint64_t STEAMMOCK_CALL SteamAPI_ISteamUser_GetSteamID(void* self) {
     std::uint64_t result = 0;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUser_GetSteamID", args, reply)) {
-            result = steambridge::reply_uint(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUser_GetSteamID", args, reply)) {
+            result = steammock::reply_uint(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -325,14 +325,14 @@ STEAMBRIDGE_EXPORT std::uint64_t STEAMBRIDGE_CALL SteamAPI_ISteamUser_GetSteamID
 }
 
 // SteamAPI_ISteamUtils
-STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamAPI_ISteamUtils(void) {
+STEAMMOCK_EXPORT void* STEAMMOCK_CALL SteamAPI_ISteamUtils(void) {
     void* result = nullptr;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUtils", args, reply)) {
-            result = steambridge::reply_pointer(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUtils", args, reply)) {
+            result = steammock::reply_pointer(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -341,15 +341,15 @@ STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamAPI_ISteamUtils(void) {
 }
 
 // SteamAPI_ISteamUtils_GetAppID
-STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_ISteamUtils_GetAppID(void* self) {
+STEAMMOCK_EXPORT std::uint32_t STEAMMOCK_CALL SteamAPI_ISteamUtils_GetAppID(void* self) {
     std::uint32_t result = 0;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUtils_GetAppID", args, reply)) {
-            result = static_cast<std::uint32_t>(steambridge::reply_uint(reply));
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUtils_GetAppID", args, reply)) {
+            result = static_cast<std::uint32_t>(steammock::reply_uint(reply));
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -358,15 +358,15 @@ STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_ISteamUtils_GetAppID(
 }
 
 // SteamAPI_ISteamUtils_GetCurrentGameLanguage
-STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamAPI_ISteamUtils_GetCurrentGameLanguage(void* self) {
+STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamAPI_ISteamUtils_GetCurrentGameLanguage(void* self) {
     const char* result = kEmptyString;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUtils_GetCurrentGameLanguage", args, reply)) {
-            result = steambridge::reply_cstring(reply, kEmptyString);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUtils_GetCurrentGameLanguage", args, reply)) {
+            result = steammock::reply_cstring(reply, kEmptyString);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -375,15 +375,15 @@ STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamAPI_ISteamUtils_GetCurrentG
 }
 
 // SteamAPI_ISteamUtils_GetSecondsSinceAppActive
-STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_ISteamUtils_GetSecondsSinceAppActive(void* self) {
+STEAMMOCK_EXPORT std::uint32_t STEAMMOCK_CALL SteamAPI_ISteamUtils_GetSecondsSinceAppActive(void* self) {
     std::uint32_t result = 0;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUtils_GetSecondsSinceAppActive", args, reply)) {
-            result = static_cast<std::uint32_t>(steambridge::reply_uint(reply));
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUtils_GetSecondsSinceAppActive", args, reply)) {
+            result = static_cast<std::uint32_t>(steammock::reply_uint(reply));
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -392,15 +392,15 @@ STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_ISteamUtils_GetSecond
 }
 
 // SteamAPI_ISteamUtils_GetServerRealTime
-STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_ISteamUtils_GetServerRealTime(void* self) {
+STEAMMOCK_EXPORT std::uint32_t STEAMMOCK_CALL SteamAPI_ISteamUtils_GetServerRealTime(void* self) {
     std::uint32_t result = 0;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUtils_GetServerRealTime", args, reply)) {
-            result = static_cast<std::uint32_t>(steambridge::reply_uint(reply));
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUtils_GetServerRealTime", args, reply)) {
+            result = static_cast<std::uint32_t>(steammock::reply_uint(reply));
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -409,15 +409,15 @@ STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamAPI_ISteamUtils_GetServer
 }
 
 // SteamAPI_ISteamUtils_GetSteamUILanguage
-STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamAPI_ISteamUtils_GetSteamUILanguage(void* self) {
+STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamAPI_ISteamUtils_GetSteamUILanguage(void* self) {
     const char* result = kEmptyString;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("self", steambridge::arg_pointer(self));
+        steammock::Json args = steammock::Json::object();
+        args.set("self", steammock::arg_pointer(self));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_ISteamUtils_GetSteamUILanguage", args, reply)) {
-            result = steambridge::reply_cstring(reply, kEmptyString);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_ISteamUtils_GetSteamUILanguage", args, reply)) {
+            result = steammock::reply_cstring(reply, kEmptyString);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -426,14 +426,14 @@ STEAMBRIDGE_EXPORT const char* STEAMBRIDGE_CALL SteamAPI_ISteamUtils_GetSteamUIL
 }
 
 // SteamAPI_Init
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_Init(void) {
+STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_Init(void) {
     bool result = false;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_Init", args, reply)) {
-            result = steambridge::reply_bool(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_Init", args, reply)) {
+            result = steammock::reply_bool(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -442,14 +442,14 @@ STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_Init(void) {
 }
 
 // SteamAPI_IsSteamRunning
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_IsSteamRunning(void) {
+STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_IsSteamRunning(void) {
     bool result = false;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_IsSteamRunning", args, reply)) {
-            result = steambridge::reply_bool(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_IsSteamRunning", args, reply)) {
+            result = steammock::reply_bool(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -458,43 +458,43 @@ STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_IsSteamRunning(void) {
 }
 
 // SteamAPI_RegisterCallResult
-STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_RegisterCallResult(void* pCallback, std::uint64_t hAPICall) {
+STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_RegisterCallResult(void* pCallback, std::uint64_t hAPICall) {
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("pCallback", steambridge::arg_pointer(pCallback));
-        args.set("hAPICall", steambridge::arg_uint(hAPICall));
+        steammock::Json args = steammock::Json::object();
+        args.set("pCallback", steammock::arg_pointer(pCallback));
+        args.set("hAPICall", steammock::arg_uint(hAPICall));
 
-        steambridge::Json reply;
-        (void)steambridge::invoke("SteamAPI_RegisterCallResult", args, reply);
+        steammock::Json reply;
+        (void)steammock::invoke("SteamAPI_RegisterCallResult", args, reply);
     } catch (...) {
         // Never let an exception cross into the game.
     }
 }
 
 // SteamAPI_RegisterCallback
-STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_RegisterCallback(void* pCallback, std::int32_t iCallback) {
+STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_RegisterCallback(void* pCallback, std::int32_t iCallback) {
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("pCallback", steambridge::arg_pointer(pCallback));
-        args.set("iCallback", steambridge::arg_int(iCallback));
+        steammock::Json args = steammock::Json::object();
+        args.set("pCallback", steammock::arg_pointer(pCallback));
+        args.set("iCallback", steammock::arg_int(iCallback));
 
-        steambridge::Json reply;
-        (void)steambridge::invoke("SteamAPI_RegisterCallback", args, reply);
+        steammock::Json reply;
+        (void)steammock::invoke("SteamAPI_RegisterCallback", args, reply);
     } catch (...) {
         // Never let an exception cross into the game.
     }
 }
 
 // SteamAPI_RestartAppIfNecessary
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_RestartAppIfNecessary(std::uint32_t unOwnAppID) {
+STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamAPI_RestartAppIfNecessary(std::uint32_t unOwnAppID) {
     bool result = false;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("unOwnAppID", steambridge::arg_uint(unOwnAppID));
+        steammock::Json args = steammock::Json::object();
+        args.set("unOwnAppID", steammock::arg_uint(unOwnAppID));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamAPI_RestartAppIfNecessary", args, reply)) {
-            result = steambridge::reply_bool(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamAPI_RestartAppIfNecessary", args, reply)) {
+            result = steammock::reply_bool(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -503,93 +503,93 @@ STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamAPI_RestartAppIfNecessary(std::uin
 }
 
 // SteamAPI_RunCallbacks
-STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_RunCallbacks(void) {
+STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_RunCallbacks(void) {
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        (void)steambridge::invoke("SteamAPI_RunCallbacks", args, reply);
+        steammock::Json reply;
+        (void)steammock::invoke("SteamAPI_RunCallbacks", args, reply);
     } catch (...) {
         // Never let an exception cross into the game.
     }
 }
 
 // SteamAPI_SetMiniDumpComment
-STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_SetMiniDumpComment(const char* pchMsg) {
+STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_SetMiniDumpComment(const char* pchMsg) {
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("pchMsg", steambridge::arg_cstring(pchMsg));
+        steammock::Json args = steammock::Json::object();
+        args.set("pchMsg", steammock::arg_cstring(pchMsg));
 
-        steambridge::Json reply;
-        (void)steambridge::invoke("SteamAPI_SetMiniDumpComment", args, reply);
+        steammock::Json reply;
+        (void)steammock::invoke("SteamAPI_SetMiniDumpComment", args, reply);
     } catch (...) {
         // Never let an exception cross into the game.
     }
 }
 
 // SteamAPI_Shutdown
-STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_Shutdown(void) {
+STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_Shutdown(void) {
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        (void)steambridge::invoke("SteamAPI_Shutdown", args, reply);
+        steammock::Json reply;
+        (void)steammock::invoke("SteamAPI_Shutdown", args, reply);
     } catch (...) {
         // Never let an exception cross into the game.
     }
 }
 
 // SteamAPI_UnregisterCallResult
-STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_UnregisterCallResult(void* pCallback, std::uint64_t hAPICall) {
+STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_UnregisterCallResult(void* pCallback, std::uint64_t hAPICall) {
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("pCallback", steambridge::arg_pointer(pCallback));
-        args.set("hAPICall", steambridge::arg_uint(hAPICall));
+        steammock::Json args = steammock::Json::object();
+        args.set("pCallback", steammock::arg_pointer(pCallback));
+        args.set("hAPICall", steammock::arg_uint(hAPICall));
 
-        steambridge::Json reply;
-        (void)steambridge::invoke("SteamAPI_UnregisterCallResult", args, reply);
+        steammock::Json reply;
+        (void)steammock::invoke("SteamAPI_UnregisterCallResult", args, reply);
     } catch (...) {
         // Never let an exception cross into the game.
     }
 }
 
 // SteamAPI_UnregisterCallback
-STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_UnregisterCallback(void* pCallback) {
+STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_UnregisterCallback(void* pCallback) {
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("pCallback", steambridge::arg_pointer(pCallback));
+        steammock::Json args = steammock::Json::object();
+        args.set("pCallback", steammock::arg_pointer(pCallback));
 
-        steambridge::Json reply;
-        (void)steambridge::invoke("SteamAPI_UnregisterCallback", args, reply);
+        steammock::Json reply;
+        (void)steammock::invoke("SteamAPI_UnregisterCallback", args, reply);
     } catch (...) {
         // Never let an exception cross into the game.
     }
 }
 
 // SteamAPI_WriteMiniDump
-STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamAPI_WriteMiniDump(std::uint32_t uStructuredExceptionCode, void* pvExceptionInfo, std::uint32_t uBuildID) {
+STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamAPI_WriteMiniDump(std::uint32_t uStructuredExceptionCode, void* pvExceptionInfo, std::uint32_t uBuildID) {
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("uStructuredExceptionCode", steambridge::arg_uint(uStructuredExceptionCode));
-        args.set("pvExceptionInfo", steambridge::arg_pointer(pvExceptionInfo));
-        args.set("uBuildID", steambridge::arg_uint(uBuildID));
+        steammock::Json args = steammock::Json::object();
+        args.set("uStructuredExceptionCode", steammock::arg_uint(uStructuredExceptionCode));
+        args.set("pvExceptionInfo", steammock::arg_pointer(pvExceptionInfo));
+        args.set("uBuildID", steammock::arg_uint(uBuildID));
 
-        steambridge::Json reply;
-        (void)steambridge::invoke("SteamAPI_WriteMiniDump", args, reply);
+        steammock::Json reply;
+        (void)steammock::invoke("SteamAPI_WriteMiniDump", args, reply);
     } catch (...) {
         // Never let an exception cross into the game.
     }
 }
 
 // SteamGameServer_GetHSteamPipe
-STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamGameServer_GetHSteamPipe(void) {
+STEAMMOCK_EXPORT std::uint32_t STEAMMOCK_CALL SteamGameServer_GetHSteamPipe(void) {
     std::uint32_t result = 0;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamGameServer_GetHSteamPipe", args, reply)) {
-            result = static_cast<std::uint32_t>(steambridge::reply_uint(reply));
+        steammock::Json reply;
+        if (steammock::invoke("SteamGameServer_GetHSteamPipe", args, reply)) {
+            result = static_cast<std::uint32_t>(steammock::reply_uint(reply));
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -598,14 +598,14 @@ STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamGameServer_GetHSteamPipe(
 }
 
 // SteamGameServer_GetHSteamUser
-STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamGameServer_GetHSteamUser(void) {
+STEAMMOCK_EXPORT std::uint32_t STEAMMOCK_CALL SteamGameServer_GetHSteamUser(void) {
     std::uint32_t result = 0;
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamGameServer_GetHSteamUser", args, reply)) {
-            result = static_cast<std::uint32_t>(steambridge::reply_uint(reply));
+        steammock::Json reply;
+        if (steammock::invoke("SteamGameServer_GetHSteamUser", args, reply)) {
+            result = static_cast<std::uint32_t>(steammock::reply_uint(reply));
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -614,34 +614,34 @@ STEAMBRIDGE_EXPORT std::uint32_t STEAMBRIDGE_CALL SteamGameServer_GetHSteamUser(
 }
 
 // SteamGameServer_RunCallbacks
-STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamGameServer_RunCallbacks(void) {
+STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamGameServer_RunCallbacks(void) {
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        (void)steambridge::invoke("SteamGameServer_RunCallbacks", args, reply);
+        steammock::Json reply;
+        (void)steammock::invoke("SteamGameServer_RunCallbacks", args, reply);
     } catch (...) {
         // Never let an exception cross into the game.
     }
 }
 
 // SteamGameServer_Shutdown
-STEAMBRIDGE_EXPORT void STEAMBRIDGE_CALL SteamGameServer_Shutdown(void) {
+STEAMMOCK_EXPORT void STEAMMOCK_CALL SteamGameServer_Shutdown(void) {
     try {
-        steambridge::Json args = steambridge::Json::object();
+        steammock::Json args = steammock::Json::object();
 
-        steambridge::Json reply;
-        (void)steambridge::invoke("SteamGameServer_Shutdown", args, reply);
+        steammock::Json reply;
+        (void)steammock::invoke("SteamGameServer_Shutdown", args, reply);
     } catch (...) {
         // Never let an exception cross into the game.
     }
 }
 
 // SteamInternal_ContextInit
-STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_ContextInit(void* pContextInitData) {
+STEAMMOCK_EXPORT void* STEAMMOCK_CALL SteamInternal_ContextInit(void* pContextInitData) {
     void* result = nullptr;
     try {
-        result = steambridge::context_init(pContextInitData, "SteamInternal_ContextInit");
+        result = steammock::context_init(pContextInitData, "SteamInternal_ContextInit");
     } catch (...) {
         // Never let an exception cross into the game.
     }
@@ -649,18 +649,18 @@ STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_ContextInit(void* pConte
 }
 
 // SteamInternal_CreateInterface
-STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_CreateInterface(const char* ver) {
+STEAMMOCK_EXPORT void* STEAMMOCK_CALL SteamInternal_CreateInterface(const char* ver) {
     void* result = nullptr;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("ver", steambridge::arg_cstring(ver));
+        steammock::Json args = steammock::Json::object();
+        args.set("ver", steammock::arg_cstring(ver));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamInternal_CreateInterface", args, reply)) {
-            result = steambridge::reply_pointer(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamInternal_CreateInterface", args, reply)) {
+            result = steammock::reply_pointer(reply);
         }
         if (result == nullptr) {
-            result = steambridge::interface_object(ver);
+            result = steammock::interface_object(ver);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -669,19 +669,19 @@ STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_CreateInterface(const ch
 }
 
 // SteamInternal_FindOrCreateGameServerInterface
-STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_FindOrCreateGameServerInterface(std::int32_t hSteamUser, const char* pszVersion) {
+STEAMMOCK_EXPORT void* STEAMMOCK_CALL SteamInternal_FindOrCreateGameServerInterface(std::int32_t hSteamUser, const char* pszVersion) {
     void* result = nullptr;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("hSteamUser", steambridge::arg_int(hSteamUser));
-        args.set("pszVersion", steambridge::arg_cstring(pszVersion));
+        steammock::Json args = steammock::Json::object();
+        args.set("hSteamUser", steammock::arg_int(hSteamUser));
+        args.set("pszVersion", steammock::arg_cstring(pszVersion));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamInternal_FindOrCreateGameServerInterface", args, reply)) {
-            result = steambridge::reply_pointer(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamInternal_FindOrCreateGameServerInterface", args, reply)) {
+            result = steammock::reply_pointer(reply);
         }
         if (result == nullptr) {
-            result = steambridge::interface_object(pszVersion);
+            result = steammock::interface_object(pszVersion);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -690,19 +690,19 @@ STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_FindOrCreateGameServerIn
 }
 
 // SteamInternal_FindOrCreateUserInterface
-STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_FindOrCreateUserInterface(std::int32_t hSteamUser, const char* pszVersion) {
+STEAMMOCK_EXPORT void* STEAMMOCK_CALL SteamInternal_FindOrCreateUserInterface(std::int32_t hSteamUser, const char* pszVersion) {
     void* result = nullptr;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("hSteamUser", steambridge::arg_int(hSteamUser));
-        args.set("pszVersion", steambridge::arg_cstring(pszVersion));
+        steammock::Json args = steammock::Json::object();
+        args.set("hSteamUser", steammock::arg_int(hSteamUser));
+        args.set("pszVersion", steammock::arg_cstring(pszVersion));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamInternal_FindOrCreateUserInterface", args, reply)) {
-            result = steambridge::reply_pointer(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamInternal_FindOrCreateUserInterface", args, reply)) {
+            result = steammock::reply_pointer(reply);
         }
         if (result == nullptr) {
-            result = steambridge::interface_object(pszVersion);
+            result = steammock::interface_object(pszVersion);
         }
     } catch (...) {
         // Never let an exception cross into the game.
@@ -711,20 +711,20 @@ STEAMBRIDGE_EXPORT void* STEAMBRIDGE_CALL SteamInternal_FindOrCreateUserInterfac
 }
 
 // SteamInternal_GameServer_Init
-STEAMBRIDGE_EXPORT bool STEAMBRIDGE_CALL SteamInternal_GameServer_Init(std::uint32_t unIP, std::uint16_t usSteamPort, std::uint16_t usGamePort, std::uint16_t usQueryPort, std::int32_t eServerMode, const char* pchVersionString) {
+STEAMMOCK_EXPORT bool STEAMMOCK_CALL SteamInternal_GameServer_Init(std::uint32_t unIP, std::uint16_t usSteamPort, std::uint16_t usGamePort, std::uint16_t usQueryPort, std::int32_t eServerMode, const char* pchVersionString) {
     bool result = false;
     try {
-        steambridge::Json args = steambridge::Json::object();
-        args.set("unIP", steambridge::arg_uint(unIP));
-        args.set("usSteamPort", steambridge::arg_uint(usSteamPort));
-        args.set("usGamePort", steambridge::arg_uint(usGamePort));
-        args.set("usQueryPort", steambridge::arg_uint(usQueryPort));
-        args.set("eServerMode", steambridge::arg_int(eServerMode));
-        args.set("pchVersionString", steambridge::arg_cstring(pchVersionString));
+        steammock::Json args = steammock::Json::object();
+        args.set("unIP", steammock::arg_uint(unIP));
+        args.set("usSteamPort", steammock::arg_uint(usSteamPort));
+        args.set("usGamePort", steammock::arg_uint(usGamePort));
+        args.set("usQueryPort", steammock::arg_uint(usQueryPort));
+        args.set("eServerMode", steammock::arg_int(eServerMode));
+        args.set("pchVersionString", steammock::arg_cstring(pchVersionString));
 
-        steambridge::Json reply;
-        if (steambridge::invoke("SteamInternal_GameServer_Init", args, reply)) {
-            result = steambridge::reply_bool(reply);
+        steammock::Json reply;
+        if (steammock::invoke("SteamInternal_GameServer_Init", args, reply)) {
+            result = steammock::reply_bool(reply);
         }
     } catch (...) {
         // Never let an exception cross into the game.

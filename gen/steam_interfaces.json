@@ -1,6 +1,6 @@
 {
   "source": "Steamworks SDK interface headers, one entry per interface version",
-  "format": "each version's slots are one row each: [method, returns] or [method, returns, params], a parameter being [name, type] with \"out\" or \"unmarshalable\" after it. A type is a kind from steambridge_codegen's table or a value class or structure declared here. A row that says more carries an object of notes as its last element, and the vtable's destructor slot is [\"~\"] - or [\"~\", notes] for the one the SDK gives a flat name.",
+  "format": "each version's slots are one row each: [method, returns] or [method, returns, params], a parameter being [name, type] with \"out\" or \"unmarshalable\" after it. A type is a kind from steammock_codegen's table or a value class or structure declared here. A row that says more carries an object of notes as its last element, and the vtable's destructor slot is [\"~\"] - or [\"~\", notes] for the one the SDK gives a flat name.",
   "value_types": [
     {"name": "CGameID", "wire": "uint64", "size": 8, "member": "m_gameid"},
     {"name": "CSteamID", "wire": "uint64", "size": 8, "member": "m_steamid"}

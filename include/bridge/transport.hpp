@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  How a call reaches the backend.
@@ -57,4 +57,4 @@ private:
     unsigned _timeout_ms;
 };
 
-}  // namespace steambridge
+}  // namespace steammock

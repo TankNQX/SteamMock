@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  What the stub exports, as the backend sees it.
@@ -34,4 +34,4 @@ const char* api_surface_name() noexcept;
 int api_surface_revision() noexcept;
 const SurfaceCall* api_surface_calls(std::size_t& count) noexcept;
 
-}  // namespace steambridge
+}  // namespace steammock

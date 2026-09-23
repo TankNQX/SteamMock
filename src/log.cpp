@@ -5,7 +5,7 @@
 
 #include <windows.h>
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 LogLevel g_level = LogLevel::info;
@@ -58,7 +58,7 @@ void log_write(LogLevel level, std::string_view message) noexcept {
         }
         std::string line;
         line.reserve(g_prefix.size() + message.size() + 40u);
-        line += "[steambridge] ";
+        line += "[steammock] ";
         line += level_name(level);
         line += ": ";
         if (!g_prefix.empty()) {
@@ -89,9 +89,9 @@ void log_configure(const char* module_path) noexcept {
             return;
         }
         g_configured = true;
-        g_level = parse_level(std::getenv("STEAMBRIDGE_LOG_LEVEL"));
+        g_level = parse_level(std::getenv("STEAMMOCK_LOG_LEVEL"));
 
-        if (const char* path = std::getenv("STEAMBRIDGE_LOG")) {
+        if (const char* path = std::getenv("STEAMMOCK_LOG")) {
             if (path[0] != '\0') {
                 g_file = std::fopen(path, "ab");
             }
@@ -116,4 +116,4 @@ void log_configure(const char* module_path) noexcept {
     }
 }
 
-}  // namespace steambridge
+}  // namespace steammock

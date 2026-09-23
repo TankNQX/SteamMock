@@ -4,7 +4,7 @@
 #include <string>
 #include <utility>
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 // ---------------------------------------------------------------------------
@@ -423,4 +423,4 @@ std::vector<std::string> state_handled_calls() {
     return names;
 }
 
-}  // namespace steambridge
+}  // namespace steammock

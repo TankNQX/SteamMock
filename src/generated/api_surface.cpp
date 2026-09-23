@@ -2,12 +2,12 @@
 //  GENERATED FILE - do not edit by hand.
 //
 //  Source:   gen/steam_api.idl.json (surface 'seed', revision 2, 43 calls)
-//  Regenerate: steambridge_codegen
+//  Regenerate: steammock_codegen
 // ============================================================================
 
 #include "bridge/surface.hpp"
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 const SurfaceParam kParams_SteamAPI_ISteamApps_GetAppBuildId[] = {
@@ -197,4 +197,4 @@ const SurfaceCall* api_surface_calls(std::size_t& count) noexcept {
     return kCalls;
 }
 
-}  // namespace steambridge
+}  // namespace steammock

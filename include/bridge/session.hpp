@@ -9,7 +9,7 @@
 
 #include "bridge/json.hpp"
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  The per-game state machine.
@@ -136,4 +136,4 @@ private:
 // exists to catch.
 std::vector<std::string> state_handled_calls();
 
-}  // namespace steambridge
+}  // namespace steammock

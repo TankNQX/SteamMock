@@ -10,12 +10,12 @@ the [README](../README.md); for how the two halves talk, see [protocol.md](proto
 | --- | --- |
 | `gen/steam_api.idl.json` | The flat API surface the stub exports. **The one file to edit to add a call.** |
 | `gen/steam_interfaces.json` | The interface layouts the stub hands out: names, version strings, slot order and argument kinds. Hand-maintained, one row per slot, and validated by the generator - see [Interface layouts](#interface-layouts). |
-| `src/idl.cpp`, `src/codegen_main.cpp` | `steambridge_codegen` turns the IDL into the trampolines, the `.def` and the surface table. |
+| `src/idl.cpp`, `src/codegen_main.cpp` | `steammock_codegen` turns the IDL into the trampolines, the `.def` and the surface table. |
 | `src/generated/` | Generated and committed - the build needs nothing to regenerate them. `--check` fails if stale. |
 | `include/bridge/`, `src/` | Protocol, JSON, transport, client, the slot marshalling in `synth.cpp`, the DLL entry point. |
 | `src/session.cpp`, `src/scenario.cpp` | The backend's decisions: per-game state, and the scenario that overrides it. |
 | `src/server.cpp`, `src/backend_main.cpp` | The loopback server, and the console front end for it. |
-| `src/gui_main.cpp` | The live view. Optional, behind `STEAMBRIDGE_BUILD_GUI`. |
+| `src/gui_main.cpp` | The live view. Optional, behind `STEAMMOCK_BUILD_GUI`. |
 | `scenarios/` | Two scenarios: `example.json` for `fake_game` and the tests, `spacewar.json` for the walkthrough in the [README](../README.md). |
 | `tests/` | C++ unit tests, `fake_game`, and the end-to-end test. |
 | `docs/` | These notes. |
@@ -27,16 +27,16 @@ from where it runs and what is in its environment:
 
 | Variable | What it does |
 | --- | --- |
-| `STEAMBRIDGE_HOST`, `STEAMBRIDGE_PORT` | Where the backend is. Default `127.0.0.1:50990`. |
-| `STEAMBRIDGE_OFF` | Set to `1` to bypass the bridge: every call answers as if Steam is absent. |
-| `STEAMBRIDGE_TIMEOUT_MS` | How long a call waits for the backend. Default `2000`. |
-| `STEAMBRIDGE_LOG` | A file to append the stub's own log to. |
-| `STEAMBRIDGE_LOG_LEVEL` | `error`, `warning`, `info` (default) or `debug`. |
+| `STEAMMOCK_HOST`, `STEAMMOCK_PORT` | Where the backend is. Default `127.0.0.1:50990`. |
+| `STEAMMOCK_OFF` | Set to `1` to bypass the bridge: every call answers as if Steam is absent. |
+| `STEAMMOCK_TIMEOUT_MS` | How long a call waits for the backend. Default `2000`. |
+| `STEAMMOCK_LOG` | A file to append the stub's own log to. |
+| `STEAMMOCK_LOG_LEVEL` | `error`, `warning`, `info` (default) or `debug`. |
 
 If no backend is listening, the stub says so once and every call takes its Steam-absent value. A game
 still boots, and a backend started later is picked up on the next call.
 
-The console backend (`steambridge`):
+The console backend (`steammock`):
 
 | Option | What it does |
 | --- | --- |
@@ -51,7 +51,7 @@ The console backend (`steambridge`):
 The live view takes four of these and no more - `--host`, `--port`, `--scenario` and `--start` - and
 an argument it does not know is ignored rather than reported. It keeps its own log in the window
 instead of writing one to disk, and has no `--transcript`: for an artifact of a run, use the console
-backend. `-DSTEAMBRIDGE_STUB_NAME` decides what the built DLL is called - `steam_api` for a 32-bit
+backend. `-DSTEAMMOCK_STUB_NAME` decides what the built DLL is called - `steam_api` for a 32-bit
 game, which is what the README's walkthrough builds.
 
 Match rules come in three kinds, and a rule with none of them matches every game:
@@ -77,7 +77,7 @@ ctest --test-dir build -C Release --output-on-failure
 the way a game's import table would and prints what it got:
 
 ```bat
-set STEAMBRIDGE_STUB=build\Release\steam_api.dll
+set STEAMMOCK_STUB=build\Release\steam_api.dll
 build\Release\fake_game.exe
 ```
 
@@ -85,13 +85,13 @@ build\Release\fake_game.exe
 
 ```sh
 # edit gen/steam_api.idl.json, then:
-build/Release/steambridge_codegen
+build/Release/steammock_codegen
 ```
 
 The generator validates the IDL and rewrites `src/generated/api_stub.cpp`,
 `src/generated/steam_api_exports.def` and `src/generated/api_surface.cpp`. The
 `generated_files_are_current` test fails the build if the IDL and the generated files have drifted
-apart, so there is no way to forget this step. `steambridge --list-api` prints the surface as the
+apart, so there is no way to forget this step. `steammock --list-api` prints the surface as the
 backend sees it.
 
 Most of the seed surface's signatures are hand-written rather than lifted from a real header - the
@@ -101,7 +101,7 @@ so reconcile the rest against your own `steam_api_flat.h` (or the export table o
 
 A game notices a missing export at load time, not at call time: Windows resolves the whole import
 table first, so one name the surface does not cover stops the game before `DllMain`. Compare the
-game's `steam_api.dll` imports against `steambridge --list-api` when a game will not start.
+game's `steam_api.dll` imports against `steammock --list-api` when a game will not start.
 
 ## Interface layouts
 
@@ -112,7 +112,7 @@ hands out objects of its own, described by `gen/steam_interfaces.json`: one entr
 its version string and its slots, in order.
 
 That file is **hand-maintained data**. Adding a version string means adding its slots there and
-running `steambridge_codegen`, which refuses to generate anything from a file whose kinds, names or
+running `steammock_codegen`, which refuses to generate anything from a file whose kinds, names or
 sizes do not add up - that validation is the only thing standing between a hand edit and a vtable a
 game reads the wrong way. The entries were laid out by importing SDK headers once (five generations at
 a time, oldest first, one version string per entry), and what that established is what a hand edit has
@@ -192,7 +192,7 @@ taken from an import:
 
 ### What the generator writes from it
 
-`steambridge_codegen` reads `gen/steam_interfaces.json` as well as the IDL, and writes
+`steammock_codegen` reads `gen/steam_interfaces.json` as well as the IDL, and writes
 `src/generated/api_interfaces.cpp` (checked for staleness like the rest):
 
 * one class per version string, whose virtuals mirror the interface's slots in order, so the vtable
@@ -243,9 +243,9 @@ Everything below runs on a push, and all of it must be green.
   were caught rather than shipped.
 * **clang-format** (`tools/check-format.ps1`), so the hand-written files stay formatted as
   `.clang-format` describes. The files under `src/generated/` are **out of scope on purpose**: a
-  test byte-compares them against what `steambridge_codegen` writes, so an editor's format-on-save
+  test byte-compares them against what `steammock_codegen` writes, so an editor's format-on-save
   would break the build. Leave that setting off for those paths, or run the checker to find out.
-* **The live view** (`gui / msvc / x64`), built with `-DSTEAMBRIDGE_BUILD_GUI=ON` and warnings as
+* **The live view** (`gui / msvc / x64`), built with `-DSTEAMMOCK_BUILD_GUI=ON` and warnings as
   errors. It is the only job that checks out the submodules, so the rest stay fast and need no
   third-party code.
 

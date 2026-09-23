@@ -9,5 +9,5 @@
 //  the calling convention, on x86 exactly as on x64.
 
 // Windows only: the stub is a DLL, and a game loads it by name.
-#define STEAMBRIDGE_EXPORT extern "C" __declspec(dllexport)
-#define STEAMBRIDGE_CALL __cdecl
+#define STEAMMOCK_EXPORT extern "C" __declspec(dllexport)
+#define STEAMMOCK_CALL __cdecl

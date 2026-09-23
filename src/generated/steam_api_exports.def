@@ -1,5 +1,5 @@
 ; GENERATED FILE - do not edit by hand.
-; Regenerate: steambridge_codegen
+; Regenerate: steammock_codegen
 ;
 ; A .def rather than __declspec(dllexport) so the exported names are exactly the
 ; ones games import, with no decoration on x86 and no difference on x64.
@@ -38,9 +38,6 @@ EXPORTS
     SteamAPI_UnregisterCallResult
     SteamAPI_UnregisterCallback
     SteamAPI_WriteMiniDump
-    SteamBridge_SessionId
-    SteamBridge_Stats
-    SteamBridge_Version
     SteamGameServer_GetHSteamPipe
     SteamGameServer_GetHSteamUser
     SteamGameServer_RunCallbacks
@@ -50,3 +47,6 @@ EXPORTS
     SteamInternal_FindOrCreateGameServerInterface
     SteamInternal_FindOrCreateUserInterface
     SteamInternal_GameServer_Init
+    SteamMock_SessionId
+    SteamMock_Stats
+    SteamMock_Version

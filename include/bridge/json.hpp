@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  Deliberately small JSON.
@@ -70,4 +70,4 @@ private:
     std::vector<std::pair<std::string, Json>> _members;  // object members, insertion order
 };
 
-}  // namespace steambridge
+}  // namespace steammock

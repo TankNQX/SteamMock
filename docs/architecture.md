@@ -25,7 +25,7 @@ is their entry point: the stub is a DLL that a game loads, the backend is a prog
    integers, so the backend can echo them but not follow them.
 3. `Client::call` takes the round-trip lock, dials the backend if it is not connected, sends
    `{"type":"call","seq":N,...}`, and blocks for the matching reply. Loopback latency is
-   microseconds; the timeout (`STEAMBRIDGE_TIMEOUT_MS`, default 2000) is a ceiling, not a target.
+   microseconds; the timeout (`STEAMMOCK_TIMEOUT_MS`, default 2000) is a ceiling, not a target.
 4. `Server` hands the call to `Dispatcher::answer`, which tries the scenario, then the session, and
    reports which of them spoke. It answers with `answer: "handled"` plus `ret`/`out`, or with
    `answer: "default"`.
@@ -116,7 +116,7 @@ The objects answer nothing themselves: every slot forwards to the backend, and w
 declines falls back to the default the game would see with Steam absent. A structure passed by value
 is the one thing the wire cannot carry, so those calls are reported and answered with a zeroed value;
 `gen/steam_interfaces.json` is where a newer SDK's version strings are added, and
-`steambridge_codegen` turns them into slots.
+`steammock_codegen` turns them into slots.
 
 Two ways in, both ending at the same objects, and both of them needing the stub's help only because
 they are the *fetch*:

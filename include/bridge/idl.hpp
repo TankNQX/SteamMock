@@ -5,7 +5,7 @@
 
 #include "bridge/json.hpp"
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  gen/steam_api.idl.json - the one file to edit to add a call.
@@ -61,4 +61,4 @@ std::string render_api_stub(const Idl& idl);
 std::string render_exports_def(const Idl& idl);
 std::string render_api_surface(const Idl& idl);
 
-}  // namespace steambridge
+}  // namespace steammock

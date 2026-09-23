@@ -11,7 +11,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 using socket_t = SOCKET;
@@ -174,4 +174,4 @@ bool TcpTransport::exchange(const std::string& request, std::string& response) {
     return recv_all(handle, response.data(), reply_length);
 }
 
-}  // namespace steambridge
+}  // namespace steammock

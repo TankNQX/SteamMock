@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 void append_escaped(std::string& out, std::string_view text) {
@@ -518,4 +518,4 @@ bool Json::parse(std::string_view text, Json& out) {
     return parser.parse(out);
 }
 
-}  // namespace steambridge
+}  // namespace steammock

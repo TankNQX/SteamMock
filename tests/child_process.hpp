@@ -17,7 +17,7 @@
 #include <string>
 #include <thread>
 
-namespace steambridge_test {
+namespace steammock_test {
 
 // Quotes one argument for a Win32 command line. Without this a path under
 // "C:\Program Files" splits into two arguments and the child never starts.
@@ -168,4 +168,4 @@ private:
     bool _exited = false;
 };
 
-}  // namespace steambridge_test
+}  // namespace steammock_test

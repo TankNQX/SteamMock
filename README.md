@@ -1,4 +1,4 @@
-# SteamApiBridge
+# SteamMock
 
 Watch a real game's Steam calls arrive, live, without Steam.
 
@@ -21,7 +21,7 @@ each one, how long it took, and the state that game is being told.*
 the stand-in DLL and the window.
 
 ```bat
-cmake -S . -B build -A Win32 -DSTEAMBRIDGE_BUILD_GUI=ON -DSTEAMBRIDGE_STUB_NAME=steam_api
+cmake -S . -B build -A Win32 -DSTEAMMOCK_BUILD_GUI=ON -DSTEAMMOCK_STUB_NAME=steam_api
 cmake --build build --config Release
 ```
 
@@ -35,7 +35,7 @@ next to `SteamworksExample.exe`. It takes the place of the real one.
 **4. Start the window.** From your checkout:
 
 ```bat
-build\Release\steambridge_gui.exe --scenario scenarios\spacewar.json --start
+build\Release\steammock_gui.exe --scenario scenarios\spacewar.json --start
 ```
 
 The window opens already serving, and says `listening on 127.0.0.1:50990`.
@@ -73,8 +73,8 @@ running, which is why the game keeps going instead of getting an invented succes
 * The DLL must be the **32-bit** build from step 1. A 64-bit one will not load into Spacewar.
 * The window must be **running first**. Started later, the game still finds it - the next call picks
   it up - and the row appears then.
-* To see the other side of the conversation, run the game with `STEAMBRIDGE_LOG` set to a file
-  (`set STEAMBRIDGE_LOG=stub.log` before `SteamworksExample.exe`) and read what the stub did.
+* To see the other side of the conversation, run the game with `STEAMMOCK_LOG` set to a file
+  (`set STEAMMOCK_LOG=stub.log` before `SteamworksExample.exe`) and read what the stub did.
 
 ## What this is not
 

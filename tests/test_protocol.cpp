@@ -26,8 +26,8 @@ void check(const char* what, bool ok) {
     }
 }
 
-bool reparses(const steambridge::Json& value, steambridge::Json& out) {
-    return steambridge::Json::parse(value.dump(), out);
+bool reparses(const steammock::Json& value, steammock::Json& out) {
+    return steammock::Json::parse(value.dump(), out);
 }
 
 void test_numbers() {
@@ -35,80 +35,80 @@ void test_numbers() {
 
     // A Steam id is 17 digits: it has to survive exactly, which is why the
     // parser keeps integers away from doubles.
-    steambridge::Json steam_id = steambridge::Json::integer(76561198000000001LL);
-    steambridge::Json back;
+    steammock::Json steam_id = steammock::Json::integer(76561198000000001LL);
+    steammock::Json back;
     check("a 64-bit id survives the round trip",
           reparses(steam_id, back) && back.as_uint64() == 76561198000000001ull);
 
-    steambridge::Json negative = steambridge::Json::integer(-1234567890123LL);
+    steammock::Json negative = steammock::Json::integer(-1234567890123LL);
     check("a negative integer survives",
           reparses(negative, back) && back.as_int64() == -1234567890123LL);
 
-    steambridge::Json zero = steambridge::Json::integer(0);
+    steammock::Json zero = steammock::Json::integer(0);
     check("zero survives", reparses(zero, back) && back.as_int64() == 0);
 
-    steambridge::Json real = steambridge::Json::real(0.5);
+    steammock::Json real = steammock::Json::real(0.5);
     check("a fraction survives", reparses(real, back) && back.as_double() == 0.5);
 
-    steambridge::Json exponent;
+    steammock::Json exponent;
     check("an exponent is understood",
-          steambridge::Json::parse("1.5e3", exponent) && exponent.as_double() == 1500.0);
+          steammock::Json::parse("1.5e3", exponent) && exponent.as_double() == 1500.0);
 
-    steambridge::Json parsed_int;
+    steammock::Json parsed_int;
     check("a parsed integer is still an integer",
-          steambridge::Json::parse("42", parsed_int) && parsed_int.dump() == "42");
+          steammock::Json::parse("42", parsed_int) && parsed_int.dump() == "42");
 
-    steambridge::Json boolean = steambridge::Json::boolean(true);
+    steammock::Json boolean = steammock::Json::boolean(true);
     check("a boolean survives", reparses(boolean, back) && back.as_bool());
 }
 
 void test_booleans() {
     std::printf("[:] booleans\n");
 
-    steambridge::Json value;
-    check("true reads as true", steambridge::Json::parse("true", value) && value.as_bool());
-    check("false reads as false", steambridge::Json::parse("false", value) && !value.as_bool());
+    steammock::Json value;
+    check("true reads as true", steammock::Json::parse("true", value) && value.as_bool());
+    check("false reads as false", steammock::Json::parse("false", value) && !value.as_bool());
     // A hand-written scenario may spell them as numbers.
-    check("1 reads as true", steambridge::Json::parse("1", value) && value.as_bool());
-    check("0 reads as false", steambridge::Json::parse("0", value) && !value.as_bool());
-    check("a boolean dumps as a literal", steambridge::Json::boolean(true).dump() == "true");
+    check("1 reads as true", steammock::Json::parse("1", value) && value.as_bool());
+    check("0 reads as false", steammock::Json::parse("0", value) && !value.as_bool());
+    check("a boolean dumps as a literal", steammock::Json::boolean(true).dump() == "true");
     check("a boolean is not a number node",
-          steambridge::Json::parse("true", value) && !value.is_number());
+          steammock::Json::parse("true", value) && !value.is_number());
 }
 
 void test_strings() {
     std::printf("[:] strings\n");
 
     const std::string nasty = "quote:\" backslash:\\ newline:\n tab:\t control:\x01";
-    steambridge::Json text = steambridge::Json::string(nasty);
-    steambridge::Json back;
+    steammock::Json text = steammock::Json::string(nasty);
+    steammock::Json back;
     check("escapes survive the round trip", reparses(text, back) && back.as_string() == nasty);
     check("the dump is one line and has no raw control bytes",
           text.dump().find('\n') == std::string::npos &&
               text.dump().find('\x01') == std::string::npos);
 
-    steambridge::Json utf8;
+    steammock::Json utf8;
     // Written as explicit bytes rather than \u escapes: a narrow \u literal is
     // encoded in the execution character set, so it means different bytes on
     // MSVC (system code page) and on GCC (UTF-8). The bytes are the contract.
     check("a UTF-8 payload survives",
-          steambridge::Json::parse("{\"s\":\"caf\xc3\xa9 \xe2\x9c\x93\"}", utf8) &&
+          steammock::Json::parse("{\"s\":\"caf\xc3\xa9 \xe2\x9c\x93\"}", utf8) &&
               utf8.find("s")->as_string() == "caf\xc3\xa9 \xe2\x9c\x93");
 
-    steambridge::Json escaped;
-    check("a \\u escape becomes UTF-8", steambridge::Json::parse("{\"s\":\"\\u00e9\"}", escaped) &&
+    steammock::Json escaped;
+    check("a \\u escape becomes UTF-8", steammock::Json::parse("{\"s\":\"\\u00e9\"}", escaped) &&
                                             escaped.find("s")->as_string() == "\xc3\xa9");
 
-    steambridge::Json emoji;
+    steammock::Json emoji;
     check("a surrogate pair becomes one code point",
-          steambridge::Json::parse("{\"s\":\"\\ud83d\\ude00\"}", emoji) &&
+          steammock::Json::parse("{\"s\":\"\\ud83d\\ude00\"}", emoji) &&
               emoji.find("s")->as_string() == "\xf0\x9f\x98\x80");
 
-    steambridge::Json empty = steambridge::Json::string("");
+    steammock::Json empty = steammock::Json::string("");
     check("an empty string survives", reparses(empty, back) && back.as_string().empty());
 
-    steambridge::Json null_string;
-    check("null is distinct from an empty string", steambridge::Json::parse("null", null_string) &&
+    steammock::Json null_string;
+    check("null is distinct from an empty string", steammock::Json::parse("null", null_string) &&
                                                        null_string.is_null() &&
                                                        !null_string.is_string());
 }
@@ -116,18 +116,18 @@ void test_strings() {
 void test_containers() {
     std::printf("[:] objects and arrays\n");
 
-    steambridge::Json object = steambridge::Json::object();
-    object.set("type", steambridge::Json::string("call"));
-    object.set("seq", steambridge::Json::integer(7));
-    steambridge::Json args = steambridge::Json::object();
-    args.set("self", steambridge::Json::integer(4660));
-    args.set("pchName", steambridge::Json::string("Deaths"));
-    args.set("pnData", steambridge::Json::null());
+    steammock::Json object = steammock::Json::object();
+    object.set("type", steammock::Json::string("call"));
+    object.set("seq", steammock::Json::integer(7));
+    steammock::Json args = steammock::Json::object();
+    args.set("self", steammock::Json::integer(4660));
+    args.set("pchName", steammock::Json::string("Deaths"));
+    args.set("pnData", steammock::Json::null());
     object.set("args", args);
 
-    steambridge::Json parsed;
+    steammock::Json parsed;
     check("a nested message survives", reparses(object, parsed));
-    const steambridge::Json* parsed_args = parsed.find("args");
+    const steammock::Json* parsed_args = parsed.find("args");
     check("the nested object is reachable",
           parsed_args != nullptr && parsed_args->is_object() &&
               parsed_args->find("pchName")->as_string() == "Deaths");
@@ -137,15 +137,15 @@ void test_containers() {
     check("members keep their order",
           object.dump().find("\"type\"") < object.dump().find("\"args\""));
 
-    object.set("seq", steambridge::Json::integer(8));
+    object.set("seq", steammock::Json::integer(8));
     check("setting a member twice replaces it in place",
           object.find("seq")->as_int64() == 8 && object.members().size() == 3u);
 
-    steambridge::Json array = steambridge::Json::array();
-    array.push(steambridge::Json::integer(1));
-    array.push(steambridge::Json::string("two"));
-    array.push(steambridge::Json::boolean(false));
-    steambridge::Json parsed_array;
+    steammock::Json array = steammock::Json::array();
+    array.push(steammock::Json::integer(1));
+    array.push(steammock::Json::string("two"));
+    array.push(steammock::Json::boolean(false));
+    steammock::Json parsed_array;
     check("an array survives", reparses(array, parsed_array) && parsed_array.items().size() == 3u &&
                                    parsed_array.items()[1].as_string() == "two");
     check("the dump is compact", array.dump() == "[1,\"two\",false]");
@@ -154,17 +154,17 @@ void test_containers() {
 void test_strictness() {
     std::printf("[:] rejection of malformed input\n");
 
-    steambridge::Json value;
-    check("trailing garbage is rejected", !steambridge::Json::parse("{} extra", value));
-    check("an unterminated object is rejected", !steambridge::Json::parse("{\"a\":1", value));
-    check("an unterminated string is rejected", !steambridge::Json::parse("\"abc", value));
-    check("an unknown escape is rejected", !steambridge::Json::parse("\"\\q\"", value));
-    check("a bare word is rejected", !steambridge::Json::parse("nope", value));
-    check("an empty argument is rejected", !steambridge::Json::parse("", value));
+    steammock::Json value;
+    check("trailing garbage is rejected", !steammock::Json::parse("{} extra", value));
+    check("an unterminated object is rejected", !steammock::Json::parse("{\"a\":1", value));
+    check("an unterminated string is rejected", !steammock::Json::parse("\"abc", value));
+    check("an unknown escape is rejected", !steammock::Json::parse("\"\\q\"", value));
+    check("a bare word is rejected", !steammock::Json::parse("nope", value));
+    check("an empty argument is rejected", !steammock::Json::parse("", value));
     // A runaway length prefix is exactly what a confused peer sends.
     const std::string too_deep = std::string(40, '[') + std::string(40, ']');
-    check("absurd nesting is rejected", !steambridge::Json::parse(too_deep, value));
-    check("a valid message is still accepted", steambridge::Json::parse("{\"a\":[1,2]}", value));
+    check("absurd nesting is rejected", !steammock::Json::parse(too_deep, value));
+    check("a valid message is still accepted", steammock::Json::parse("{\"a\":[1,2]}", value));
 }
 
 void test_framing() {
@@ -172,25 +172,25 @@ void test_framing() {
 
     char header[4] = {};
     for (const std::uint32_t length : {0u, 1u, 255u, 256u, 65535u, 0xFFFFFFFFu}) {
-        steambridge::write_frame_length(header, length);
-        if (steambridge::read_frame_length(header) != length) {
+        steammock::write_frame_length(header, length);
+        if (steammock::read_frame_length(header) != length) {
             check("a length survives the header", false);
             return;
         }
     }
     check("a length survives the header", true);
 
-    steambridge::write_frame_length(header, 0x04030201u);
+    steammock::write_frame_length(header, 0x04030201u);
     check("the length is little endian",
           header[0] == 0x01 && header[1] == 0x02 && header[2] == 0x03 && header[3] == 0x04);
     check("the frame limit is the one the server mirrors",
-          steambridge::kMaxFrameBytes == 4u * 1024u * 1024u);
+          steammock::kMaxFrameBytes == 4u * 1024u * 1024u);
 }
 
 }  // namespace
 
 int main() {
-    std::printf("[+] SteamApiBridge protocol tests\n\n");
+    std::printf("[+] SteamMock protocol tests\n\n");
     test_numbers();
     test_booleans();
     test_strings();

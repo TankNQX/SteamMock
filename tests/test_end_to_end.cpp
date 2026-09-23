@@ -1,7 +1,7 @@
 // ============================================================================
 //  End-to-end test: the real backend, the real stub DLL, a real game process.
 // ----------------------------------------------------------------------------
-//    test_end_to_end --server build/steambridge.exe \
+//    test_end_to_end --server build/steammock.exe \
 //                     --stub build/steam_api64.dll \
 //                     --game build/fake_game.exe \
 //                     --scenario scenarios/example.json
@@ -31,8 +31,8 @@
 #include "bridge/json.hpp"
 #include "child_process.hpp"
 
-using steambridge_test::ChildProcess;
-using steambridge_test::quote;
+using steammock_test::ChildProcess;
+using steammock_test::quote;
 
 namespace {
 
@@ -105,8 +105,8 @@ std::string value_of(const std::map<std::string, std::string>& values, const cha
     return found == values.end() ? std::string() : found->second;
 }
 
-std::vector<steambridge::Json> read_transcript(const std::string& path, bool& ok) {
-    std::vector<steambridge::Json> records;
+std::vector<steammock::Json> read_transcript(const std::string& path, bool& ok) {
+    std::vector<steammock::Json> records;
     std::string text;
     ok = read_file(path, text);
     if (!ok) {
@@ -123,16 +123,16 @@ std::vector<steambridge::Json> read_transcript(const std::string& path, bool& ok
         if (trimmed(line).empty()) {
             continue;
         }
-        steambridge::Json record;
-        if (steambridge::Json::parse(line, record)) {
+        steammock::Json record;
+        if (steammock::Json::parse(line, record)) {
             records.push_back(std::move(record));
         }
     }
     return records;
 }
 
-std::string text_member(const steambridge::Json& record, const char* key) {
-    const steambridge::Json* member = record.find(key);
+std::string text_member(const steammock::Json& record, const char* key) {
+    const steammock::Json* member = record.find(key);
     return member != nullptr && member->is_string() ? member->as_string() : std::string();
 }
 
@@ -212,12 +212,12 @@ int main(int argc, char** argv) {
         }
     }
 
-    std::printf("[+] SteamApiBridge end-to-end test\n");
+    std::printf("[+] SteamMock end-to-end test\n");
 
     char temp_directory[MAX_PATH] = {};
     GetTempPathA(MAX_PATH, temp_directory);
     const std::string transcript =
-        std::string(temp_directory) + "steambridge-e2e-" +
+        std::string(temp_directory) + "steammock-e2e-" +
         std::to_string(static_cast<unsigned long>(GetCurrentProcessId())) + ".jsonl";
     DeleteFileA(transcript.c_str());
 
@@ -255,10 +255,10 @@ int main(int argc, char** argv) {
     std::printf("    backend %s:%s\n", host.c_str(), port.c_str());
 
     // --- the game, with the backend's address in its environment ------------
-    _putenv_s("STEAMBRIDGE_STUB", stub_path.c_str());
-    _putenv_s("STEAMBRIDGE_HOST", host.c_str());
-    _putenv_s("STEAMBRIDGE_PORT", port.c_str());
-    _putenv_s("STEAMBRIDGE_LOG_LEVEL", "debug");
+    _putenv_s("STEAMMOCK_STUB", stub_path.c_str());
+    _putenv_s("STEAMMOCK_HOST", host.c_str());
+    _putenv_s("STEAMMOCK_PORT", port.c_str());
+    _putenv_s("STEAMMOCK_LOG_LEVEL", "debug");
 
     ChildProcess game;
     if (!game.start(quote(game_path), error)) {
@@ -362,7 +362,7 @@ int main(int argc, char** argv) {
     // --- what the backend recorded ----------------------------------------
     std::printf("\n[:] what the backend recorded\n");
     const int forwarded = std::atoi(value_of(values, "forwarded").c_str());
-    std::vector<steambridge::Json> records;
+    std::vector<steammock::Json> records;
     for (int attempt = 0; attempt < 100; ++attempt) {
         bool ok = false;
         records = read_transcript(transcript, ok);
@@ -390,7 +390,7 @@ int main(int argc, char** argv) {
           records.empty() ? "no records" : text_member(records.back(), "call"));
 
     std::map<std::string, std::string> sources;
-    for (const steambridge::Json& record : records) {
+    for (const steammock::Json& record : records) {
         sources[text_member(record, "call")] = text_member(record, "via");
     }
     check("identity was answered from the session state",
@@ -405,7 +405,7 @@ int main(int argc, char** argv) {
     // calls. Both arrive under one name, because the backend answers calls rather
     // than callers.
     int steam_id_records = 0;
-    for (const steambridge::Json& record : records) {
+    for (const steammock::Json& record : records) {
         if (text_member(record, "call") == "SteamAPI_ISteamUser_GetSteamID") {
             ++steam_id_records;
         }
@@ -417,11 +417,11 @@ int main(int argc, char** argv) {
     // it as the integer it is, so the steam id the game passed by value through
     // the vtable has to be readable in the record of the call.
     bool value_argument_recorded = false;
-    for (const steambridge::Json& record : records) {
+    for (const steammock::Json& record : records) {
         if (text_member(record, "call") != "SteamAPI_ISteamUserStats_GetUserAchievement") {
             continue;
         }
-        const steambridge::Json* args = record.find("args");
+        const steammock::Json* args = record.find("args");
         if (args != nullptr && args->find("steamIDUser") != nullptr &&
             args->find("steamIDUser")->as_uint64() == 76561198000000001ull) {
             value_argument_recorded = true;
@@ -432,15 +432,15 @@ int main(int argc, char** argv) {
     bool out_parameter_recorded = false;
     bool stats_write_recorded = false;
     bool every_record_names_its_session = true;
-    for (const steambridge::Json& record : records) {
+    for (const steammock::Json& record : records) {
         const std::string call = text_member(record, "call");
-        const steambridge::Json* out = record.find("out");
+        const steammock::Json* out = record.find("out");
         if (ends_with(call, "GetStatInt32") && out != nullptr && out->find("pData") != nullptr &&
             out->find("pData")->as_int64() == 0) {
             out_parameter_recorded = true;
         }
         if (ends_with(call, "SetStatInt32")) {
-            const steambridge::Json* args = record.find("args");
+            const steammock::Json* args = record.find("args");
             if (args != nullptr && args->find("nData") != nullptr &&
                 args->find("nData")->as_int64() == 4) {
                 stats_write_recorded = true;

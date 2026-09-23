@@ -1,5 +1,5 @@
 # ============================================================================
-#  SteamApiBridge CI
+#  SteamMock CI
 # ----------------------------------------------------------------------------
 #  Windows only, because the harness is: the stub is a DLL a game loads by name,
 #  and the backend answers it over loopback Winsock. Both architectures are
@@ -66,7 +66,7 @@ jobs:
       - name: Configure
         run: >-
           cmake -S . -B build -G "Visual Studio 17 2022"
-          -A ${{ matrix.arch }} -DSTEAMBRIDGE_WERROR=ON
+          -A ${{ matrix.arch }} -DSTEAMMOCK_WERROR=ON
 
       - name: Build
         run: cmake --build build --config Release --parallel
@@ -90,7 +90,7 @@ jobs:
       - name: Configure
         run: >-
           cmake -S . -B build -G "Visual Studio 17 2022"
-          -A ${{ matrix.arch }} -T ClangCL -DSTEAMBRIDGE_WERROR=ON
+          -A ${{ matrix.arch }} -T ClangCL -DSTEAMMOCK_WERROR=ON
 
       - name: Build
         run: cmake --build build --config Release --parallel
@@ -120,7 +120,7 @@ jobs:
       - name: Configure
         run: >-
           cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-          -DSTEAMBRIDGE_BUILD_GUI=ON -DSTEAMBRIDGE_WERROR=ON
+          -DSTEAMMOCK_BUILD_GUI=ON -DSTEAMMOCK_WERROR=ON
 
       - name: Build
         run: cmake --build build --config Release --parallel

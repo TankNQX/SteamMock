@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 // ---------------------------------------------------------------------------
@@ -625,14 +625,14 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             number(static_cast<int>(interfaces.versions().size())) + " interface versions, " +
             number(static_cast<int>(slot_count)) + " slots,",
         "//            " + number(static_cast<int>(calls.size())) + " distinct calls)",
-        "//  Regenerate: steambridge_codegen",
+        "//  Regenerate: steammock_codegen",
         "// ============================================================================",
         "",
         "#include \"bridge/synth.hpp\"",
         "",
         "#include <cstring>",
         "",
-        "namespace steambridge {",
+        "namespace steammock {",
         "namespace {",
         "",
         "// ---------------------------------------------------------------------------",
@@ -773,7 +773,7 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
 
     for (std::size_t index = 0; index < calls.size(); ++index) {
         const int names = calls[index].second;
-        out.push_back("const steambridge::SlotInfo kCall_" + number(static_cast<int>(index)) +
+        out.push_back("const steammock::SlotInfo kCall_" + number(static_cast<int>(index)) +
                       " = {" + literal(calls[index].first) + ", " +
                       (names < 0 ? "nullptr" : "kParams_" + number(names)) + "};");
     }
@@ -820,8 +820,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                     "    virtual " + slot.returns_cpp + " " + slot.method + "(" + parameters +
                     ") { " +
                     (slot.returns == "void"
-                         ? "steambridge::slot<void>(" + passed + "); }"
-                         : "return steambridge::slot<" + slot.returns_cpp + ">(" + passed + "); }");
+                         ? "steammock::slot<void>(" + passed + "); }"
+                         : "return steammock::slot<" + slot.returns_cpp + ">(" + passed + "); }");
                 if (one.size() <= 100u) {
                     out.push_back(one);
                     continue;
@@ -831,18 +831,17 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("    virtual " + slot.returns_cpp + " " + slot.method + "(" + parameters +
                           ") {");
             if (slot.returns == "void") {
-                out.push_back("        steambridge::slot<void>(" + passed + ");");
+                out.push_back("        steammock::slot<void>(" + passed + ");");
             } else if (factory.empty()) {
-                out.push_back("        return steambridge::slot<" + slot.returns_cpp + ">(" +
-                              passed + ");");
+                out.push_back("        return steammock::slot<" + slot.returns_cpp + ">(" + passed +
+                              ");");
             } else {
                 // The same fallback the factory call in api_stub.cpp has: the
                 // backend answered, or this is the object of ours for the string
                 // the game named.
-                out.push_back("        void* result = steambridge::slot<void*>(" + passed + ");");
+                out.push_back("        void* result = steammock::slot<void*>(" + passed + ");");
                 out.push_back("        if (result == nullptr) {");
-                out.push_back("            result = steambridge::interface_object(" + factory +
-                              ");");
+                out.push_back("            result = steammock::interface_object(" + factory + ");");
                 out.push_back("        }");
                 out.push_back("        return result;");
             }
@@ -854,7 +853,7 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("");
     }
 
-    out.push_back("const steambridge::InterfaceVersion kVersions[] = {");
+    out.push_back("const steammock::InterfaceVersion kVersions[] = {");
     for (const InterfaceVersion& version : interfaces.versions()) {
         out.push_back("    {" + literal(version.version) + ", &g_" + identified(version.version) +
                       "},");
@@ -882,8 +881,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("    return kVersions;");
     out.push_back("}");
     out.push_back("");
-    out.push_back("}  // namespace steambridge");
+    out.push_back("}  // namespace steammock");
     return joined(out) + "\n";
 }
 
-}  // namespace steambridge
+}  // namespace steammock

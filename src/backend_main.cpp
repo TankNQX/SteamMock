@@ -1,13 +1,13 @@
 // ---------------------------------------------------------------------------
-//  steambridge - the backend a game's stub talks to.
+//  steammock - the backend a game's stub talks to.
 // ---------------------------------------------------------------------------
 //  Bind a loopback port, answer whatever the stub sends, and keep a transcript.
 //  Every option has an environment-free equivalent here, because this is the
 //  process a person starts while debugging a game:
 //
-//    steambridge --scenario scenarios/example.json --transcript run.jsonl
-//    steambridge --list-api
-//    steambridge --show-profiles
+//    steammock --scenario scenarios/example.json --transcript run.jsonl
+//    steammock --list-api
+//    steammock --show-profiles
 //
 //  The whole decision layer lives in bridge/server.hpp and is front-end free, so
 //  this file is argument parsing, three printers and a sleep loop. A GUI is the
@@ -38,20 +38,20 @@ namespace {
 std::atomic<bool> g_interrupted{false};
 }
 
-extern "C" void steambridge_on_interrupt(int) { g_interrupted.store(true); }
+extern "C" void steammock_on_interrupt(int) { g_interrupted.store(true); }
 
 namespace {
 
-using steambridge::LogLevel;
+using steammock::LogLevel;
 
 constexpr const char* kDefaultHost = "127.0.0.1";
 constexpr std::uint16_t kDefaultPort = 50990;
 constexpr const char* kDefaultScenario = "scenarios/example.json";
 // The version this build reports, and the one DllMain answers through
-// SteamBridge_Version: both come from the project version in CMake, so the two
+// SteamMock_Version: both come from the project version in CMake, so the two
 // halves cannot report different builds.
-constexpr const char* kVersion = STEAMBRIDGE_VERSION;
-constexpr const char* kProgram = "steambridge";
+constexpr const char* kVersion = STEAMMOCK_VERSION;
+constexpr const char* kProgram = "steammock";
 
 void print_usage(std::FILE* out) {
     std::fprintf(out,
@@ -206,11 +206,11 @@ ParseResult parse_args(int argc, char** argv, Options& options) {
 
 int print_api() {
     std::size_t count = 0;
-    const steambridge::SurfaceCall* calls = steambridge::api_surface_calls(count);
-    std::printf("# surface '%s' revision %d, %zu calls\n", steambridge::api_surface_name(),
-                steambridge::api_surface_revision(), count);
+    const steammock::SurfaceCall* calls = steammock::api_surface_calls(count);
+    std::printf("# surface '%s' revision %d, %zu calls\n", steammock::api_surface_name(),
+                steammock::api_surface_revision(), count);
     for (std::size_t index = 0; index < count; ++index) {
-        const steambridge::SurfaceCall& call = calls[index];
+        const steammock::SurfaceCall& call = calls[index];
         std::string params;
         for (std::size_t index_param = 0; index_param < call.param_count; ++index_param) {
             if (index_param != 0u) {
@@ -229,9 +229,9 @@ int print_api() {
 }
 
 int show_profiles(const std::string& path) {
-    steambridge::Dispatcher dispatcher;
+    steammock::Dispatcher dispatcher;
     std::string error;
-    if (!steambridge::Dispatcher::load_file(path, dispatcher, error)) {
+    if (!steammock::Dispatcher::load_file(path, dispatcher, error)) {
         std::fprintf(stderr, "%s\n", error.c_str());
         return 2;
     }
@@ -240,7 +240,7 @@ int show_profiles(const std::string& path) {
         std::printf("  profile '%s'\n", name.c_str());
     }
     std::printf("match rules, first one wins:\n");
-    for (const steambridge::MatchRule& rule : dispatcher.match_rules()) {
+    for (const steammock::MatchRule& rule : dispatcher.match_rules()) {
         std::printf("  %s\n", rule.describe().c_str());
     }
     return 0;
@@ -251,21 +251,21 @@ int show_profiles(const std::string& path) {
 // ---------------------------------------------------------------------------
 
 int serve(const Options& options) {
-    steambridge::Dispatcher dispatcher;
+    steammock::Dispatcher dispatcher;
     std::string error;
-    if (!steambridge::Dispatcher::load_file(options.scenario, dispatcher, error)) {
+    if (!steammock::Dispatcher::load_file(options.scenario, dispatcher, error)) {
         std::fprintf(stderr, "%s (try --scenario %s)\n", error.c_str(), kDefaultScenario);
         return 2;
     }
     const std::vector<std::string> profiles = dispatcher.profile_names();
 
-    steambridge::ServerOptions server_options;
+    steammock::ServerOptions server_options;
     server_options.host = options.host;
     server_options.port = options.port;
     server_options.transcript = options.transcript;
     server_options.log_level = options.level;
 
-    steambridge::Server server(std::move(dispatcher), std::move(server_options));
+    steammock::Server server(std::move(dispatcher), std::move(server_options));
     if (!server.start(error)) {
         std::fprintf(stderr, "%s\n", error.c_str());
         return 2;
@@ -273,7 +273,7 @@ int serve(const Options& options) {
 
     const auto say = [&options](LogLevel level, const std::string& message) {
         if (level <= options.level) {
-            steambridge::stderr_log_sink(level, message);
+            steammock::stderr_log_sink(level, message);
         }
     };
     std::string joined;
@@ -283,8 +283,8 @@ int serve(const Options& options) {
         }
         joined += name;
     }
-    say(LogLevel::info, "protocol v" + std::to_string(steambridge::kProtocolVersion) +
-                            ", scenario " + options.scenario + ", profiles " + joined);
+    say(LogLevel::info, "protocol v" + std::to_string(steammock::kProtocolVersion) + ", scenario " +
+                            options.scenario + ", profiles " + joined);
     if (!options.transcript.empty()) {
         say(LogLevel::info, "transcript: " + options.transcript);
     }
@@ -294,9 +294,9 @@ int serve(const Options& options) {
     std::printf("listening on %s:%u\n", options.host.c_str(), static_cast<unsigned>(server.port()));
     std::fflush(stdout);
 
-    std::signal(SIGINT, steambridge_on_interrupt);
+    std::signal(SIGINT, steammock_on_interrupt);
 #if defined(SIGTERM)
-    std::signal(SIGTERM, steambridge_on_interrupt);
+    std::signal(SIGTERM, steammock_on_interrupt);
 #endif
     while (!g_interrupted.load()) {
         // The accept loop runs on its own thread; this one only has to notice a

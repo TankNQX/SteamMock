@@ -5,7 +5,7 @@
 #include <string>
 #include <utility>
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 std::string lower_ascii(std::string text) {
@@ -225,4 +225,4 @@ Answer Dispatcher::answer(Session& session, const std::string& name, const Json&
     return answer;
 }
 
-}  // namespace steambridge
+}  // namespace steammock

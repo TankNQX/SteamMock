@@ -11,7 +11,7 @@
 #endif
 #include <windows.h>
 
-namespace steambridge {
+namespace steammock {
 namespace {
 
 constexpr unsigned kDefaultPort = 50990u;
@@ -91,19 +91,18 @@ void Client::configure() {
     _exe_name = file_name_of(path);
     log_configure(path.c_str());
 
-    if (environment("STEAMBRIDGE_OFF") == "1") {
+    if (environment("STEAMMOCK_OFF") == "1") {
         _enabled = false;
-        log_write(LogLevel::info, "STEAMBRIDGE_OFF=1 - every call answers with its default");
+        log_write(LogLevel::info, "STEAMMOCK_OFF=1 - every call answers with its default");
         return;
     }
 
-    _host = environment("STEAMBRIDGE_HOST");
+    _host = environment("STEAMMOCK_HOST");
     if (_host.empty()) {
         _host = "127.0.0.1";
     }
-    _port =
-        static_cast<std::uint16_t>(parse_unsigned(environment("STEAMBRIDGE_PORT"), kDefaultPort));
-    _timeout_ms = parse_unsigned(environment("STEAMBRIDGE_TIMEOUT_MS"), kDefaultTimeoutMs);
+    _port = static_cast<std::uint16_t>(parse_unsigned(environment("STEAMMOCK_PORT"), kDefaultPort));
+    _timeout_ms = parse_unsigned(environment("STEAMMOCK_TIMEOUT_MS"), kDefaultTimeoutMs);
     _transport->set_timeout_ms(_timeout_ms);
 
     log_write(LogLevel::debug, "backend target " + _host + ":" + std::to_string(_port));
@@ -227,4 +226,4 @@ bool invoke(std::string_view name, const Json& args, Json& reply) noexcept {
     return Client::instance().call(name, args, reply);
 }
 
-}  // namespace steambridge
+}  // namespace steammock

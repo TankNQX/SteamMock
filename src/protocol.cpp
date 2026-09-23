@@ -1,6 +1,6 @@
 #include "bridge/protocol.hpp"
 
-namespace steambridge {
+namespace steammock {
 
 bool carries_out(const Json& out) noexcept { return out.is_object() && !out.members().empty(); }
 
@@ -31,4 +31,4 @@ Json make_welcome(const std::string& session_id, const std::string& profile_name
     return message;
 }
 
-}  // namespace steambridge
+}  // namespace steammock

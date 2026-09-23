@@ -2,7 +2,7 @@
 #  check-format.ps1 - fail if a hand-written file is not clang-format clean.
 # ---------------------------------------------------------------------------
 #  The generated files are deliberately out of scope: a test byte-compares them
-#  against what steambridge_codegen writes, so a formatter must never touch one.
+#  against what steammock_codegen writes, so a formatter must never touch one.
 #  The same goes for external/, which is other people's code.
 #
 #  Run it the way CI does:

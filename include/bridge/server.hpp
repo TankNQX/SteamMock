@@ -16,7 +16,7 @@
 #include "bridge/scenario.hpp"
 #include "bridge/session.hpp"
 
-namespace steambridge {
+namespace steammock {
 
 // ---------------------------------------------------------------------------
 //  The loopback server a game's stub talks to.
@@ -148,4 +148,4 @@ private:
     std::FILE* _transcript = nullptr;
 };
 
-}  // namespace steambridge
+}  // namespace steammock
