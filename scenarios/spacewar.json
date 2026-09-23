@@ -30,7 +30,12 @@
 
         "SteamInternal_GameServer_Init": { "ret": true },
         "SteamGameServer_GetHSteamUser": { "ret": 1 },
-        "SteamGameServer_GetHSteamPipe": { "ret": 1 }
+        "SteamGameServer_GetHSteamPipe": { "ret": 1 },
+
+        "SteamAPI_ISteamGameServer_LogOnAnonymous": {
+          "ret": true,
+          "then": [ { "event": "SteamServersConnected_t", "id": 101 } ]
+        }
       }
     },
     "second_player": {

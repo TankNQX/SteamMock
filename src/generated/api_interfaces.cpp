@@ -132,6 +132,9 @@ struct LobbyDataUpdate_t {
     bool m_bSuccess;
 };
 static_assert(sizeof(LobbyDataUpdate_t) == 24, "LobbyDataUpdate_t has to be the size the SDK's callback pack gives it");
+struct SteamServersConnected_t {
+};
+static_assert(sizeof(SteamServersConnected_t) == 1, "SteamServersConnected_t has to be the size the SDK's callback pack gives it");
 #pragma pack(pop)
 
 }  // namespace
@@ -8815,6 +8818,12 @@ void fill_LobbyDataUpdate_t(const Json& fields, void* buffer) noexcept {
     std::memcpy(buffer, &value, sizeof(value));
 }
 
+void fill_SteamServersConnected_t(const Json& fields, void* buffer) noexcept {
+    SteamServersConnected_t value{};
+    (void)fields;  // this payload carries nothing to read
+    std::memcpy(buffer, &value, sizeof(value));
+}
+
 const steammock::EventInfo kEvents[] = {
     {"LobbyCreated_t",
      sizeof(LobbyCreated_t),
@@ -8840,6 +8849,10 @@ const steammock::EventInfo kEvents[] = {
      sizeof(LobbyDataUpdate_t),
      505,
      &fill_LobbyDataUpdate_t},
+    {"SteamServersConnected_t",
+     sizeof(SteamServersConnected_t),
+     101,
+     &fill_SteamServersConnected_t},
 };
 
 }  // namespace

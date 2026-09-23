@@ -421,7 +421,11 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (lobby == nullptr) {
             return false;
         }
-        const LobbyMember* member = lobby->find_member(id_member(args, "steamIDUser"));
+        // Steam's member-data calls are about the member the caller is: the SDK's own
+        // declaration carries no user id, and the wire shows games not sending one. The
+        // roster is the exception, so a named member wins where there is one.
+        const std::uint64_t named = id_member(args, "steamIDUser");
+        const LobbyMember* member = lobby->find_member(named != 0 ? named : me);
         if (member == nullptr) {
             return false;
         }
@@ -442,7 +446,8 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (lobby == nullptr) {
             return false;
         }
-        LobbyMember* member = lobby->find_member(id_member(args, "steamIDUser"));
+        const std::uint64_t named = id_member(args, "steamIDUser");
+        LobbyMember* member = lobby->find_member(named != 0 ? named : me);
         if (member == nullptr) {
             return false;
         }

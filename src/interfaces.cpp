@@ -416,8 +416,15 @@ bool read_layouts(const Json& document, const char* key, const char* what,
             return false;
         }
         const Json* members = member(entry, "members");
-        if (members == nullptr || !members->is_array() || members->items().empty()) {
+        if (members == nullptr || !members->is_array()) {
             error = where + ": a " + what + " needs its members - that is what its ABI is";
+            return false;
+        }
+        // A payload with no fields is a real shape: plenty of the SDK's callbacks are
+        // notifications with nothing in them. A structure with no members is a
+        // declaration that says nothing at all, so only the empty event is allowed.
+        if (members->items().empty() && std::string(what) != "event") {
+            error = where + ": a " + what + " with no members says nothing about its ABI";
             return false;
         }
         for (const Json& declared : members->items()) {
@@ -926,6 +933,12 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("void fill_" + event.name +
                           "(const Json& fields, void* buffer) noexcept {");
             out.push_back("    " + event.name + " value{};");
+            if (event.members.empty()) {
+                // A payload with nothing in it is a real shape - a notification the SDK
+                // sends to say something happened - so the reader takes the empty wire
+                // object and says so rather than leaving a parameter unused.
+                out.push_back("    (void)fields;  // this payload carries nothing to read");
+            }
             for (const auto& declared_member : event.members) {
                 const std::string& cpp = declared_member.first;
                 const std::string& member = declared_member.second;
