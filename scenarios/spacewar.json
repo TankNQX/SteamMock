@@ -36,8 +36,7 @@
           "ret": true,
           "then": [ { "event": "SteamServersConnected_t", "id": 101 } ]
         },
-        "SteamAPI_ISteamGameServer_GetPublicIP": { "ret": 2130706433 },
-        "SteamAPI_ISteamGameServer_GetSteamID": { "ret": 18014398509482001 }
+        "SteamAPI_ISteamGameServer_GetPublicIP": { "ret": 2130706433 }
       }
     },
     "second_player": {

@@ -57,6 +57,14 @@ struct Lobby {
     void set_data(std::string key, std::string value);
 };
 
+// What one game sent another over Steam's own network: the bytes, the channel they belong
+// to, and who sent them - which is what a reader is told beside the payload.
+struct P2PPacket {
+    std::uint64_t remote = 0;
+    std::int32_t channel = 0;
+    std::string bytes;
+};
+
 // What one lobby call resolved to, plus what the *other* members have to be told.
 //
 // A notification names a Steam id rather than a session because only the server
@@ -73,6 +81,10 @@ public:
     // must not collide within a run, because that is what a call result is filed
     // under.
     static constexpr std::uint64_t kFirstCallHandle = 1000;
+
+    // The first game server's Steam id: the account type in the top bits says "anonymous
+    // game server", which is what tells a server apart from the players in its room.
+    static constexpr std::uint64_t kFirstGameServerId = (4ull << 52) | 1ull;
 
     // The calls this world answers, so a test can prove every one of them is a
     // name the stub can actually send.
@@ -93,6 +105,18 @@ private:
                               std::uint64_t making_change, std::uint32_t state_change,
                               std::vector<std::pair<std::uint64_t, Json>>& notifications) const;
 
+    // The identity this session answers to as a game server: minted the first time it is
+    // asked for, and found rather than minted when a packet is being routed.
+    std::uint64_t game_server_id_of(std::uint64_t user);
+    std::uint64_t known_game_server_id(std::uint64_t user) const noexcept;
+
+    // One game's packets, by the Steam id they were addressed to. A session is a client and
+    // a server at once when it hosts, so both of its identities are asked for what it has.
+    void queue_packet(std::uint64_t to, std::uint64_t from, std::int32_t channel,
+                      const std::string& bytes);
+    const P2PPacket* peek_packet(std::uint64_t user, std::int32_t channel) const noexcept;
+    void drop_packet(std::uint64_t user, std::int32_t channel);
+
     std::vector<Lobby> _lobbies;
     std::uint64_t _next_lobby_id = kFirstLobbyId;
     std::uint64_t _next_call = kFirstCallHandle;
@@ -102,6 +126,16 @@ private:
     // publishes it, expecting Steam to fill both in - so the run has to know both to do
     // the same. Recorded from the calls that carry them, not asked for.
     std::vector<std::pair<std::uint64_t, std::uint16_t>> _game_ports;
+
+    // The identity each session answers to as a game server. Minted the first time it asks,
+    // which is what lets a packet addressed to a server be routed to the session running it
+    // - and keeps two servers in one run from being handed the same id.
+    std::vector<std::pair<std::uint64_t, std::uint64_t>> _game_server_ids;
+
+    // What one game has sent to another and the other has not read yet, by Steam id of the
+    // recipient. Steam moves these itself and never shows them to anyone, so the only part
+    // that has to be modelled is that they arrive whole and in the order they were sent.
+    std::vector<std::pair<std::uint64_t, std::vector<P2PPacket>>> _packets;
 };
 
 }  // namespace steammock

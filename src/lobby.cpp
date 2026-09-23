@@ -237,6 +237,12 @@ constexpr const char* kSetLobbyGameServer = "SteamAPI_ISteamMatchmaking_SetLobby
 constexpr const char* kGetLobbyGameServer = "SteamAPI_ISteamMatchmaking_GetLobbyGameServer";
 constexpr const char* kGetFriendPersonaName = "SteamAPI_ISteamFriends_GetFriendPersonaName";
 constexpr const char* kGameServerInit = "SteamInternal_GameServer_Init";
+constexpr const char* kGameServerGetSteamID = "SteamAPI_ISteamGameServer_GetSteamID";
+constexpr const char* kSendP2PPacket = "SteamAPI_ISteamNetworking_SendP2PPacket";
+constexpr const char* kIsP2PPacketAvailable = "SteamAPI_ISteamNetworking_IsP2PPacketAvailable";
+constexpr const char* kReadP2PPacket = "SteamAPI_ISteamNetworking_ReadP2PPacket";
+constexpr const char* kAcceptP2PSession = "SteamAPI_ISteamNetworking_AcceptP2PSessionWithUser";
+constexpr const char* kCloseP2PSession = "SteamAPI_ISteamNetworking_CloseP2PSessionWithUser";
 
 // 127.0.0.1 the way Steam hands addresses around: host order, so a game that reads it and
 // passes it to inet_ntoa or htonl sees the machine it is standing on.
@@ -250,12 +256,13 @@ constexpr std::uint32_t kLoopback = 0x7F000001u;
 
 std::vector<std::string> LobbyWorld::handled_calls() {
     return {
-        kCreateLobby,          kRequestLobbyList,    kGetLobbyByIndex,       kJoinLobby,
-        kLeaveLobby,           kGetNumLobbyMembers,  kGetLobbyMemberByIndex, kGetLobbyOwner,
-        kGetLobbyData,         kSetLobbyData,        kGetLobbyDataCount,     kGetLobbyMemberData,
-        kSetLobbyMemberData,   kGetLobbyMemberLimit, kSetLobbyMemberLimit,   kSetLobbyJoinable,
-        kSetLobbyType,         kRequestLobbyData,    kSetLobbyGameServer,    kGetLobbyGameServer,
-        kGetFriendPersonaName,
+        kCreateLobby,          kRequestLobbyList,     kGetLobbyByIndex,       kJoinLobby,
+        kLeaveLobby,           kGetNumLobbyMembers,   kGetLobbyMemberByIndex, kGetLobbyOwner,
+        kGetLobbyData,         kSetLobbyData,         kGetLobbyDataCount,     kGetLobbyMemberData,
+        kSetLobbyMemberData,   kGetLobbyMemberLimit,  kSetLobbyMemberLimit,   kSetLobbyJoinable,
+        kSetLobbyType,         kRequestLobbyData,     kSetLobbyGameServer,    kGetLobbyGameServer,
+        kGetFriendPersonaName, kGameServerGetSteamID, kSendP2PPacket,         kIsP2PPacketAvailable,
+        kReadP2PPacket,        kAcceptP2PSession,     kCloseP2PSession,
     };
 }
 
@@ -284,6 +291,74 @@ const LobbyMember* LobbyWorld::find_member_anywhere(std::uint64_t steam_id) cons
         }
     }
     return nullptr;
+}
+
+std::uint64_t LobbyWorld::known_game_server_id(std::uint64_t user) const noexcept {
+    for (const auto& entry : _game_server_ids) {
+        if (entry.first == user) {
+            return entry.second;
+        }
+    }
+    return 0;
+}
+
+std::uint64_t LobbyWorld::game_server_id_of(std::uint64_t user) {
+    const std::uint64_t known = known_game_server_id(user);
+    if (known != 0) {
+        return known;
+    }
+    // Minted on the first ask, so a second server in the same run cannot be handed the id
+    // the first one is already known by.
+    const std::uint64_t minted = kFirstGameServerId + _game_server_ids.size();
+    _game_server_ids.emplace_back(user, minted);
+    return minted;
+}
+
+void LobbyWorld::queue_packet(std::uint64_t to, std::uint64_t from, std::int32_t channel,
+                              const std::string& bytes) {
+    P2PPacket packet;
+    packet.remote = from;
+    packet.channel = channel;
+    packet.bytes = bytes;
+    for (auto& entry : _packets) {
+        if (entry.first == to) {
+            entry.second.push_back(std::move(packet));
+            return;
+        }
+    }
+    _packets.emplace_back(to, std::vector<P2PPacket>{std::move(packet)});
+}
+
+const P2PPacket* LobbyWorld::peek_packet(std::uint64_t user, std::int32_t channel) const noexcept {
+    // A session that hosts is a client and a server at once, and the two have different
+    // ids: a packet addressed to either of them is for this process.
+    const std::uint64_t server = known_game_server_id(user);
+    for (const auto& entry : _packets) {
+        if (entry.first != user && (server == 0 || entry.first != server)) {
+            continue;
+        }
+        for (const P2PPacket& packet : entry.second) {
+            if (packet.channel == channel) {
+                return &packet;
+            }
+        }
+    }
+    return nullptr;
+}
+
+void LobbyWorld::drop_packet(std::uint64_t user, std::int32_t channel) {
+    const std::uint64_t server = known_game_server_id(user);
+    for (auto& entry : _packets) {
+        if (entry.first != user && (server == 0 || entry.first != server)) {
+            continue;
+        }
+        for (auto packet = entry.second.begin(); packet != entry.second.end(); ++packet) {
+            if (packet->channel == channel) {
+                entry.second.erase(packet);
+                return;
+            }
+        }
+    }
 }
 
 void LobbyWorld::notify_member_change(
@@ -607,6 +682,70 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             return false;
         }
         out = from_lobby(Json::string(member->persona));
+        return true;
+    }
+
+    if (call == kGameServerGetSteamID) {
+        // The identity a server is known by, which is what a client addresses its packets to
+        // and what the room published as its game server.
+        out = from_lobby(id_value(game_server_id_of(me)));
+        return true;
+    }
+
+    if (call == kSendP2PPacket) {
+        // The bytes arrive as hex, which is how the wire carries a buffer - see the layouts'
+        // "bytes" kind and the marshalling in bridge/synth.hpp. Nothing is checked about the
+        // destination: Steam would refuse a peer it does not know, but a run that did would
+        // be inventing a rule the games cannot see anyway.
+        queue_packet(id_member(args, "steamIDRemote"), me,
+                     static_cast<std::int32_t>(int_member(args, "nChannel", 0)),
+                     string_member(args, "pubData"));
+        out = from_lobby(Json::boolean(true));
+        return true;
+    }
+
+    if (call == kIsP2PPacketAvailable) {
+        const std::int32_t channel = static_cast<std::int32_t>(int_member(args, "nChannel", 0));
+        const P2PPacket* packet = peek_packet(me, channel);
+        if (packet == nullptr) {
+            // An empty queue is not an opinion about anything: the stub's own default
+            // already answers "nothing waiting", which is what a game expects.
+            return false;
+        }
+        Json values = Json::object();
+        values.set("pcubMsgSize",
+                   Json::integer(static_cast<std::int64_t>(packet->bytes.size() / 2u)));
+        Answer answer = from_lobby(Json::boolean(true));
+        answer.out = std::move(values);
+        out = std::move(answer);
+        return true;
+    }
+
+    if (call == kReadP2PPacket) {
+        const std::int32_t channel = static_cast<std::int32_t>(int_member(args, "nChannel", 0));
+        const P2PPacket* packet = peek_packet(me, channel);
+        if (packet == nullptr) {
+            return false;
+        }
+        // Copied out before the queue drops it, because the next read is a different
+        // packet: the bytes go back as hex and the stub writes them into the game's buffer.
+        Json values = Json::object();
+        values.set("pubDest", Json::string(packet->bytes));
+        values.set("pcubMsgSize",
+                   Json::integer(static_cast<std::int64_t>(packet->bytes.size() / 2u)));
+        values.set("psteamIDRemote", id_value(packet->remote));
+        drop_packet(me, channel);
+        Answer answer = from_lobby(Json::boolean(true));
+        answer.out = std::move(values);
+        out = std::move(answer);
+        return true;
+    }
+
+    if (call == kAcceptP2PSession || call == kCloseP2PSession) {
+        // Nothing here refuses a peer or holds a session open. A packet either reaches the
+        // game it was addressed to or it does not, and Steam's session bookkeeping is not
+        // something a run has to model to be believed.
+        out = from_lobby(Json::boolean(true));
         return true;
     }
 
