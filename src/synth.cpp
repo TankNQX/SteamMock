@@ -218,6 +218,20 @@ void deliver_one(const Json& event) noexcept {
 void callback_registered(void* object, std::int32_t id) noexcept {
     try {
         const std::lock_guard<std::mutex> lock(registry_mutex());
+        // Said out loud, because this is the one path in all of this with no other line - and
+        // because one id can have two objects on it. A process that runs a game server inside
+        // a game has both sides registering callbacks, and this map keeps only the last of
+        // them, so which one it is decides which side hears about an event. The addresses are
+        // here to tell the two apart: they are the only thing about them we can see.
+        const auto found = callbacks_by_id().find(id);
+        const std::string address = std::to_string(reinterpret_cast<std::uintptr_t>(object));
+        if (found != callbacks_by_id().end()) {
+            log_write(LogLevel::debug,
+                      "callback id " + std::to_string(id) + ": keeping " + address + " over " +
+                          std::to_string(reinterpret_cast<std::uintptr_t>(found->second)));
+        } else {
+            log_write(LogLevel::debug, "callback id " + std::to_string(id) + ": first, " + address);
+        }
         callbacks_by_id()[id] = object;
     } catch (...) {
         // A registry that cannot grow is a game that gets no callbacks, which is
