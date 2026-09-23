@@ -135,6 +135,13 @@ static_assert(sizeof(LobbyDataUpdate_t) == 24, "LobbyDataUpdate_t has to be the 
 struct SteamServersConnected_t {
 };
 static_assert(sizeof(SteamServersConnected_t) == 1, "SteamServersConnected_t has to be the size the SDK's callback pack gives it");
+struct LobbyGameCreated_t {
+    std::uint64_t m_ulSteamIDLobby;
+    std::uint32_t m_unIP;
+    std::uint16_t m_usPort;
+    std::uint64_t m_ulSteamIDGameServer;
+};
+static_assert(sizeof(LobbyGameCreated_t) == 24, "LobbyGameCreated_t has to be the size the SDK's callback pack gives it");
 #pragma pack(pop)
 
 }  // namespace
@@ -8824,6 +8831,23 @@ void fill_SteamServersConnected_t(const Json& fields, void* buffer) noexcept {
     std::memcpy(buffer, &value, sizeof(value));
 }
 
+void fill_LobbyGameCreated_t(const Json& fields, void* buffer) noexcept {
+    LobbyGameCreated_t value{};
+    if (const Json* field = fields.find("m_ulSteamIDLobby")) {
+        value.m_ulSteamIDLobby = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_unIP")) {
+        value.m_unIP = static_cast<std::uint32_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_usPort")) {
+        value.m_usPort = static_cast<std::uint16_t>(field->as_uint64());
+    }
+    if (const Json* field = fields.find("m_ulSteamIDGameServer")) {
+        value.m_ulSteamIDGameServer = static_cast<std::uint64_t>(field->as_uint64());
+    }
+    std::memcpy(buffer, &value, sizeof(value));
+}
+
 const steammock::EventInfo kEvents[] = {
     {"LobbyCreated_t",
      sizeof(LobbyCreated_t),
@@ -8853,6 +8877,10 @@ const steammock::EventInfo kEvents[] = {
      sizeof(SteamServersConnected_t),
      101,
      &fill_SteamServersConnected_t},
+    {"LobbyGameCreated_t",
+     sizeof(LobbyGameCreated_t),
+     509,
+     &fill_LobbyGameCreated_t},
 };
 
 }  // namespace

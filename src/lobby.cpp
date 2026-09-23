@@ -196,6 +196,21 @@ Json data_update_payload(std::uint64_t lobby, std::uint64_t member) {
     return event;
 }
 
+// "this room has a game server, and here it is": what the other members are told once
+// one of them puts a server up, which is what a client connects to.
+Json lobby_game_created_payload(const Lobby& lobby) {
+    Json fields = Json::object();
+    fields.set("m_ulSteamIDLobby", id_value(lobby.id));
+    fields.set("m_unIP", Json::integer(static_cast<std::int64_t>(lobby.game_server_ip)));
+    fields.set("m_usPort", Json::integer(static_cast<std::int64_t>(lobby.game_server_port)));
+    fields.set("m_ulSteamIDGameServer", id_value(lobby.game_server_id));
+
+    Json event = Json::object();
+    event.set("event", Json::string("LobbyGameCreated_t"));
+    event.set("in", std::move(fields));
+    return event;
+}
+
 // EChatMemberStateChange
 constexpr std::uint32_t kMemberEntered = 0x0001;
 constexpr std::uint32_t kMemberLeft = 0x0002;
@@ -218,6 +233,8 @@ constexpr const char* kSetLobbyMemberLimit = "SteamAPI_ISteamMatchmaking_SetLobb
 constexpr const char* kSetLobbyJoinable = "SteamAPI_ISteamMatchmaking_SetLobbyJoinable";
 constexpr const char* kSetLobbyType = "SteamAPI_ISteamMatchmaking_SetLobbyType";
 constexpr const char* kRequestLobbyData = "SteamAPI_ISteamMatchmaking_RequestLobbyData";
+constexpr const char* kSetLobbyGameServer = "SteamAPI_ISteamMatchmaking_SetLobbyGameServer";
+constexpr const char* kGetLobbyGameServer = "SteamAPI_ISteamMatchmaking_GetLobbyGameServer";
 constexpr const char* kGetFriendPersonaName = "SteamAPI_ISteamFriends_GetFriendPersonaName";
 
 }  // namespace
@@ -228,11 +245,12 @@ constexpr const char* kGetFriendPersonaName = "SteamAPI_ISteamFriends_GetFriendP
 
 std::vector<std::string> LobbyWorld::handled_calls() {
     return {
-        kCreateLobby,        kRequestLobbyList,    kGetLobbyByIndex,       kJoinLobby,
-        kLeaveLobby,         kGetNumLobbyMembers,  kGetLobbyMemberByIndex, kGetLobbyOwner,
-        kGetLobbyData,       kSetLobbyData,        kGetLobbyDataCount,     kGetLobbyMemberData,
-        kSetLobbyMemberData, kGetLobbyMemberLimit, kSetLobbyMemberLimit,   kSetLobbyJoinable,
-        kSetLobbyType,       kRequestLobbyData,    kGetFriendPersonaName,
+        kCreateLobby,          kRequestLobbyList,    kGetLobbyByIndex,       kJoinLobby,
+        kLeaveLobby,           kGetNumLobbyMembers,  kGetLobbyMemberByIndex, kGetLobbyOwner,
+        kGetLobbyData,         kSetLobbyData,        kGetLobbyDataCount,     kGetLobbyMemberData,
+        kSetLobbyMemberData,   kGetLobbyMemberLimit, kSetLobbyMemberLimit,   kSetLobbyJoinable,
+        kSetLobbyType,         kRequestLobbyData,    kSetLobbyGameServer,    kGetLobbyGameServer,
+        kGetFriendPersonaName,
     };
 }
 
@@ -494,6 +512,45 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             return false;
         }
         out = from_lobby(Json::boolean(true));
+        return true;
+    }
+
+    if (call == kSetLobbyGameServer) {
+        Lobby* lobby = find_lobby(id_member(args, "steamIDLobby"));
+        if (lobby == nullptr) {
+            return false;
+        }
+        lobby->has_game_server = true;
+        lobby->game_server_ip = static_cast<std::uint32_t>(int_member(args, "unGameServerIP", 0));
+        lobby->game_server_port =
+            static_cast<std::uint16_t>(int_member(args, "unGameServerPort", 0));
+        lobby->game_server_id = id_member(args, "steamIDGameServer");
+        // The others hear about it; the game that put the server up already knows.
+        for (const LobbyMember& other : lobby->members) {
+            if (other.steam_id != me) {
+                notifications.emplace_back(other.steam_id, lobby_game_created_payload(*lobby));
+            }
+        }
+        out = from_lobby(Json::boolean(true));
+        return true;
+    }
+
+    if (call == kGetLobbyGameServer) {
+        const Lobby* lobby = find_lobby(id_member(args, "steamIDLobby"));
+        if (lobby == nullptr || !lobby->has_game_server) {
+            // A room with no server yet is not an error: it is a room whose owner has
+            // not started the game, and Steam reports exactly that.
+            return false;
+        }
+        Json values = Json::object();
+        values.set("punGameServerIP",
+                   Json::integer(static_cast<std::int64_t>(lobby->game_server_ip)));
+        values.set("punGameServerPort",
+                   Json::integer(static_cast<std::int64_t>(lobby->game_server_port)));
+        values.set("psteamIDGameServer", id_value(lobby->game_server_id));
+        Answer answer = from_lobby(Json::boolean(true));
+        answer.out = std::move(values);
+        out = std::move(answer);
         return true;
     }
 

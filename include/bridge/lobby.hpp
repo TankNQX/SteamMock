@@ -42,6 +42,15 @@ struct Lobby {
     std::vector<std::pair<std::string, std::string>> data;
     std::vector<LobbyMember> members;
 
+    // What the room says about its game server, which is how a game that has one lets
+    // the others find it - and, for a client, the only thing needed to connect. Steam
+    // hands the address over in host order and does not interpret it, and neither does
+    // this: it is the game's to make sense of.
+    bool has_game_server = false;
+    std::uint32_t game_server_ip = 0;
+    std::uint16_t game_server_port = 0;
+    std::uint64_t game_server_id = 0;
+
     LobbyMember* find_member(std::uint64_t steam_id) noexcept;
     const LobbyMember* find_member(std::uint64_t steam_id) const noexcept;
     const std::string* find_data(const std::string& key) const noexcept;
