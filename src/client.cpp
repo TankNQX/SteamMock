@@ -124,12 +124,12 @@ bool Client::ensure_connected() {
     }
 
     Json hello = Json::object();
-    hello.set("type", Json::string("hello"));
-    hello.set("v", Json::integer(kProtocolVersion));
-    hello.set("exe", Json::string(_exe_name));
-    hello.set("arch", Json::string(sizeof(void*) == 8u ? "x64" : "x86"));
-    hello.set("module", Json::string("steam_api stub"));
-    hello.set("pid", Json::integer(static_cast<std::int64_t>(GetCurrentProcessId())));
+    hello["type"] = Json("hello");
+    hello["v"] = Json(kProtocolVersion);
+    hello["exe"] = Json(_exe_name);
+    hello["arch"] = Json(sizeof(void*) == 8u ? "x64" : "x86");
+    hello["module"] = Json("steam_api stub");
+    hello["pid"] = Json(static_cast<std::int64_t>(GetCurrentProcessId()));
     // Which game this one is pretending to be, when a single scenario has to
     // describe two of them running at once: the exe name cannot tell two Spacewars
     // apart, and a pid cannot be written down in advance.
@@ -137,7 +137,7 @@ bool Client::ensure_connected() {
     const DWORD wanted_length =
         GetEnvironmentVariableA("STEAMMOCK_PROFILE", wanted, sizeof(wanted));
     if (wanted_length > 0 && wanted_length < sizeof(wanted)) {
-        hello.set("profile", Json::string(wanted));
+        hello["profile"] = Json(wanted);
     }
 
     std::string response;
@@ -146,14 +146,14 @@ bool Client::ensure_connected() {
         return false;
     }
     Json welcome;
-    const bool parsed = Json::parse(response, welcome);
-    const Json* session = parsed ? welcome.find("session") : nullptr;
+    const bool parsed = parse(response, welcome);
+    const Json* session = parsed ? json_member(welcome, "session") : nullptr;
     if (session == nullptr) {
         log_write(LogLevel::warn, "the backend did not answer the handshake - ignoring it");
         _transport->close();
         return false;
     }
-    _session_id = session->as_string();
+    _session_id = as_string(*session);
     _logged_offline = false;
     log_write(LogLevel::info, "connected to the backend, session " + _session_id);
     return true;
@@ -177,12 +177,12 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         }
 
         Json request = Json::object();
-        request.set("type", Json::string("call"));
-        request.set("v", Json::integer(kProtocolVersion));
-        request.set("seq", Json::integer(static_cast<std::int64_t>(++_sequence)));
-        request.set("name", Json::string(std::string(name)));
-        request.set("args", args);
-        request.set("session", Json::string(_session_id));
+        request["type"] = Json("call");
+        request["v"] = Json(kProtocolVersion);
+        request["seq"] = Json(static_cast<std::int64_t>(++_sequence));
+        request["name"] = Json(std::string(name));
+        request["args"] = args;
+        request["session"] = Json(_session_id);
 
         std::string response;
         if (!_transport->exchange(request.dump(), response)) {
@@ -192,12 +192,12 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         }
 
         Json message;
-        if (!Json::parse(response, message)) {
+        if (!parse(response, message)) {
             log_write(LogLevel::warn, "ignoring an unparsable reply from the backend");
             return false;
         }
-        const Json* sequence = message.find("seq");
-        if (sequence == nullptr || sequence->as_int64() != static_cast<std::int64_t>(_sequence)) {
+        const Json* sequence = json_member(message, "seq");
+        if (sequence == nullptr || as_int64(*sequence) != static_cast<std::int64_t>(_sequence)) {
             log_write(LogLevel::warn, "ignoring a reply that does not match the request");
             return false;
         }
@@ -209,16 +209,17 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         // the call it came back on. A game is told things while it is asking about
         // something else: a lobby host sits on calls nobody answers, and a payload that
         // rode back on one of those used to be dropped along with the reply.
-        if (const Json* events = message.find("events"); events != nullptr && events->is_array()) {
-            for (const Json& event : events->items()) {
+        if (const Json* events = json_member(message, "events");
+            events != nullptr && events->is_array()) {
+            for (const Json& event : *events) {
                 _events.push_back(event);
             }
             log_write(LogLevel::debug, "the backend sent " + std::to_string(_events.size()) +
                                            " payload(s) for the game to be given next");
         }
 
-        const Json* answer = message.find("answer");
-        if (answer == nullptr || answer->as_string() != "handled") {
+        const Json* answer = json_member(message, "answer");
+        if (answer == nullptr || as_string(*answer) != "handled") {
             ++_unhandled_count;
             return false;
         }

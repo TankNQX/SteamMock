@@ -43,8 +43,15 @@ option(STEAMMOCK_WERROR "Treat warnings as errors" OFF)
 #  Core: the wire format, the JSON subset, the transport and the client. Static,
 #  so the stub, the backend and the tests all share one copy.
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+#  nlohmann/json - the JSON the bridge speaks, and the one third party library the
+#  stub and the backend share. Header only, so it is an interface target.
+# ---------------------------------------------------------------------------
+add_library(nlohmann_json INTERFACE)
+target_include_directories(nlohmann_json INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/nlohmann_json/single_include)
+
 add_library(steammock_core STATIC
-    src/json.cpp
     src/log.cpp
     src/transport_tcp.cpp
     src/client.cpp
@@ -53,8 +60,9 @@ target_include_directories(steammock_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc
 target_compile_features(steammock_core PUBLIC cxx_std_17)
 
 # Winsock: the loopback transport and the backend's server. Public, because
-# everything that links the core ends up needing it.
-target_link_libraries(steammock_core PUBLIC ws2_32)
+# everything that links the core ends up needing it. And JSON, for the same reason:
+# the protocol, the scenarios and the transcripts are all JSON.
+target_link_libraries(steammock_core PUBLIC nlohmann_json ws2_32)
 
 # ---------------------------------------------------------------------------
 #  The backend: the session state machine, the scenario dispatcher and the

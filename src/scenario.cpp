@@ -18,7 +18,7 @@ std::string lower_ascii(std::string text) {
 }
 
 std::string text_of(const Json& value) {
-    return value.is_string() ? value.as_string() : std::string();
+    return value.is_string() ? as_string(value) : std::string();
 }
 
 bool read_file(const std::string& path, std::string& out) {
@@ -48,11 +48,11 @@ std::string MatchRule::describe() const {
     };
     if (has_exe_contains) {
         comma();
-        text += "\"exe_contains\": " + Json::string(exe_contains).dump();
+        text += "\"exe_contains\": " + Json(exe_contains).dump();
     }
     if (has_exe) {
         comma();
-        text += "\"exe\": " + Json::string(exe).dump();
+        text += "\"exe\": " + Json(exe).dump();
     }
     if (has_pid) {
         comma();
@@ -60,7 +60,7 @@ std::string MatchRule::describe() const {
     }
     if (!profile.empty()) {
         comma();
-        text += "\"profile\": " + Json::string(profile).dump();
+        text += "\"profile\": " + Json(profile).dump();
     }
     text += "}";
     return text;
@@ -73,7 +73,7 @@ bool Dispatcher::load_file(const std::string& path, Dispatcher& out, std::string
         return false;
     }
     Json scenario;
-    if (!Json::parse(text, scenario) || !scenario.is_object()) {
+    if (!parse(text, scenario) || !scenario.is_object()) {
         error = path + " is not a JSON object";
         return false;
     }
@@ -91,12 +91,12 @@ void Dispatcher::configure(const Json& scenario) {
         return;
     }
 
-    if (const Json* profiles = scenario.find("profiles");
+    if (const Json* profiles = json_member(scenario, "profiles");
         profiles != nullptr && profiles->is_object()) {
-        for (const auto& member : profiles->members()) {
-            if (member.second.is_object()) {
-                _profiles.emplace_back(member.first,
-                                       Profile::from_json(member.first, member.second));
+        for (const auto& [profile_name, profile_json] : profiles->items()) {
+            if (profile_json.is_object()) {
+                _profiles.emplace_back(profile_name,
+                                       Profile::from_json(profile_name, profile_json));
             }
         }
     }
@@ -104,32 +104,35 @@ void Dispatcher::configure(const Json& scenario) {
         _profiles.emplace_back("default", Profile{});
     }
 
-    if (const Json* default_profile = scenario.find("default_profile");
+    if (const Json* default_profile = json_member(scenario, "default_profile");
         default_profile != nullptr && default_profile->is_string()) {
-        _default_profile = default_profile->as_string();
+        _default_profile = as_string(*default_profile);
     }
 
-    if (const Json* match = scenario.find("match"); match != nullptr && match->is_array()) {
-        for (const Json& entry : match->items()) {
+    if (const Json* match = json_member(scenario, "match"); match != nullptr && match->is_array()) {
+        for (const Json& entry : *match) {
             if (!entry.is_object()) {
                 continue;
             }
             MatchRule rule;
-            if (const Json* value = entry.find("exe_contains");
+            if (const Json* value = json_member(entry, "exe_contains");
                 value != nullptr && value->is_string()) {
                 rule.has_exe_contains = true;
-                rule.exe_contains = value->as_string();
+                rule.exe_contains = as_string(*value);
             }
-            if (const Json* value = entry.find("exe"); value != nullptr && value->is_string()) {
+            if (const Json* value = json_member(entry, "exe");
+                value != nullptr && value->is_string()) {
                 rule.has_exe = true;
-                rule.exe = value->as_string();
+                rule.exe = as_string(*value);
             }
-            if (const Json* value = entry.find("pid"); value != nullptr && value->is_number()) {
+            if (const Json* value = json_member(entry, "pid");
+                value != nullptr && value->is_number()) {
                 rule.has_pid = true;
-                rule.pid = value->as_int64();
+                rule.pid = as_int64(*value);
             }
-            if (const Json* value = entry.find("profile"); value != nullptr && value->is_string()) {
-                rule.profile = value->as_string();
+            if (const Json* value = json_member(entry, "profile");
+                value != nullptr && value->is_string()) {
+                rule.profile = as_string(*value);
             }
             _match.push_back(std::move(rule));
         }
@@ -164,14 +167,15 @@ Profile Dispatcher::profile_for(const Json& hello) const {
     std::int64_t pid = 0;
     std::string requested;
     if (hello.is_object()) {
-        if (const Json* value = hello.find("exe")) {
+        if (const Json* value = json_member(hello, "exe")) {
             exe = lower_ascii(text_of(*value));
         }
-        if (const Json* value = hello.find("pid"); value != nullptr && value->is_number()) {
-            pid = value->as_int64();
+        if (const Json* value = json_member(hello, "pid"); value != nullptr && value->is_number()) {
+            pid = as_int64(*value);
         }
-        if (const Json* value = hello.find("profile"); value != nullptr && value->is_string()) {
-            requested = value->as_string();
+        if (const Json* value = json_member(hello, "profile");
+            value != nullptr && value->is_string()) {
+            requested = as_string(*value);
         }
     }
 
@@ -217,35 +221,36 @@ Answer Dispatcher::answer(Session& session, const std::string& name, const Json&
             // declines - the same as an explicit "answer": "default".
             return answer;
         }
-        const Json* mode = scripted->find("answer");
-        if (mode != nullptr && mode->is_string() && mode->as_string() == "default") {
+        const Json* mode = json_member(*scripted, "answer");
+        if (mode != nullptr && mode->is_string() && as_string(*mode) == "default") {
             return answer;
         }
         answer.answered = true;
-        if (const Json* ret = scripted->find("ret")) {
+        if (const Json* ret = json_member(*scripted, "ret")) {
             answer.ret = *ret;
         }
-        if (const Json* out = scripted->find("out")) {
+        if (const Json* out = json_member(*scripted, "out")) {
             answer.out = *out;
         }
         // A `then` list is what should happen to the game once this answer is on
         // its way: each entry names a payload and the fields to write into it, and
         // the call it completes is the handle this entry just returned - so a
         // scenario says "create the lobby" once rather than twice.
-        if (const Json* then = scripted->find("then"); then != nullptr && then->is_array()) {
+        if (const Json* then = json_member(*scripted, "then");
+            then != nullptr && then->is_array()) {
             Json events = Json::array();
-            for (const Json& entry : then->items()) {
+            for (const Json& entry : *then) {
                 if (!entry.is_object()) {
                     continue;
                 }
                 Json event = entry;
-                if (event.find("call") == nullptr && event.find("id") == nullptr &&
+                if (json_member(event, "call") == nullptr && json_member(event, "id") == nullptr &&
                     answer.ret.is_number()) {
-                    event.set("call", answer.ret);
+                    event["call"] = answer.ret;
                 }
-                events.push(std::move(event));
+                events.push_back(std::move(event));
             }
-            if (!events.items().empty()) {
+            if (!events.empty()) {
                 answer.events = std::move(events);
             }
         }

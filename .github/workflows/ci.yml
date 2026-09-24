@@ -14,7 +14,7 @@
 #  on the same ABI, and it is worth the job because it reports what /W4 cannot.
 #
 #  The live view lives in its own job because it is the one target that needs the
-#  submodules - so the other jobs stay fast and dependency-free.
+#  graphics submodules. JSON is a submodule too, and every job takes that one.
 # ============================================================================
 
 name: CI
@@ -43,6 +43,8 @@ jobs:
         build_type: [Debug, Release]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Configure
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.arch }}
@@ -62,6 +64,8 @@ jobs:
         arch: [x64, Win32]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Configure
         run: >-
@@ -86,6 +90,8 @@ jobs:
         arch: [x64, Win32]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Configure
         run: >-
@@ -103,12 +109,14 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Check
         shell: pwsh
         run: pwsh -File tools/check-format.ps1
 
-  # The only target that needs the submodules, so only this job checks them out.
+  # On top of the JSON submodule every job takes, this one needs the graphics ones.
   gui:
     name: gui / msvc / x64
     runs-on: windows-2022

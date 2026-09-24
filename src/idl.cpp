@@ -28,24 +28,26 @@ struct TypeInfo {
 
 constexpr TypeInfo kTypes[] = {
     {"bool", "bool", "arg_bool", "false", "steammock::reply_bool(reply)",
-     "static_cast<bool>(value->as_bool())"},
+     "static_cast<bool>(steammock::as_bool(*value))"},
     {"int32", "std::int32_t", "arg_int", "0",
      "static_cast<std::int32_t>(steammock::reply_int(reply))",
-     "static_cast<std::int32_t>(value->as_int64())"},
+     "static_cast<std::int32_t>(steammock::as_int64(*value))"},
     {"uint32", "std::uint32_t", "arg_uint", "0",
      "static_cast<std::uint32_t>(steammock::reply_uint(reply))",
-     "static_cast<std::uint32_t>(value->as_uint64())"},
+     "static_cast<std::uint32_t>(steammock::as_uint64(*value))"},
     // A port number is a uint16 in the real headers and stays one here: read as
     // a wider type it would carry whatever the caller left in the top half.
     {"uint16", "std::uint16_t", "arg_uint", "0",
      "static_cast<std::uint16_t>(steammock::reply_uint(reply))",
-     "static_cast<std::uint16_t>(value->as_uint64())"},
-    {"int64", "std::int64_t", "arg_int", "0", "steammock::reply_int(reply)", "value->as_int64()"},
+     "static_cast<std::uint16_t>(steammock::as_uint64(*value))"},
+    {"int64", "std::int64_t", "arg_int", "0", "steammock::reply_int(reply)",
+     "steammock::as_int64(*value)"},
     {"uint64", "std::uint64_t", "arg_uint", "0", "steammock::reply_uint(reply)",
-     "value->as_uint64()"},
+     "steammock::as_uint64(*value)"},
     {"float", "float", "arg_real", "0.0f", "static_cast<float>(steammock::reply_real(reply))",
-     "static_cast<float>(value->as_double())"},
-    {"double", "double", "arg_real", "0.0", "steammock::reply_real(reply)", "value->as_double()"},
+     "static_cast<float>(steammock::as_double(*value))"},
+    {"double", "double", "arg_real", "0.0", "steammock::reply_real(reply)",
+     "steammock::as_double(*value)"},
     // A returned string is copied by the stub before the reply dies with the
     // call, so the game gets its own text (see bridge/call.hpp).
     {"cstring", "const char*", "arg_cstring", "kEmptyString",
@@ -181,16 +183,16 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
         if (param.out) {
             // Send what the caller passed in, so the backend can see the current
             // value; a null pointer is reported as null and never dereferenced.
-            out.push_back("        args.set(\"" + param.name + "\", " + param.name + " != nullptr");
+            out.push_back("        args[\"" + param.name + "\"] = " + param.name + " != nullptr");
             out.push_back(std::string("                                  ? steammock::") +
                           type.arg_helper + "(static_cast<" + type.cpp + ">(*" + param.name + "))");
-            out.push_back("                                  : steammock::Json::null());");
+            out.push_back("                                  : steammock::Json();");
         } else if (std::string(param.type) == "cstring") {
-            out.push_back("        args.set(\"" + param.name + "\", steammock::arg_cstring(" +
-                          param.name + "));");
+            out.push_back("        args[\"" + param.name + "\"] = steammock::arg_cstring(" +
+                          param.name + ");");
         } else {
-            out.push_back(std::string("        args.set(\"") + param.name +
-                          "\", steammock::" + type.arg_helper + "(" + param.name + "));");
+            out.push_back(std::string("        args[\"") + param.name +
+                          "\"] = steammock::" + type.arg_helper + "(" + param.name + ");");
         }
     }
     out.push_back("");
@@ -272,35 +274,35 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
         error = "the IDL has to be a JSON object";
         return false;
     }
-    const Json* calls_json = document.find("calls");
+    const Json* calls_json = json_member(document, "calls");
     if (calls_json == nullptr || !calls_json->is_array()) {
         error = "the IDL needs a 'calls' array";
         return false;
     }
 
     Idl parsed;
-    if (const Json* surface = document.find("surface");
+    if (const Json* surface = json_member(document, "surface");
         surface != nullptr && surface->is_string()) {
-        parsed._surface = surface->as_string();
+        parsed._surface = as_string(*surface);
     }
-    if (const Json* revision = document.find("revision");
+    if (const Json* revision = json_member(document, "revision");
         revision != nullptr && revision->is_number()) {
-        parsed._revision = static_cast<int>(revision->as_int64());
+        parsed._revision = static_cast<int>(as_int64(*revision));
     }
 
-    for (const Json& entry : calls_json->items()) {
+    for (const Json& entry : *calls_json) {
         if (!entry.is_object()) {
             error = "every call has to be a JSON object";
             return false;
         }
-        const Json* name = entry.find("name");
-        if (name == nullptr || !name->is_string() || name->as_string().empty()) {
+        const Json* name = json_member(entry, "name");
+        if (name == nullptr || !name->is_string() || as_string(*name).empty()) {
             error = "every call needs a 'name'";
             return false;
         }
 
         IdlCall call;
-        call.name = name->as_string();
+        call.name = as_string(*name);
         for (const IdlCall& existing : parsed._calls) {
             if (existing.name == call.name) {
                 error = call.name + " appears twice";
@@ -308,19 +310,19 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
             }
         }
 
-        if (const Json* returns = entry.find("returns"); returns != nullptr) {
+        if (const Json* returns = json_member(entry, "returns"); returns != nullptr) {
             if (!returns->is_string()) {
                 error = call.name + ": 'returns' has to be a type name";
                 return false;
             }
-            call.returns = returns->as_string();
+            call.returns = as_string(*returns);
         }
-        if (const Json* hook = entry.find("hook"); hook != nullptr) {
+        if (const Json* hook = json_member(entry, "hook"); hook != nullptr) {
             if (!hook->is_string()) {
                 error = call.name + ": 'hook' has to be a name";
                 return false;
             }
-            call.hook = hook->as_string();
+            call.hook = as_string(*hook);
             // Named rather than trusted: a hook the generator does not know is a
             // trampoline that would quietly do nothing.
             static const char* const kHooks[] = {"register_callback", "unregister_callback",
@@ -340,36 +342,38 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
             return false;
         }
 
-        if (const Json* params = entry.find("params"); params != nullptr && params->is_array()) {
-            for (const Json& entry_param : params->items()) {
+        if (const Json* params = json_member(entry, "params");
+            params != nullptr && params->is_array()) {
+            for (const Json& entry_param : *params) {
                 if (!entry_param.is_object()) {
                     error = call.name + ": every parameter has to be a JSON object";
                     return false;
                 }
                 IdlParam param;
-                const Json* param_name = entry_param.find("name");
+                const Json* param_name = json_member(entry_param, "name");
                 if (param_name == nullptr || !param_name->is_string() ||
-                    param_name->as_string().empty()) {
+                    as_string(*param_name).empty()) {
                     error = call.name + ": every parameter needs a 'name'";
                     return false;
                 }
-                param.name = param_name->as_string();
+                param.name = as_string(*param_name);
 
-                const Json* param_type = entry_param.find("type");
+                const Json* param_type = json_member(entry_param, "type");
                 if (param_type == nullptr || !param_type->is_string() ||
-                    find_type(param_type->as_string()) == nullptr) {
+                    find_type(as_string(*param_type)) == nullptr) {
                     error =
                         call.name + "." + param.name + ": unknown type '" +
-                        (param_type != nullptr && param_type->is_string() ? param_type->as_string()
+                        (param_type != nullptr && param_type->is_string() ? as_string(*param_type)
                                                                           : std::string()) +
                         "'";
                     return false;
                 }
-                param.type = param_type->as_string();
+                param.type = as_string(*param_type);
 
                 std::string direction = "in";
-                if (const Json* dir = entry_param.find("dir"); dir != nullptr && dir->is_string()) {
-                    direction = dir->as_string();
+                if (const Json* dir = json_member(entry_param, "dir");
+                    dir != nullptr && dir->is_string()) {
+                    direction = as_string(*dir);
                 }
                 if (direction != "in" && direction != "out") {
                     error = call.name + "." + param.name + ": dir must be 'in' or 'out'";
@@ -392,8 +396,8 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
         // The calls that can answer themselves: they are handed a version string a
         // game wants an interface for, and the stub has objects of its own for
         // some of them (see bridge/synth.hpp).
-        if (const Json* fallback = entry.find("fallback"); fallback != nullptr) {
-            const std::string kind = fallback->is_string() ? fallback->as_string() : std::string();
+        if (const Json* fallback = json_member(entry, "fallback"); fallback != nullptr) {
+            const std::string kind = fallback->is_string() ? as_string(*fallback) : std::string();
             const bool factory = kind == "interface";
             const bool lazy = kind == "context";
             if (!factory && !lazy) {
@@ -447,7 +451,7 @@ bool Idl::load_file(const std::string& path, Idl& out, std::string& error) {
     std::fclose(file);
 
     Json document;
-    if (!Json::parse(text, document)) {
+    if (!parse(text, document)) {
         error = path + " is not valid JSON";
         return false;
     }

@@ -17,7 +17,7 @@
 #include <string>
 
 #include "bridge/interfaces.hpp"
-#include "bridge/json.hpp"
+#include "bridge/json_read.hpp"
 
 namespace {
 
@@ -44,7 +44,7 @@ std::string document(const std::string& slots) {
 
 bool reads(const std::string& text, steammock::Interfaces& out, std::string& error) {
     steammock::Json parsed;
-    if (!steammock::Json::parse(text, parsed)) {
+    if (!steammock::parse(text, parsed)) {
         error = "the test's own JSON does not parse";
         return false;
     }

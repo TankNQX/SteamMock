@@ -8,7 +8,7 @@
 
 #include "bridge/call.hpp"
 #include "bridge/client.hpp"
-#include "bridge/json.hpp"
+#include "bridge/json_read.hpp"
 
 namespace steammock {
 
@@ -160,13 +160,13 @@ template <class T, class = void> struct Kind {
             return;
         }
         if constexpr (std::is_same_v<T, bool>) {
-            *target = value.as_bool();
+            *target = as_bool(value);
         } else if constexpr (std::is_floating_point_v<T>) {
-            *target = static_cast<T>(value.as_double());
+            *target = static_cast<T>(as_double(value));
         } else if constexpr (std::is_signed_v<T>) {
-            *target = static_cast<T>(value.as_int64());
+            *target = static_cast<T>(as_int64(value));
         } else {
-            *target = static_cast<T>(value.as_uint64());
+            *target = static_cast<T>(as_uint64(value));
         }
     }
 
@@ -486,7 +486,7 @@ inline void* context_init(void* p_context_init_data, const char* call) noexcept 
 
     Json args = Json::object();
     Json reply;
-    args.set("pContextInitData", arg_pointer(p_context_init_data));
+    args["pContextInitData"] = arg_pointer(p_context_init_data);
     (void)invoke(call, args, reply);
 
     context->counter = 1;

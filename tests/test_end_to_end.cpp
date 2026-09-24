@@ -28,7 +28,7 @@
 #include <thread>
 #include <vector>
 
-#include "bridge/json.hpp"
+#include "bridge/json_read.hpp"
 #include "child_process.hpp"
 
 using steammock_test::ChildProcess;
@@ -124,7 +124,7 @@ std::vector<steammock::Json> read_transcript(const std::string& path, bool& ok) 
             continue;
         }
         steammock::Json record;
-        if (steammock::Json::parse(line, record)) {
+        if (steammock::parse(line, record)) {
             records.push_back(std::move(record));
         }
     }
@@ -132,8 +132,8 @@ std::vector<steammock::Json> read_transcript(const std::string& path, bool& ok) 
 }
 
 std::string text_member(const steammock::Json& record, const char* key) {
-    const steammock::Json* member = record.find(key);
-    return member != nullptr && member->is_string() ? member->as_string() : std::string();
+    const steammock::Json* member = steammock::json_member(record, key);
+    return member != nullptr && member->is_string() ? steammock::as_string(*member) : std::string();
 }
 
 bool ends_with(const std::string& text, const std::string& tail) {
@@ -441,9 +441,10 @@ int main(int argc, char** argv) {
         if (text_member(record, "call") != "SteamAPI_ISteamUserStats_GetUserAchievement") {
             continue;
         }
-        const steammock::Json* args = record.find("args");
-        if (args != nullptr && args->find("steamIDUser") != nullptr &&
-            args->find("steamIDUser")->as_uint64() == 76561198000000001ull) {
+        const steammock::Json* args = steammock::json_member(record, "args");
+        if (args != nullptr && steammock::json_member(*args, "steamIDUser") != nullptr &&
+            steammock::as_uint64(*steammock::json_member(*args, "steamIDUser")) ==
+                76561198000000001ull) {
             value_argument_recorded = true;
         }
     }
@@ -458,15 +459,16 @@ int main(int argc, char** argv) {
     bool every_record_names_its_session = true;
     for (const steammock::Json& record : records) {
         const std::string call = text_member(record, "call");
-        const steammock::Json* out = record.find("out");
-        if (ends_with(call, "GetStatInt32") && out != nullptr && out->find("pData") != nullptr &&
-            out->find("pData")->as_int64() == 0) {
+        const steammock::Json* out = steammock::json_member(record, "out");
+        if (ends_with(call, "GetStatInt32") && out != nullptr &&
+            steammock::json_member(*out, "pData") != nullptr &&
+            steammock::as_int64(*steammock::json_member(*out, "pData")) == 0) {
             out_parameter_recorded = true;
         }
         if (ends_with(call, "SetStatInt32")) {
-            const steammock::Json* args = record.find("args");
-            if (args != nullptr && args->find("nData") != nullptr &&
-                args->find("nData")->as_int64() == 4) {
+            const steammock::Json* args = steammock::json_member(record, "args");
+            if (args != nullptr && steammock::json_member(*args, "nData") != nullptr &&
+                steammock::as_int64(*steammock::json_member(*args, "nData")) == 4) {
                 stats_write_recorded = true;
             }
         }

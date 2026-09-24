@@ -28,20 +28,19 @@ namespace {
 // spell the value a declaration already gave us.
 Json packed_value(const Arg& argument) {
     switch (argument.wire) {
-        case Wire::boolean: return Json::boolean(argument.bits != 0);
-        case Wire::integer: return Json::integer(static_cast<std::int64_t>(argument.bits));
+        case Wire::boolean: return Json(argument.bits != 0);
+        case Wire::integer: return Json(static_cast<std::int64_t>(argument.bits));
         case Wire::real: {
             double number = 0.0;
             std::memcpy(&number, &argument.bits, sizeof(number));
-            return Json::real(number);
+            return Json(number);
         }
         case Wire::cstring:
-            return argument.bits == 0 ? Json::null()
-                                      : Json::string(reinterpret_cast<const char*>(argument.bits));
+            return argument.bits == 0 ? Json() : Json(reinterpret_cast<const char*>(argument.bits));
         case Wire::null_value: break;
     }
     // A value class the wire cannot carry, or an out-parameter nobody passed.
-    return Json::null();
+    return Json();
 }
 
 }  // namespace
@@ -50,7 +49,7 @@ bool run_slot(const SlotInfo& info, const Arg* args, std::size_t count, Json& re
     try {
         Json request = Json::object();
         for (std::size_t index = 0; index < count; ++index) {
-            request.set(name_at(info, index), packed_value(args[index]));
+            request[name_at(info, index)] = packed_value(args[index]);
         }
         return invoke(info.call, request, reply);
     } catch (...) {
@@ -151,38 +150,38 @@ void call_object(void* object, const EventInfo& event, const Json* fields, std::
 // completes, the callback id it belongs to, or neither - in which case it is
 // something that happened to a game rather than an answer to something it asked.
 void deliver_one(const Json& event) noexcept {
-    const Json* name = event.find("event");
+    const Json* name = json_member(event, "event");
     if (name == nullptr || !name->is_string()) {
         return;
     }
-    const EventInfo* info = find_event(name->as_string().c_str());
+    const EventInfo* info = find_event(as_string(*name).c_str());
     if (info == nullptr) {
-        log_write(LogLevel::warn, "an event the layouts do not declare: " + name->as_string());
+        log_write(LogLevel::warn, "an event the layouts do not declare: " + as_string(*name));
         return;
     }
 
-    const Json* fields = event.find("in");
+    const Json* fields = json_member(event, "in");
     void* object = nullptr;
     std::uint64_t call = 0;
     bool call_result = false;
     {
         const std::lock_guard<std::mutex> lock(registry_mutex());
-        const Json* handle = event.find("call");
-        const Json* id = event.find("id");
+        const Json* handle = json_member(event, "call");
+        const Json* id = json_member(event, "id");
         if (handle != nullptr && handle->is_number()) {
-            call = handle->as_uint64();
+            call = as_uint64(*handle);
             const auto found = results_by_call().find(call);
             if (found != results_by_call().end()) {
                 object = found->second;
                 call_result = true;
             }
         } else if (id != nullptr && id->is_number()) {
-            const auto found = callbacks_by_id().find(static_cast<std::int32_t>(id->as_int64()));
+            const auto found = callbacks_by_id().find(static_cast<std::int32_t>(as_int64(*id)));
             if (found != callbacks_by_id().end()) {
                 object = found->second;
-                log_write(LogLevel::debug, "delivering " + name->as_string() +
+                log_write(LogLevel::debug, "delivering " + as_string(*name) +
                                                " to the callback the game registered for id " +
-                                               std::to_string(id->as_int64()));
+                                               std::to_string(as_int64(*id)));
             }
         } else {
             // Nobody asked for this, because it is not an answer to anything: a room
@@ -192,7 +191,7 @@ void deliver_one(const Json& event) noexcept {
             const auto found = callbacks_by_id().find(info->callback);
             if (found != callbacks_by_id().end()) {
                 object = found->second;
-                log_write(LogLevel::debug, "delivering " + name->as_string() +
+                log_write(LogLevel::debug, "delivering " + as_string(*name) +
                                                " to the callback registered for id " +
                                                std::to_string(info->callback));
             }
@@ -205,7 +204,7 @@ void deliver_one(const Json& event) noexcept {
         // drops those too - but it says so, because an event that goes nowhere is
         // the hardest kind of silence.
         log_write(LogLevel::warn,
-                  "an event nobody is waiting for: " + name->as_string() +
+                  "an event nobody is waiting for: " + as_string(*name) +
                       (call_result ? std::string()
                                    : " (callback " + std::to_string(info->callback) + ")"));
         return;
@@ -285,10 +284,10 @@ void deliver_events() noexcept {
             }
             // Said out loud, because a payload that comes out of the queue and then does
             // nothing is the one thing here that is otherwise invisible.
-            const Json* name = event.find("event");
+            const Json* name = json_member(event, "event");
             log_write(LogLevel::debug,
                       "taking a payload out of the queue to hand over: " +
-                          (name != nullptr && name->is_string() ? name->as_string()
+                          (name != nullptr && name->is_string() ? as_string(*name)
                                                                 : std::string("<no name>")));
             deliver_one(event);
         }

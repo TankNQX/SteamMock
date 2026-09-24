@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include "bridge/json.hpp"
+#include "bridge/json_read.hpp"
 
 namespace steammock {
 

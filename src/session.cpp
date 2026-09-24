@@ -16,60 +16,63 @@ namespace {
 //  scenario cannot take the backend down in the middle of a run.
 
 std::int64_t to_int64(const Json& value, std::int64_t fallback) noexcept {
-    switch (value.kind()) {
-        case Json::Kind::number: return value.as_int64();
-        case Json::Kind::boolean: return value.as_bool() ? 1 : 0;
-        case Json::Kind::string: {
-            const std::string& text = value.as_string();
-            std::size_t index = 0;
-            while (index < text.size() && (text[index] == ' ' || text[index] == '\t')) {
-                ++index;
-            }
-            bool negative = false;
-            if (index < text.size() && (text[index] == '+' || text[index] == '-')) {
-                negative = text[index] == '-';
-                ++index;
-            }
-            const std::size_t digits_begin = index;
-            std::int64_t magnitude = 0;
-            while (index < text.size() && text[index] >= '0' && text[index] <= '9') {
-                if (magnitude > (9223372036854775807LL - (text[index] - '0')) / 10) {
-                    return fallback;
-                }
-                magnitude = magnitude * 10 + (text[index] - '0');
-                ++index;
-            }
-            if (index == digits_begin) {
-                return fallback;
-            }
-            while (index < text.size() && (text[index] == ' ' || text[index] == '\t')) {
-                ++index;
-            }
-            if (index != text.size()) {
-                return fallback;
-            }
-            return negative ? -magnitude : magnitude;
-        }
-        default: return fallback;
+    if (value.is_number()) {
+        return as_int64(value);
     }
+    if (value.is_boolean()) {
+        return as_bool(value) ? 1 : 0;
+    }
+    if (value.is_string()) {
+        const std::string text = as_string(value);
+        std::size_t index = 0;
+        while (index < text.size() && (text[index] == ' ' || text[index] == '\t')) {
+            ++index;
+        }
+        bool negative = false;
+        if (index < text.size() && (text[index] == '+' || text[index] == '-')) {
+            negative = text[index] == '-';
+            ++index;
+        }
+        const std::size_t digits_begin = index;
+        std::int64_t magnitude = 0;
+        while (index < text.size() && text[index] >= '0' && text[index] <= '9') {
+            if (magnitude > (9223372036854775807LL - (text[index] - '0')) / 10) {
+                return fallback;
+            }
+            magnitude = magnitude * 10 + (text[index] - '0');
+            ++index;
+        }
+        if (index == digits_begin) {
+            return fallback;
+        }
+        while (index < text.size() && (text[index] == ' ' || text[index] == '\t')) {
+            ++index;
+        }
+        if (index != text.size()) {
+            return fallback;
+        }
+        return negative ? -magnitude : magnitude;
+    }
+    return fallback;
 }
 
 std::string to_text(const Json& value, const std::string& fallback) {
-    switch (value.kind()) {
-        case Json::Kind::string: return value.as_string();
-        case Json::Kind::number:
-            // Only an integral number has a text form worth reading as a name;
-            // anything else is more likely a mistake than a name. The cast says
-            // out loud what the comparison used to do implicitly.
-            return static_cast<double>(value.as_int64()) == value.as_double()
-                       ? std::to_string(value.as_int64())
-                       : fallback;
-        default: return fallback;
+    if (value.is_string()) {
+        return as_string(value);
     }
+    if (value.is_number()) {
+        // Only an integral number has a text form worth reading as a name;
+        // anything else is more likely a mistake than a name. The cast says
+        // out loud what the comparison used to do implicitly.
+        return static_cast<double>(as_int64(value)) == as_double(value)
+                   ? std::to_string(as_int64(value))
+                   : fallback;
+    }
+    return fallback;
 }
 
 std::string string_member(const Json& args, const char* key) {
-    const Json* value = args.find(key);
+    const Json* value = json_member(args, key);
     return value != nullptr ? to_text(*value, std::string()) : std::string();
 }
 
@@ -110,110 +113,107 @@ Answer from_state_out(Json ret, Json out) {
 // caller's variable alone, which is what the stub's "no out-parameter" rule
 // already does for us.
 
-Answer h_const_one(Session&, const Json&) { return from_state(Json::integer(1)); }
+Answer h_const_one(Session&, const Json&) { return from_state(Json(1)); }
 
 Answer h_install_path(Session& session, const Json&) {
-    return from_state(Json::string(session.profile().install_path));
+    return from_state(Json(session.profile().install_path));
 }
 
 Answer h_steam_id(Session& session, const Json&) {
-    return from_state(Json::integer(static_cast<std::int64_t>(session.profile().steam_id)));
+    return from_state(Json(static_cast<std::int64_t>(session.profile().steam_id)));
 }
 
 Answer h_persona_name(Session& session, const Json&) {
-    return from_state(Json::string(session.profile().persona_name));
+    return from_state(Json(session.profile().persona_name));
 }
 
 Answer h_app_id(Session& session, const Json&) {
-    return from_state(Json::integer(session.profile().app_id));
+    return from_state(Json(session.profile().app_id));
 }
 
 Answer h_language(Session& session, const Json&) {
-    return from_state(Json::string(session.profile().language));
+    return from_state(Json(session.profile().language));
 }
 
 Answer h_ui_language(Session& session, const Json&) {
-    return from_state(Json::string(session.profile().ui_language));
+    return from_state(Json(session.profile().ui_language));
 }
 
 Answer h_seconds_since_active(Session& session, const Json&) {
     const auto elapsed = std::chrono::system_clock::now() - session.started();
     const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
-    return from_state(Json::integer(static_cast<std::int64_t>(seconds)));
+    return from_state(Json(static_cast<std::int64_t>(seconds)));
 }
 
 Answer h_server_real_time(Session&, const Json&) {
     // Steam hands out UTC seconds; a game only ever uses it for clock sanity.
     const auto now = std::chrono::system_clock::now().time_since_epoch();
     const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(now).count();
-    return from_state(Json::integer(static_cast<std::int64_t>(seconds)));
+    return from_state(Json(static_cast<std::int64_t>(seconds)));
 }
 
 Answer h_build_id(Session& session, const Json&) {
-    return from_state(Json::integer(session.profile().build_id));
+    return from_state(Json(session.profile().build_id));
 }
 
-Answer h_true(Session&, const Json&) { return from_state(Json::boolean(true)); }
+Answer h_true(Session&, const Json&) { return from_state(Json(true)); }
 
 Answer h_get_stat(Session& session, const Json& args) {
     const std::int64_t* value = session.profile().find_stat(string_member(args, "pchName"));
     if (value == nullptr) {
         // Steam reports failure for a name it does not know, and leaves the
         // caller's variable alone - which is exactly what we do here too.
-        return from_state(Json::boolean(false));
+        return from_state(Json(false));
     }
     Json out = Json::object();
-    out.set("pData", Json::integer(*value));
-    return from_state_out(Json::boolean(true), std::move(out));
+    out["pData"] = Json(*value);
+    return from_state_out(Json(true), std::move(out));
 }
 
 Answer h_set_stat(Session& session, const Json& args) {
     // Setting an unknown name is accepted and remembered, so a game can invent a
     // stat locally without the scenario having listed it first.
     const std::string key = string_member(args, "pchName");
-    const Json* value = args.find("nData");
+    const Json* value = json_member(args, "nData");
     const std::int64_t number = value != nullptr ? to_int64(*value, 0) : 0;
     session.profile().set_stat(key, number);
     session.note_stat_written(key, number);
-    return from_state(Json::boolean(true));
+    return from_state(Json(true));
 }
 
 Answer h_get_achievement(Session& session, const Json& args) {
     const int index = session.profile().achievement_index(string_member(args, "pchName"));
     if (index < 0) {
-        return from_state(Json::boolean(false));
+        return from_state(Json(false));
     }
     Json out = Json::object();
-    out.set(
-        "pbAchieved",
-        Json::boolean(session.profile().achievements[static_cast<std::size_t>(index)].achieved));
-    return from_state_out(Json::boolean(true), std::move(out));
+    out["pbAchieved"] =
+        Json(session.profile().achievements[static_cast<std::size_t>(index)].achieved);
+    return from_state_out(Json(true), std::move(out));
 }
 
 Answer h_set_achievement(Session& session, const Json& args) {
     const std::string name = string_member(args, "pchName");
     Achievement* achievement = session.profile().find_achievement(name);
     if (achievement == nullptr) {
-        return from_state(Json::boolean(false));
+        return from_state(Json(false));
     }
     achievement->achieved = true;
     session.note_achievement_set(name);
-    return from_state(Json::boolean(true));
+    return from_state(Json(true));
 }
 
 Answer h_num_achievements(Session& session, const Json&) {
-    return from_state(
-        Json::integer(static_cast<std::int64_t>(session.profile().achievements.size())));
+    return from_state(Json(static_cast<std::int64_t>(session.profile().achievements.size())));
 }
 
 Answer h_achievement_name(Session& session, const Json& args) {
-    const Json* requested = args.find("iAchievement");
+    const Json* requested = json_member(args, "iAchievement");
     const std::int64_t index = requested != nullptr ? to_int64(*requested, 0) : 0;
     if (index < 0 || index >= static_cast<std::int64_t>(session.profile().achievements.size())) {
-        return from_state(Json::string(""));
+        return from_state(Json(""));
     }
-    return from_state(
-        Json::string(session.profile().achievements[static_cast<std::size_t>(index)].name));
+    return from_state(Json(session.profile().achievements[static_cast<std::size_t>(index)].name));
 }
 
 // Calls answered from session state. Everything absent here is either scripted
@@ -259,54 +259,55 @@ Profile Profile::from_json(const std::string& profile_name, const Json& data) {
         return profile;
     }
 
-    if (const Json* value = data.find("app_id")) {
+    if (const Json* value = json_member(data, "app_id")) {
         profile.app_id = to_int64(*value, profile.app_id);
     }
-    if (const Json* value = data.find("steam_id")) {
+    if (const Json* value = json_member(data, "steam_id")) {
         profile.steam_id = static_cast<std::uint64_t>(
             to_int64(*value, static_cast<std::int64_t>(profile.steam_id)));
     }
-    if (const Json* value = data.find("persona_name")) {
+    if (const Json* value = json_member(data, "persona_name")) {
         profile.persona_name = to_text(*value, profile.persona_name);
     }
-    if (const Json* value = data.find("language")) {
+    if (const Json* value = json_member(data, "language")) {
         profile.language = to_text(*value, profile.language);
     }
-    if (const Json* value = data.find("ui_language")) {
+    if (const Json* value = json_member(data, "ui_language")) {
         profile.ui_language = to_text(*value, profile.ui_language);
     }
-    if (const Json* value = data.find("install_path")) {
+    if (const Json* value = json_member(data, "install_path")) {
         profile.install_path = to_text(*value, profile.install_path);
     }
-    if (const Json* value = data.find("build_id")) {
+    if (const Json* value = json_member(data, "build_id")) {
         profile.build_id = to_int64(*value, profile.build_id);
     }
 
-    if (const Json* value = data.find("stats"); value != nullptr && value->is_object()) {
-        for (const auto& member : value->members()) {
-            profile.stats.emplace_back(member.first, to_int64(member.second, 0));
+    if (const Json* value = json_member(data, "stats"); value != nullptr && value->is_object()) {
+        for (const auto& [stat_name, stat_value] : value->items()) {
+            profile.stats.emplace_back(stat_name, to_int64(stat_value, 0));
         }
     }
 
-    if (const Json* value = data.find("achievements"); value != nullptr && value->is_array()) {
-        for (const Json& entry : value->items()) {
+    if (const Json* value = json_member(data, "achievements");
+        value != nullptr && value->is_array()) {
+        for (const Json& entry : *value) {
             if (!entry.is_object()) {
                 continue;
             }
             Achievement achievement;
-            if (const Json* entry_name = entry.find("name")) {
+            if (const Json* entry_name = json_member(entry, "name")) {
                 achievement.name = to_text(*entry_name, std::string());
             }
-            if (const Json* achieved = entry.find("achieved")) {
-                achievement.achieved = achieved->as_bool();
+            if (const Json* achieved = json_member(entry, "achieved")) {
+                achievement.achieved = as_bool(*achieved);
             }
             profile.achievements.push_back(std::move(achievement));
         }
     }
 
-    if (const Json* value = data.find("scripted"); value != nullptr && value->is_object()) {
-        for (const auto& member : value->members()) {
-            profile.scripted.emplace_back(member.first, member.second);
+    if (const Json* value = json_member(data, "scripted"); value != nullptr && value->is_object()) {
+        for (const auto& [call_name, script] : value->items()) {
+            profile.scripted.emplace_back(call_name, script);
         }
     }
 
@@ -369,14 +370,14 @@ const Json* Profile::scripted_for(const std::string& call) const noexcept {
 Session::Session(std::string id, const Json& hello, Profile profile)
     : _id(std::move(id)), _profile(std::move(profile)), _started(std::chrono::system_clock::now()) {
     if (hello.is_object()) {
-        if (const Json* pid = hello.find("pid")) {
+        if (const Json* pid = json_member(hello, "pid")) {
             _pid = to_int64(*pid, 0);
         }
-        if (const Json* exe = hello.find("exe")) {
-            _exe = exe->is_string() ? exe->as_string() : std::string();
+        if (const Json* exe = json_member(hello, "exe")) {
+            _exe = exe->is_string() ? as_string(*exe) : std::string();
         }
-        if (const Json* arch = hello.find("arch")) {
-            _arch = arch->is_string() ? arch->as_string() : std::string();
+        if (const Json* arch = json_member(hello, "arch")) {
+            _arch = arch->is_string() ? as_string(*arch) : std::string();
         }
     }
 }

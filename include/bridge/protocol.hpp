@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-#include "bridge/json.hpp"
+#include "bridge/json_read.hpp"
 
 namespace steammock {
 

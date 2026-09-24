@@ -72,30 +72,30 @@ namespace {
 // --- the wire, read the way the state handlers read it ---------------------
 
 std::string string_member(const Json& object, const char* key) {
-    const Json* value = object.find(key);
+    const Json* value = json_member(object, key);
     if (value == nullptr || !value->is_string()) {
         return std::string();
     }
-    return value->as_string();
+    return as_string(*value);
 }
 
 std::uint64_t id_member(const Json& object, const char* key) {
-    const Json* value = object.find(key);
+    const Json* value = json_member(object, key);
     if (value == nullptr || !value->is_number()) {
         return 0;
     }
-    return value->as_uint64();
+    return as_uint64(*value);
 }
 
 std::int64_t int_member(const Json& object, const char* key, std::int64_t fallback) {
-    const Json* value = object.find(key);
+    const Json* value = json_member(object, key);
     if (value == nullptr || !value->is_number()) {
         return fallback;
     }
-    return value->as_int64();
+    return as_int64(*value);
 }
 
-Json id_value(std::uint64_t id) { return Json::integer(static_cast<std::int64_t>(id)); }
+Json id_value(std::uint64_t id) { return Json(static_cast<std::int64_t>(id)); }
 
 // --- answers ---------------------------------------------------------------
 
@@ -121,45 +121,45 @@ Answer from_lobby(Json ret) {
 // rule a scripted "then" entry follows, where the handle is filled in from the
 // entry's own "ret".
 Answer from_lobby_calling(Json ret, Json event) {
-    event.set("call", ret);
+    event["call"] = ret;
     Answer answer = answered(std::move(ret));
     answer.via = kLobbyVia;
     answer.events = Json::array();
-    answer.events.push(std::move(event));
+    answer.events.push_back(std::move(event));
     return answer;
 }
 
 Json lobby_created_payload(std::uint64_t lobby) {
     Json fields = Json::object();
-    fields.set("m_eResult", Json::integer(1));  // k_EResultOK
-    fields.set("m_ulSteamIDLobby", id_value(lobby));
+    fields["m_eResult"] = Json(1);  // k_EResultOK
+    fields["m_ulSteamIDLobby"] = id_value(lobby);
 
     Json event = Json::object();
-    event.set("event", Json::string("LobbyCreated_t"));
-    event.set("in", std::move(fields));
+    event["event"] = Json("LobbyCreated_t");
+    event["in"] = std::move(fields);
     return event;
 }
 
 Json lobby_match_list_payload(std::size_t count) {
     Json fields = Json::object();
-    fields.set("m_nLobbiesMatching", Json::integer(static_cast<std::int64_t>(count)));
+    fields["m_nLobbiesMatching"] = Json(static_cast<std::int64_t>(count));
 
     Json event = Json::object();
-    event.set("event", Json::string("LobbyMatchList_t"));
-    event.set("in", std::move(fields));
+    event["event"] = Json("LobbyMatchList_t");
+    event["in"] = std::move(fields);
     return event;
 }
 
 Json lobby_enter_payload(std::uint64_t lobby) {
     Json fields = Json::object();
-    fields.set("m_ulSteamIDLobby", id_value(lobby));
-    fields.set("m_rgfChatPermissions", Json::integer(0));
-    fields.set("m_bLocked", Json::boolean(false));
-    fields.set("m_EChatRoomEnterResponse", Json::integer(1));  // k_EChatRoomEnterResponseSuccess
+    fields["m_ulSteamIDLobby"] = id_value(lobby);
+    fields["m_rgfChatPermissions"] = Json(0);
+    fields["m_bLocked"] = Json(false);
+    fields["m_EChatRoomEnterResponse"] = Json(1);  // k_EChatRoomEnterResponseSuccess
 
     Json event = Json::object();
-    event.set("event", Json::string("LobbyEnter_t"));
-    event.set("in", std::move(fields));
+    event["event"] = Json("LobbyEnter_t");
+    event["in"] = std::move(fields);
     return event;
 }
 
@@ -169,15 +169,14 @@ Json lobby_enter_payload(std::uint64_t lobby) {
 Json chat_update_payload(std::uint64_t lobby, std::uint64_t who, std::uint64_t making_change,
                          std::uint32_t state_change) {
     Json fields = Json::object();
-    fields.set("m_ulSteamIDLobby", id_value(lobby));
-    fields.set("m_ulSteamIDUserChanged", id_value(who));
-    fields.set("m_ulSteamIDMakingChange", id_value(making_change));
-    fields.set("m_rgfChatMemberStateChange",
-               Json::integer(static_cast<std::int64_t>(state_change)));
+    fields["m_ulSteamIDLobby"] = id_value(lobby);
+    fields["m_ulSteamIDUserChanged"] = id_value(who);
+    fields["m_ulSteamIDMakingChange"] = id_value(making_change);
+    fields["m_rgfChatMemberStateChange"] = Json(static_cast<std::int64_t>(state_change));
 
     Json event = Json::object();
-    event.set("event", Json::string("LobbyChatUpdate_t"));
-    event.set("in", std::move(fields));
+    event["event"] = Json("LobbyChatUpdate_t");
+    event["in"] = std::move(fields);
     return event;
 }
 
@@ -186,13 +185,13 @@ Json chat_update_payload(std::uint64_t lobby, std::uint64_t who, std::uint64_t m
 // for this one.
 Json data_update_payload(std::uint64_t lobby, std::uint64_t member) {
     Json fields = Json::object();
-    fields.set("m_ulSteamIDLobby", id_value(lobby));
-    fields.set("m_ulSteamIDMember", id_value(member));
-    fields.set("m_bSuccess", Json::boolean(true));
+    fields["m_ulSteamIDLobby"] = id_value(lobby);
+    fields["m_ulSteamIDMember"] = id_value(member);
+    fields["m_bSuccess"] = Json(true);
 
     Json event = Json::object();
-    event.set("event", Json::string("LobbyDataUpdate_t"));
-    event.set("in", std::move(fields));
+    event["event"] = Json("LobbyDataUpdate_t");
+    event["in"] = std::move(fields);
     return event;
 }
 
@@ -200,14 +199,14 @@ Json data_update_payload(std::uint64_t lobby, std::uint64_t member) {
 // one of them puts a server up, which is what a client connects to.
 Json lobby_game_created_payload(const Lobby& lobby) {
     Json fields = Json::object();
-    fields.set("m_ulSteamIDLobby", id_value(lobby.id));
-    fields.set("m_unIP", Json::integer(static_cast<std::int64_t>(lobby.game_server_ip)));
-    fields.set("m_usPort", Json::integer(static_cast<std::int64_t>(lobby.game_server_port)));
-    fields.set("m_ulSteamIDGameServer", id_value(lobby.game_server_id));
+    fields["m_ulSteamIDLobby"] = id_value(lobby.id);
+    fields["m_unIP"] = Json(static_cast<std::int64_t>(lobby.game_server_ip));
+    fields["m_usPort"] = Json(static_cast<std::int64_t>(lobby.game_server_port));
+    fields["m_ulSteamIDGameServer"] = id_value(lobby.game_server_id);
 
     Json event = Json::object();
-    event.set("event", Json::string("LobbyGameCreated_t"));
-    event.set("in", std::move(fields));
+    event["event"] = Json("LobbyGameCreated_t");
+    event["in"] = std::move(fields);
     return event;
 }
 
@@ -227,11 +226,11 @@ bool is_game_server_id(std::uint64_t id) noexcept {
 // which is what a server does before it will serve whoever just knocked.
 Json session_request_payload(std::uint64_t remote) {
     Json fields = Json::object();
-    fields.set("m_steamIDRemote", id_value(remote));
+    fields["m_steamIDRemote"] = id_value(remote);
 
     Json event = Json::object();
-    event.set("event", Json::string("P2PSessionRequest_t"));
-    event.set("in", std::move(fields));
+    event["event"] = Json("P2PSessionRequest_t");
+    event["in"] = std::move(fields);
     return event;
 }
 
@@ -512,7 +511,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
                 break;
             }
         }
-        out = from_lobby(Json::boolean(true));
+        out = from_lobby(Json(true));
         return true;
     }
 
@@ -521,7 +520,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (lobby == nullptr) {
             return false;
         }
-        out = from_lobby(Json::integer(static_cast<std::int64_t>(lobby->members.size())));
+        out = from_lobby(Json(static_cast<std::int64_t>(lobby->members.size())));
         return true;
     }
 
@@ -554,7 +553,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             return false;
         }
         const std::string* value = lobby->find_data(string_member(args, "pchKey"));
-        out = from_lobby(Json::string(value != nullptr ? *value : std::string()));
+        out = from_lobby(Json(value != nullptr ? *value : std::string()));
         return true;
     }
 
@@ -564,7 +563,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             return false;
         }
         lobby->set_data(string_member(args, "pchKey"), string_member(args, "pchValue"));
-        out = from_lobby(Json::boolean(true));
+        out = from_lobby(Json(true));
         return true;
     }
 
@@ -573,7 +572,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (lobby == nullptr) {
             return false;
         }
-        out = from_lobby(Json::integer(static_cast<std::int64_t>(lobby->data.size())));
+        out = from_lobby(Json(static_cast<std::int64_t>(lobby->data.size())));
         return true;
     }
 
@@ -592,13 +591,13 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         }
         const std::string key = string_member(args, "pchKey");
         if (const std::string* value = member->find(key); value != nullptr) {
-            out = from_lobby(Json::string(*value));
+            out = from_lobby(Json(*value));
             return true;
         }
         // A key nobody set: the member's own name is the answer a roster is after,
         // and the alternative is a list of blank rows. Steam would say "" here, so
         // this is the one place the world is more generous than the real thing.
-        out = from_lobby(Json::string(member->persona));
+        out = from_lobby(Json(member->persona));
         return true;
     }
 
@@ -613,7 +612,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             return false;
         }
         member->set(string_member(args, "pchKey"), string_member(args, "pchValue"));
-        out = from_lobby(Json::boolean(true));
+        out = from_lobby(Json(true));
         return true;
     }
 
@@ -622,7 +621,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (lobby == nullptr) {
             return false;
         }
-        out = from_lobby(Json::integer(lobby->max_members));
+        out = from_lobby(Json(lobby->max_members));
         return true;
     }
 
@@ -635,7 +634,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (limit > 0) {
             lobby->max_members = limit;
         }
-        out = from_lobby(Json::boolean(true));
+        out = from_lobby(Json(true));
         return true;
     }
 
@@ -646,7 +645,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (find_lobby(id_member(args, "steamIDLobby")) == nullptr) {
             return false;
         }
-        out = from_lobby(Json::boolean(true));
+        out = from_lobby(Json(true));
         return true;
     }
 
@@ -654,7 +653,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (find_lobby(id_member(args, "steamIDLobby")) == nullptr) {
             return false;
         }
-        out = from_lobby(Json::boolean(true));
+        out = from_lobby(Json(true));
         return true;
     }
 
@@ -700,7 +699,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         for (const LobbyMember& other : lobby->members) {
             notifications.emplace_back(other.steam_id, lobby_game_created_payload(*lobby));
         }
-        out = from_lobby(Json::boolean(true));
+        out = from_lobby(Json(true));
         return true;
     }
 
@@ -712,12 +711,10 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             return false;
         }
         Json values = Json::object();
-        values.set("punGameServerIP",
-                   Json::integer(static_cast<std::int64_t>(lobby->game_server_ip)));
-        values.set("punGameServerPort",
-                   Json::integer(static_cast<std::int64_t>(lobby->game_server_port)));
-        values.set("psteamIDGameServer", id_value(lobby->game_server_id));
-        Answer answer = from_lobby(Json::boolean(true));
+        values["punGameServerIP"] = Json(static_cast<std::int64_t>(lobby->game_server_ip));
+        values["punGameServerPort"] = Json(static_cast<std::int64_t>(lobby->game_server_port));
+        values["psteamIDGameServer"] = id_value(lobby->game_server_id);
+        Answer answer = from_lobby(Json(true));
         answer.out = std::move(values);
         out = std::move(answer);
         return true;
@@ -730,7 +727,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (member == nullptr || member->persona.empty()) {
             return false;
         }
-        out = from_lobby(Json::string(member->persona));
+        out = from_lobby(Json(member->persona));
         return true;
     }
 
@@ -763,7 +760,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (needs_session_request(from, recipient)) {
             notifications.emplace_back(recipient, session_request_payload(from));
         }
-        out = from_lobby(Json::boolean(true));
+        out = from_lobby(Json(true));
         return true;
     }
 
@@ -776,9 +773,8 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             return false;
         }
         Json values = Json::object();
-        values.set("pcubMsgSize",
-                   Json::integer(static_cast<std::int64_t>(packet->bytes.size() / 2u)));
-        Answer answer = from_lobby(Json::boolean(true));
+        values["pcubMsgSize"] = Json(static_cast<std::int64_t>(packet->bytes.size() / 2u));
+        Answer answer = from_lobby(Json(true));
         answer.out = std::move(values);
         out = std::move(answer);
         return true;
@@ -793,12 +789,11 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         // Copied out before the queue drops it, because the next read is a different
         // packet: the bytes go back as hex and the stub writes them into the game's buffer.
         Json values = Json::object();
-        values.set("pubDest", Json::string(packet->bytes));
-        values.set("pcubMsgSize",
-                   Json::integer(static_cast<std::int64_t>(packet->bytes.size() / 2u)));
-        values.set("psteamIDRemote", id_value(packet->remote));
+        values["pubDest"] = Json(packet->bytes);
+        values["pcubMsgSize"] = Json(static_cast<std::int64_t>(packet->bytes.size() / 2u));
+        values["psteamIDRemote"] = id_value(packet->remote);
         drop_packet(me, channel);
-        Answer answer = from_lobby(Json::boolean(true));
+        Answer answer = from_lobby(Json(true));
         answer.out = std::move(values);
         out = std::move(answer);
         return true;
@@ -808,7 +803,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         // Nothing here refuses a peer or holds a session open. A packet either reaches the
         // game it was addressed to or it does not, and Steam's session bookkeeping is not
         // something a run has to model to be believed.
-        out = from_lobby(Json::boolean(true));
+        out = from_lobby(Json(true));
         return true;
     }
 

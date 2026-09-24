@@ -75,7 +75,7 @@ unsigned parse_port(const char* text, unsigned fallback) noexcept {
 
 // `out` is only worth showing when the call had any.
 std::string out_suffix(const CallRecord& record) {
-    if (!record.out.is_object() || record.out.members().empty()) {
+    if (!record.out.is_object() || record.out.empty()) {
         return std::string();
     }
     return "\nout " + record.out.dump();

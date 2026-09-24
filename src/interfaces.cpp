@@ -176,12 +176,12 @@ std::string interface_factory_parameter(const InterfaceSlot& slot) {
 // ---------------------------------------------------------------------------
 //  Reading the layouts
 // ---------------------------------------------------------------------------
-
-const Json* member(const Json& object, const char* name) noexcept { return object.find(name); }
+//  `member` is the one in bridge/json_read.hpp: this file used to carry its own
+//  overload for a `const char*` name, which is what std::string_view is for.
 
 bool read_string(const Json& object, const char* name, bool required, std::string& out,
                  std::string& error, const std::string& where) {
-    const Json* value = member(object, name);
+    const Json* value = json_member(object, name);
     if (value == nullptr || value->is_null()) {
         if (required) {
             error = where + ": '" + name + "' is missing";
@@ -193,21 +193,21 @@ bool read_string(const Json& object, const char* name, bool required, std::strin
         error = where + ": '" + name + "' has to be a string";
         return false;
     }
-    out = value->as_string();
+    out = as_string(*value);
     return true;
 }
 
 bool read_flag(const Json& object, const char* name, bool& out, std::string& error,
                const std::string& where) {
-    const Json* value = member(object, name);
+    const Json* value = json_member(object, name);
     if (value == nullptr) {
         return true;
     }
-    if (value->kind() != Json::Kind::boolean) {
+    if (!value->is_boolean()) {
         error = where + ": '" + name + "' has to be true or false";
         return false;
     }
-    out = value->as_bool();
+    out = as_bool(*value);
     return true;
 }
 
@@ -215,12 +215,12 @@ bool read_flag(const Json& object, const char* name, bool& out, std::string& err
 // established for it, and a declaration without a size is not something this can
 // write - so it is an error rather than a zero.
 bool read_size(const Json& object, int& out, std::string& error, const std::string& where) {
-    const Json* value = member(object, "size");
+    const Json* value = json_member(object, "size");
     if (value == nullptr || !value->is_number()) {
         error = where + ": no size - the file has to carry one before a declaration can be written";
         return false;
     }
-    out = static_cast<int>(value->as_int64());
+    out = static_cast<int>(as_int64(*value));
     return true;
 }
 
@@ -272,23 +272,22 @@ bool resolve_type(const std::string& name,
 
 bool read_param(const Json& row, const std::vector<std::pair<std::string, std::string>>& named,
                 InterfaceParam& out, std::string& error, const std::string& where) {
-    if (!row.is_array() || row.items().size() < 2u || !row.items()[0].is_string() ||
-        !row.items()[1].is_string()) {
+    if (!row.is_array() || row.size() < 2u || !row[0].is_string() || !row[1].is_string()) {
         error = where + ": a parameter is [name, type], and 'out' or 'unmarshalable' after it";
         return false;
     }
-    out.name = row.items()[0].as_string();
+    out.name = as_string(row[0]);
     const std::string param_where = where + "." + out.name;
-    if (!resolve_type(row.items()[1].as_string(), named, out.kind, out.decl, error, param_where)) {
+    if (!resolve_type(as_string(row[1]), named, out.kind, out.decl, error, param_where)) {
         return false;
     }
-    for (std::size_t index = 2; index < row.items().size(); ++index) {
-        const Json& flag = row.items()[index];
+    for (std::size_t index = 2; index < row.size(); ++index) {
+        const Json& flag = row[index];
         if (!flag.is_string()) {
             error = param_where + ": 'out' and 'unmarshalable' are written as strings";
             return false;
         }
-        const std::string text = flag.as_string();
+        const std::string text = as_string(flag);
         if (text == "out") {
             out.out = true;
         } else if (text == "unmarshalable") {
@@ -341,13 +340,13 @@ bool read_notes(const Json& notes, InterfaceSlot& out, std::string& error,
 bool read_slot(const Json& row, const std::string& interface_name,
                const std::vector<std::pair<std::string, std::string>>& named, InterfaceSlot& out,
                std::string& error, const std::string& where) {
-    if (!row.is_array() || row.items().empty() || !row.items()[0].is_string()) {
+    if (!row.is_array() || row.empty() || !row[0].is_string()) {
         error = where + ": a slot is a row - [method, returns] or [method, returns, params], " +
                 "or [\"~\"] for the destructor";
         return false;
     }
-    const std::vector<Json>& items = row.items();
-    const std::string head = items[0].as_string();
+    const Json& items = row;
+    const std::string head = as_string(items[0]);
 
     if (head == "~") {
         // The destructor owns a slot and names no call of its own. Where it sits
@@ -369,7 +368,7 @@ bool read_slot(const Json& row, const std::string& interface_name,
         return false;
     }
     out.method = head;
-    if (!resolve_type(items[1].as_string(), named, out.returns, out.returns_decl, error,
+    if (!resolve_type(as_string(items[1]), named, out.returns, out.returns_decl, error,
                       slot_where)) {
         return false;
     }
@@ -384,7 +383,7 @@ bool read_slot(const Json& row, const std::string& interface_name,
             error = slot_where + ": a slot's parameters are a list of rows";
             return false;
         }
-        for (const Json& declared : items[2].items()) {
+        for (const Json& declared : items[2]) {
             InterfaceParam param;
             if (!read_param(declared, named, param, error, slot_where)) {
                 return false;
@@ -415,18 +414,18 @@ bool read_slot(const Json& row, const std::string& interface_name,
 // reader serves both. `what` is only there to name the thing in an error.
 bool read_layouts(const Json& document, const char* key, const char* what,
                   std::vector<InterfaceStructure>& out, std::string& error) {
-    const Json* entries = member(document, key);
+    const Json* entries = json_member(document, key);
     if (entries == nullptr || !entries->is_array()) {
         return true;
     }
-    for (const Json& entry : entries->items()) {
+    for (const Json& entry : *entries) {
         InterfaceStructure layout;
         const std::string where = std::string(key) + "[" + std::to_string(out.size()) + "]";
         if (!read_string(entry, "name", true, layout.name, error, where) ||
             !read_size(entry, layout.size, error, where)) {
             return false;
         }
-        const Json* members = member(entry, "members");
+        const Json* members = json_member(entry, "members");
         if (members == nullptr || !members->is_array()) {
             error = where + ": a " + what + " needs its members - that is what its ABI is";
             return false;
@@ -434,22 +433,22 @@ bool read_layouts(const Json& document, const char* key, const char* what,
         // A payload with no fields is a real shape: plenty of the SDK's callbacks are
         // notifications with nothing in them. A structure with no members is a
         // declaration that says nothing at all, so only the empty event is allowed.
-        if (members->items().empty() && std::string(what) != "event") {
+        if (members->empty() && std::string(what) != "event") {
             error = where + ": a " + what + " with no members says nothing about its ABI";
             return false;
         }
-        for (const Json& declared : members->items()) {
-            if (!declared.is_array() || declared.items().size() != 2u) {
+        for (const Json& declared : *members) {
+            if (!declared.is_array() || declared.size() != 2u) {
                 error = where + ": every member is a pair of a type and a name";
                 return false;
             }
-            const std::string type = declared.items()[0].as_string();
+            const std::string type = as_string(declared[0]);
             std::string cpp;
             if (!member_type(type, cpp, error)) {
                 error = where + " (" + layout.name + "): " + error;
                 return false;
             }
-            layout.members.emplace_back(cpp, declared.items()[1].as_string());
+            layout.members.emplace_back(cpp, as_string(declared[1]));
         }
         out.push_back(std::move(layout));
     }
@@ -463,7 +462,7 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
         error = "the layouts have to be a JSON object";
         return false;
     }
-    const Json* versions = member(document, "interfaces");
+    const Json* versions = json_member(document, "interfaces");
     if (versions == nullptr || !versions->is_array()) {
         error = "the layouts need an 'interfaces' array";
         return false;
@@ -471,9 +470,9 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
 
     Interfaces parsed;
 
-    if (const Json* values = member(document, "value_types");
+    if (const Json* values = json_member(document, "value_types");
         values != nullptr && values->is_array()) {
-        for (const Json& entry : values->items()) {
+        for (const Json& entry : *values) {
             InterfaceValueType value;
             const std::string where =
                 "value_types[" + std::to_string(parsed._value_types.size()) + "]";
@@ -501,19 +500,20 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
     // it has to: a payload that completes no call can only be handed over to the
     // object a game registered under that id, so an event without one could be
     // written but never delivered.
-    if (const Json* events = member(document, "events"); events != nullptr && events->is_array()) {
-        if (events->items().size() != parsed._events.size()) {
+    if (const Json* events = json_member(document, "events");
+        events != nullptr && events->is_array()) {
+        if (events->size() != parsed._events.size()) {
             error = "events: the array changed while it was being read";
             return false;
         }
         for (std::size_t index = 0; index < parsed._events.size(); ++index) {
             const std::string where = "events[" + std::to_string(index) + "]";
-            const Json* callback = member(events->items()[index], "callback");
+            const Json* callback = json_member((*events)[index], "callback");
             if (callback == nullptr || !callback->is_number()) {
                 error = where + ": an event needs the callback id a game registers it under";
                 return false;
             }
-            parsed._events[index].callback = static_cast<std::int32_t>(callback->as_int64());
+            parsed._events[index].callback = static_cast<std::int32_t>(as_int64(*callback));
         }
     }
 
@@ -528,20 +528,20 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
         named.emplace_back(structure.name, "struct");
     }
 
-    for (const Json& entry : versions->items()) {
+    for (const Json& entry : *versions) {
         InterfaceVersion version;
         const std::string where = "interfaces[" + std::to_string(parsed._versions.size()) + "]";
         if (!read_string(entry, "name", true, version.name, error, where) ||
             !read_string(entry, "version", true, version.version, error, where)) {
             return false;
         }
-        const Json* slots = member(entry, "slots");
-        if (slots == nullptr || !slots->is_array() || slots->items().empty()) {
+        const Json* slots = json_member(entry, "slots");
+        if (slots == nullptr || !slots->is_array() || slots->empty()) {
             error = where + " (" + version.version + "): a version needs its slots";
             return false;
         }
 
-        for (const Json& declared : slots->items()) {
+        for (const Json& declared : *slots) {
             InterfaceSlot slot;
             if (!read_slot(declared, version.name, named, slot, error,
                            where + " (" + version.version + ")")) {
@@ -578,7 +578,7 @@ bool Interfaces::load_file(const std::string& path, Interfaces& out, std::string
     std::fclose(file);
 
     Json document;
-    if (!Json::parse(text, document)) {
+    if (!parse(text, document)) {
         error = path + " is not valid JSON";
         return false;
     }
@@ -761,7 +761,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("    static void store(" + value.name +
                           "* target, const Json& value) noexcept {");
             out.push_back("        if (target != nullptr) {");
-            out.push_back("            target->" + value.member + " = value.as_uint64();");
+            out.push_back("            target->" + value.member +
+                          " = steammock::as_uint64(value);");
             out.push_back("        }");
             out.push_back("    }");
             out.push_back("    static " + value.name + " fallback() noexcept { return " +
@@ -966,18 +967,18 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                 if (member.find('[') != std::string::npos) {
                     continue;
                 }
-                std::string read = "as_int64()";
+                std::string read = "as_int64";
                 if (cpp == "bool") {
-                    read = "as_bool()";
+                    read = "as_bool";
                 } else if (cpp == "float" || cpp == "double") {
-                    read = "as_double()";
+                    read = "as_double";
                 } else if (cpp.compare(0, 9, "std::uint") == 0 || cpp == "std::size_t") {
-                    read = "as_uint64()";
+                    read = "as_uint64";
                 }
-                out.push_back("    if (const Json* field = fields.find(" + literal(member) +
-                              ")) {");
-                out.push_back("        value." + member + " = static_cast<" + cpp + ">(field->" +
-                              read + ");");
+                out.push_back("    if (const Json* field = steammock::json_member(fields, " +
+                              literal(member) + ")) {");
+                out.push_back("        value." + member + " = static_cast<" + cpp +
+                              ">(steammock::" + read + "(*field));");
                 out.push_back("    }");
             }
             out.push_back("    std::memcpy(buffer, &value, sizeof(value));");

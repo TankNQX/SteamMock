@@ -162,8 +162,8 @@ const char* level_name(LogLevel level) noexcept {
 }
 
 std::string text_member(const Json& value, const char* key) {
-    if (const Json* member = value.find(key)) {
-        return member->is_string() ? member->as_string() : std::string();
+    if (const Json* member = json_member(value, key)) {
+        return member->is_string() ? as_string(*member) : std::string();
     }
     return std::string();
 }
@@ -188,17 +188,17 @@ void stderr_log_sink(LogLevel level, const std::string& message) {
 
 Json CallRecord::to_json() const {
     Json json = Json::object();
-    json.set("session", Json::string(session));
-    json.set("seq", Json::integer(seq));
-    json.set("call", Json::string(call));
-    json.set("args", args);
-    json.set("answered", Json::boolean(answered));
-    json.set("via", Json::string(via));
-    json.set("ms", Json::real(ms));
+    json["session"] = Json(session);
+    json["seq"] = Json(seq);
+    json["call"] = Json(call);
+    json["args"] = args;
+    json["answered"] = Json(answered);
+    json["via"] = Json(via);
+    json["ms"] = Json(ms);
     if (answered) {
-        json.set("ret", ret);
+        json["ret"] = ret;
         if (carries_out(out)) {
-            json.set("out", out);
+            json["out"] = out;
         }
     }
     return json;
@@ -442,7 +442,7 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
     }
 
     Json hello;
-    if (!Json::parse(payload, hello) || !hello.is_object()) {
+    if (!parse(payload, hello) || !hello.is_object()) {
         log(LogLevel::warn, "the first frame from " + peer + " was not a JSON object");
         close_socket(socket);
         return;
@@ -469,7 +469,7 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
                 break;  // the normal way a game leaves
             }
             Json message;
-            if (!Json::parse(payload, message) || !message.is_object()) {
+            if (!parse(payload, message) || !message.is_object()) {
                 log(LogLevel::warn, "protocol error from " + session_id + ": an unparsable frame");
                 break;
             }
@@ -513,15 +513,15 @@ std::string Server::handle_call(Session& session, const Json& message) {
     const std::string name = text_member(message, "name");
 
     Json args = Json::object();
-    if (const Json* value = message.find("args"); value != nullptr && value->is_object()) {
+    if (const Json* value = json_member(message, "args"); value != nullptr && value->is_object()) {
         args = *value;
     } else if (value != nullptr && !value->is_null()) {
         log(LogLevel::warn, name + ": arguments were not an object; using none");
     }
 
     std::int64_t seq = 0;
-    if (const Json* value = message.find("seq"); value != nullptr && value->is_number()) {
-        seq = value->as_int64();
+    if (const Json* value = json_member(message, "seq"); value != nullptr && value->is_number()) {
+        seq = as_int64(*value);
     }
 
     const auto started = std::chrono::steady_clock::now();
@@ -557,7 +557,7 @@ std::string Server::handle_call(Session& session, const Json& message) {
                 answer.events = Json::array();
             }
             for (const Json& payload : queued->second) {
-                answer.events.push(payload);
+                answer.events.push_back(payload);
             }
             _inbox.erase(queued);
         }
@@ -604,9 +604,9 @@ std::string Server::handle_call(Session& session, const Json& message) {
     // queues it and hands it over on the game's own next RunCallbacks, which is
     // the only place a callback object may be called from.
     Json reply = make_reply(seq, answer.answered, answer.ret, answer.out);
-    if (answer.events.is_array() && !answer.events.items().empty()) {
-        reply.set("events", answer.events);
-        log(LogLevel::debug, "   .. " + std::to_string(answer.events.items().size()) +
+    if (answer.events.is_array() && !answer.events.empty()) {
+        reply["events"] = answer.events;
+        log(LogLevel::debug, "   .. " + std::to_string(answer.events.size()) +
                                  " payload(s) for the game, on its next pump");
     }
     return reply.dump();

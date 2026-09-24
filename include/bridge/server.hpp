@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-#include "bridge/json.hpp"
+#include "bridge/json_read.hpp"
 #include "bridge/lobby.hpp"
 #include "bridge/log.hpp"
 #include "bridge/scenario.hpp"

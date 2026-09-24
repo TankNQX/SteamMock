@@ -19,7 +19,7 @@
 #include <string>
 #include <thread>
 
-#include "bridge/json.hpp"
+#include "bridge/json_read.hpp"
 #include "bridge/log.hpp"
 #include "bridge/protocol.hpp"
 #include "bridge/scenario.hpp"
@@ -57,27 +57,27 @@ template <typename Predicate> bool wait_until(Predicate ready, double seconds) {
 
 Json hello_message() {
     Json message = Json::object();
-    message.set("type", Json::string("hello"));
-    message.set("v", Json::integer(steammock::kProtocolVersion));
-    message.set("exe", Json::string("game.exe"));
-    message.set("arch", Json::string("x64"));
-    message.set("pid", Json::integer(1234));
+    message["type"] = Json("hello");
+    message["v"] = Json(steammock::kProtocolVersion);
+    message["exe"] = Json("game.exe");
+    message["arch"] = Json("x64");
+    message["pid"] = Json(1234);
     return message;
 }
 
 Json call_message(const char* name, std::int64_t seq) {
     Json message = Json::object();
-    message.set("type", Json::string("call"));
-    message.set("v", Json::integer(steammock::kProtocolVersion));
-    message.set("seq", Json::integer(seq));
-    message.set("name", Json::string(name));
-    message.set("args", Json::object());
+    message["type"] = Json("call");
+    message["v"] = Json(steammock::kProtocolVersion);
+    message["seq"] = Json(seq);
+    message["name"] = Json(name);
+    message["args"] = Json::object();
     return message;
 }
 
 std::string answer_of(const Json& reply) {
-    const Json* answer = reply.find("answer");
-    return answer != nullptr && answer->is_string() ? answer->as_string() : std::string();
+    const Json* answer = steammock::json_member(reply, "answer");
+    return answer != nullptr && answer->is_string() ? steammock::as_string(*answer) : std::string();
 }
 
 // One framed message out, one framed answer back: exactly what a stub does.
@@ -86,7 +86,7 @@ bool exchange(steammock::TcpTransport& client, const Json& message, Json& reply)
     if (!client.exchange(message.dump(), text)) {
         return false;
     }
-    return Json::parse(text, reply);
+    return steammock::parse(text, reply);
 }
 
 // One scripted call, one answered from state, one nobody has an opinion about,
@@ -98,7 +98,7 @@ void test_what_the_server_saw() {
     std::printf("[:] a real connection, and what the server says about it\n");
 
     Json scenario;
-    if (!Json::parse(kScenario, scenario)) {
+    if (!steammock::parse(kScenario, scenario)) {
         check("the test scenario parses", false);
         return;
     }
@@ -125,12 +125,13 @@ void test_what_the_server_saw() {
 
     Json reply;
     check("the handshake is answered", exchange(client, hello_message(), reply));
-    const Json* session = reply.find("session");
+    const Json* session = steammock::json_member(reply, "session");
     const std::string session_id =
-        session != nullptr && session->is_string() ? session->as_string() : std::string();
+        session != nullptr && session->is_string() ? steammock::as_string(*session) : std::string();
     check("the welcome names the session", !session_id.empty());
     check("the welcome names the profile",
-          reply.find("profile") != nullptr && reply.find("profile")->as_string() == "default");
+          steammock::json_member(reply, "profile") != nullptr &&
+              steammock::as_string(*steammock::json_member(reply, "profile")) == "default");
 
     check("a scripted call is answered", exchange(client, call_message("SteamAPI_Init", 1), reply));
     check("a call the state machine knows is answered",
