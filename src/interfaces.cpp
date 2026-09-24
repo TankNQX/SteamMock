@@ -993,43 +993,32 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("     &fill_" + event.name + "},");
         }
         out.push_back("};");
-        out.push_back("const std::size_t kEventCount = " +
-                      number(static_cast<int>(interfaces.events().size())) + ";");
-        out.push_back("");
-        // Closed and reopened around this one definition: the marshalling in
-        // synth.cpp is another translation unit, so the lookup needs external
-        // linkage - everything above it in this file is internal on purpose.
-        out.push_back("}  // namespace");
-        out.push_back("");
-        out.push_back("const EventInfo* find_event(const char* name) noexcept {");
-        out.push_back("    for (const EventInfo& event : kEvents) {");
-        out.push_back("        if (std::strcmp(event.name, name) == 0) {");
-        out.push_back("            return &event;");
-        out.push_back("        }");
-        out.push_back("    }");
-        out.push_back("    return nullptr;");
-        out.push_back("}");
-        out.push_back("");
-        out.push_back("namespace {");
-        out.push_back("");
     } else {
-        // The payloads are declared in the layouts file, so a build with none has
-        // none - and the lookup below still has to exist, because synth.cpp is the
-        // one that calls it. A table with nothing in it is not C++, so this is a
-        // null one with a count of zero, which is the same answer as an unknown name.
+        // The payloads are declared in the layouts file, so a build with none has none.
+        // A table with nothing in it is not C++, so it is a null one - and the count and
+        // the lookup below are the same either way, because a constant nobody reads is a
+        // warning the clang job turns into an error.
         out.push_back("const steammock::EventInfo* const kEvents = nullptr;");
-        out.push_back("const std::size_t kEventCount = 0;");
-        out.push_back("");
-        out.push_back("}  // namespace");
-        out.push_back("");
-        out.push_back("const EventInfo* find_event(const char* name) noexcept {");
-        out.push_back("    (void)name;");
-        out.push_back("    return nullptr;");
-        out.push_back("}");
-        out.push_back("");
-        out.push_back("namespace {");
-        out.push_back("");
     }
+    out.push_back("const std::size_t kEventCount = " +
+                  number(static_cast<int>(interfaces.events().size())) + ";");
+    out.push_back("");
+    // Closed and reopened around this one definition: the marshalling in synth.cpp is
+    // another translation unit, so the lookup needs external linkage - everything above
+    // it in this file is internal on purpose.
+    out.push_back("}  // namespace");
+    out.push_back("");
+    out.push_back("const EventInfo* find_event(const char* name) noexcept {");
+    out.push_back("    for (std::size_t index = 0; index < kEventCount; ++index) {");
+    out.push_back("        if (std::strcmp(kEvents[index].name, name) == 0) {");
+    out.push_back("            return &kEvents[index];");
+    out.push_back("        }");
+    out.push_back("    }");
+    out.push_back("    return nullptr;");
+    out.push_back("}");
+    out.push_back("");
+    out.push_back("namespace {");
+    out.push_back("");
 
     // A table with nothing in it is not C++, and a build with no layouts - which is
     // what a fresh clone has, since Valve's layouts are not part of the checkout -
