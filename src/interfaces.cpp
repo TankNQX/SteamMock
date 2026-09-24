@@ -859,8 +859,10 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("public:");
         // Which user handle this object was handed out for. One version string asked
         // for under two handles is two objects, and this is what lets a call made
-        // through one of them say who made it.
-        out.push_back("    std::int32_t hSteamUser = 0;");
+        // through one of them say who made it. The underscore because the accessors
+        // that take a handle name their parameter hSteamUser, and a member of the same
+        // name would be hidden by it in every one of them.
+        out.push_back("    std::int32_t _hSteamUser = 0;");
         for (std::size_t index = 0; index < version.slots.size(); ++index) {
             const InterfaceSlot& slot = version.slots[index];
             if (slot.destructor) {
@@ -871,7 +873,7 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             // The handle travels in front of the call name, which is what the two
             // overloads of slot() tell apart. Whether it reaches the wire is the
             // marshaller's business - see needs_user_handle.
-            const std::string at = "hSteamUser, kCall_" + number(slot_call[v][index]);
+            const std::string at = "_hSteamUser, kCall_" + number(slot_call[v][index]);
             std::string parameters;
             std::string arguments;
             for (const InterfaceParam& param : slot.params) {
@@ -1055,8 +1057,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             // only thing that can say which handle a call through it was made under.
             out.push_back("    {" + literal(version.version) + ", {&g_" +
                           identified(version.version) + "[0], &g_" + identified(version.version) +
-                          "[1]}, {&g_" + identified(version.version) + "[0].hSteamUser, &g_" +
-                          identified(version.version) + "[1].hSteamUser}},");
+                          "[1]}, {&g_" + identified(version.version) + "[0]._hSteamUser, &g_" +
+                          identified(version.version) + "[1]._hSteamUser}},");
         }
         out.push_back("};");
     } else {
