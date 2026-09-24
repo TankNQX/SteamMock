@@ -136,12 +136,20 @@ private:
     std::uint64_t game_server_id_of(std::uint64_t user);
     std::uint64_t known_game_server_id(std::uint64_t user) const noexcept;
 
-    // One game's packets, by the Steam id they were addressed to. A session is a client and
-    // a server at once when it hosts, so both of its identities are asked for what it has.
+    // One game's packets, by the Steam id they were addressed to. A session that hosts
+    // is a customer and a game server at once and has an id for each, and a packet
+    // addressed to either of them is for this process - but not for both of its ends,
+    // which is why every read says which handle it was made through.
     void queue_packet(std::uint64_t to, std::uint64_t from, std::int32_t channel,
                       const std::string& bytes);
-    const P2PPacket* peek_packet(std::uint64_t user, std::int32_t channel) const noexcept;
-    void drop_packet(std::uint64_t user, std::int32_t channel);
+    const P2PPacket* peek_packet(std::uint64_t user, std::int32_t hSteamUser,
+                                 std::int32_t channel) const noexcept;
+    void drop_packet(std::uint64_t user, std::int32_t hSteamUser, std::int32_t channel);
+
+    // The id a call made through this user handle is addressed to: the game server this
+    // world minted for the session when the handle is a game server's, and the
+    // session's own id otherwise - which is what a process without one of those is.
+    std::uint64_t endpoint_of(std::uint64_t user, std::int32_t hSteamUser) const noexcept;
 
     // The session behind a Steam id, which is the id itself unless it names a game server,
     // and whether this pair has already talked - the question Steam's session request hangs

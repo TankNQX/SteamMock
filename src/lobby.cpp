@@ -263,6 +263,13 @@ constexpr const char* kReadP2PPacket = "SteamAPI_ISteamNetworking_ReadP2PPacket"
 constexpr const char* kAcceptP2PSession = "SteamAPI_ISteamNetworking_AcceptP2PSessionWithUser";
 constexpr const char* kCloseP2PSession = "SteamAPI_ISteamNetworking_CloseP2PSessionWithUser";
 
+// The handle a process's game server answers under, which is what tells its
+// ISteamNetworking from the customer's: one version string, one set of calls, and this
+// as the only thing between them. The customer's handle is not here - a session already
+// answers SteamAPI_GetHSteamUser, and the world is only where the second one comes from.
+constexpr const char* kGameServerGetHSteamUser = "SteamGameServer_GetHSteamUser";
+constexpr const char* kGameServerGetHSteamPipe = "SteamGameServer_GetHSteamPipe";
+
 // 127.0.0.1 the way Steam hands addresses around: host order, so a game that reads it and
 // passes it to inet_ntoa or htonl sees the machine it is standing on.
 constexpr std::uint32_t kLoopback = 0x7F000001u;
@@ -275,13 +282,35 @@ constexpr std::uint32_t kLoopback = 0x7F000001u;
 
 std::vector<std::string> LobbyWorld::handled_calls() {
     return {
-        kCreateLobby,          kRequestLobbyList,     kGetLobbyByIndex,       kJoinLobby,
-        kLeaveLobby,           kGetNumLobbyMembers,   kGetLobbyMemberByIndex, kGetLobbyOwner,
-        kGetLobbyData,         kSetLobbyData,         kGetLobbyDataCount,     kGetLobbyMemberData,
-        kSetLobbyMemberData,   kGetLobbyMemberLimit,  kSetLobbyMemberLimit,   kSetLobbyJoinable,
-        kSetLobbyType,         kRequestLobbyData,     kSetLobbyGameServer,    kGetLobbyGameServer,
-        kGetFriendPersonaName, kGameServerGetSteamID, kSendP2PPacket,         kIsP2PPacketAvailable,
-        kReadP2PPacket,        kAcceptP2PSession,     kCloseP2PSession,
+        kCreateLobby,
+        kRequestLobbyList,
+        kGetLobbyByIndex,
+        kJoinLobby,
+        kLeaveLobby,
+        kGetNumLobbyMembers,
+        kGetLobbyMemberByIndex,
+        kGetLobbyOwner,
+        kGetLobbyData,
+        kSetLobbyData,
+        kGetLobbyDataCount,
+        kGetLobbyMemberData,
+        kSetLobbyMemberData,
+        kGetLobbyMemberLimit,
+        kSetLobbyMemberLimit,
+        kSetLobbyJoinable,
+        kSetLobbyType,
+        kRequestLobbyData,
+        kSetLobbyGameServer,
+        kGetLobbyGameServer,
+        kGetFriendPersonaName,
+        kGameServerGetSteamID,
+        kSendP2PPacket,
+        kIsP2PPacketAvailable,
+        kReadP2PPacket,
+        kAcceptP2PSession,
+        kCloseP2PSession,
+        kGameServerGetHSteamUser,
+        kGameServerGetHSteamPipe,
     };
 }
 
@@ -370,12 +399,27 @@ void LobbyWorld::queue_packet(std::uint64_t to, std::uint64_t from, std::int32_t
     _packets.emplace_back(to, std::vector<P2PPacket>{std::move(packet)});
 }
 
-const P2PPacket* LobbyWorld::peek_packet(std::uint64_t user, std::int32_t channel) const noexcept {
-    // A session that hosts is a client and a server at once, and the two have different
-    // ids: a packet addressed to either of them is for this process.
-    const std::uint64_t server = known_game_server_id(user);
+std::uint64_t LobbyWorld::endpoint_of(std::uint64_t user, std::int32_t hSteamUser) const noexcept {
+    // A session that hosts is a customer and a game server at once and has an id for
+    // each, which are the two queues a packet can be waiting in. Which of them a call is
+    // for is the handle it was made through, and that is the only thing that survives the
+    // trip: the two interfaces answer to one name and neither takes a user.
+    if (hSteamUser == kGameServerHSteamUser) {
+        const std::uint64_t server = known_game_server_id(user);
+        if (server != 0) {
+            return server;
+        }
+    }
+    // A handle this world never gave out, or none at all: the session's own end, which is
+    // the one thing a process without a game server in it has.
+    return user;
+}
+
+const P2PPacket* LobbyWorld::peek_packet(std::uint64_t user, std::int32_t hSteamUser,
+                                         std::int32_t channel) const noexcept {
+    const std::uint64_t end = endpoint_of(user, hSteamUser);
     for (const auto& entry : _packets) {
-        if (entry.first != user && (server == 0 || entry.first != server)) {
+        if (entry.first != end) {
             continue;
         }
         for (const P2PPacket& packet : entry.second) {
@@ -387,10 +431,10 @@ const P2PPacket* LobbyWorld::peek_packet(std::uint64_t user, std::int32_t channe
     return nullptr;
 }
 
-void LobbyWorld::drop_packet(std::uint64_t user, std::int32_t channel) {
-    const std::uint64_t server = known_game_server_id(user);
+void LobbyWorld::drop_packet(std::uint64_t user, std::int32_t hSteamUser, std::int32_t channel) {
+    const std::uint64_t end = endpoint_of(user, hSteamUser);
     for (auto& entry : _packets) {
-        if (entry.first != user && (server == 0 || entry.first != server)) {
+        if (entry.first != end) {
             continue;
         }
         for (auto packet = entry.second.begin(); packet != entry.second.end(); ++packet) {
@@ -764,9 +808,19 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         return true;
     }
 
+    if (call == kGameServerGetHSteamUser || call == kGameServerGetHSteamPipe) {
+        // The handle this process's game server answers under. Real Steam gives the game
+        // server a user of its own beside the customer's, and that handle is what a packet
+        // read through ISteamNetworking can be attributed back to. The customer's own end
+        // is answered by the session, which is where it has always been answered.
+        out = from_lobby(Json(static_cast<std::int64_t>(kGameServerHSteamUser)));
+        return true;
+    }
+
     if (call == kIsP2PPacketAvailable) {
         const std::int32_t channel = static_cast<std::int32_t>(int_member(args, "nChannel", 0));
-        const P2PPacket* packet = peek_packet(me, channel);
+        const std::int32_t user = static_cast<std::int32_t>(int_member(args, "hSteamUser", 0));
+        const P2PPacket* packet = peek_packet(me, user, channel);
         if (packet == nullptr) {
             // An empty queue is not an opinion about anything: the stub's own default
             // already answers "nothing waiting", which is what a game expects.
@@ -782,7 +836,8 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
 
     if (call == kReadP2PPacket) {
         const std::int32_t channel = static_cast<std::int32_t>(int_member(args, "nChannel", 0));
-        const P2PPacket* packet = peek_packet(me, channel);
+        const std::int32_t user = static_cast<std::int32_t>(int_member(args, "hSteamUser", 0));
+        const P2PPacket* packet = peek_packet(me, user, channel);
         if (packet == nullptr) {
             return false;
         }
@@ -792,7 +847,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         values["pubDest"] = Json(packet->bytes);
         values["pcubMsgSize"] = Json(static_cast<std::int64_t>(packet->bytes.size() / 2u));
         values["psteamIDRemote"] = id_value(packet->remote);
-        drop_packet(me, channel);
+        drop_packet(me, user, channel);
         Answer answer = from_lobby(Json(true));
         answer.out = std::move(values);
         out = std::move(answer);

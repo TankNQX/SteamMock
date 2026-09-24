@@ -937,8 +937,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                 // the game named.
                 out.push_back("        void* result = steammock::slot<void*>(" + passed + ");");
                 out.push_back("        if (result == nullptr) {");
-                out.push_back("            result = steammock::interface_object(" + factory +
-                              ", " + factory_user + ");");
+                out.push_back("            result = steammock::interface_object(" + factory + ", " +
+                              factory_user + ");");
                 out.push_back("        }");
                 out.push_back("        return result;");
             }
@@ -1054,9 +1054,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             // version asked for under two handles is two objects, and the object is the
             // only thing that can say which handle a call through it was made under.
             out.push_back("    {" + literal(version.version) + ", {&g_" +
-                          identified(version.version) + "[0], &g_" +
-                          identified(version.version) + "[1]}, {&g_" +
-                          identified(version.version) + "[0].hSteamUser, &g_" +
+                          identified(version.version) + "[0], &g_" + identified(version.version) +
+                          "[1]}, {&g_" + identified(version.version) + "[0].hSteamUser, &g_" +
                           identified(version.version) + "[1].hSteamUser}},");
         }
         out.push_back("};");
@@ -1073,7 +1072,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("// handle is the user it is asked for under, or 0 when the caller did not say");
     out.push_back("// which: the object already holding that handle comes back, otherwise one");
     out.push_back("// nobody has claimed, and the object remembers the handle from then on.");
-    out.push_back("void* interface_object(const char* version, std::int32_t hSteamUser) noexcept {");
+    out.push_back(
+        "void* interface_object(const char* version, std::int32_t hSteamUser) noexcept {");
     out.push_back("    if (version == nullptr) {");
     out.push_back("        return nullptr;");
     out.push_back("    }");
@@ -1081,13 +1081,16 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("        if (std::strcmp(kVersions[index].version, version) != 0) {");
     out.push_back("            continue;");
     out.push_back("        }");
-    out.push_back("        for (std::size_t endpoint = 0; endpoint < steammock::kInterfaceEndpoints;");
+    out.push_back(
+        "        for (std::size_t endpoint = 0; endpoint < steammock::kInterfaceEndpoints;");
     out.push_back("             ++endpoint) {");
-    out.push_back("            if (hSteamUser != 0 && *kVersions[index].user[endpoint] == hSteamUser) {");
+    out.push_back(
+        "            if (hSteamUser != 0 && *kVersions[index].user[endpoint] == hSteamUser) {");
     out.push_back("                return kVersions[index].object[endpoint];");
     out.push_back("            }");
     out.push_back("        }");
-    out.push_back("        for (std::size_t endpoint = 0; endpoint < steammock::kInterfaceEndpoints;");
+    out.push_back(
+        "        for (std::size_t endpoint = 0; endpoint < steammock::kInterfaceEndpoints;");
     out.push_back("             ++endpoint) {");
     out.push_back("            if (*kVersions[index].user[endpoint] == 0) {");
     out.push_back("                *kVersions[index].user[endpoint] = hSteamUser;");
