@@ -145,6 +145,11 @@ and `b.log` (the stub's own view of each instance, at `debug` level), and
 games' own, tagged by pid). The installed game is never written to - the copy is what
 gets the stub, and `-GamePath` says where the original lives.
 
+With `-Record`, also `two-instances.mp4`: the two windows put side by side once the last
+key has been sent, filmed with ffmpeg for as long as `-WaitAfterStart` says. A run of
+sixty seconds is about six megabytes, and it shows both games rendering the same match -
+same field, same ships, same score - which is the thing worth having a picture of.
+
 The games' own `OutputDebugString` lines *are* captured, by
 [`tools/debug-output.ps1`](../tools/debug-output.ps1) - the rig starts it before the
 instances and stops it after them, and it lands in `game-output.log` as `<pid> <text>`

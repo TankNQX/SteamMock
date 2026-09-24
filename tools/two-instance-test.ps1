@@ -8,6 +8,9 @@
 #
 #   pwsh -File tools/two-instance-test.ps1
 #   pwsh -File tools/two-instance-test.ps1 -Shoot      # also capture each window
+#   pwsh -File tools/two-instance-test.ps1 -Record -WaitAfterStart 90
+#                                                       # tile the two windows and film them for
+#                                                       # that many seconds (needs ffmpeg)
 #
 # Everything below is Windows-only and needs a built tree: -RepoRoot\build\Release
 # (the backend) and -RepoRoot\build-w32\Release (the 32-bit stub). See the walkthrough
@@ -17,7 +20,8 @@ param(
     [string] $GamePath = 'D:\Games\Steam\steamapps\common\Spacewar',
     [string] $RigDir = (Join-Path $env:TEMP 'sw-two'),
     [int] $WaitAfterStart = 25,
-    [switch] $Shoot
+    [switch] $Shoot,
+    [switch] $Record
 )
 
 $ErrorActionPreference = 'Continue'
@@ -71,6 +75,8 @@ public static class Win {
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
     [DllImport("user32.dll")] public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+    [DllImport("user32.dll")] public static extern bool MoveWindow(IntPtr hWnd, int x, int y, int width, int height, bool repaint);
+    [DllImport("user32.dll")] public static extern int GetSystemMetrics(int index);
     [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
     public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
 }
@@ -128,6 +134,25 @@ function Drive([IntPtr] $hwnd, [int[]] $keys, [string] $what) {
     Say ("  {0}: posting {1}" -f $what, $shape)
     if (-not $foreground) { Say '  (warning: the window never came to the front, the keys will be dropped)' }
     foreach ($key in $keys) { Key $hwnd $key }
+    Start-Sleep -Milliseconds 400
+}
+
+# The two windows on one screen, half each. The rig's keys need the foreground and the
+# recording needs both of them in one frame, and by the time this is called the last key
+# has been sent - so nothing has to hold the focus any more.
+function Tile([IntPtr] $left, [IntPtr] $right) {
+    $width = [Win]::GetSystemMetrics(0)
+    $height = [Win]::GetSystemMetrics(1)
+    if ($width -le 0 -or $height -le 0) { return }
+    $half = [int] ($width / 2)
+    [void] [Win]::MoveWindow($left, 0, 0, $half, $height, $true)
+    [void] [Win]::MoveWindow($right, $half, 0, $width - $half, $height, $true)
+    # On top of whatever else is on the desktop: a window that keeps the foreground and
+    # repaints over one of the halves would end up in the recording.
+    [void] [Win]::ShowWindow($left, 5)
+    [void] [Win]::BringWindowToTop($left)
+    [void] [Win]::ShowWindow($right, 5)
+    [void] [Win]::BringWindowToTop($right)
     Start-Sleep -Milliseconds 400
 }
 
@@ -244,7 +269,45 @@ if ($Shoot) {
     Shoot $hwndB (Join-Path $RigDir 'lobby-b.png')
 }
 Drive $hwndA @($VK_DOWN, $VK_RETURN) 'instance A: Start game'
+
+# Filming starts after the key that starts the match, so the video is the match and not
+# the menu: the windows are put side by side first, and ffmpeg is given the same length as
+# the wait, which is how it ends - a duration rather than a kill, because a killed
+# recorder leaves a file nothing can play.
+$recorder = $null
+$video = Join-Path $RigDir 'two-instances.mp4'
+if ($Record) {
+    # ffmpeg may be on the PATH, or not until the shell that installed it is restarted -
+    # so the package it came in is looked in as well.
+    $ffmpegPath = $null
+    $onPath = Get-Command ffmpeg -ErrorAction SilentlyContinue
+    if ($null -ne $onPath) { $ffmpegPath = $onPath.Source }
+    else {
+        $found = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages') -Recurse -Filter ffmpeg.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -ne $found) { $ffmpegPath = $found.FullName }
+    }
+    if ($null -eq $ffmpegPath) {
+        Say 'no ffmpeg on PATH or in the WinGet packages - recording nothing'
+    }
+    else {
+        Tile $hwndA $hwndB
+        Remove-Item -Force $video -ErrorAction SilentlyContinue
+        Say ("recording {0}s of the desktop to {1}" -f $WaitAfterStart, $video)
+        $recorder = Start-Process -FilePath $ffmpegPath -PassThru -WindowStyle Hidden -ArgumentList @(
+            '-hide_banner', '-loglevel', 'error', '-y',
+            '-f', 'gdigrab', '-framerate', '30', '-i', 'desktop',
+            '-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p',
+            '-t', "$WaitAfterStart", $video)
+    }
+}
+
 Start-Sleep -Seconds $WaitAfterStart
+
+if ($null -ne $recorder) {
+    $recorder.WaitForExit()
+    if (Test-Path $video) { Say ("video: {0} ({1:N1} MB)" -f $video, (1.0 * (Get-Item $video).Length / 1MB)) }
+    else { Say 'the recorder wrote no file' }
+}
 
 Say ''
 Say '--- the two instances ---'
