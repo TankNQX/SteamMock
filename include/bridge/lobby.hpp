@@ -84,7 +84,21 @@ public:
 
     // The first game server's Steam id: the account type in the top bits says "anonymous
     // game server", which is what tells a server apart from the players in its room.
-    static constexpr std::uint64_t kFirstGameServerId = (4ull << 52) | 1ull;
+    //
+    // The universe has to be a real one as well, and that is not decoration: a game
+    // deciding whether the address a lobby published is worth connecting to asks
+    // CSteamID::IsValid(), which refuses an invalid universe before it looks at
+    // anything else. Spacewar's client is exactly that game - it receives the lobby's
+    // game server, asks IsValid(), and quietly does nothing when the answer is no,
+    // which is a client that never connects and says nothing about why.
+    //
+    // The two names below are the SDK's k_EUniversePublic and
+    // k_EAccountTypeAnonGameServer written out: this tree carries no Valve
+    // enumeration, so the values say what they are here instead.
+    static constexpr std::uint64_t kUniversePublic = 1;
+    static constexpr std::uint64_t kAnonymousGameServer = 4;
+    static constexpr std::uint64_t kFirstGameServerId =
+        (kUniversePublic << 56) | (kAnonymousGameServer << 52) | 1ull;
 
     // The calls this world answers, so a test can prove every one of them is a
     // name the stub can actually send.

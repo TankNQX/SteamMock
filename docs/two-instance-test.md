@@ -122,12 +122,26 @@ lobby's own start-game path.
 
 Under `%TEMP%\sw-two`: `game\` (the copy, carrying the stub), `transcript.jsonl`
 (every call, with its session, its answer and where the answer came from), `a.log`
-and `b.log` (the stub's own view of each instance, at `debug` level). The installed
-game is never written to - the copy is what gets the stub, and `-GamePath` says
-where the original lives.
+and `b.log` (the stub's own view of each instance, at `debug` level), and
+`game-output.log` (both instances' `OutputDebugString`, the stub's lines and the
+games' own, tagged by pid). The installed game is never written to - the copy is what
+gets the stub, and `-GamePath` says where the original lives.
 
-The debug channel the game itself writes to (`OutputDebugString`) is *not* captured
-here: that needs the DBWIN buffer reader the earlier rig had, and until it is
-promoted into `tools\` the game's own complaints - the "unknown message" above
-included - are only visible by running the game under a debugger or a tool such as
-DebugView.
+The games' own `OutputDebugString` lines *are* captured, by
+[`tools/debug-output.ps1`](../tools/debug-output.ps1) - the rig starts it before the
+instances and stops it after them, and it lands in `game-output.log` as `<pid> <text>`
+so two games in one run stay apart. It exists because the harness records every call a
+game makes and none of the opinions a game has about them, and a game's opinion is
+where it says why it is unhappy: the guest sitting there doing nothing was only
+readable as "the guest said nothing", and the host's *"unknown message on our listen
+socket"* is the game, not the stub.
+
+Two things about that wire: only one reader can hold the DBWIN buffer, so a debugger,
+an IDE or DebugView running at the same time takes these lines; and the buffer is
+filled by whoever calls `OutputDebugString`, so a reader that stops draining it makes
+those calls block - which is why the rig starts the reader before the games and keeps
+its handshake tight.
+
+The stub's own debug lines go to that wire too (it writes them to `STEAMMOCK_LOG` and
+to `OutputDebugString`), so `game-output.log` holds both; the games' own lines are the
+ones without the `[steammock]` prefix.

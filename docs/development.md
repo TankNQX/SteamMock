@@ -193,6 +193,15 @@ difference is written down here because a version string is meant to name one AB
   every SDK from 1.51 on calls it `SteamAPI_ISteamUserStats_GetStatInt32`, and the IDL the backend
   answers from uses the newer name. One name per call means a scenario does not have to know which SDK
   built the game.
+* An event's members are in the SDK's order, and that order is semantics rather than style. The stub
+  compiles its own copy of every payload struct from this file and writes it into the game's own
+  object, so a member in the wrong place puts one field where the game reads another - and nothing
+  local catches it, because every name is present and the sizes still add up. `LobbyGameCreated_t`
+  carried `m_unIP` before `m_ulSteamIDGameServer`, so a game read the address where the server's id
+  belongs, its `CSteamID::IsValid()` said no, and it silently never connected. The only thing that
+  sees this is `tools/steamworks_sdk_import.py --diff` against an SDK - which did see it, and reported
+  the event as different, and the difference was read as a generation artefact for a while. Read the
+  diff; do not count it.
 
 Three things worth knowing about the newer headers, if a version is ever added by hand rather than
 taken from an import:

@@ -45,6 +45,18 @@ Copy-Item -Recurse -Force $GamePath $game
 Copy-Item -Force $stub (Join-Path $game 'steam_api.dll')
 Say ('setup: the copy holds the stub ({0} bytes) in place of Valve''s' -f (Get-Item (Join-Path $game 'steam_api.dll')).Length)
 
+# The games' own OutputDebugString lines, which is where a game says why it is
+# unhappy - the harness records the calls and none of the opinions. Started before
+# the instances: the buffer is drained one line at a time, and a line nobody is
+# holding is a line gone.
+$debugLog = Join-Path $RigDir 'game-output.log'
+Remove-Item -Force $debugLog -ErrorAction SilentlyContinue
+$debugReader = Start-Process -FilePath 'powershell' -PassThru -WindowStyle Hidden -ArgumentList @(
+    '-NoProfile', '-ExecutionPolicy', 'Bypass',
+    '-File', (Join-Path $PSScriptRoot 'debug-output.ps1'),
+    '-OutFile', $debugLog)
+Say 'setup: the games'' own output is being read into game-output.log'
+
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
@@ -248,6 +260,10 @@ foreach ($process in @($a, $b)) {
 $backend.Refresh()
 if (-not $backend.HasExited) { Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue }
 Start-Sleep -Seconds 1
+# The reader last, so the games' final lines are in the file before it goes.
+$debugReader.Refresh()
+if (-not $debugReader.HasExited) { Stop-Process -Id $debugReader.Id -Force -ErrorAction SilentlyContinue }
+Start-Sleep -Milliseconds 500
 
 Say ''
 Say '--- what the backend saw ---'
@@ -314,6 +330,23 @@ foreach ($log in 'a.log', 'b.log') {
         ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[1].Value }
     if ($handed.Count -eq 0) { Say '  nothing was handed over' }
     else { $handed | Group-Object | Sort-Object Name | ForEach-Object { Say ("  {0,-44} {1}" -f $_.Name, $_.Count) } }
+}
+
+# The games' own words, which is where a game says why it is unhappy. Every line is
+# "<pid> <text>", and the two pids are the two instances this run started.
+Say ''
+Say '--- what the games themselves said ---'
+$gameOutput = @()
+if (Test-Path $debugLog) { $gameOutput = [System.IO.File]::ReadAllLines($debugLog) }
+Say ("debug output: {0} line(s) in {1}" -f $gameOutput.Count, $debugLog)
+foreach ($which in @(
+        [pscustomobject] @{ Name = 'instance A'; Process = $a },
+        [pscustomobject] @{ Name = 'instance B'; Process = $b })) {
+    if ($null -eq $which.Process) { continue }
+    $mine = $gameOutput | Where-Object { $_ -match "^$($which.Process.Id) " } |
+        ForEach-Object { $_ -replace "^$($which.Process.Id) ", '' }
+    Say ("{0} (pid {1}): {2} line(s)" -f $which.Name, $which.Process.Id, $mine.Count)
+    if ($mine.Count -gt 0) { $mine | Select-Object -Last 10 | ForEach-Object { Say "  $_" } }
 }
 
 Say ''
