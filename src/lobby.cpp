@@ -234,6 +234,36 @@ Json session_request_payload(std::uint64_t remote) {
     return event;
 }
 
+// The ticket a game is given, and the approval it is looked up by. Steam's own tickets are
+// opaque blobs of a few hundred bytes that only Steam can read. What a game does with one
+// here is check that it is not empty - Spacewar's client says "Looks like
+// GetAuthSessionTicket didn't give us a good ticket" when the length comes back zero - and
+// what a game server does is hand it back to be approved. So this is short, clearly fake
+// and the same every run, and the approval below is "yes" for anyone who asks.
+constexpr const char* kMockTicketHex = "6d6f636b2d7469636b65742d31";  // "mock-ticket-1"
+constexpr std::int64_t kMockTicketBytes = 14;
+constexpr std::int64_t kMockAuthTicketHandle = 1;
+
+// The response a game server waits for between a client's connection attempt and letting it
+// play: k_EAuthSessionResponseOK, which is 0, with the same player as the ticket's owner -
+// which is what it is for a ticket nobody else's account issued.
+constexpr std::int64_t kAuthSessionResponseOk = 0;
+
+Json validate_auth_ticket_payload(std::uint64_t user) {
+    Json fields = Json::object();
+    fields["m_SteamID"] = id_value(user);
+    fields["m_eAuthSessionResponse"] = Json(kAuthSessionResponseOk);
+    fields["m_OwnerSteamID"] = id_value(user);
+
+    Json event = Json::object();
+    event["event"] = Json("ValidateAuthTicketResponse_t");
+    event["in"] = std::move(fields);
+    return event;
+}
+
+constexpr const char* kGetAuthSessionTicket = "SteamAPI_ISteamUser_GetAuthSessionTicket";
+constexpr const char* kBeginAuthSession = "SteamAPI_ISteamGameServer_BeginAuthSession";
+
 constexpr const char* kCreateLobby = "SteamAPI_ISteamMatchmaking_CreateLobby";
 constexpr const char* kRequestLobbyList = "SteamAPI_ISteamMatchmaking_RequestLobbyList";
 constexpr const char* kGetLobbyByIndex = "SteamAPI_ISteamMatchmaking_GetLobbyByIndex";
@@ -311,6 +341,8 @@ std::vector<std::string> LobbyWorld::handled_calls() {
         kCloseP2PSession,
         kGameServerGetHSteamUser,
         kGameServerGetHSteamPipe,
+        kGetAuthSessionTicket,
+        kBeginAuthSession,
     };
 }
 
@@ -772,6 +804,32 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             return false;
         }
         out = from_lobby(Json(member->persona));
+        return true;
+    }
+
+    if (call == kGetAuthSessionTicket) {
+        // A game asks for a ticket to send to whoever it wants to play with, and gets a
+        // handle to cancel it by later. The bytes are opaque to the game: it copies them
+        // into its own buffer, tells the other end how long they are, and that is all it
+        // can do with them - which is why the buffer is an out-parameter and the length
+        // comes back beside it.
+        Json values = Json::object();
+        values["pTicket"] = Json(kMockTicketHex);
+        values["pcbTicket"] = Json(kMockTicketBytes);
+        Answer answer = from_lobby(Json(kMockAuthTicketHandle));
+        answer.out = std::move(values);
+        out = std::move(answer);
+        return true;
+    }
+
+    if (call == kBeginAuthSession) {
+        // A game server has been handed a ticket by a player and asks what to make of it.
+        // Nothing here refuses anyone, and the answer the server acts on is a callback:
+        // it is told who the ticket belongs to and that it is good, which is what lets the
+        // player in. The server finds the player it was waiting for by that id.
+        const std::uint64_t user = id_member(args, "steamID");
+        notifications.emplace_back(me, validate_auth_ticket_payload(user));
+        out = from_lobby(Json(kAuthSessionResponseOk));
         return true;
     }
 
