@@ -7,7 +7,7 @@ Watch a real game's Steam calls arrive, live, without Steam.
 *Two copies of one game running at once. The view lists each as its own session: the calls it makes, what answered
 each one, how long it took, and the state that game is being told.*
 
-![Three copies of the game and the live view in a grid](docs/images/two-instances.gif)
+![Three copies of the game and the live view in a grid](docs/images/three-instances.gif)
 
 *Three of them, and the view with them: one makes a lobby, the others join it, and all three are authenticated
 against each other. [The full recording (30 MB, mp4)](https://github.com/TankNQX/SteamMock/releases/download/demo-two-instances/two-instances.mp4)
