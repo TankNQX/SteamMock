@@ -1,0 +1,12 @@
+# What the SDK importer needs, and nothing else in the repository does: the C++
+# build, the tests and steammock_codegen are all CMake.
+#
+#   python -m venv .venv
+#   .venv/Scripts/pip install -r tools/requirements.txt
+#
+# Both halves of reading a header: cxxheaderparser for the declarations, and pcpp
+# for the preprocessor its front end drives. These are the versions the reader was
+# written and checked against - the node shapes normalise() reads are
+# cxxheaderparser 2.0's.
+cxxheaderparser==2.0.0
+pcpp==1.30
