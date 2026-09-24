@@ -235,8 +235,17 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
         // lazy accessor is answered here, and tells the backend when it does.
         out.push_back("        if (result == nullptr) {");
         if (call.fallback == "interface") {
+            // The user handle this interface is asked for under, when the call names
+            // one: the game-server half of an interface has a handle of its own, and at
+            // the hand-out that is the only thing that can say which end is asking.
+            std::string fallback_user = "0";
+            for (const auto& param : call.params) {
+                if (param.name == "hSteamUser" || param.name == "hSteamuser") {
+                    fallback_user = param.name;
+                }
+            }
             out.push_back(std::string("            result = steammock::interface_object(") +
-                          call.fallback_param + ");");
+                          call.fallback_param + ", " + fallback_user + ");");
         } else {
             out.push_back(std::string("            result = steammock::context_init(") +
                           call.params[0].name + ", \"" + call.name + "\");");

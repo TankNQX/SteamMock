@@ -45,11 +45,37 @@ Json packed_value(const Arg& argument) {
 
 }  // namespace
 
-bool run_slot(const SlotInfo& info, const Arg* args, std::size_t count, Json& reply) noexcept {
+// The calls a game can make through two objects that answer to the same name, where
+// nothing in the arguments says which one it used. A process that hosts has a customer
+// and a game server, each with its own ISteamNetworking, and a packet read through one
+// of them cannot be told from a packet read through the other by anything else on this
+// wire - so these calls carry the user handle they were made through, and the world
+// reads the queue of the end that asked. Only these: every other call is answered for
+// the interface it names.
+bool needs_user_handle(const char* call) noexcept {
+    constexpr const char* kPrefix = "SteamAPI_ISteamNetworking_";
+    if (call == nullptr) {
+        return false;
+    }
+    for (std::size_t index = 0; kPrefix[index] != '\0'; ++index) {
+        if (call[index] != kPrefix[index]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool run_slot(std::int32_t hSteamUser, const SlotInfo& info, const Arg* args, std::size_t count,
+              Json& reply) noexcept {
     try {
         Json request = Json::object();
         for (std::size_t index = 0; index < count; ++index) {
             request[name_at(info, index)] = packed_value(args[index]);
+        }
+        if (hSteamUser != 0 && needs_user_handle(info.call)) {
+            // The handle this was called through, under the name the SDK's own accessor
+            // calls it by - the same word, because it is the same fact.
+            request["hSteamUser"] = Json(hSteamUser);
         }
         return invoke(info.call, request, reply);
     } catch (...) {

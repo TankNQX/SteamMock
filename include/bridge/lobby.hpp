@@ -100,6 +100,18 @@ public:
     static constexpr std::uint64_t kFirstGameServerId =
         (kUniversePublic << 56) | (kAnonymousGameServer << 52) | 1ull;
 
+    // The user handles the two ends of a process answer under. Steam runs a game
+    // server as a user of its own on the same pipe as the customer it sits beside, and
+    // a game asks for an interface under the handle it means. That is the only thing
+    // that tells a customer's ISteamNetworking from a game server's: both are handed
+    // the same version string and both then make the same calls. The world is where
+    // those handles are given out, so it is also where a call can be read back to the
+    // end that made it.
+    static constexpr std::int32_t kCustomerHSteamUser = 1;
+    static constexpr std::int32_t kCustomerHSteamPipe = 1;
+    static constexpr std::int32_t kGameServerHSteamUser = 2;
+    static constexpr std::int32_t kGameServerHSteamPipe = 2;
+
     // The calls this world answers, so a test can prove every one of them is a
     // name the stub can actually send.
     static std::vector<std::string> handled_calls();

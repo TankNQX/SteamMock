@@ -857,6 +857,10 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("// " + version.name + " " + version.version);
         out.push_back("class Version_" + id + " {");
         out.push_back("public:");
+        // Which user handle this object was handed out for. One version string asked
+        // for under two handles is two objects, and this is what lets a call made
+        // through one of them say who made it.
+        out.push_back("    std::int32_t hSteamUser = 0;");
         for (std::size_t index = 0; index < version.slots.size(); ++index) {
             const InterfaceSlot& slot = version.slots[index];
             if (slot.destructor) {
@@ -864,7 +868,10 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                 continue;
             }
 
-            const std::string at = "kCall_" + number(slot_call[v][index]);
+            // The handle travels in front of the call name, which is what the two
+            // overloads of slot() tell apart. Whether it reaches the wire is the
+            // marshaller's business - see needs_user_handle.
+            const std::string at = "hSteamUser, kCall_" + number(slot_call[v][index]);
             std::string parameters;
             std::string arguments;
             for (const InterfaceParam& param : slot.params) {
@@ -888,6 +895,17 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
 
             const std::string passed = at + (arguments.empty() ? "" : ", " + arguments);
             const std::string factory = interface_factory_parameter(slot);
+            // The user handle the game asked this object for, when the call says which
+            // user it is for. A customer's ISteamNetworking and a game server's are the
+            // same version string under different handles - `hSteamUser` in the SDK's
+            // spelling, `hSteamuser` in a few of its declarations - and at the hand-out
+            // this is the only thing that can tell the two of them apart.
+            std::string factory_user = "0";
+            for (const InterfaceParam& param : slot.params) {
+                if (param.name == "hSteamUser" || param.name == "hSteamuser") {
+                    factory_user = param.name;
+                }
+            }
 
             // A slot that only forwards fits on one line, which is what most of
             // them are. The ones that answer with an object of ours keep the
@@ -919,7 +937,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                 // the game named.
                 out.push_back("        void* result = steammock::slot<void*>(" + passed + ");");
                 out.push_back("        if (result == nullptr) {");
-                out.push_back("            result = steammock::interface_object(" + factory + ");");
+                out.push_back("            result = steammock::interface_object(" + factory +
+                              ", " + factory_user + ");");
                 out.push_back("        }");
                 out.push_back("        return result;");
             }
@@ -927,7 +946,9 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         }
         out.push_back("};");
         out.push_back("");
-        out.push_back("Version_" + id + " g_" + id + ";");
+        // One object per user handle this version can be handed out under, so that a
+        // call made through one of them can say which handle it was made under.
+        out.push_back("Version_" + id + " g_" + id + "[steammock::kInterfaceEndpoints];");
         out.push_back("");
     }
 
@@ -1028,8 +1049,15 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     if (!interfaces.versions().empty()) {
         out.push_back("const steammock::InterfaceVersion kVersions[] = {");
         for (const InterfaceVersion& version : interfaces.versions()) {
-            out.push_back("    {" + literal(version.version) + ", &g_" +
-                          identified(version.version) + "},");
+            // One row per version, carrying every object that version is handed out as
+            // and the place each of them keeps its user handle in. Both, because a
+            // version asked for under two handles is two objects, and the object is the
+            // only thing that can say which handle a call through it was made under.
+            out.push_back("    {" + literal(version.version) + ", {&g_" +
+                          identified(version.version) + "[0], &g_" +
+                          identified(version.version) + "[1]}, {&g_" +
+                          identified(version.version) + "[0].hSteamUser, &g_" +
+                          identified(version.version) + "[1].hSteamUser}},");
         }
         out.push_back("};");
     } else {
@@ -1041,15 +1069,34 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("}  // namespace");
     out.push_back("");
     out.push_back("// The object to hand back for a version string, or null when this stub has");
-    out.push_back("// none - a game that asked for something newer than any SDK this knows.");
-    out.push_back("void* interface_object(const char* version) noexcept {");
+    out.push_back("// none - a game that asked for something newer than any SDK this knows. The");
+    out.push_back("// handle is the user it is asked for under, or 0 when the caller did not say");
+    out.push_back("// which: the object already holding that handle comes back, otherwise one");
+    out.push_back("// nobody has claimed, and the object remembers the handle from then on.");
+    out.push_back("void* interface_object(const char* version, std::int32_t hSteamUser) noexcept {");
     out.push_back("    if (version == nullptr) {");
     out.push_back("        return nullptr;");
     out.push_back("    }");
     out.push_back("    for (std::size_t index = 0; index < kVersionCount; ++index) {");
-    out.push_back("        if (std::strcmp(kVersions[index].version, version) == 0) {");
-    out.push_back("            return kVersions[index].object;");
+    out.push_back("        if (std::strcmp(kVersions[index].version, version) != 0) {");
+    out.push_back("            continue;");
     out.push_back("        }");
+    out.push_back("        for (std::size_t endpoint = 0; endpoint < steammock::kInterfaceEndpoints;");
+    out.push_back("             ++endpoint) {");
+    out.push_back("            if (hSteamUser != 0 && *kVersions[index].user[endpoint] == hSteamUser) {");
+    out.push_back("                return kVersions[index].object[endpoint];");
+    out.push_back("            }");
+    out.push_back("        }");
+    out.push_back("        for (std::size_t endpoint = 0; endpoint < steammock::kInterfaceEndpoints;");
+    out.push_back("             ++endpoint) {");
+    out.push_back("            if (*kVersions[index].user[endpoint] == 0) {");
+    out.push_back("                *kVersions[index].user[endpoint] = hSteamUser;");
+    out.push_back("                return kVersions[index].object[endpoint];");
+    out.push_back("            }");
+    out.push_back("        }");
+    out.push_back("        // Both are spoken for, which takes two game servers in one process to");
+    out.push_back("        // reach. A stub has nothing better to say than the first of them.");
+    out.push_back("        return kVersions[index].object[0];");
     out.push_back("    }");
     out.push_back("    return nullptr;");
     out.push_back("}");

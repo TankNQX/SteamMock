@@ -52,10 +52,23 @@ struct SlotInfo {
     const char* const* parameters;
 };
 
-// One interface version the stub can answer, and the object to hand back for it.
+// How many user handles one version of an interface is handed out for. A process
+// that hosts is a customer and a game server at once, Steam gives each of them a
+// user handle of its own, and the object a call is made through is the only thing on
+// this side that can say which of them made it - so each handle needs an object of
+// its own. Two is that number; a handle that arrives once both are spoken for reuses
+// the first object, which is where a process running two game servers would be
+// wrong, and nothing else is.
+constexpr std::size_t kInterfaceEndpoints = 2;
+
+// One interface version the stub can answer, and the objects to hand back for it -
+// one per user handle, each remembering the handle it was handed out for. That
+// memory is what lets a call made through one of them say who made it, which is the
+// only way a packet queue can tell a customer's read from a game server's.
 struct InterfaceVersion {
     const char* version;
-    void* object;
+    void* object[kInterfaceEndpoints];
+    std::int32_t* user[kInterfaceEndpoints];
 };
 
 // A game that skips its null check should read empty text rather than fault.
@@ -346,8 +359,12 @@ inline const char* name_at(const SlotInfo& info, std::size_t index) noexcept {
 // It is defined in synth.cpp rather than here, once, because the work it does -
 // building a request, sending it, parsing what came back - has nothing to do
 // with any one signature, and leaving it in the header would write a copy of it
-// into every shape of call the generated file declares.
-bool run_slot(const SlotInfo& info, const Arg* args, std::size_t count, Json& reply) noexcept;
+// into every shape of call the generated file declares. hSteamUser is the user
+// handle the object the game called through was handed out for, or 0 when the call
+// did not come through one: only the calls that cannot be told apart without it put
+// it on the wire, so most calls carry it nowhere.
+bool run_slot(std::int32_t hSteamUser, const SlotInfo& info, const Arg* args, std::size_t count,
+              Json& reply) noexcept;
 template <class Parameter>
 void store_out(const SlotInfo& info, std::size_t index, const Json& reply,
                Parameter parameter) noexcept {
@@ -364,13 +381,16 @@ void store_out(const SlotInfo& info, std::size_t index, const Json& reply,
     }
 }
 
+// The one marshalling path, so that a call made through an object of ours and one
+// made without one cannot drift apart. hSteamUser is the handle the object was handed
+// out for, or 0 when the call came through no object at all.
 template <class Return, class... Parameters>
-Return slot(const SlotInfo& info, Parameters... parameters) noexcept {
+Return call_slot(std::int32_t hSteamUser, const SlotInfo& info, Parameters... parameters) noexcept {
     try {
         const Arg packed[sizeof...(Parameters) + 1] = {Kind<Parameters>::arg(parameters)...};
         Json reply;
 
-        if (!run_slot(info, packed, sizeof...(Parameters), reply)) {
+        if (!run_slot(hSteamUser, info, packed, sizeof...(Parameters), reply)) {
             return Kind<Return>::fallback();
         }
 
@@ -383,14 +403,31 @@ Return slot(const SlotInfo& info, Parameters... parameters) noexcept {
     }
 }
 
+template <class Return, class... Parameters>
+Return slot(const SlotInfo& info, Parameters... parameters) noexcept {
+    return call_slot<Return>(0, info, parameters...);
+}
+
+// The same call made through an interface object of ours, which knows the user handle
+// it was handed out for. Two overloads rather than a second name is what keeps a
+// generated body readable either way: the handle is one more thing in front of the
+// call name, and a version of an interface asked for under two handles is two
+// objects, which is how a customer's call is told from a game server's.
+template <class Return, class... Parameters>
+Return slot(std::int32_t hSteamUser, const SlotInfo& info, Parameters... parameters) noexcept {
+    return call_slot<Return>(hSteamUser, info, parameters...);
+}
+
 // ---------------------------------------------------------------------------
 //  What the generated file provides.
 // ---------------------------------------------------------------------------
 
-// The object to hand out for a version string, or null when the stub has no
-// object for it - which is a game that asked for something newer than any SDK
-// this was imported from.
-void* interface_object(const char* version) noexcept;
+// The object to hand out for a version string, or null when the stub has no object
+// for it - which is a game that asked for something newer than any SDK this was
+// imported from. hSteamUser is the handle the game asked under, or 0 when it did not
+// say which: the object already holding that handle comes back, otherwise one nobody
+// has claimed yet, and the object remembers the handle from then on.
+void* interface_object(const char* version, std::int32_t hSteamUser) noexcept;
 
 // Every version string the stub can answer, for a harness that wants to say so.
 const InterfaceVersion* interface_versions(std::size_t& count) noexcept;
