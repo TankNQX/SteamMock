@@ -14,6 +14,21 @@ each one, how long it took, and the state that game is being told.*
   as `Spacewar`, next to your other games.
 * **A copy of this repository**, cloned with its submodules. If you cloned without them, run
   `git submodule update --init --recursive` inside your checkout.
+* **Optionally, a Steamworks SDK** - yours, from Valve - if you want the stub to hand out interface
+  objects. A game built against a recent SDK does not import the per-interface calls: it asks the
+  stub for a version string and calls what it gets back. What the stub can answer that with is the
+  imported layouts, and they are Valve's data, so they are not in this repository and the build
+  works without them:
+
+```bat
+python -m venv .venv
+.venv\Scripts\pip install -r tools\requirements.txt
+.venv\Scripts\python tools\steamworks_sdk_import.py --sdk <sdk>\public\steam --out gen\steam_interfaces.json
+```
+
+  With none imported the stub answers every such request with null - the same thing a game sees from
+  a steam_api that does not know the version - and `end_to_end` says so and skips those checks. The
+  Spacewar walkthrough below is about the flat calls and the lobby, so it works either way.
 
 ## Step by step
 
@@ -84,6 +99,9 @@ running, which is why the game keeps going instead of getting an invented succes
   runs and out of anything you distribute.
 * **Not a Steam emulator.** It never talks to Valve, so anything that needs the real service has to be
   scripted call by call.
+* **Not Valve's code or data.** No Steamworks SDK, header, library or interface layout is in this
+  repository, and nothing generated from them is committed either: the layouts are imported from an
+  SDK you have, the files the generator writes are build outputs, and the two test apps are ours.
 
 Contributors: `docs/development.md` has the source layout, the tests and what CI checks. Licensed
 under MIT - see `LICENSE`.

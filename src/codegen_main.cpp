@@ -46,6 +46,15 @@ bool read_file_bytes(const std::string& path, std::string& out) {
     return true;
 }
 
+bool file_exists(const std::string& path) {
+    std::FILE* file = std::fopen(path.c_str(), "rb");
+    if (file == nullptr) {
+        return false;
+    }
+    std::fclose(file);
+    return true;
+}
+
 bool write_file_bytes(const std::string& path, const std::string& text) {
     std::FILE* file = std::fopen(path.c_str(), "wb");
     if (file == nullptr) {
@@ -151,7 +160,19 @@ int run(int argc, char** argv) {
     }
 
     steammock::Interfaces interfaces;
-    if (!steammock::Interfaces::load_file(interfaces_path, interfaces, error)) {
+    if (!file_exists(interfaces_path)) {
+        // The layouts are Valve's own data and are deliberately not part of the
+        // checkout: whoever builds this imports theirs from an SDK they have (see
+        // tools/steamworks_sdk_import.py). Without one there is no version string
+        // to hand an object out for, which is the same answer a game gets from a
+        // stub that does not know the version - so this is a note, not a failure.
+        std::fprintf(stderr,
+                     "steammock_codegen: no interface layouts at %s\n"
+                     "  the stub will hand out no interface objects; import yours with\n"
+                     "  python tools/steamworks_sdk_import.py --sdk <sdk>/public/steam "
+                     "--out %s\n",
+                     interfaces_path.c_str(), interfaces_path.c_str());
+    } else if (!steammock::Interfaces::load_file(interfaces_path, interfaces, error)) {
         std::fprintf(stderr, "interfaces error: %s\n", error.c_str());
         return 2;
     }

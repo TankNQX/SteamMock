@@ -107,6 +107,60 @@ add_executable(steammock_codegen src/codegen_main.cpp src/idl.cpp src/interfaces
 target_link_libraries(steammock_codegen PRIVATE steammock_core)
 
 # ---------------------------------------------------------------------------
+#  The generated files, written by that generator before anything reads them
+# ---------------------------------------------------------------------------
+#  Nothing under src/generated/ is committed: they are outputs, and the build runs
+#  the generator for them. Neither is gen/steam_interfaces.json, because it holds
+#  Valve's own interface layouts - whoever builds this imports them from an SDK
+#  they have:
+#
+#    python tools/steamworks_sdk_import.py --sdk <sdk>/public/steam --out gen/steam_interfaces.json
+#
+#  Without one the stub hands out no interface objects - a game built against a
+#  recent SDK gets null where it asks for a version string - and the end-to-end
+#  test says so and skips those checks. Everything else works the same.
+set(STEAMMOCK_IDL "${CMAKE_CURRENT_SOURCE_DIR}/gen/steam_api.idl.json"
+    CACHE FILEPATH "The API surface the stub is generated from")
+set(STEAMMOCK_INTERFACES "${CMAKE_CURRENT_SOURCE_DIR}/gen/steam_interfaces.json"
+    CACHE FILEPATH "The interface layouts the stub is generated from (imported from an SDK)")
+
+set(STEAMMOCK_GENERATED
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/generated/api_stub.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/generated/api_surface.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/generated/api_interfaces.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/generated/steam_api_exports.def"
+)
+
+# The layouts are an input only when they are there: a checkout with none still
+# builds, and re-importing them means configuring again (or running the generator
+# by hand), which is what regeneration has always meant here.
+set(STEAMMOCK_GENERATED_INPUTS "${STEAMMOCK_IDL}")
+if(EXISTS "${STEAMMOCK_INTERFACES}")
+    list(APPEND STEAMMOCK_GENERATED_INPUTS "${STEAMMOCK_INTERFACES}")
+else()
+    message(STATUS "steammock: no interface layouts at ${STEAMMOCK_INTERFACES} - "
+                   "the stub will hand out no interface objects")
+endif()
+
+add_custom_command(
+    OUTPUT ${STEAMMOCK_GENERATED}
+    COMMAND steammock_codegen
+            --idl "${STEAMMOCK_IDL}"
+            --interfaces "${STEAMMOCK_INTERFACES}"
+            --root "${CMAKE_CURRENT_SOURCE_DIR}"
+    DEPENDS steammock_codegen ${STEAMMOCK_GENERATED_INPUTS}
+    COMMENT "steammock_codegen: ${STEAMMOCK_IDL}"
+    VERBATIM
+)
+add_custom_target(steammock_generated DEPENDS ${STEAMMOCK_GENERATED})
+
+# The backend's surface table and the stub's trampolines are those outputs, so the
+# two of them wait for the generator - and so does the check below, which reads
+# what it wrote.
+add_dependencies(steammock_backend steammock_generated)
+add_dependencies(${STEAMMOCK_STUB_NAME} steammock_generated)
+
+# ---------------------------------------------------------------------------
 #  The live view - optional, and the only part that uses other people's code.
 # ---------------------------------------------------------------------------
 #  The backend with a window on it: which games are attached, what they are
@@ -192,11 +246,12 @@ if(STEAMMOCK_BUILD_TESTS)
     target_link_libraries(test_server PRIVATE steammock_backend)
     add_test(NAME server COMMAND test_server)
 
-    # Generated files are committed, so this fails if the IDL was edited without
-    # regenerating them. Run from the checkout, which is where the default --idl
-    # path points.
+    # The generated files are outputs of the build, and this compares them against
+    # the inputs they were generated from - so it fails if the IDL was edited and
+    # the tree not rebuilt. Same inputs as the build, by the same paths.
     add_test(NAME generated_files_are_current
-             COMMAND $<TARGET_FILE:steammock_codegen> --check)
+             COMMAND $<TARGET_FILE:steammock_codegen> --check
+                     --idl "${STEAMMOCK_IDL}" --interfaces "${STEAMMOCK_INTERFACES}")
     set_tests_properties(generated_files_are_current PROPERTIES
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 

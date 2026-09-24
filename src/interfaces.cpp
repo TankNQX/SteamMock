@@ -993,6 +993,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("     &fill_" + event.name + "},");
         }
         out.push_back("};");
+        out.push_back("const std::size_t kEventCount = " +
+                      number(static_cast<int>(interfaces.events().size())) + ";");
         out.push_back("");
         // Closed and reopened around this one definition: the marshalling in
         // synth.cpp is another translation unit, so the lookup needs external
@@ -1010,14 +1012,41 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("");
         out.push_back("namespace {");
         out.push_back("");
+    } else {
+        // The payloads are declared in the layouts file, so a build with none has
+        // none - and the lookup below still has to exist, because synth.cpp is the
+        // one that calls it. A table with nothing in it is not C++, so this is a
+        // null one with a count of zero, which is the same answer as an unknown name.
+        out.push_back("const steammock::EventInfo* const kEvents = nullptr;");
+        out.push_back("const std::size_t kEventCount = 0;");
+        out.push_back("");
+        out.push_back("}  // namespace");
+        out.push_back("");
+        out.push_back("const EventInfo* find_event(const char* name) noexcept {");
+        out.push_back("    (void)name;");
+        out.push_back("    return nullptr;");
+        out.push_back("}");
+        out.push_back("");
+        out.push_back("namespace {");
+        out.push_back("");
     }
 
-    out.push_back("const steammock::InterfaceVersion kVersions[] = {");
-    for (const InterfaceVersion& version : interfaces.versions()) {
-        out.push_back("    {" + literal(version.version) + ", &g_" + identified(version.version) +
-                      "},");
+    // A table with nothing in it is not C++, and a build with no layouts - which is
+    // what a fresh clone has, since Valve's layouts are not part of the checkout -
+    // has no versions at all. So the table exists when there is one, and the count
+    // is what the two lookups below go by.
+    if (!interfaces.versions().empty()) {
+        out.push_back("const steammock::InterfaceVersion kVersions[] = {");
+        for (const InterfaceVersion& version : interfaces.versions()) {
+            out.push_back("    {" + literal(version.version) + ", &g_" +
+                          identified(version.version) + "},");
+        }
+        out.push_back("};");
+    } else {
+        out.push_back("const steammock::InterfaceVersion* const kVersions = nullptr;");
     }
-    out.push_back("};");
+    out.push_back("const std::size_t kVersionCount = " +
+                  number(static_cast<int>(interfaces.versions().size())) + ";");
     out.push_back("");
     out.push_back("}  // namespace");
     out.push_back("");
@@ -1027,16 +1056,16 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("    if (version == nullptr) {");
     out.push_back("        return nullptr;");
     out.push_back("    }");
-    out.push_back("    for (const InterfaceVersion& entry : kVersions) {");
-    out.push_back("        if (std::strcmp(entry.version, version) == 0) {");
-    out.push_back("            return entry.object;");
+    out.push_back("    for (std::size_t index = 0; index < kVersionCount; ++index) {");
+    out.push_back("        if (std::strcmp(kVersions[index].version, version) == 0) {");
+    out.push_back("            return kVersions[index].object;");
     out.push_back("        }");
     out.push_back("    }");
     out.push_back("    return nullptr;");
     out.push_back("}");
     out.push_back("");
     out.push_back("const InterfaceVersion* interface_versions(std::size_t& count) noexcept {");
-    out.push_back("    count = sizeof(kVersions) / sizeof(kVersions[0]);");
+    out.push_back("    count = kVersionCount;");
     out.push_back("    return kVersions;");
     out.push_back("}");
     out.push_back("");
