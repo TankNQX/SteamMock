@@ -74,20 +74,38 @@ the lobby menu was read when the key counts were being worked out.
 
 ## Where it stops
 
-The connect message the client sends to its own server is four bytes -
-`f5 01 00 00` = 501 - and the game's server calls them *"unknown message on our
-listen socket"*. No UDP socket is bound anywhere: this traffic is P2P, and
-"listen socket" is the game's own name for its P2P receive. That is the one open
-thing in the whole two-instance story, and it is a game-side parse, not a missing
-answer from the harness - the bytes arrive, with the right length, on the right
-channel, from the id the lobby published.
+A process that hosts is two ends on one pipe - a customer and a game server - and
+the world keeps its packet queue per session, so it hands a packet to whichever of
+the two asks first. `LobbyWorld::peek_packet` says so in as many words: it merges
+the customer's queue with the game server's, on the grounds that a packet for either
+of them is for this process. It is - but not for *either* half of it.
 
-The cheapest next probe is the game's own `+connect` switch, whose argument is a
-**number** rather than a dotted address (`"+connect %d:%d"` in the game's string
-table): launch a second instance with `+connect 2130706433:27015` - 127.0.0.1 in
-host order, which is what the harness publishes in
-`SteamAPI_ISteamGameServer_GetPublicIP` - and see whether it gets further than the
-lobby's own start-game path.
+So the host's own customer reads the connect message its own game server was sent:
+`f5 01 00 00` = 501, `k_EMsgClientInitiateConnection`, answered with *"Received
+unknown message on our listen socket"*. That is `SpaceWarClient.cpp:747`, the
+customer's side of the mail; the game server's own complaint about a message it
+cannot place would be *"Bad connection attempt msg"* (`SpaceWarServer.cpp:530`). No
+UDP socket is bound anywhere: this traffic is P2P, and "listen socket" is the game's
+own name for its P2P receive. Reading a packet does not put it back, so the game
+server never sees the one its customer sent - which is why a guest that dialled
+carefully goes unanswered.
+
+The two halves cannot be told apart as things stand. `ReadP2PPacket` carries no
+identity, and neither does an object: the stub hands out **one object per version
+string**, and both halves reach `ISteamNetworking` through the same accessor with the
+same arguments. The transcript shows it - `SteamAPI_ISteamClient_GetISteamNetworking`
+twice per session, at seq 15 for the customer and at seq 33121 when the game server
+starts, both `hSteamUser: 1, hSteamPipe: 1`, because the harness answers
+`SteamGameServer_GetHSteamUser` exactly the way it answers the customer's. Real Steam
+gives a process's game server its own user handle, and that is the way in: a handle
+of its own, an object per handle, the calls that need it carrying the handle they were
+made through, and the world reading from the queue of the end that asked.
+
+A shortcut worth knowing: the game's own `+connect` switch takes a **number** rather
+than a dotted address (`"+connect %d:%d"` in its string table), so
+`+connect 2130706433:27015` - 127.0.0.1 in host order, which is what the harness
+publishes in `SteamAPI_ISteamGameServer_GetPublicIP` - walks straight to the dial
+without the lobby dance.
 
 ## Traps, so nobody works them out twice
 
