@@ -11,6 +11,8 @@
 #   pwsh -File tools/two-instance-test.ps1 -Record -WaitAfterStart 90
 #                                                       # tile the two windows and film them for
 #                                                       # that many seconds (needs ffmpeg)
+#   pwsh -File tools\two-instance-test.ps1 -Gui -Record # the live view is the server, so this
+#                                                       # films it between the two clients
 #
 # Everything below is Windows-only and needs a built tree: -RepoRoot\build\Release
 # (the backend) and -RepoRoot\build-w32\Release (the 32-bit stub). See the walkthrough
@@ -21,13 +23,17 @@ param(
     [string] $RigDir = (Join-Path $env:TEMP 'sw-two'),
     [int] $WaitAfterStart = 25,
     [switch] $Shoot,
-    [switch] $Record
+    [switch] $Record,
+    [switch] $Gui
 )
 
 $ErrorActionPreference = 'Continue'
 
 $game = Join-Path $RigDir 'game'
+# The live view is the same server with a window on it, so -Gui is one line down here: the
+# games do not know or care which of the two is listening, they just connect to it.
 $server = Join-Path $RepoRoot 'build\Release\steammock.exe'
+if ($Gui) { $server = Join-Path $RepoRoot 'build\Release\steammock_gui.exe' }
 $stub = Join-Path $RepoRoot 'build-w32\Release\steam_api64.dll'
 $scenario = Join-Path $RepoRoot 'scenarios\spacewar.json'
 $transcript = Join-Path $RigDir 'transcript.jsonl'
@@ -140,19 +146,21 @@ function Drive([IntPtr] $hwnd, [int[]] $keys, [string] $what) {
 # The two windows on one screen, half each. The rig's keys need the foreground and the
 # recording needs both of them in one frame, and by the time this is called the last key
 # has been sent - so nothing has to hold the focus any more.
-function Tile([IntPtr] $left, [IntPtr] $right) {
+function Tile([IntPtr[]] $windows) {
+    $live = @($windows | Where-Object { $_ -ne [IntPtr]::Zero })
     $width = [Win]::GetSystemMetrics(0)
     $height = [Win]::GetSystemMetrics(1)
-    if ($width -le 0 -or $height -le 0) { return }
-    $half = [int] ($width / 2)
-    [void] [Win]::MoveWindow($left, 0, 0, $half, $height, $true)
-    [void] [Win]::MoveWindow($right, $half, 0, $width - $half, $height, $true)
-    # On top of whatever else is on the desktop: a window that keeps the foreground and
-    # repaints over one of the halves would end up in the recording.
-    [void] [Win]::ShowWindow($left, 5)
-    [void] [Win]::BringWindowToTop($left)
-    [void] [Win]::ShowWindow($right, 5)
-    [void] [Win]::BringWindowToTop($right)
+    if ($live.Count -eq 0 -or $width -le 0 -or $height -le 0) { return }
+    $each = [int] ($width / $live.Count)
+    for ($index = 0; $index -lt $live.Count; ++$index) {
+        $left = $index * $each
+        $size = if ($index -eq $live.Count - 1) { $width - $left } else { $each }
+        # On top of whatever else is on the desktop: a window that keeps the foreground
+        # and repaints over one of these would end up in the recording.
+        [void] [Win]::ShowWindow($live[$index], 5)
+        [void] [Win]::MoveWindow($live[$index], $left, 0, $size, $height, $true)
+        [void] [Win]::BringWindowToTop($live[$index])
+    }
     Start-Sleep -Milliseconds 400
 }
 
@@ -208,10 +216,41 @@ function Wait-Window($process) {
     return $hwnd
 }
 
-$backend = Start-Process -FilePath $server `
-    -ArgumentList @('--scenario', $scenario, '--transcript', $transcript, '--log-level', 'debug') `
-    -WorkingDirectory $RepoRoot -PassThru -WindowStyle Hidden
+# The live view takes the scenario and --start and nothing else, so a run with it on has no
+# transcript for the summary below to read - it has a window, and that is the point of it.
+$backend = if ($Gui) {
+    Start-Process -FilePath $server -ArgumentList @('--scenario', $scenario, '--start') `
+        -WorkingDirectory $RepoRoot -PassThru
+}
+else {
+    Start-Process -FilePath $server `
+        -ArgumentList @('--scenario', $scenario, '--transcript', $transcript, '--log-level', 'debug') `
+        -WorkingDirectory $RepoRoot -PassThru -WindowStyle Hidden
+}
 Say "backend: pid $($backend.Id), listening on its default port"
+$guiHwnd = [IntPtr]::Zero
+if ($Gui) {
+    $guiHwnd = Wait-Window $backend
+    # It has to be drawn for the server to start: --start is honoured on the first frame the
+    # window renders, and a minimized window never renders. So it is shown, put somewhere
+    # out of the way and left drawing, which is what it does for the whole run until the
+    # recording tiles it in between the two clients.
+    [void] [Win]::ShowWindow($guiHwnd, 5)
+    [void] [Win]::MoveWindow($guiHwnd, 0, 0, 640, 480, $true)
+    [void] [Win]::BringWindowToTop($guiHwnd)
+
+    # Serving is what the clients need, and it is worth waiting for rather than assuming:
+    # a live view that never draws never listens, and then a game's first call goes
+    # nowhere and its menu never moves - which is exactly what a first attempt at this
+    # looked like from the outside.
+    $listening = $false
+    for ($attempt = 0; $attempt -lt 24 -and -not $listening; ++$attempt) {
+        Start-Sleep -Milliseconds 250
+        $listening = @(Get-NetTCPConnection -OwningProcess $backend.Id -State Listen -ErrorAction SilentlyContinue).Count -gt 0
+    }
+    if ($listening) { Say ("live view: window {0} for pid {1}, and listening" -f $guiHwnd, $backend.Id) }
+    else { Say 'live view: the window never started listening - the games will not reach it' }
+}
 
 Say 'instance A: launching as the default profile'
 Start-Sleep -Seconds 2
@@ -290,7 +329,7 @@ if ($Record) {
         Say 'no ffmpeg on PATH or in the WinGet packages - recording nothing'
     }
     else {
-        Tile $hwndA $hwndB
+        Tile @($hwndA, $guiHwnd, $hwndB)
         Remove-Item -Force $video -ErrorAction SilentlyContinue
         Say ("recording {0}s of the desktop to {1}" -f $WaitAfterStart, $video)
         $recorder = Start-Process -FilePath $ffmpegPath -PassThru -WindowStyle Hidden -ArgumentList @(
