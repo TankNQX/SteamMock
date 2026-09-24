@@ -121,6 +121,10 @@ public:
 
     void set_start(bool start) { _start_on_launch = start; }
 
+    void set_transcript(const char* transcript) {
+        std::snprintf(_transcript, sizeof(_transcript), "%s", transcript);
+    }
+
     void draw() {
         if (_start_on_launch) {
             // --start, so the window comes up serving without a click - which is
@@ -206,6 +210,7 @@ private:
         ServerOptions options;
         options.host = _host;
         options.port = static_cast<std::uint16_t>(parse_port(_port, 0));
+        options.transcript = _transcript;
         options.log_level = LogLevel::debug;
         // The server logs from its own threads, so the sink has to be safe to
         // call from any of them.
@@ -586,6 +591,11 @@ private:
     char _port[8] = "50990";
     char _scenario[512] = "scenarios/example.json";
 
+    // Empty keeps no transcript, exactly as the console backend's own option does. A window
+    // is lovely and a script still needs something to read: the rig that runs clients beside
+    // this learns the lobby id from a transcript, and has nowhere else to learn it.
+    char _transcript[512] = {};
+
     std::unique_ptr<Server> _server;
     std::string _status;
 
@@ -642,6 +652,10 @@ int main(int argc, char** argv) {
             view.set_port(argv[++index]);
         } else if (argument == "--start") {
             view.set_start(true);
+        } else if (argument == "--transcript" && index + 1 < argc) {
+            // The same server is behind this window, so the same transcript is worth having:
+            // it is what a script driving a run reads.
+            view.set_transcript(argv[++index]);
         }
     }
 

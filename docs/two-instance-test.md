@@ -145,10 +145,18 @@ and `b.log` (the stub's own view of each instance, at `debug` level), and
 games' own, tagged by pid). The installed game is never written to - the copy is what
 gets the stub, and `-GamePath` says where the original lives.
 
-With `-Record`, also `two-instances.mp4`: the two windows put side by side once the last
-key has been sent, filmed with ffmpeg for as long as `-WaitAfterStart` says. A run of
-sixty seconds is about six megabytes, and it shows both games rendering the same match -
-same field, same ships, same score - which is the thing worth having a picture of.
+With `-Record`, also `two-instances.mp4`: every window the run has, tiled into a grid - two
+across from four of them - and filmed from the first window appearing to the end of the
+match, so the menus and the keypresses that drive them are in it too. It ends by asking
+ffmpeg for `q` rather than killing it, because an mp4 whose index never got written is a
+file nothing can play; a four minute ceiling is passed as well, in case the run dies.
+
+`-Gui` puts the live view in the grid as the backend rather than beside it, and
+`-Clients 3` adds a third client the same way the second is there. A two-client match of a
+minute is about six megabytes; three clients and the window over a whole session came out
+at thirty. What that recording shows is worth knowing before watching it: the host plays a
+round, and the guests are told "Multiplayer authentication failed" and sit at the menus -
+the game's own words for the thing this rig has not worked out yet.
 
 The games' own `OutputDebugString` lines *are* captured, by
 [`tools/debug-output.ps1`](../tools/debug-output.ps1) - the rig starts it before the

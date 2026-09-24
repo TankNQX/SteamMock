@@ -13,6 +13,9 @@
 #                                                       # that many seconds (needs ffmpeg)
 #   pwsh -File tools\two-instance-test.ps1 -Gui -Record # the live view is the server, so this
 #                                                       # films it between the two clients
+#   pwsh -File tools\two-instance-test.ps1 -Clients 3 -Gui -Record -WaitAfterStart 90
+#                                                       # three clients and the live view in a
+#                                                       # grid, filmed from the first menu on
 #
 # Everything below is Windows-only and needs a built tree: -RepoRoot\build\Release
 # (the backend) and -RepoRoot\build-w32\Release (the 32-bit stub). See the walkthrough
@@ -24,7 +27,8 @@ param(
     [int] $WaitAfterStart = 25,
     [switch] $Shoot,
     [switch] $Record,
-    [switch] $Gui
+    [switch] $Gui,
+    [int] $Clients = 2
 )
 
 $ErrorActionPreference = 'Continue'
@@ -147,18 +151,25 @@ function Drive([IntPtr] $hwnd, [int[]] $keys, [string] $what) {
 # recording needs both of them in one frame, and by the time this is called the last key
 # has been sent - so nothing has to hold the focus any more.
 function Tile([IntPtr[]] $windows) {
-    $live = @($windows | Where-Object { $_ -ne [IntPtr]::Zero })
+    $live = @($windows | Where-Object { $_ -and $_ -ne [IntPtr]::Zero })
     $width = [Win]::GetSystemMetrics(0)
     $height = [Win]::GetSystemMetrics(1)
     if ($live.Count -eq 0 -or $width -le 0 -or $height -le 0) { return }
-    $each = [int] ($width / $live.Count)
+    # Two across as soon as there are four of them, so each client gets a cell rather than a
+    # thin column; three still reads better as a row.
+    $columns = if ($live.Count -ge 4) { 2 } elseif ($live.Count -eq 3) { 3 } else { $live.Count }
+    $rows = [int] [Math]::Ceiling($live.Count / $columns)
     for ($index = 0; $index -lt $live.Count; ++$index) {
-        $left = $index * $each
-        $size = if ($index -eq $live.Count - 1) { $width - $left } else { $each }
+        $column = $index % $columns
+        $row = [int] [Math]::Floor($index / $columns)
+        $left = [int] ($column * $width / $columns)
+        $size = if ($column -eq $columns - 1) { $width - $left } else { [int] ($width / $columns) }
+        $top = [int] ($row * $height / $rows)
+        $tall = if ($row -eq $rows - 1) { $height - $top } else { [int] ($height / $rows) }
         # On top of whatever else is on the desktop: a window that keeps the foreground
         # and repaints over one of these would end up in the recording.
         [void] [Win]::ShowWindow($live[$index], 5)
-        [void] [Win]::MoveWindow($live[$index], $left, 0, $size, $height, $true)
+        [void] [Win]::MoveWindow($live[$index], $left, $top, $size, $tall, $true)
         [void] [Win]::BringWindowToTop($live[$index])
     }
     Start-Sleep -Milliseconds 400
@@ -216,10 +227,12 @@ function Wait-Window($process) {
     return $hwnd
 }
 
-# The live view takes the scenario and --start and nothing else, so a run with it on has no
-# transcript for the summary below to read - it has a window, and that is the point of it.
+# The live view is the same server with a window on it, and it takes the scenario, the
+# transcript to keep and --start: the recording and the summary both want the run written
+# down, and a window that kept nothing would leave this script with nothing to read.
 $backend = if ($Gui) {
-    Start-Process -FilePath $server -ArgumentList @('--scenario', $scenario, '--start') `
+    Start-Process -FilePath $server `
+        -ArgumentList @('--scenario', $scenario, '--start', '--transcript', $transcript) `
         -WorkingDirectory $RepoRoot -PassThru
 }
 else {
@@ -252,6 +265,13 @@ if ($Gui) {
     else { Say 'live view: the window never started listening - the games will not reach it' }
 }
 
+# The clients' windows, known one at a time; the live view's, if there is one. Tile takes
+# whatever is known, so the grid fills in as the run goes.
+$hwndB = [IntPtr]::Zero
+$hwndC = [IntPtr]::Zero
+$recorder = $null
+$video = Join-Path $RigDir 'two-instances.mp4'
+
 Say 'instance A: launching as the default profile'
 Start-Sleep -Seconds 2
 $a = Start-Game 'default' @() 'a.log'
@@ -262,6 +282,41 @@ if ($hwndA -eq [IntPtr]::Zero) {
     Stop-Process -Id $a.Id -Force -ErrorAction SilentlyContinue
     Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue
     exit 1
+}
+
+# Recording starts here, with the first window up and before a single key is pressed: the
+# menus are half of what this is for, and a video that begins at the match has thrown that
+# half away. -t is a ceiling rather than the length - the stop at the end is what closes the
+# file properly, which on Windows is the only way to get one that plays.
+if ($Record) {
+    # ffmpeg may be on the PATH, or not until the shell that installed it is restarted - so
+    # the package it came in is looked in as well.
+    $ffmpegPath = $null
+    $onPath = Get-Command ffmpeg -ErrorAction SilentlyContinue
+    if ($null -ne $onPath) { $ffmpegPath = $onPath.Source }
+    else {
+        $found = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages') -Recurse -Filter ffmpeg.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -ne $found) { $ffmpegPath = $found.FullName }
+    }
+    if ($null -eq $ffmpegPath) {
+        Say 'no ffmpeg on PATH or in the WinGet packages - recording nothing'
+    }
+    else {
+        Tile @($hwndA, $guiHwnd)
+        Remove-Item -Force $video -ErrorAction SilentlyContinue
+        Say ("recording the whole run to {0}" -f $video)
+        $recorder = New-Object System.Diagnostics.Process
+        $recorder.StartInfo.FileName = $ffmpegPath
+        $recorder.StartInfo.Arguments = @(
+            '-hide_banner', '-loglevel', 'error', '-y',
+            '-f', 'gdigrab', '-framerate', '30', '-i', 'desktop',
+            '-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p',
+            '-t', '240', $video) -join ' '
+        $recorder.StartInfo.UseShellExecute = $false
+        $recorder.StartInfo.RedirectStandardInput = $true
+        $recorder.StartInfo.CreateNoWindow = $true
+        [void] $recorder.Start()
+    }
 }
 
 # Main menu: Start New Server, Find LAN Servers, Find Internet Servers, Create Lobby.
@@ -282,6 +337,9 @@ if (-not $lobby) {
 }
 Say "lobby: the world minted $lobby"
 
+# One guest per client after the first: each joins the same lobby by id - a number on the
+# command line, so it needs no keypresses - and a lobby menu lists one row per member, which
+# is what the key counts below are relative to.
 Say 'instance B: launching with +connect_lobby, which walks in with no keypresses'
 $b = Start-Game 'second_player' @("+connect_lobby $lobby") 'b.log'
 $joined = $false
@@ -290,17 +348,40 @@ for ($i = 0; $i -lt 40 -and -not $joined; $i++) {
     $joined = (Read-Transcript).Contains('JoinLobby')
 }
 Say "instance B: pid $($b.Id), joined=$joined"
-# Both menus now list two members, which is what the key counts below assume.
 Start-Sleep -Seconds 5
 
 $hwndB = Wait-Window $b
 Say "instance B: window $hwndB, exited $($b.HasExited)"
 
-# The lobby menu, with two members listed: [member, member, ready toggle, ...]. The
-# cursor starts at the top, so Ready is two downs in.
-Drive $hwndA @($VK_DOWN, $VK_DOWN, $VK_RETURN) 'instance A: Set myself as Ready'
-if ($hwndB -ne [IntPtr]::Zero) {
-    Drive $hwndB @($VK_DOWN, $VK_DOWN, $VK_RETURN) 'instance B: Set myself as Ready'
+if ($Clients -ge 3) {
+    Say 'instance C: launching with +connect_lobby too'
+    $c = Start-Game 'third_player' @("+connect_lobby $lobby") 'c.log'
+    $joined = $false
+    for ($i = 0; $i -lt 40 -and -not $joined; $i++) {
+        Start-Sleep -Seconds 1
+        $joins = [regex]::Matches((Read-Transcript), 'SteamAPI_ISteamMatchmaking_JoinLobby').Count
+        $joined = $joins -ge 2
+    }
+    Say "instance C: pid $($c.Id), joined=$joined"
+    Start-Sleep -Seconds 5
+    $hwndC = Wait-Window $c
+    Say "instance C: window $hwndC, exited $($c.HasExited)"
+}
+Start-Sleep -Seconds 2
+
+# Everyone is in, so the grid is what the rest of the run looks like.
+Tile @($hwndA, $hwndB, $hwndC, $guiHwnd)
+
+# The lobby menu lists one row per member and then the ready toggle, so Ready is as many
+# downs in as there are clients - which is why this counts instead of being written twice.
+$ready = @($VK_DOWN) * $Clients + $VK_RETURN
+foreach ($which in @(
+        [pscustomobject] @{ Name = 'instance A'; Window = $hwndA },
+        [pscustomobject] @{ Name = 'instance B'; Window = $hwndB },
+        [pscustomobject] @{ Name = 'instance C'; Window = $hwndC })) {
+    if ($which.Window -ne [IntPtr]::Zero) {
+        Drive $which.Window $ready ("{0}: Set myself as Ready" -f $which.Name)
+    }
 }
 Say 'instance A: Start game = down and return from the ready toggle, and the owner alone has it'
 if ($Shoot) {
@@ -309,53 +390,29 @@ if ($Shoot) {
 }
 Drive $hwndA @($VK_DOWN, $VK_RETURN) 'instance A: Start game'
 
-# Filming starts after the key that starts the match, so the video is the match and not
-# the menu: the windows are put side by side first, and ffmpeg is given the same length as
-# the wait, which is how it ends - a duration rather than a kill, because a killed
-# recorder leaves a file nothing can play.
-$recorder = $null
-$video = Join-Path $RigDir 'two-instances.mp4'
-if ($Record) {
-    # ffmpeg may be on the PATH, or not until the shell that installed it is restarted -
-    # so the package it came in is looked in as well.
-    $ffmpegPath = $null
-    $onPath = Get-Command ffmpeg -ErrorAction SilentlyContinue
-    if ($null -ne $onPath) { $ffmpegPath = $onPath.Source }
-    else {
-        $found = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages') -Recurse -Filter ffmpeg.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($null -ne $found) { $ffmpegPath = $found.FullName }
-    }
-    if ($null -eq $ffmpegPath) {
-        Say 'no ffmpeg on PATH or in the WinGet packages - recording nothing'
-    }
-    else {
-        Tile @($hwndA, $guiHwnd, $hwndB)
-        Remove-Item -Force $video -ErrorAction SilentlyContinue
-        Say ("recording {0}s of the desktop to {1}" -f $WaitAfterStart, $video)
-        $recorder = Start-Process -FilePath $ffmpegPath -PassThru -WindowStyle Hidden -ArgumentList @(
-            '-hide_banner', '-loglevel', 'error', '-y',
-            '-f', 'gdigrab', '-framerate', '30', '-i', 'desktop',
-            '-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p',
-            '-t', "$WaitAfterStart", $video)
-    }
-}
-
 Start-Sleep -Seconds $WaitAfterStart
 
 if ($null -ne $recorder) {
-    $recorder.WaitForExit()
+    # q rather than a kill: ffmpeg closes the file on its own terms, and an mp4 whose index
+    # never got written is a file nothing can play. The recording has been running since the
+    # first window appeared, so this is the end of the whole session, menus included.
+    $recorder.StandardInput.WriteLine('q')
+    $recorder.StandardInput.Flush()
+    $recorder.WaitForExit(15000) | Out-Null
+    if (-not $recorder.HasExited) { Stop-Process -Id $recorder.Id -Force -ErrorAction SilentlyContinue }
     if (Test-Path $video) { Say ("video: {0} ({1:N1} MB)" -f $video, (1.0 * (Get-Item $video).Length / 1MB)) }
     else { Say 'the recorder wrote no file' }
 }
 
 Say ''
-Say '--- the two instances ---'
-$a.Refresh()
-$b.Refresh()
+Say '--- the instances ---'
+foreach ($which in @($a, $b, $c)) {
+    if ($null -ne $which) { $which.Refresh() }
+}
 Say ("instance A pid {0} exited={1}; instance B pid {2} exited={3}" -f $a.Id, $a.HasExited, $b.Id, $b.HasExited)
 
 Say 'stopping the instances and the backend, so the transcript can be read'
-foreach ($process in @($a, $b)) {
+foreach ($process in @($a, $b, $c)) {
     $process.Refresh()
     if (-not $process.HasExited) { Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue }
 }
@@ -424,7 +481,7 @@ else {
 
 Say ''
 Say '--- what the stub handed to each game ---'
-foreach ($log in 'a.log', 'b.log') {
+foreach ($log in 'a.log', 'b.log', 'c.log') {
     $path = Join-Path $RigDir $log
     if (-not (Test-Path $path)) { continue }
     Say ("{0}:" -f $log)
@@ -443,7 +500,8 @@ if (Test-Path $debugLog) { $gameOutput = [System.IO.File]::ReadAllLines($debugLo
 Say ("debug output: {0} line(s) in {1}" -f $gameOutput.Count, $debugLog)
 foreach ($which in @(
         [pscustomobject] @{ Name = 'instance A'; Process = $a },
-        [pscustomobject] @{ Name = 'instance B'; Process = $b })) {
+        [pscustomobject] @{ Name = 'instance B'; Process = $b },
+        [pscustomobject] @{ Name = 'instance C'; Process = $c })) {
     if ($null -eq $which.Process) { continue }
     $mine = $gameOutput | Where-Object { $_ -match "^$($which.Process.Id) " } |
         ForEach-Object { $_ -replace "^$($which.Process.Id) ", '' }
