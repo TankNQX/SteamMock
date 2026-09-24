@@ -318,8 +318,12 @@ template <> struct Kind<BytesOut> {
     }
     // Called with the parameter the caller passed, which for one of these is the whole
     // thing: the game's pointer and the room it has, which is why this takes it by value.
+    // The value here is the hex from the reply's out-block, not the reply itself - reading
+    // it with reply_cstring asked a string for a member named "ret" and got nothing back,
+    // so every buffer read this way stayed exactly as the game left it: a game that read a
+    // packet read its own uninitialised bytes and said so.
     static void store(BytesOut target, const Json& value) noexcept {
-        bytes_into(target.data, target.size, reply_cstring(value));
+        bytes_into(target.data, target.size, as_string(value));
     }
     static BytesOut fallback() noexcept { return BytesOut{}; }
 };
