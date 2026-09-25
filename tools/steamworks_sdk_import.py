@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 # ---------------------------------------------------------------------------
-#  steamworks_sdk_import - read an installed Steamworks SDK and write the
-#  interface layouts, or say how they differ from the ones in the tree.
+#  steamworks_sdk_import - read installed Steamworks SDKs and write the
+#  interface layouts, or say what the ones in use are missing.
 # ---------------------------------------------------------------------------
-#  gen/steam_interfaces.json is hand-maintained data that was laid out by
-#  importing Steamworks SDK headers once. This is the same import, done again the
-#  same way, from an SDK that is already on the machine - so nobody has to hand
-#  over a Steam header, a Valve DLL or a copy of the file that came out of either.
-#  Nothing here writes into gen/: it reads an SDK and an existing layout file and
-#  reports, which is what makes it useful as a second opinion on the file rather
-#  than a replacement for it.
+#  gen/steam_interfaces.json is the interface layouts the stub hands out: Valve's
+#  own data, which is why it is not committed. It is built from SDKs the builder
+#  has, and an SDK declares exactly the generation that was current when Valve
+#  released it - 1.46 declares SteamUser020, 1.57 declares SteamUser023, and
+#  neither declares SteamUser019. A game built in between asks for the strings of
+#  its own generation and gets null where it expected an interface, so the file is
+#  the union of every SDK a builder can point at: the Spacewar this harness runs
+#  against wants twenty-one version strings, and the SDKs that were to hand when
+#  the file was last built declare thirteen of them.
+#
+#  Nothing here invents a generation: what an SDK does not declare is reported by
+#  --wanted against the game, so a short file says so rather than handing a game
+#  nothing and letting it fail somewhere else.
 #
 #    python tools/steamworks_sdk_import.py --sdk <sdk>/public/steam --list
-#    python tools/steamworks_sdk_import.py --sdk 1.51=<sdk> --out layout.json
-#    python tools/steamworks_sdk_import.py --sdk 1.51=<sdk> --diff gen/steam_interfaces.json
+#    python tools/steamworks_sdk_import.py --sdk 1.46=<sdk> --out layout.json
+#    python tools/steamworks_sdk_import.py --sdk 1.46=<sdk> --diff gen/steam_interfaces.json
+#    python tools/steamworks_sdk_import.py --sdk 1.39=<sdk> --wanted <game>/SteamworksExample.exe
 #
 #  The two halves, because they are worth keeping apart:
 #
@@ -31,8 +38,9 @@
 #  this tool and by nothing else in the repository: the C++ build still needs no
 #  Python at all.
 #
-#  `--selftest` runs the reader and the merge against headers written here rather
-#  than against an SDK, so the tool can be checked on a machine that has none.
+#  `--selftest` runs the reader, the merge, the wanted check and the writer against
+#  headers and a game written here rather than against an SDK, so the tool can be
+#  checked on a machine that has none.
 
 from __future__ import annotations
 
@@ -148,6 +156,17 @@ BYTE_BUFFERS: Dict[Tuple[str, str, str], Tuple[str, str]] = {
     ("ISteamMatchmaking", "GetLobbyChatEntry", "pvData"): ("out_bytes", "cubData"),
     ("ISteamNetworking", "SendP2PPacket", "pubData"): ("bytes", "cubData"),
     ("ISteamNetworking", "ReadP2PPacket", "pubDest"): ("out_bytes", "cubDest"),
+    # The auth tickets are the one buffer a call hands over to be filled and then
+    # reads back out of the caller's own memory: Spacewar's game server answers
+    # `BeginAuthSession` with the ticket it was given, and a ticket that was never
+    # written into that buffer is the `GetAuthSessionTicket didn't give us a good
+    # ticket` both games print. No other call follows that shape - `BeginAuthSession`
+    # takes its own ticket as a `const void *` and only reads it, so its `pAuthTicket`
+    # stays an opaque pointer - which is why the choice stays here in the table
+    # rather than becoming a rule in the reader.
+    ("ISteamGameServer", "GetAuthSessionTicket", "pTicket"): ("out_bytes", "cbMaxTicket"),
+    ("ISteamUser", "GetAuthSessionTicket", "pTicket"): ("out_bytes", "cbMaxTicket"),
+    ("ISteamUser", "GetEncryptedAppTicket", "pTicket"): ("out_bytes", "cbMaxTicket"),
 }
 
 # The pack the layouts were measured at: a callback struct is read by a game at
@@ -321,6 +340,10 @@ class Sdk:
     path: str
     typedefs: Dict[str, Ty] = field(default_factory=dict)
     enums: Dict[str, List[Tuple[str, int]]] = field(default_factory=dict)
+    # The plain integers a header declares at file scope - `const uint32
+    # k_unEnumeratePublishedFilesMaxResults = 50;` - which is what an array extent
+    # is written as when it is not a bare number.
+    constants: Dict[str, int] = field(default_factory=dict)
     aggregates: Dict[str, Aggregate] = field(default_factory=dict)
     # The classes each header declared, in the order the headers were read: an
     # Aggregate says what a structure is made of, while a vtable also needs the
@@ -331,8 +354,44 @@ class Sdk:
     flat: Dict[str, List[FlatFunction]] = field(default_factory=dict)
     unread: List[str] = field(default_factory=list)
 
+    # A payload declares its id as `k_iCallback = k_iSteamXxxCallbacks + n`, and the
+    # base is declared in another header - `steam_api_internal.h` in the 1.46 era,
+    # `isteamclient.h` in the 1.39 one. Which header that is decides whether the sum
+    # can be read at the moment the payload is: the bases are recorded here and the
+    # ids are resolved once every header has been read, so the order headers are read
+    # in cannot decide whether a payload is read at all.
+    pending: List[Tuple[str, str, object, Aggregate]] = field(default_factory=list)
+
     def find_aggregate(self, name: str) -> Optional[Aggregate]:
         return self.aggregates.get(name)
+
+    def extent(self, text: Optional[str]) -> Optional[int]:
+        """An array extent as a number, against the tables this SDK declares.
+
+        An extent is written the way its header spells it - `16`, or the name of a
+        constant - and the file has to carry a number: the declaration rendered
+        from it is read by a compiler that has never seen these headers, so a name
+        that survives into the file is an undeclared identifier there.
+        """
+        if not text:
+            return None
+        written = text.strip()
+        try:
+            return int(written, 0)
+        except ValueError:
+            pass
+        match = re.match(r"^\s*(k_[A-Za-z_0-9]+)\s*(?:([+-])\s*(\d+))?\s*$", written)
+        if match is None:
+            return None
+        base_name, sign, offset = match.groups()
+        base = self.constants.get(base_name)
+        if base is None:
+            base = _enum_member(self, base_name)
+        if base is None:
+            return None
+        if sign is None:
+            return base
+        return base + int(offset) if sign == "+" else base - int(offset)
 
     # -- typedefs ----------------------------------------------------------
 
@@ -351,10 +410,18 @@ class Sdk:
                 return Ty("unknown")
             seen.add(current.name)
             expanded = self.typedefs[current.name]
-            current = replace(expanded, const=True) if current.const else expanded
+            if current.const:
+                expanded = replace(expanded, const=True)
+            if current.count is not None:
+                # The extent belongs to the declaration, not to the typedef that
+                # spelled its element: `uint8 m_FileSHA[20]` is twenty bytes even
+                # though `uint8` is a name by the time the member is read, and a
+                # size that counted it as one byte is a size the assert catches.
+                expanded = replace(expanded, count=current.count)
+            current = expanded
         if current.form == "pointer":
             inner = self.canonical(current.pointee)
-            return Ty("pointer", const=current.const, pointee=inner)
+            return Ty("pointer", const=current.const, pointee=inner, count=current.count)
         return current
 
 
@@ -452,11 +519,26 @@ def _preprocessor(steam_dir: str):
         defines=["VALVE_CALLBACK_PACK_LARGE"],
     )
 
+    # The annotations Valve's own binding generator reads, in the form an SDK of the
+    # 1.39 era writes them: `CALL_RESULT( FileDetailsResult_t )` and its dozen
+    # relatives are spelled in headers that do not include the half of the chain
+    # defining them, and read on its own the annotation survives into the
+    # declaration - `isteamapps.h` stops the parser at the `virtual` after it, which
+    # costs the whole interface. They are annotations (`API_GEN` turns them into a
+    # clang attribute and every other build gets nothing) and say nothing about a
+    # slot: the call goes, and the declaration reads as it does everywhere else.
+    ANNOTATIONS = re.compile(
+        r"\b(?:CALL_RESULT|CALL_BACK|METHOD_DESC|IGNOREATTR|OUT_STRUCT|OUT_STRING"
+        r"|OUT_ARRAY_CALL|OUT_ARRAY_COUNT|ARRAY_COUNT_D|ARRAY_COUNT|OUT_BUFFER_COUNT"
+        r"|BUFFER_COUNT|OUT_STRING_COUNT|DESC)\s*\([^()]*\)"
+    )
+
     def preprocess(filename: str, content: Optional[str]) -> str:
         text = inner(filename, content)
         text = text.replace("\ufeff", "").replace("\u00ef\u00bb\u00bf", "")
         text = re.sub(r"\bS_API\b", "", text)
         text = re.sub(r"\bS_CALLTYPE\b", "", text)
+        text = ANNOTATIONS.sub("", text)
         return re.sub(r'\bextern\s*"C"\s+typedef\b', "typedef", text)
 
     return preprocess
@@ -479,6 +561,7 @@ def parse_sdk(label: str, steam_dir: str) -> Sdk:
         _absorb(sdk, name, path, parsed)
 
     _read_flat_header(sdk, options, steam_dir)
+    _resolve_callbacks(sdk)
     return sdk
 
 
@@ -487,17 +570,15 @@ def _one_line(text: str) -> str:
 
 
 def _read_order(names: Sequence[str]) -> List[str]:
-    """The headers to read, with the ones a payload's id is written against first.
+    """The headers to read, name by name, so that one SDK is read the same way twice.
 
-    `steam_api_internal.h` declares the `k_iSteamXxxCallbacks` bases, and a payload
-    in an `isteam*.h` writes its own id as one of those plus an offset - so the
-    header holding the sum has to be read after the numbers it adds up. Sorting the
-    rest by name keeps the reading repeatable.
+    The order used to matter: a payload writes its id as `k_iSteamXxxCallbacks + n`
+    and the base lives in another header, which is `steam_api_internal.h` in the 1.46
+    era and `isteamclient.h` in the 1.39 one. It no longer does - the ids are
+    resolved once every header has been read - so this is only the reading's own
+    order, which keeps two runs over one SDK comparable.
     """
-    return sorted(names, key=lambda name: (name not in _BASES_FIRST, name))
-
-
-_BASES_FIRST = ("steam_api_internal.h", "steam_api_common.h")
+    return sorted(names)
 
 
 def _enum_key(name: str, where: str) -> str:
@@ -544,6 +625,11 @@ def _absorb(sdk: Sdk, header: str, path: str, parsed) -> None:
         name = _typename_text(typedef.name)
         sdk.typedefs[name] = normalise(typedef.type)
 
+    for variable in namespace.variables:
+        number = _enum_number(variable.value)
+        if number is not None:
+            sdk.constants[_typename_text(variable.name)] = number
+
     for enum in namespace.enums:
         _record_enum(sdk, enum, header)
     for scope in namespace.classes:
@@ -568,18 +654,24 @@ def _absorb(sdk: Sdk, header: str, path: str, parsed) -> None:
             continue
         sdk.interfaces.append(Interface(name=owner, version=version))
 
-    # A struct that names its own callback id is a payload the backend can send.
+    # A struct that names its own callback id is a payload the backend can send. The
+    # id is not resolved here: the base it adds to may be in a header not read yet.
     for name, scope in classes.items():
         for enum in getattr(scope, "enums", []):
             for value in enum.values:
                 if value.name != "k_iCallback":
                     continue
-                identifier = _callback_number(value.value, sdk)
-                if identifier is None:
-                    sdk.unread.append("%s: %s has an unreadable k_iCallback" % (header, name))
-                    continue
-                aggregate = sdk.aggregates[name]
-                sdk.callbacks[name] = Callback(name=name, callback_id=identifier, aggregate=aggregate)
+                sdk.pending.append((header, name, value.value, sdk.aggregates[name]))
+
+
+def _resolve_callbacks(sdk: Sdk) -> None:
+    """Every payload's id, now that every header's numbers have been read."""
+    for header, name, value, aggregate in sdk.pending:
+        identifier = _callback_number(value, sdk)
+        if identifier is None:
+            sdk.unread.append("%s: %s has an unreadable k_iCallback" % (header, name))
+            continue
+        sdk.callbacks[name] = Callback(name=name, callback_id=identifier, aggregate=aggregate)
 
 
 def _enum_number(node) -> Optional[int]:
@@ -843,7 +935,7 @@ class SizeOf:
             inner = self.member(element)
             if inner is None:
                 return None
-            count = _array_count(ty.count)
+            count = self.mapper.sdk.extent(ty.count)
             if count is None:
                 return None
             return inner[0] * count, inner[1]
@@ -857,7 +949,15 @@ class SizeOf:
         return size, align
 
     def of(self, aggregate: Aggregate) -> Optional[Tuple[int, int]]:
-        """The (size, alignment) of one aggregate, in whole bytes."""
+        """The (size, alignment) of one aggregate, in whole bytes.
+
+        Measured over the members the file *writes*, not over the declaration the
+        SDK has: the two are not always the same shape, and the number the file
+        records is asserted against the declaration the generator renders from
+        those members. `SteamNetworkingIPAddr` is 24 bytes to a compiler - the
+        anonymous union of its first sixteen bytes is aligned at eight - and 18 as
+        the file spells it, which is the arm it kept.
+        """
         key = id(aggregate)
         if key in self.cache:
             return self.cache[key]
@@ -879,7 +979,7 @@ class SizeOf:
                 return max(item[0] for item in measured), max(item[1] for item in measured)
             return 1, 1
         members: List[Tuple[int, int]] = []
-        for ty, _name in aggregate.members:
+        for ty, _name in _flatten_members(self.mapper.sdk, self.mapper, aggregate):
             item = self._member_of(aggregate, ty)
             if item is None:
                 return None
@@ -922,13 +1022,6 @@ def _pad(offset: int, alignment: int) -> int:
     return offset if remainder == 0 else offset + (alignment - remainder)
 
 
-def _array_count(text: str) -> Optional[int]:
-    try:
-        return int(text, 0)
-    except ValueError:
-        return None
-
-
 # ---------------------------------------------------------------------------
 #  Building a layout out of one SDK
 # ---------------------------------------------------------------------------
@@ -968,11 +1061,26 @@ class Builder:
         for interface in self.sdk.interfaces:
             self.versions.append(self._version(interface))
         layout.versions = self.versions
+        # A payload is declared from its own entry below, and a name that is one is
+        # not declared anywhere else. The lists can overlap: a payload looks like a
+        # value class when its one member is the `uint64` a value class is
+        # (`SteamInputDeviceConnected_t` is exactly that), and like a structure when
+        # a call names it as well (`SteamNetAuthenticationStatus_t` is). Both ways
+        # the generator renders one C++ declaration per name, so writing two is a
+        # redefinition - and the payload's entry is the one with the members in it.
+        payloads = set()
+        for name in self.events_wanted:
+            if name in self.sdk.callbacks:
+                payloads.add(name)
         for name, member in sorted(self.mapper.value_types.items()):
+            if name in payloads:
+                continue
             layout.value_types.append(
                 {"name": name, "wire": "uint64", "size": 8, "member": member}
             )
         for name in sorted(self.mapper.structures):
+            if name in payloads:
+                continue
             entry = self._structure(self.mapper.structures[name])
             if entry is None:
                 layout.unmeasured.append(name)
@@ -1145,7 +1253,13 @@ class Builder:
             declared = kind if kind in MEMBER_KINDS else kind
             written = name
             if ty.count is not None:
-                written = "%s[%s]" % (name, ty.count)
+                extent = self.sdk.extent(ty.count)
+                if extent is None:
+                    # The size of this member is not knowable from here, and a name
+                    # the generated file cannot look up is not a declaration: the
+                    # structure is reported instead of written wrong.
+                    return None
+                written = "%s[%d]" % (name, extent)
             members.append([declared, written])
         measured = self.sizes.of(aggregate)
         if measured is None:
@@ -1262,7 +1376,7 @@ def _newest_by_name(groups: Sequence[List[dict]]) -> List[dict]:
 def render(layout: Layout) -> str:
     """The file, one row to a line, the way the one in the tree is written."""
     lines = ["{"]
-    lines.append('  "source": "Steamworks SDK headers, read by tools/steamworks_sdk_import.py",')
+    lines.append("  \"source\": \"Steamworks SDK headers, read by tools/steamworks_sdk_import.py\",")
     lines.append(
         '  "format": "the same shape gen/steam_interfaces.json uses: one row per slot, in vtable order",'
     )
@@ -1319,11 +1433,20 @@ class Comparison:
 
     @property
     def differences(self) -> int:
-        return sum(count for count in self.counts.values())
+        """How many things are not the same, which is what the exit code is.
+
+        The `identical-` kinds are counted too, because how much two files agree
+        about belongs next to how much they do not - but they are not
+        differences, and a check that reads this number has to come out zero for
+        two files that say the same thing.
+        """
+        return sum(
+            count for kind, count in self.counts.items() if not kind.startswith("identical-")
+        )
 
 
-def load_layout(path: str) -> Layout:
-    document = json.loads(read_text(path))
+def layout_from_document(document) -> Layout:
+    """A layout out of the JSON one is written as."""
     layout = Layout()
     layout.value_types = [dict(entry) for entry in document.get("value_types", [])]
     layout.structures = [dict(entry) for entry in document.get("structures", [])]
@@ -1338,6 +1461,10 @@ def load_layout(path: str) -> Layout:
             )
         )
     return layout
+
+
+def load_layout(path: str) -> Layout:
+    return layout_from_document(json.loads(read_text(path)))
 
 
 def compare(ours: Layout, theirs: Layout) -> Comparison:
@@ -1428,6 +1555,63 @@ def _compare_named(result: Comparison, what: str, ours: Sequence[dict], theirs: 
 
 
 # ---------------------------------------------------------------------------
+#  What a game asks for
+# ---------------------------------------------------------------------------
+#  A game does not import an interface: it asks for a version string and calls
+#  what it gets back, so a string this file does not carry is a game handed null
+#  where it expected an object. An SDK declares one generation per interface, and
+#  a game older than every SDK here asks for a generation none of them has - the
+#  Spacewar this harness runs against asks for twenty-one strings, and the SDKs
+#  that were to hand when the file was last built declare thirteen of them. That
+#  is worth knowing before a run rather than after one.
+#
+#  The strings come out of a binary without reading its code: the shapes Valve
+#  spells them in, whole, and - for the families the layouts already carry - the
+#  family's own spelling followed by digits. The second rule is what catches a
+#  game built against the generation *before* the one here, which is the case that
+#  matters; a family nothing here declares is not looked for, because a pattern
+#  loose enough to find it would find text that is not a version string.
+
+VERSION_SHAPE = re.compile(rb"STEAM[A-Z0-9_]*_INTERFACE_V[A-Z0-9_]*")
+
+
+def wanted_strings(path: str, families: Sequence[str]) -> List[str]:
+    """The version strings one binary asks for, as far as they can be recognised."""
+    with open(path, "rb") as handle:
+        data = handle.read()
+    found = {match.group(0).decode("ascii") for match in VERSION_SHAPE.finditer(data)}
+    for family in families:
+        head = family.rstrip("0123456789")
+        if not head:
+            continue
+        pattern = re.compile(re.escape(head).encode("ascii") + rb"[0-9]+")
+        found.update(match.group(0).decode("ascii") for match in pattern.finditer(data))
+    return sorted(found)
+
+
+def report_wanted(paths: Sequence[str], carried: Sequence[str], what: str) -> None:
+    """Say what a game asks for, and what it will not get."""
+    have = set(carried)
+    for path in paths:
+        try:
+            asked = wanted_strings(path, sorted(have))
+        except OSError as error:
+            sys.stderr.write(
+                "steamworks_sdk_import: %s could not be read (%s)\n"
+                % (path, _one_line(str(error)))
+            )
+            continue
+        if not asked:
+            print("%s: no version string this reader recognises" % path)
+            continue
+        missing = [version for version in asked if version not in have]
+        print("%s asks for %d version string(s); %d are in %s"
+              % (path, len(asked), len(asked) - len(missing), what))
+        if missing:
+            print("   not carried: %s" % ", ".join(missing))
+
+
+# ---------------------------------------------------------------------------
 #  Finding an SDK
 # ---------------------------------------------------------------------------
 
@@ -1488,6 +1672,14 @@ def parse_arguments(argv: Sequence[str]) -> argparse.Namespace:
     parser.add_argument("--diff", metavar="FILE", help="compare against a layout file")
     parser.add_argument("--list", action="store_true", help="print what was read, then stop")
     parser.add_argument(
+        "--wanted",
+        action="append",
+        default=[],
+        metavar="FILE",
+        help="a game or a library to read version strings out of, and report the ones the "
+        "layouts in play do not carry (repeatable)",
+    )
+    parser.add_argument(
         "--all-events",
         action="store_true",
         help="every payload the SDK declares, not only the ones the compared file names",
@@ -1495,6 +1687,28 @@ def parse_arguments(argv: Sequence[str]) -> argparse.Namespace:
     parser.add_argument("--selftest", action="store_true", help="check the reader without an SDK")
     parser.add_argument("--quiet", action="store_true", help="only the summary and the differences")
     return parser.parse_args(argv)
+
+
+def emit(layout: Layout, arguments: argparse.Namespace) -> int:
+    """Write the file if one was asked for, and compare it if one was named."""
+    if arguments.out:
+        with open(arguments.out, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(render(layout))
+        print("wrote %s" % arguments.out)
+
+    if arguments.diff:
+        theirs = load_layout(arguments.diff)
+        comparison = compare(layout, theirs)
+        for line in sorted(comparison.lines):
+            print(line)
+        print()
+        print("compared against %s" % arguments.diff)
+        for kind, count in sorted(comparison.counts.items()):
+            print("  %-24s %d" % (kind, count))
+        print("  %-24s %d" % ("differences", comparison.differences))
+        return 0 if comparison.differences == 0 else 1
+
+    return 0
 
 
 def main(argv: Sequence[str]) -> int:
@@ -1551,30 +1765,24 @@ def main(argv: Sequence[str]) -> int:
         for line in merged.unmeasured:
             print("  unmeasured: %s" % line)
 
+    if arguments.wanted:
+        # The file in play is the one being compared with if there is one - that is
+        # the file the games would run against - and otherwise the one this run
+        # would write.
+        against = load_layout(arguments.diff) if arguments.diff else merged
+        report_wanted(
+            arguments.wanted,
+            [version.version for version in against.versions],
+            arguments.diff if arguments.diff else "these SDKs' layouts",
+        )
+        print()
+
     if arguments.list:
         for version in sorted(merged.versions, key=lambda item: (item.name, _version_key(item.version))):
             print("%-40s %-34s %3d slots" % (version.name, version.version, len(version.slots)))
         return 0
 
-    if arguments.out:
-        with open(arguments.out, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(render(merged))
-        print("wrote %s" % arguments.out)
-
-    if arguments.diff:
-        theirs = load_layout(arguments.diff)
-        comparison = compare(merged, theirs)
-        for line in sorted(comparison.lines):
-            print(line)
-        print()
-        print("compared against %s" % arguments.diff)
-        for kind, count in sorted(comparison.counts.items()):
-            print("  %-24s %d" % (kind, count))
-        print("  %-24s %d" % ("differences", comparison.differences))
-        return 0 if comparison.differences == 0 else 1
-
-    return 0
-
+    return emit(merged, arguments)
 
 # ---------------------------------------------------------------------------
 #  Checking the reader without an SDK
@@ -1619,6 +1827,26 @@ struct SteamIPAddress_t
 #include "steam_api_common.h"
 #include "steamtypes.h"
 enum ESteamTestResult { k_ESteamTestResultOK = 1 };
+// An array extent written as a name: the file has to carry the number, because
+// the declaration rendered from it is compiled by something that has never read
+// this header.
+const uint32 k_unSteamTestMaxResults = 4;
+struct SteamTestTable_t
+{
+    uint32 m_nCount;
+    uint64 m_rgIds[ k_unSteamTestMaxResults ];
+};
+// A structure whose first member is an anonymous union: the arm the file keeps is
+// the one that was written first, so the shape it sizes is not the shape the SDK
+// has - the union's own alignment is not the arm's.
+struct SteamTestInside_t
+{
+    union {
+        unsigned char m_bytes[16];
+        uint64 m_words[2];
+    };
+    unsigned short m_port;
+};
 struct SteamTestDone_t
 {
     enum { k_iCallback = k_iSteamTestCallbacks + 7 };
@@ -1633,6 +1861,13 @@ public:
     virtual bool GetStat( const char *pchName, int32 *pData ) = 0;
     virtual bool GetStat( const char *pchName, float *pData ) = 0;
     virtual SteamIPAddress_t GetAddress() = 0;
+    // An SDK of the 1.39 era annotates a method in headers that do not include the
+    // half of the chain defining the annotation, and a reader that leaves it in the
+    // declaration stops at the `virtual` after it - which is what 1.39's
+    // `isteamapps.h` does in the wild.
+    CALL_RESULT( SteamTestDone_t )
+    virtual bool GetTable( SteamTestTable_t *pTable ) = 0;
+    virtual SteamTestInside_t GetInside() = 0;
     virtual void FillBuffer( char *pchBuffer, int cubBuffer ) = 0;
     STEAM_PRIVATE_API( virtual void RunFrame() = 0; )
 };
@@ -1648,6 +1883,8 @@ S_API uint64 SteamAPI_ISteamTest_GetTestID( ISteamTest* self );
 S_API bool SteamAPI_ISteamTest_GetStatInt32( ISteamTest* self, const char * pchName, int32 * pData );
 S_API bool SteamAPI_ISteamTest_GetStatFloat( ISteamTest* self, const char * pchName, float * pData );
 S_API SteamIPAddress_t SteamAPI_ISteamTest_GetAddress( ISteamTest* self );
+S_API bool SteamAPI_ISteamTest_GetTable( ISteamTest* self, SteamTestTable_t * pTable );
+S_API SteamTestInside_t SteamAPI_ISteamTest_GetInside( ISteamTest* self );
 S_API void SteamAPI_ISteamTest_FillBuffer( ISteamTest* self, char * pchBuffer, int cubBuffer );
 S_API void SteamAPI_ISteamTest_DestructISteamTest( ISteamTest* self );
 #endif
@@ -1687,6 +1924,8 @@ def selftest() -> int:
                 ["GetStat", "bool", [["pchName", "cstring"], ["pData", "int32", "out"]], {"call": "SteamAPI_ISteamTest_GetStatInt32"}],
                 ["GetStat", "bool", [["pchName", "cstring"], ["pData", "float", "out"]], {"call": "SteamAPI_ISteamTest_GetStatFloat"}],
                 ["GetAddress", "SteamIPAddress_t", [], {"unmarshalable": True}],
+                ["GetTable", "bool", [["pTable", "opaque_ptr"]]],
+                ["GetInside", "SteamTestInside_t", [], {"unmarshalable": True}],
                 ["FillBuffer", "void", [["pchBuffer", "opaque_ptr", "unmarshalable"], ["cubBuffer", "int32"]]],
                 ["RunFrame", "void", [], {"call": "ISteamTest::RunFrame", "private": True}],
             ]
@@ -1705,6 +1944,25 @@ def selftest() -> int:
             "size": 20,
         }:
             failures.append("SteamIPAddress_t read as %s" % json.dumps(structures["SteamIPAddress_t"]))
+
+        # An extent the header spells as a name is a number in the file, and one
+        # whose element is a typedef is as many bytes as the array really is.
+        if structures.get("SteamTestTable_t") != {
+            "name": "SteamTestTable_t",
+            "members": [["uint32", "m_nCount"], ["uint64", "m_rgIds[4]"]],
+            "size": 40,
+        }:
+            failures.append("SteamTestTable_t read as %s" % json.dumps(structures.get("SteamTestTable_t")))
+
+        # And the size is the one the written shape has, not the one the SDK's
+        # declaration has: the arm kept for the union is aligned at one, so this
+        # is 18 bytes here and 24 to a compiler that saw the `uint64` arm.
+        if structures.get("SteamTestInside_t") != {
+            "name": "SteamTestInside_t",
+            "members": [["uint8", "m_bytes[16]"], ["uint16", "m_port"]],
+            "size": 18,
+        }:
+            failures.append("SteamTestInside_t read as %s" % json.dumps(structures.get("SteamTestInside_t")))
 
         events = {entry["name"]: entry for entry in layout.events}
         if "SteamTestDone_t" not in events:
@@ -1759,12 +2017,28 @@ def selftest() -> int:
             if key not in document:
                 failures.append("the rendered file has no '%s'" % key)
 
+        # What a game asks for is read out of the binary, and the version strings
+        # this file does not carry are the ones to worry about: the family rules
+        # are what catch a game built against the generation before the one here.
+        game_path = os.path.join(root, "game.bin")
+        with open(game_path, "wb") as handle:
+            handle.write(
+                b"\x00\x01SteamTest001\x00"          # carried
+                b"\x00SteamTest002\x00"              # the same family, one on
+                b"\x00SteamOther004\x00"             # a family this file has none of
+                b"\x00STEAMTEST_INTERFACE_VERSION001\x00"
+            )
+        asked = wanted_strings(game_path, ["SteamTest001"])
+        if asked != ["STEAMTEST_INTERFACE_VERSION001", "SteamTest001", "SteamTest002"]:
+            failures.append("the wanted strings came out as %s" % json.dumps(asked))
+
     if failures:
         for failure in failures:
             sys.stderr.write("selftest: %s\n" % failure)
         sys.stderr.write("selftest: %d checks failed\n" % len(failures))
         return 1
-    print("selftest: the reader, the merge, the comparison and the writer all check out")
+    print("selftest: the reader, the merge, the comparison, the wanted check and the writer "
+          "all check out")
     return 0
 
 

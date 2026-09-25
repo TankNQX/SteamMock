@@ -6,8 +6,8 @@
 # Generated, and never committed
 #
 # src/generated/ is written by steammock_codegen at build time, and
-# gen/steam_interfaces.json is written by tools/steamworks_sdk_import.py from an
-# SDK the builder has. Both carry Valve's own API surface - the second one is
+# gen/steam_interfaces.json is written by tools/steamworks_sdk_import.py from the
+# SDKs the builder has. Both carry Valve's own API surface - the second one is
 # Valve's interface layouts and the first is rendered from them - so neither
 # belongs in the tree. gen/steam_api.idl.json, the hand-written seed, is the input
 # and stays.
