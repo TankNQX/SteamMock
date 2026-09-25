@@ -978,12 +978,12 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("void fill_" + event.name +
                           "(const Json& fields, void* buffer) noexcept {");
             out.push_back("    " + event.name + " value{};");
-            if (event.members.empty()) {
-                // A payload with nothing in it is a real shape - a notification the SDK
-                // sends to say something happened - so the reader takes the empty wire
-                // object and says so rather than leaving a parameter unused.
-                out.push_back("    (void)fields;  // this payload carries nothing to read");
-            }
+            // A payload with nothing in it is a real shape - a notification the SDK
+            // sends to say something happened - and so is one whose members are all
+            // arrays, which no single field of the wire carries: either way nothing
+            // is read out of the object, and a parameter nobody reads is a warning
+            // the clang job turns into an error.
+            bool reads = false;
             for (const auto& declared_member : event.members) {
                 const std::string& cpp = declared_member.first;
                 const std::string& member = declared_member.second;
@@ -1003,6 +1003,10 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                 out.push_back("        value." + member + " = static_cast<" + cpp +
                               ">(steammock::" + read + "(*field));");
                 out.push_back("    }");
+                reads = true;
+            }
+            if (!reads) {
+                out.push_back("    (void)fields;  // this payload carries nothing to read");
             }
             out.push_back("    std::memcpy(buffer, &value, sizeof(value));");
             out.push_back("}");
