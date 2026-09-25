@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -63,7 +64,9 @@ public:
     // Picks the profile a connecting process should get. The profile is returned
     // by value, and every Session keeps its own copy: two games matched to the
     // same profile must not share stats.
-    Profile profile_for(const Json& hello) const;
+    // The profile a session runs as, or nothing when the handshake asked for a name
+    // the scenario does not have - a refusal rather than a substitution.
+    std::optional<Profile> profile_for(const Json& hello) const;
 
     Answer answer(Session& session, const std::string& name, const Json& args) const;
 

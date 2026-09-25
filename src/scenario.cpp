@@ -162,7 +162,7 @@ bool Dispatcher::has_profile(const std::string& name) const {
     return find_profile(name) != nullptr;
 }
 
-Profile Dispatcher::profile_for(const Json& hello) const {
+std::optional<Profile> Dispatcher::profile_for(const Json& hello) const {
     std::string exe;
     std::int64_t pid = 0;
     std::string requested;
@@ -183,10 +183,18 @@ Profile Dispatcher::profile_for(const Json& hello) const {
     // copies of the same exe are indistinguishable by name, and a pid cannot be
     // written into a scenario in advance - so this is how one file describes two
     // instances of the same game running side by side.
+    //
+    // A name the scenario does not have is a mistake and not a request for the
+    // default: three clients asking for three names and receiving two identities have
+    // been running as the same player, which from outside looks like a lobby holding
+    // two members, auth responses delivered to a session nobody waits in, and a guest
+    // whose ticket never arrives. This used to fall through to the default profile and
+    // say nothing, and that silence is what made the whole thing take a day to find.
     if (!requested.empty()) {
         if (const Profile* profile = find_profile(requested)) {
             return *profile;
         }
+        return std::nullopt;
     }
 
     for (const MatchRule& rule : _match) {

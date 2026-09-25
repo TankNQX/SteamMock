@@ -341,15 +341,29 @@ void test_scenarios() {
     Json special = Json::object();
     special["exe"] = Json("my_special_game.exe");
     check("a match rule can pick a profile by executable",
-          dispatcher.profile_for(special).app_id == 2);
+          dispatcher.profile_for(special).value().app_id == 2);
 
     Json plain = Json::object();
     plain["exe"] = Json("game.exe");
-    check("the first matching rule wins", dispatcher.profile_for(plain).app_id == 1);
+    check("the first matching rule wins", dispatcher.profile_for(plain).value().app_id == 1);
+
+    // A name asked for by name is not a hint. Substituting the default is how three
+    // clients came to run as two players while every run still looked plausible, so a
+    // scenario without the name is refused and the caller says so.
+    Json by_name = Json::object();
+    by_name["profile"] = Json("other");
+    check("a profile asked for by name is served before any match rule",
+          dispatcher.profile_for(by_name).value().app_id == 2);
+
+    Json missing = Json::object();
+    missing["profile"] = Json("no_such_profile");
+    check("a profile asked for by name and not there is refused, not replaced",
+          !dispatcher.profile_for(missing).has_value());
 
     Json unknown = Json::object();
     unknown["exe"] = Json("unknown.exe");
-    check("an unmatched game gets the default", dispatcher.profile_for(unknown).app_id == 1);
+    check("an unmatched game gets the default",
+          dispatcher.profile_for(unknown).value().app_id == 1);
 
     Json typo_document;
     check("the typo scenario parses",
@@ -360,7 +374,7 @@ void test_scenarios() {
     Json game = Json::object();
     game["exe"] = Json("game.exe");
     check("a rule naming an unknown profile falls back to the default",
-          typo.profile_for(game).app_id == 1);
+          typo.profile_for(game).value().app_id == 1);
 
     const Dispatcher empty{Json::object()};
     check("an empty scenario still has a default profile", empty.has_profile("default"));
@@ -376,7 +390,7 @@ void test_scenarios() {
     }
     Json fake_game = Json::object();
     fake_game["exe"] = Json("fake_game.exe");
-    const Profile profile = loaded.profile_for(fake_game);
+    const Profile profile = loaded.profile_for(fake_game).value();
     check("the example gives fake_game the default profile", profile.app_id == 480);
     check("the example scripts SteamAPI_Init",
           profile.scripted_for("SteamAPI_Init") != nullptr &&
@@ -402,7 +416,7 @@ void test_profiles_are_per_session() {
     const Dispatcher dispatcher;
     Json game = Json::object();
     game["exe"] = Json("game.exe");
-    const Profile matched = dispatcher.profile_for(game);
+    const Profile matched = dispatcher.profile_for(game).value();
 
     Session one("one", Json::object(), matched);
     Session two("two", Json::object(), matched);
