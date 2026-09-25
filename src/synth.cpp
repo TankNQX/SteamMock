@@ -15,6 +15,12 @@
 
 #include "bridge/synth.hpp"
 
+// For the structured-exception guard around a callback call: an access violation is
+// not a C++ exception, so this is the platform's own mechanism or nothing.
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+
 #include <map>
 #include <mutex>
 
@@ -179,6 +185,47 @@ void call_object(void* object, const EventInfo& event, const Json* fields, std::
     log_write(LogLevel::debug, "the game returned from a " + std::string(event.name) + " callback");
 }
 
+// A structured exception is not a C++ one, so the `catch (...)` in `deliver_one` never
+// sees an access violation: a fault while a game's callback runs - or in the two lines
+// above that read the callback object's own vtable - leaves the stub and arrives as the
+// game's crash. That is exactly what the host's own exception translator reported, and
+// there is no debugger here, so this runs the call under SEH to say what happened: the
+// code and the faulting address go to the log, and the filter returns CONTINUE_SEARCH,
+// so the fault still ends up where it was already going. Swallowing it would hide the
+// one fact worth having.
+void report_callback_fault(unsigned long code, const void* address) noexcept {
+    try {
+        const char* const digits = "0123456789abcdef";
+        std::string text = "a callback faulted: 0x";
+        for (int shift = 28; shift >= 0; shift -= 4) {
+            text.push_back(digits[(code >> shift) & 0xFu]);
+        }
+        text += " at 0x";
+        const std::uintptr_t where = reinterpret_cast<std::uintptr_t>(address);
+        for (int shift = static_cast<int>(sizeof(where) * 8u) - 4; shift >= 0; shift -= 4) {
+            text.push_back(digits[(where >> static_cast<unsigned>(shift)) & 0xFu]);
+        }
+        log_write(LogLevel::error, text);
+    } catch (...) {
+        // A logger that cannot say this must not turn a report into a second fault.
+    }
+}
+
+void call_object_guarded(void* object, const EventInfo& event, const Json* fields,
+                         std::uint64_t call, bool call_result) noexcept {
+    // No local with a destructor in here on purpose: MSVC refuses `__try` in a
+    // function that needs object unwinding, which is why this is a function of its
+    // own rather than a guard wrapped around the body of `call_object`.
+    __try {
+        call_object(object, event, fields, call, call_result);
+    } __except (report_callback_fault(static_cast<unsigned long>(GetExceptionCode()),
+                                      GetExceptionInformation()->ExceptionRecord->ExceptionAddress),
+                EXCEPTION_CONTINUE_SEARCH) {
+        // Not reached: the filter always continues the search, and `__except` wants
+        // a handler regardless.
+    }
+}
+
 // One event, as the backend spells it: the payload's name, and either the call it
 // completes, the callback id it belongs to, or neither - in which case it is
 // something that happened to a game rather than an answer to something it asked.
@@ -250,7 +297,7 @@ void deliver_one(const Json& event) noexcept {
                                        : " (callback " + std::to_string(info->callback) + ")"));
             return;
         }
-        call_object(object, *info, fields, call, call_result);
+        call_object_guarded(object, *info, fields, call, call_result);
     } catch (...) {
         // A literal, so building the message cannot allocate on the way in, and
         // `log_write` catches its own failures: nothing here can throw again.
