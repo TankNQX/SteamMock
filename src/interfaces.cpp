@@ -734,6 +734,11 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("};");
         out.push_back("static_assert(sizeof(" + event.name + ") == " + number(event.size) + ", \"" +
                       event.name + " has to be the size the SDK's callback pack gives it\");");
+        // The delivery buffer is bounded rather than sized from the file, so a file
+        // that declares a payload bigger than it is a build error here instead of a
+        // write past the end of a stack buffer inside a game's callback.
+        out.push_back("static_assert(sizeof(" + event.name + ") <= steammock::kMaxEventBytes, \"" +
+                      event.name + " has to fit the buffer a payload is delivered in\");");
     }
 
     out.push_back("#pragma pack(pop)");

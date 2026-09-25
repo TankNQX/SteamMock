@@ -137,9 +137,10 @@ static_assert(sizeof(RunFunction) == sizeof(void*), "a vtable slot is one pointe
 
 void call_object(void* object, const EventInfo& event, const Json* fields, std::uint64_t call,
                  bool call_result) noexcept {
-    // Zeroed, and larger than any payload this declares: a layout that is wrong
-    // then reads zeros rather than past what the stub wrote.
-    alignas(std::uint64_t) unsigned char payload[64] = {};
+    // Zeroed, and as large as `kMaxEventBytes`: the generated asserts beside each
+    // payload in the layouts are what keep that bound honest, so a file that grows
+    // past it fails the build rather than writing past the end of this.
+    alignas(std::uint64_t) unsigned char payload[steammock::kMaxEventBytes] = {};
     if (fields != nullptr) {
         event.fill(*fields, payload);
     }

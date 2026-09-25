@@ -455,6 +455,15 @@ struct EventInfo {
     void (*fill)(const Json& fields, void* buffer) noexcept;
 };
 
+// How much room a payload is delivered in: one buffer, on the stack of whichever
+// thread the game registered its callback on, so it is bounded rather than sized
+// from the file. The generated `api_interfaces.cpp` asserts every payload in the
+// layouts against this, so a file that declares a bigger one is a build error and
+// not a write past the end - which is what the size only in this number's comment
+// used to be worth. `SteamRemotePlayTogetherGuestInvite_t` is the largest the 1.41
+// to 1.57 layouts declare, at 1024 bytes.
+inline constexpr std::size_t kMaxEventBytes = 4096;
+
 // The payload of that name, or null when the layouts do not declare one - which
 // is what a scenario naming an event the data does not have has to be told.
 const EventInfo* find_event(const char* name) noexcept;
