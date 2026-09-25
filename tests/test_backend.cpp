@@ -117,6 +117,17 @@ void test_replies() {
     check("ping: the frame cap is still the one the stub mirrors",
           steammock::kMaxFrameBytes == 4u * 1024u * 1024u);
 
+    // A reply is the one place a value arrives from a program this does not
+    // control, so the readers that turn one into a number have to survive what it
+    // sends: a double larger than the target can hold, a NaN, or a negative where
+    // the wire says unsigned. Each of those used to be a cast with no defined
+    // result, which is the kind of thing that works until the day it does not.
+    check("a double too large for int64 reads as the fallback",
+          steammock::as_int64(Json(1e308), 7) == 7);
+    check("a NaN reads as the fallback", steammock::as_int64(Json(std::nan("")), 7) == 7);
+    check("an unsigned read refuses a negative double", steammock::as_uint64(Json(-1.5), 7u) == 7u);
+    check("a double inside the range still reads", steammock::as_int64(Json(1.5)) == 1);
+
     Json out = Json::object();
     out["pData"] = Json(42);
     const Json answered = steammock::make_reply(8, true, Json(true), out);

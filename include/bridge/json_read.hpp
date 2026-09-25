@@ -2,6 +2,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include <cmath>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -58,7 +59,15 @@ inline std::int64_t as_int64(const Json& value, std::int64_t fallback = 0) noexc
         return static_cast<std::int64_t>(value.get<std::uint64_t>());
     }
     if (value.is_number_float()) {
-        return static_cast<std::int64_t>(value.get<double>());
+        // A double that is not a number, or one no int64 can hold, is not a number
+        // this wire carries. The cast used to be undefined for both - and a reply
+        // is the one place a value arrives from a program this does not control.
+        const double number = value.get<double>();
+        if (!std::isfinite(number) || number >= 9223372036854775808.0 ||
+            number < -9223372036854775808.0) {
+            return fallback;
+        }
+        return static_cast<std::int64_t>(number);
     }
     // A game that sends 1 where a boolean belongs is a game being readable rather
     // than wrong, which is why this is not a type error.
@@ -77,7 +86,13 @@ inline std::uint64_t as_uint64(const Json& value, std::uint64_t fallback = 0) no
         return number < 0 ? fallback : static_cast<std::uint64_t>(number);
     }
     if (value.is_number_float()) {
-        return static_cast<std::uint64_t>(value.get<double>());
+        // And the unsigned half of the same rule: no negative, and nothing past
+        // what a uint64 holds. `static_cast` of either is undefined.
+        const double number = value.get<double>();
+        if (!std::isfinite(number) || number < 0.0 || number >= 18446744073709551616.0) {
+            return fallback;
+        }
+        return static_cast<std::uint64_t>(number);
     }
     if (value.is_boolean()) {
         return value.get<bool>() ? 1u : 0u;
