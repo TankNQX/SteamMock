@@ -468,25 +468,40 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
             if (!recv_frame(socket, payload)) {
                 break;  // the normal way a game leaves
             }
-            Json message;
-            if (!parse(payload, message) || !message.is_object()) {
-                log(LogLevel::warn, "protocol error from " + session_id + ": an unparsable frame");
-                break;
-            }
-            const std::string message_kind = text_member(message, "type");
-            if (message_kind == "bye") {
-                break;
-            }
-            if (message_kind != "call") {
-                std::string ignored = "ignoring a '";
-                ignored += message_kind;
-                ignored += "' message from ";
-                ignored += session_id;
-                log(LogLevel::warn, ignored);
+            // One frame is not worth the process. This runs on a thread of its own,
+            // so anything that escapes here - a parse that throws, an answer whose
+            // own bookkeeping does - ends the whole harness and every other game
+            // with it. The frame is dropped and the connection kept: the frame was
+            // read whole, so the stream is still where it should be, and a
+            // connection that really is wedged fails on the next read anyway.
+            try {
+                Json message;
+                if (!parse(payload, message) || !message.is_object()) {
+                    log(LogLevel::warn,
+                        "protocol error from " + session_id + ": an unparsable frame");
+                    break;
+                }
+                const std::string message_kind = text_member(message, "type");
+                if (message_kind == "bye") {
+                    break;
+                }
+                if (message_kind != "call") {
+                    std::string ignored = "ignoring a '";
+                    ignored += message_kind;
+                    ignored += "' message from ";
+                    ignored += session_id;
+                    log(LogLevel::warn, ignored);
+                    continue;
+                }
+                if (!send_frame(socket, handle_call(*session, message))) {
+                    break;
+                }
+            } catch (const std::exception& error) {
+                log(LogLevel::error, "a frame from " + session_id + " threw: " + error.what());
                 continue;
-            }
-            if (!send_frame(socket, handle_call(*session, message))) {
-                break;
+            } catch (...) {
+                log(LogLevel::error, "a frame from " + session_id + " threw");
+                continue;
             }
         }
     }

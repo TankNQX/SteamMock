@@ -23,7 +23,12 @@ void ensure_winsock_started() noexcept {
     static bool started = false;
     if (!started) {
         WSADATA data{};
-        (void)WSAStartup(MAKEWORD(2, 2), &data);
+        // The one thing a socket cannot work without, and the one failure that has
+        // nowhere to be returned to: every call after it simply fails, which reads
+        // as a server that is not listening. Say it here instead.
+        if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
+            log_write(LogLevel::error, "WSAStartup failed: no socket will work in this process");
+        }
         started = true;
     }
 }
@@ -73,10 +78,17 @@ bool recv_all(socket_t handle, char* data, std::size_t size) noexcept {
 void apply_timeout(std::uintptr_t value, unsigned timeout_ms) noexcept {
     const socket_t handle = as_socket(value);
     const DWORD milliseconds = timeout_ms;
-    (void)setsockopt(handle, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&milliseconds),
-                     sizeof(milliseconds));
-    (void)setsockopt(handle, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char*>(&milliseconds),
-                     sizeof(milliseconds));
+    // Asked for, not enforced: the caller has no way to tell a socket that took
+    // them from one that refused, and a refused timeout is an interface that can
+    // hang. Nothing here can throw, so it says so and carries on.
+    if (setsockopt(handle, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&milliseconds),
+                   sizeof(milliseconds)) != 0) {
+        log_write(LogLevel::warn, "could not put a receive timeout on a socket");
+    }
+    if (setsockopt(handle, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char*>(&milliseconds),
+                   sizeof(milliseconds)) != 0) {
+        log_write(LogLevel::warn, "could not put a send timeout on a socket");
+    }
 }
 
 std::uint32_t read_length(const char header[4]) noexcept { return read_frame_length(header); }
@@ -128,6 +140,11 @@ bool TcpTransport::connect(std::string_view host, std::uint16_t port) {
         const int enable = 1;
         (void)setsockopt(handle, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&enable),
                          sizeof(enable));
+        // Before the connect, not after: `::connect` blocks, and the timeouts are
+        // what say for how long. Setting them once the call has returned is a
+        // timeout on a conversation that may never have started - a peer that
+        // accepts nothing left the whole interface hanging on it.
+        apply_timeout(static_cast<std::uintptr_t>(handle), _timeout_ms);
         if (::connect(handle, candidate->ai_addr, static_cast<int>(candidate->ai_addrlen)) == 0) {
             break;
         }
@@ -140,7 +157,6 @@ bool TcpTransport::connect(std::string_view host, std::uint16_t port) {
         return false;
     }
     _socket = static_cast<std::uintptr_t>(handle);
-    apply_timeout(_socket, _timeout_ms);
     return true;
 }
 
