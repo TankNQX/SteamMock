@@ -185,7 +185,11 @@ void test_what_the_server_saw() {
         check("a record says the scenario answered it", records[0].via == "scripted");
         check("a record says the state machine answered it", records[1].via == "state");
         check("a record says nobody answered it", records[2].via == "none" && !records[2].answered);
-        check("a record is timed", records[0].ms >= 0.0);
+        // A duration cannot be negative, so "it is not negative" is a check that
+        // cannot fail. What can fail is a duration that was never taken: a call
+        // answered in this process takes milliseconds, and anything else is a
+        // stamp that is not this call's.
+        check("a record is timed, and not by a placeholder", records[0].ms < 10000.0);
         check("a record is stamped for a live view", records[0].at_unix_ms > 0);
     }
 

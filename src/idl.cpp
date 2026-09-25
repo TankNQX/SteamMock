@@ -399,9 +399,20 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                 call.params.push_back(std::move(param));
             }
         }
-        // The one call that can answer itself: it is handed the version string a
-        // game wants an interface for, and the stub has objects of its own for
-        // some of them (see bridge/synth.hpp).
+        // A hook is spelled with the parameters it needs, and the renderer indexes
+        // them by position: a file that named `register_callback` with one
+        // parameter would be a crash in the generator rather than a message about
+        // the file.
+        if (!call.hook.empty()) {
+            const std::size_t needed = call.hook == "deliver_events"        ? 0u
+                                       : call.hook == "unregister_callback" ? 1u
+                                                                            : 2u;
+            if (call.params.size() < needed) {
+                error = call.name + ": '" + call.hook + "' takes " + std::to_string(needed) +
+                        " parameter(s) and has " + std::to_string(call.params.size());
+                return false;
+            }
+        }
         // The calls that can answer themselves: they are handed a version string a
         // game wants an interface for, and the stub has objects of its own for
         // some of them (see bridge/synth.hpp).
