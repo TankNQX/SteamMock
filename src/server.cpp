@@ -297,7 +297,7 @@ bool Server::start(std::string& error) {
 
 void Server::stop() {
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         if (_stopping && _listener == kNoSocket) {
             return;  // already stopped
         }
@@ -317,7 +317,7 @@ void Server::stop() {
     // No new connection can arrive now, so both lists are stable and the workers
     // are waiting on their own sockets.
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         for (const std::uintptr_t client : _clients) {
             shutdown_socket(as_socket(client));
         }
@@ -329,7 +329,7 @@ void Server::stop() {
     }
     _workers.clear();
 
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     _clients.clear();
     if (_transcript != nullptr) {
         std::fflush(_transcript);
@@ -341,7 +341,7 @@ void Server::stop() {
 std::uint16_t Server::port() const noexcept { return _port; }
 
 std::string Server::summary() const {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     const std::size_t answered = _total_calls - _unanswered_calls;
     return std::to_string(_sessions.size()) + " game session(s), " + std::to_string(_total_calls) +
            " call(s), " + std::to_string(answered) + " answered, " +
@@ -349,7 +349,7 @@ std::string Server::summary() const {
 }
 
 std::vector<SessionSnapshot> Server::sessions() const {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::vector<SessionSnapshot> snapshots;
     snapshots.reserve(_sessions.size());
     for (const std::unique_ptr<Session>& session : _sessions) {
@@ -372,17 +372,17 @@ std::vector<SessionSnapshot> Server::sessions() const {
 }
 
 std::vector<CallRecord> Server::records() const {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _records;
 }
 
 std::size_t Server::record_count() const {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _records.size();
 }
 
 std::vector<CallRecord> Server::records_since(std::size_t index) const {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::vector<CallRecord> tail;
     if (index >= _records.size()) {
         return tail;
@@ -395,12 +395,12 @@ std::vector<CallRecord> Server::records_since(std::size_t index) const {
 }
 
 std::size_t Server::call_count() const {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _total_calls;
 }
 
 std::size_t Server::unanswered_count() const {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _unanswered_calls;
 }
 
@@ -413,7 +413,7 @@ void Server::accept_loop(std::uintptr_t listener) {
         }
 
         {
-            std::lock_guard<std::mutex> lock(_mutex);
+            std::lock_guard<std::recursive_mutex> lock(_mutex);
             if (_stopping) {
                 close_socket(client);
                 return;
@@ -455,7 +455,7 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
     }
 
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         session_id = make_session_id();
         auto created = std::make_unique<Session>(session_id, hello, _dispatcher.profile_for(hello));
         session = created.get();
@@ -515,7 +515,7 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
         // The session stays: the transcript and the summary are about the whole
         // run, so a game that has left is still part of the picture. Only its
         // "live" flag changes.
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         session->set_connected(false);
     }
     log(LogLevel::info, "game disconnected: " + description + " (" +
@@ -546,7 +546,7 @@ std::string Server::handle_call(Session& session, const Json& message) {
         // may now touch the lobbies other games are in - so it happens under the
         // lock, and so does telling the games that were not asking. The socket work
         // around it does not.
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         std::vector<std::pair<std::uint64_t, Json>> notifications;
         if (!_world.answer(session, name, args, answer, notifications)) {
@@ -596,14 +596,17 @@ std::string Server::handle_call(Session& session, const Json& message) {
     record.at_unix_ms = unix_milliseconds_now();
 
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         ++_total_calls;
         if (!answer.answered) {
             ++_unanswered_calls;
         }
         _records.push_back(record);
-        write_transcript(record);
     }
+    // Outside the lock, because this is a blocking write to disk and the state it
+    // was taken from is already recorded. A record carries its own sequence number,
+    // which is what a reader orders by; the file's own order was never the promise.
+    write_transcript(record);
 
     if (answer.answered) {
         std::string line = "-> " + name + " = " + answer.ret.dump();

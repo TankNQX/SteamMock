@@ -28,10 +28,15 @@ namespace steammock {
 //  so several games can be debugged side by side - each with its own profile,
 //  its own stats and its own achievements.
 //
-//  Everything mutable lives behind one mutex. The calls themselves run on a
-//  thread per connection (a game per connection, and only a few of them), while
-//  `sessions()` and `records()` hand back copies for anyone watching - a console,
-//  a test, or the live view a GUI draws. Taking a snapshot never blocks on a
+//  Everything mutable lives behind one mutex, which is recursive: a call is
+//  resolved while it is held, and resolving one runs the world's own answers -
+//  which may ask the server about itself through `summary()` or `sessions()`
+//  rather than reason about what they half-changed. The same thread asking again
+//  is a reader, and what it sees is the state as that moment has it; a thread
+//  that is not the one holding it still waits, as it should. The calls themselves
+//  run on a thread per connection (a game per connection, and only a few of
+//  them), while those two hand back copies for anyone watching - a console, a
+//  test, or the live view a GUI draws. Taking a snapshot never blocks on a
 //  socket, and no lock is held while a frame is read or written.
 
 // One call, as the transcript records it and as a live view shows it.
@@ -148,7 +153,9 @@ private:
     std::uint16_t _port = 0;
     std::thread _accept_thread;
 
-    mutable std::mutex _mutex;
+    // Recursive: a call resolves under it, and resolving one runs the world's own
+    // answers, which may ask this server about itself (see the header's comment).
+    mutable std::recursive_mutex _mutex;
     std::vector<std::thread> _workers;
     std::vector<std::uintptr_t> _clients;
     std::vector<std::unique_ptr<Session>> _sessions;
