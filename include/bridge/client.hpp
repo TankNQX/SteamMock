@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -45,7 +46,11 @@ public:
     // inside a callback cannot deadlock on itself.
     bool take_event(Json& out) noexcept;
 
-    const std::string& session_id() const noexcept { return _session_id; }
+    // The session id by value, not by reference: connecting is what replaces it, and
+    // a reader holding the reference would be holding whatever the next connection
+    // leaves there. The counts are read from other threads - a diagnostic tool, a
+    // test - and written from the one the calls run on, so they are atomic.
+    std::string session_id() const noexcept { return _session_id; }
     unsigned call_count() const noexcept { return _call_count; }
     unsigned unhandled_count() const noexcept { return _unhandled_count; }
 
@@ -75,8 +80,10 @@ private:
     std::string _exe_name;
     std::string _session_id;
     unsigned _sequence = 0;
-    unsigned _call_count = 0;
-    unsigned _unhandled_count = 0;
+    // Written where the calls run, read from wherever a tool asks - so they are
+    // atomic rather than merely small.
+    std::atomic<unsigned> _call_count{0};
+    std::atomic<unsigned> _unhandled_count{0};
 
     // The payloads waiting for the game's next pump, in the order they arrived.
     std::vector<Json> _events;

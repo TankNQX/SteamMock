@@ -37,15 +37,18 @@ STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamMock_Version(void) {
     return STEAMMOCK_VERSION;
 }
 
-// Empty until the handshake has succeeded. The pointer stays valid for the life
-// of the process (the session string outlives the call), which is fine for a
-// diagnostic.
+// Empty until the handshake has succeeded. The pointer is valid until the next
+// call from this thread: the id belongs to a connection and the next one replaces
+// it, so what is handed back is this thread's own copy rather than the client's -
+// which another thread's reconnect may be rewriting while a caller reads it.
 STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamMock_SessionId(void) {
     steammock::Client& client = steammock::Client::instance();
     if (!client.backend_connected()) {
         return "";
     }
-    return client.session_id().c_str();
+    static thread_local std::string last;
+    last = client.session_id();
+    return last.c_str();
 }
 
 // Returns the number of calls the stub has forwarded, and writes the number the
