@@ -44,6 +44,20 @@ $transcript = Join-Path $RigDir 'transcript.jsonl'
 
 function Say($message) { '{0:HH:mm:ss} {1}' -f (Get-Date), $message }
 
+# Everything under -RigDir is the rig's to delete and recreate, which makes a
+# mistyped one destructive: `-RigDir D:\` would put the drive's own `game`,
+# `a.log` and `transcript.jsonl` in the way of that. A drive root is refused, and
+# the game copy is deleted only when it is one this rig made - which is what it
+# has the game's executable in it, having copied it there.
+if ([System.IO.Path]::GetPathRoot($RigDir) -eq $RigDir) {
+    Say "-RigDir '$RigDir' is a drive root - name a directory the rig may own"
+    exit 2
+}
+if ((Test-Path $game) -and -not (Test-Path (Join-Path $game 'SteamworksExample.exe'))) {
+    Say "refusing to delete '$game': it is not a copy of the game this rig made"
+    exit 2
+}
+
 foreach ($needed in @($server, $stub, $scenario, (Join-Path $GamePath 'SteamworksExample.exe'))) {
     if (-not (Test-Path $needed)) {
         Say "missing $needed - build the tree, or point -GamePath at the game"

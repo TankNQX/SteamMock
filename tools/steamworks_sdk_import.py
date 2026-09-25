@@ -287,10 +287,6 @@ def _flatten(size) -> Optional[str]:
     return text or None
 
 
-def _const_of(node) -> bool:
-    return bool(getattr(node, "const", False))
-
-
 # ---------------------------------------------------------------------------
 #  What the headers said
 # ---------------------------------------------------------------------------
@@ -875,8 +871,8 @@ class Mapper:
             return "opaque_ptr", []
         return kind, ["out"]
 
-    def member_type(self, ty: Ty, where: str, event: bool = False) -> Optional[Tuple[str, str]]:
-        """A structure member as the file writes one: (kind, name).
+    def member_type(self, ty: Ty, where: str, event: bool = False) -> Optional[str]:
+        """The kind a structure member is written as.
 
         An enum member keeps its own name in a structure, which the generator
         declares as a type the game reads that member through; in a payload it is
@@ -887,15 +883,15 @@ class Mapper:
         if ty.form == "fundamental":
             kind = FUNDAMENTAL_KINDS.get(ty.name)
             if kind in MEMBER_KINDS:
-                return kind, ty.name
+                return kind
             return None
         if ty.form == "named":
             if self.is_enum(ty.name):
-                return ("int32" if event else ty.name), ty.name
+                return "int32" if event else ty.name
             if ty.name in self.value_types:
                 # A value class is its own eight bytes on the wire, so a member of
                 # one is written as the uint64 it is rather than by its name.
-                return "uint64", ty.name
+                return "uint64"
             return None
         if ty.form == "pointer":
             return None
@@ -1246,11 +1242,9 @@ class Builder:
     def _structure(self, aggregate: Aggregate, event: bool = False) -> Optional[dict]:
         members: List[list] = []
         for ty, name in _flatten_members(self.sdk, self.mapper, aggregate):
-            mapped = self.mapper.member_type(ty, aggregate.name, event=event)
-            if mapped is None:
+            kind = self.mapper.member_type(ty, aggregate.name, event=event)
+            if kind is None:
                 return None
-            kind, _spelling = mapped
-            declared = kind if kind in MEMBER_KINDS else kind
             written = name
             if ty.count is not None:
                 extent = self.sdk.extent(ty.count)
@@ -1260,7 +1254,7 @@ class Builder:
                     # structure is reported instead of written wrong.
                     return None
                 written = "%s[%d]" % (name, extent)
-            members.append([declared, written])
+            members.append([kind, written])
         measured = self.sizes.of(aggregate)
         if measured is None:
             return None
@@ -1320,9 +1314,6 @@ def merge(layouts: Sequence[Layout]) -> Layout:
     merged = Layout()
     if not layouts:
         return merged
-    merged.value_types = list(layouts[-1].value_types)
-    merged.structures = list(layouts[-1].structures)
-    merged.events = list(layouts[-1].events)
     merged.unmeasured = sorted({name for layout in layouts for name in layout.unmeasured})
     merged.unread = sorted({line for layout in layouts for line in layout.unread})
 

@@ -9,8 +9,9 @@
 #
 #      pwsh -File tools/check-format.ps1
 #
-#  Exits 0 when every file in scope is clean, 1 when one is not, 2 when
-#  clang-format cannot be found.
+#  Exits 0 when every file in scope is clean, 1 when one is not, and 2 when the
+#  run cannot be trusted at all: clang-format missing, `git ls-files` failing, or
+#  nothing found to check.
 # ---------------------------------------------------------------------------
 
 # Continue, not Stop: clang-format reports its violations on stderr, and a
@@ -48,6 +49,19 @@ try {
     # most likely to be badly formatted.
     $files = @(git ls-files --cached --others --exclude-standard '*.cpp' '*.hpp' '*.h') |
         Where-Object { $_ -notlike 'external/*' -and $_ -notlike 'src/generated/*' }
+
+    # A gate that cannot trust its own inputs has to say so rather than report the
+    # emptiness as a pass: `git ls-files` failing leaves nothing to check, and so
+    # does a filter that matches nothing, and "clean: 0 files" with exit 0 is the
+    # one answer that hides both.
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host 'git ls-files failed, so nothing was checked.'
+        exit 2
+    }
+    if ($files.Count -eq 0) {
+        Write-Host 'no files were found to check, which is not the same as clean.'
+        exit 2
+    }
 
     $dirty = @()
     foreach ($file in $files) {
