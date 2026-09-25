@@ -17,8 +17,10 @@
 #include <cstdlib>
 #include <set>
 #include <string>
+#include <variant>
 #include <vector>
 
+#include "bridge/call.hpp"
 #include "bridge/frame.hpp"
 #include "bridge/json_read.hpp"
 #include "bridge/lobby.hpp"
@@ -26,6 +28,7 @@
 #include "bridge/scenario.hpp"
 #include "bridge/session.hpp"
 #include "bridge/surface.hpp"
+#include "bridge/synth.hpp"
 
 #ifndef STEAMMOCK_SCENARIO_PATH
 #    error "STEAMMOCK_SCENARIO_PATH must name the example scenario"
@@ -127,6 +130,20 @@ void test_replies() {
     check("a NaN reads as the fallback", steammock::as_int64(Json(std::nan("")), 7) == 7);
     check("an unsigned read refuses a negative double", steammock::as_uint64(Json(-1.5), 7u) == 7u);
     check("a double inside the range still reads", steammock::as_int64(Json(1.5)) == 1);
+
+    // A `uint64` with its top bit set is a number, not a negative one. The flat path
+    // knows the type at the call site and the packed path carries the type with the
+    // value; both used to spell `2^64-1` as `-1`, which the reply readers then
+    // refused. This is the check that fails if either goes back to a cast.
+    const std::uint64_t top_bit = 0xFFFFFFFFFFFFFFFFull;
+    check("an unsigned argument is written as an unsigned number",
+          steammock::arg_uint(top_bit).is_number_unsigned());
+    check("an unsigned argument reads back as what it was",
+          steammock::as_uint64(steammock::arg_uint(top_bit)) == top_bit);
+    check("a packed unsigned argument keeps its type",
+          std::holds_alternative<std::uint64_t>(steammock::wire_uint(top_bit)));
+    check("and a packed signed one keeps its own sign",
+          std::holds_alternative<std::int64_t>(steammock::wire_int(-1)));
 
     Json out = Json::object();
     out["pData"] = Json(42);

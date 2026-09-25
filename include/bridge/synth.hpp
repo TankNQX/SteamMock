@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 #include <type_traits>
+#include <variant>
 
 #include "bridge/call.hpp"
 #include "bridge/client.hpp"
@@ -88,39 +89,29 @@ inline const char kEmptyText[] = "";
 //  and a null there is `wire_null`, which is the same null the wire has for a
 //  value nobody could send.
 
-enum class Wire : std::uint8_t { null_value, boolean, integer, real, cstring };
+// One packed argument, as the request carries it. The type travels with the value
+// rather than beside it: a `uint64` with its top bit set and the `int64` that has
+// the same bit pattern are different numbers on the wire, and a kind in a second
+// field cannot say which one a value is - `wire_int(-1)` and `wire_uint(2^64-1)`
+// used to pack identically, so the marshaller had to cast and pick a sign for
+// both. Every spelling below keeps the type it was given instead.
+using Arg = std::variant<std::nullptr_t, bool, std::int64_t, std::uint64_t, double, const char*>;
 
-struct Arg {
-    std::uint64_t bits;
-    Wire wire;
-};
+inline Arg wire_null() noexcept { return nullptr; }
+inline Arg wire_bool(bool value) noexcept { return Arg(value); }
 
-inline Arg wire_null() noexcept { return {0, Wire::null_value}; }
-inline Arg wire_bool(bool value) noexcept { return {value ? 1u : 0u, Wire::boolean}; }
-
-// The two integer spellings differ in the cast at the call site, not here: one
-// sign-extends and one zero-extends, and widening a value the wrong way is a
-// different number on the wire.
-inline Arg wire_int(std::int64_t value) noexcept {
-    return {static_cast<std::uint64_t>(value), Wire::integer};
-}
-inline Arg wire_uint(std::uint64_t value) noexcept { return {value, Wire::integer}; }
-
-inline Arg wire_real(double value) noexcept {
-    Arg arg{0, Wire::real};
-    std::memcpy(&arg.bits, &value, sizeof(value));
-    return arg;
-}
+inline Arg wire_int(std::int64_t value) noexcept { return Arg(value); }
+inline Arg wire_uint(std::uint64_t value) noexcept { return Arg(value); }
+inline Arg wire_real(double value) noexcept { return Arg(value); }
 
 // An address travels as the integer it is, which is what the protocol has for a
-// handle no side can dereference.
+// handle no side can dereference - and as the unsigned one, because an address has
+// no sign.
 inline Arg wire_pointer(const void* value) noexcept {
-    return {reinterpret_cast<std::uint64_t>(value), Wire::integer};
+    return Arg(static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(value)));
 }
 
-inline Arg wire_cstring(const char* value) noexcept {
-    return {reinterpret_cast<std::uint64_t>(value), Wire::cstring};
-}
+inline Arg wire_cstring(const char* value) noexcept { return Arg(value); }
 
 // ---------------------------------------------------------------------------
 //  The kind a C++ type travels as.

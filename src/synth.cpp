@@ -27,19 +27,25 @@ namespace {
 // values rather than inside them, so a kind is only ever a question of how to
 // spell the value a declaration already gave us.
 Json packed_value(const Arg& argument) {
-    switch (argument.wire) {
-        case Wire::boolean: return Json(argument.bits != 0);
-        case Wire::integer: return Json(static_cast<std::int64_t>(argument.bits));
-        case Wire::real: {
-            double number = 0.0;
-            std::memcpy(&number, &argument.bits, sizeof(number));
-            return Json(number);
-        }
-        case Wire::cstring:
-            return argument.bits == 0 ? Json() : Json(reinterpret_cast<const char*>(argument.bits));
-        case Wire::null_value: break;
+    if (const bool* value = std::get_if<bool>(&argument)) {
+        return Json(*value);
     }
-    // A value class the wire cannot carry, or an out-parameter nobody passed.
+    if (const std::int64_t* value = std::get_if<std::int64_t>(&argument)) {
+        return Json(*value);
+    }
+    // The one that used to need a cast: a value whose top bit is set is written
+    // as the unsigned number it is, and the reply readers ask for it back that way.
+    if (const std::uint64_t* value = std::get_if<std::uint64_t>(&argument)) {
+        return Json(*value);
+    }
+    if (const double* value = std::get_if<double>(&argument)) {
+        return Json(*value);
+    }
+    if (const char* const* value = std::get_if<const char*>(&argument)) {
+        return *value == nullptr ? Json() : Json(*value);
+    }
+    // A value the wire cannot carry, or an out-parameter nobody passed - the same
+    // null the wire has for both.
     return Json();
 }
 

@@ -23,13 +23,19 @@ inline Json arg_bool(bool value) noexcept { return Json(value); }
 inline Json arg_int(std::int64_t value) noexcept { return Json(value); }
 
 inline Json arg_uint(std::uint64_t value) noexcept {
-    return Json(static_cast<std::int64_t>(value));
+    // Not through an `int64`: the top bit is part of the number, and the wire has an
+    // unsigned integer for exactly this. It used to be a cast, which made
+    // `2^64-1` and `-1` the same spelling on the wire, and `reply_uint` reads the
+    // unsigned one back.
+    return Json(value);
 }
 
 inline Json arg_real(double value) noexcept { return Json(value); }
 
 inline Json arg_pointer(const void* value) noexcept {
-    return Json(static_cast<std::int64_t>(reinterpret_cast<std::uintptr_t>(value)));
+    // An address is an unsigned integer, and this is the spelling `reply_pointer`
+    // asks for back.
+    return Json(static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(value)));
 }
 
 inline Json arg_cstring(const char* value) { return value != nullptr ? Json(value) : Json(); }
