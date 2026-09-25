@@ -177,66 +177,79 @@ void call_object(void* object, const EventInfo& event, const Json* fields, std::
 // completes, the callback id it belongs to, or neither - in which case it is
 // something that happened to a game rather than an answer to something it asked.
 void deliver_one(const Json& event) noexcept {
-    const Json* name = json_member(event, "event");
-    if (name == nullptr || !name->is_string()) {
-        return;
-    }
-    const EventInfo* info = find_event(as_string(*name).c_str());
-    if (info == nullptr) {
-        log_write(LogLevel::warn, "an event the layouts do not declare: " + as_string(*name));
-        return;
-    }
+    // `noexcept`, because this runs inside a game's own `RunCallbacks` and a
+    // throw out of it would be a throw into the game. What it does with a payload
+    // allocates - the event's name is copied to be looked up, and every log line
+    // is built as a string - so the whole of it is guarded, and the one thing the
+    // handler may do is call a logger that catches its own failures and never
+    // lets one out. A payload that cannot be delivered is dropped, loudly, rather
+    // than taking the game down.
+    try {
+        const Json* name = json_member(event, "event");
+        if (name == nullptr || !name->is_string()) {
+            return;
+        }
+        const EventInfo* info = find_event(as_string(*name).c_str());
+        if (info == nullptr) {
+            log_write(LogLevel::warn, "an event the layouts do not declare: " + as_string(*name));
+            return;
+        }
 
-    const Json* fields = json_member(event, "in");
-    void* object = nullptr;
-    std::uint64_t call = 0;
-    bool call_result = false;
-    {
-        const std::lock_guard<std::mutex> lock(registry_mutex());
-        const Json* handle = json_member(event, "call");
-        const Json* id = json_member(event, "id");
-        if (handle != nullptr && handle->is_number()) {
-            call = as_uint64(*handle);
-            const auto found = results_by_call().find(call);
-            if (found != results_by_call().end()) {
-                object = found->second;
-                call_result = true;
-            }
-        } else if (id != nullptr && id->is_number()) {
-            const auto found = callbacks_by_id().find(static_cast<std::int32_t>(as_int64(*id)));
-            if (found != callbacks_by_id().end()) {
-                object = found->second;
-                log_write(LogLevel::debug, "delivering " + as_string(*name) +
-                                               " to the callback the game registered for id " +
-                                               std::to_string(as_int64(*id)));
-            }
-        } else {
-            // Nobody asked for this, because it is not an answer to anything: a room
-            // changed, a packet arrived. What ties it to an object is the payload's
-            // own name - the SDK's callback id - which is what the game registered
-            // under when it said it wanted to hear about this.
-            const auto found = callbacks_by_id().find(info->callback);
-            if (found != callbacks_by_id().end()) {
-                object = found->second;
-                log_write(LogLevel::debug, "delivering " + as_string(*name) +
-                                               " to the callback registered for id " +
-                                               std::to_string(info->callback));
+        const Json* fields = json_member(event, "in");
+        void* object = nullptr;
+        std::uint64_t call = 0;
+        bool call_result = false;
+        {
+            const std::lock_guard<std::mutex> lock(registry_mutex());
+            const Json* handle = json_member(event, "call");
+            const Json* id = json_member(event, "id");
+            if (handle != nullptr && handle->is_number()) {
+                call = as_uint64(*handle);
+                const auto found = results_by_call().find(call);
+                if (found != results_by_call().end()) {
+                    object = found->second;
+                    call_result = true;
+                }
+            } else if (id != nullptr && id->is_number()) {
+                const auto found = callbacks_by_id().find(static_cast<std::int32_t>(as_int64(*id)));
+                if (found != callbacks_by_id().end()) {
+                    object = found->second;
+                    log_write(LogLevel::debug, "delivering " + as_string(*name) +
+                                                   " to the callback the game registered for id " +
+                                                   std::to_string(as_int64(*id)));
+                }
+            } else {
+                // Nobody asked for this, because it is not an answer to anything: a room
+                // changed, a packet arrived. What ties it to an object is the payload's
+                // own name - the SDK's callback id - which is what the game registered
+                // under when it said it wanted to hear about this.
+                const auto found = callbacks_by_id().find(info->callback);
+                if (found != callbacks_by_id().end()) {
+                    object = found->second;
+                    log_write(LogLevel::debug, "delivering " + as_string(*name) +
+                                                   " to the callback registered for id " +
+                                                   std::to_string(info->callback));
+                }
             }
         }
-    }
 
-    if (object == nullptr) {
-        // Nobody is waiting: a result the game never registered, one it has already
-        // unregistered, or something it never asked to hear about. The real SDK
-        // drops those too - but it says so, because an event that goes nowhere is
-        // the hardest kind of silence.
-        log_write(LogLevel::warn,
-                  "an event nobody is waiting for: " + as_string(*name) +
-                      (call_result ? std::string()
-                                   : " (callback " + std::to_string(info->callback) + ")"));
-        return;
+        if (object == nullptr) {
+            // Nobody is waiting: a result the game never registered, one it has already
+            // unregistered, or something it never asked to hear about. The real SDK
+            // drops those too - but it says so, because an event that goes nowhere is
+            // the hardest kind of silence.
+            log_write(LogLevel::warn,
+                      "an event nobody is waiting for: " + as_string(*name) +
+                          (call_result ? std::string()
+                                       : " (callback " + std::to_string(info->callback) + ")"));
+            return;
+        }
+        call_object(object, *info, fields, call, call_result);
+    } catch (...) {
+        // A literal, so building the message cannot allocate on the way in, and
+        // `log_write` catches its own failures: nothing here can throw again.
+        log_write(LogLevel::error, "a payload could not be delivered");
     }
-    call_object(object, *info, fields, call, call_result);
 }
 
 }  // namespace
