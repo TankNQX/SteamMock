@@ -85,6 +85,23 @@ $debugReader = Start-Process -FilePath 'powershell' -PassThru -WindowStyle Hidde
     '-OutFile', $debugLog)
 Say 'setup: the games'' own output is being read into game-output.log'
 
+# The one way out of this run, whichever way it goes. The reader has to be in it: it drains
+# the machine-wide debug buffer, so one left behind keeps writing whatever games are running
+# next into this run's game-output.log - lines that read exactly like this run's own, and
+# that would be very convincing evidence an hour later. Games and backend first, so the last
+# lines they have to say are in the file before the reader goes.
+function Stop-Rig {
+    param([object[]] $Things)
+    foreach ($thing in $Things) {
+        if ($null -eq $thing) { continue }
+        $thing.Refresh()
+        if (-not $thing.HasExited) { Stop-Process -Id $thing.Id -Force -ErrorAction SilentlyContinue }
+    }
+    $debugReader.Refresh()
+    if (-not $debugReader.HasExited) { Stop-Process -Id $debugReader.Id -Force -ErrorAction SilentlyContinue }
+    Start-Sleep -Milliseconds 500
+}
+
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
@@ -293,8 +310,7 @@ $hwndA = Wait-Window $a
 Say "instance A: pid $($a.Id), window $hwndA, exited $($a.HasExited)"
 if ($hwndA -eq [IntPtr]::Zero) {
     Say 'instance A never showed a window - stopping'
-    Stop-Process -Id $a.Id -Force -ErrorAction SilentlyContinue
-    Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue
+    Stop-Rig @($a, $backend)
     exit 1
 }
 
@@ -345,8 +361,7 @@ for ($i = 0; $i -lt 40 -and -not $lobby; $i++) {
 }
 if (-not $lobby) {
     Say 'no lobby was created - the menu drive did not land'
-    Stop-Process -Id $a.Id -Force -ErrorAction SilentlyContinue
-    Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue
+    Stop-Rig @($a, $backend)
     exit 1
 }
 Say "lobby: the world minted $lobby"
@@ -426,17 +441,8 @@ foreach ($which in @($a, $b, $c)) {
 Say ("instance A pid {0} exited={1}; instance B pid {2} exited={3}" -f $a.Id, $a.HasExited, $b.Id, $b.HasExited)
 
 Say 'stopping the instances and the backend, so the transcript can be read'
-foreach ($process in @($a, $b, $c)) {
-    $process.Refresh()
-    if (-not $process.HasExited) { Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue }
-}
-$backend.Refresh()
-if (-not $backend.HasExited) { Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue }
+Stop-Rig @($a, $b, $c, $backend)
 Start-Sleep -Seconds 1
-# The reader last, so the games' final lines are in the file before it goes.
-$debugReader.Refresh()
-if (-not $debugReader.HasExited) { Stop-Process -Id $debugReader.Id -Force -ErrorAction SilentlyContinue }
-Start-Sleep -Milliseconds 500
 
 Say ''
 Say '--- what the backend saw ---'
