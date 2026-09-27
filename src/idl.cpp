@@ -285,6 +285,52 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
     }
 }
 
+// ---------------------------------------------------------------------------
+//  What the mock decides, as opposed to what it copies from the SDK
+// ---------------------------------------------------------------------------
+//  A surface read out of an SDK says what exists: a name, a return type, the
+//  parameters. It cannot say what a *mock* does with any of them, and it should
+//  not be asked to - those are this harness's own decisions, and they live here,
+//  once, keyed by the name the SDK gave the call.
+//
+//  There are two of them. A handful of calls are not forwarded at all: the two
+//  that drain the queue a game's own pump asks for, and the four that remember
+//  what a game registered. And four calls hand back an object of this stub's
+//  making rather than an answer from the backend - the factories, which are given
+//  the version string a game asked for, and the SDK's lazy initialiser, which is
+//  given a blob of its own.
+
+std::string hook_for(const std::string& name) {
+    if (name == "SteamAPI_RunCallbacks" || name == "SteamGameServer_RunCallbacks") {
+        return "deliver_events";
+    }
+    if (name == "SteamAPI_RegisterCallback") {
+        return "register_callback";
+    }
+    if (name == "SteamAPI_UnregisterCallback") {
+        return "unregister_callback";
+    }
+    if (name == "SteamAPI_RegisterCallResult") {
+        return "register_call_result";
+    }
+    if (name == "SteamAPI_UnregisterCallResult") {
+        return "unregister_call_result";
+    }
+    return std::string();
+}
+
+std::string fallback_for(const std::string& name) {
+    if (name == "SteamInternal_CreateInterface" ||
+        name == "SteamInternal_FindOrCreateUserInterface" ||
+        name == "SteamInternal_FindOrCreateGameServerInterface") {
+        return "interface";
+    }
+    if (name == "SteamInternal_ContextInit") {
+        return "context";
+    }
+    return std::string();
+}
+
 std::vector<std::string> generated_header(const Idl& idl, const char* regenerate, const char* open,
                                           const char* close) {
     return {open,
@@ -351,26 +397,6 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
             }
             call.returns = as_string(*returns);
         }
-        if (const Json* hook = json_member(entry, "hook"); hook != nullptr) {
-            if (!hook->is_string()) {
-                error = call.name + ": 'hook' has to be a name";
-                return false;
-            }
-            call.hook = as_string(*hook);
-            // Named rather than trusted: a hook the generator does not know is a
-            // trampoline that would quietly do nothing.
-            static const char* const kHooks[] = {"register_callback", "unregister_callback",
-                                                 "register_call_result", "unregister_call_result",
-                                                 "deliver_events"};
-            bool known = false;
-            for (const char* candidate : kHooks) {
-                known = known || call.hook == candidate;
-            }
-            if (!known) {
-                error = call.name + ": '" + call.hook + "' is not a hook this has";
-                return false;
-            }
-        }
         if (call.returns != "void" && find_type(call.returns) == nullptr) {
             error = call.name + ": unknown return type '" + call.returns + "'";
             return false;
@@ -424,34 +450,55 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                 call.params.push_back(std::move(param));
             }
         }
+        // The mock's own decisions, made here rather than read out of the file -
+        // see the comment above `hook_for`. A document that still spells them is
+        // one written before they were the generator's: accepted while it agrees,
+        // which is what shows the rules reproduce what it said, and refused the
+        // moment it does not.
+        call.hook = hook_for(call.name);
+        call.fallback = fallback_for(call.name);
+        if (const Json* hook = json_member(entry, "hook"); hook != nullptr) {
+            const std::string written = hook->is_string() ? as_string(*hook) : std::string();
+            if (written != call.hook) {
+                error = call.name + ": 'hook' is the generator's decision now (hook_for), and " +
+                        "this says '" + written + "' where the rule says '" + call.hook + "'";
+                return false;
+            }
+        }
+        if (const Json* fallback = json_member(entry, "fallback"); fallback != nullptr) {
+            const std::string written =
+                fallback->is_string() ? as_string(*fallback) : std::string();
+            if (written != call.fallback) {
+                error = call.name +
+                        ": 'fallback' is the generator's decision now (fallback_for), "
+                        "and this says '" +
+                        written + "' where the rule says '" + call.fallback + "'";
+                return false;
+            }
+        }
+
         // A hook is spelled with the parameters it needs, and the renderer indexes
-        // them by position: a file that named `register_callback` with one
-        // parameter would be a crash in the generator rather than a message about
-        // the file.
+        // them by position: a call the rule hooks but whose SDK declaration takes
+        // fewer arguments than the hook reads is a crash in the generator rather
+        // than a message about the surface.
         if (!call.hook.empty()) {
             const std::size_t needed = call.hook == "deliver_events"        ? 0u
                                        : call.hook == "unregister_callback" ? 1u
                                                                             : 2u;
             if (call.params.size() < needed) {
-                error = call.name + ": '" + call.hook + "' takes " + std::to_string(needed) +
-                        " parameter(s) and has " + std::to_string(call.params.size());
+                error = call.name + ": the '" + call.hook + "' hook reads " +
+                        std::to_string(needed) + " parameter(s) and this takes " +
+                        std::to_string(call.params.size());
                 return false;
             }
         }
-        // The calls that can answer themselves: they are handed a version string a
-        // game wants an interface for, and the stub has objects of its own for
-        // some of them (see bridge/synth.hpp).
-        if (const Json* fallback = json_member(entry, "fallback"); fallback != nullptr) {
-            const std::string kind = fallback->is_string() ? as_string(*fallback) : std::string();
-            const bool factory = kind == "interface";
-            const bool lazy = kind == "context";
-            if (!factory && !lazy) {
-                error = call.name + ": 'fallback' is either absent, 'interface' or 'context'";
-                return false;
-            }
-            // A factory is handed the version string somewhere among its arguments
-            // - it is the only string in any of them, wherever it sits - and the
-            // lazy accessor is handed the SDK's own blob and nothing else.
+        // The calls that can answer themselves: a factory is handed the version
+        // string a game wants an interface for - the only such string among its
+        // arguments, wherever it sits - and the lazy accessor is handed the SDK's
+        // own blob and nothing else. Both are this stub's to answer (see
+        // bridge/synth.hpp), so a declaration that no longer fits is refused.
+        if (!call.fallback.empty()) {
+            const bool factory = call.fallback == "interface";
             const IdlParam* version = nullptr;
             for (const IdlParam& param : call.params) {
                 if (param.type == "cstring" && !param.out) {
@@ -462,12 +509,13 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                 factory ? version != nullptr
                         : call.params.size() == 1u && call.params[0].type == "opaque_ptr";
             if (call.returns != "opaque_ptr" || !shape_is_right) {
-                error = call.name +
-                        ": an 'interface' fallback returns opaque_ptr and is handed the "
-                        "version string, and a 'context' one is handed the SDK's blob";
+                error = call.name + ": the '" + call.fallback +
+                        "' rule (fallback_for) answers this one itself, and it returns '" +
+                        call.returns + "' with " + std::to_string(call.params.size()) +
+                        " parameter(s): it needs an opaque_ptr back and, for a factory, the "
+                        "version string among its arguments";
                 return false;
             }
-            call.fallback = kind;
             if (version != nullptr) {
                 call.fallback_param = version->name;
             }
