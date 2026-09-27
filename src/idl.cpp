@@ -29,6 +29,14 @@ struct TypeInfo {
 constexpr TypeInfo kTypes[] = {
     {"bool", "bool", "arg_bool", "false", "steammock::reply_bool(reply)",
      "static_cast<bool>(steammock::as_bool(*value))"},
+    {"int8", "std::int8_t", "arg_int", "0", "static_cast<std::int8_t>(steammock::reply_int(reply))",
+     "static_cast<std::int8_t>(steammock::as_int64(*value))"},
+    {"uint8", "std::uint8_t", "arg_uint", "0",
+     "static_cast<std::uint8_t>(steammock::reply_uint(reply))",
+     "static_cast<std::uint8_t>(steammock::as_uint64(*value))"},
+    {"int16", "std::int16_t", "arg_int", "0",
+     "static_cast<std::int16_t>(steammock::reply_int(reply))",
+     "static_cast<std::int16_t>(steammock::as_int64(*value))"},
     {"int32", "std::int32_t", "arg_int", "0",
      "static_cast<std::int32_t>(steammock::reply_int(reply))",
      "static_cast<std::int32_t>(steammock::as_int64(*value))"},
@@ -44,10 +52,27 @@ constexpr TypeInfo kTypes[] = {
      "steammock::as_int64(*value)"},
     {"uint64", "std::uint64_t", "arg_uint", "0", "steammock::reply_uint(reply)",
      "steammock::as_uint64(*value)"},
+    // An address, which is what a `void *` and an SDK's `intptr_t` both are. Two
+    // kinds rather than one because an address has no sign, and a signed one that
+    // carried the top bit set would come back as the number below zero.
+    {"intptr", "std::intptr_t", "arg_int", "0",
+     "static_cast<std::intptr_t>(steammock::reply_int(reply))",
+     "static_cast<std::intptr_t>(steammock::as_int64(*value))"},
+    {"uintptr", "std::uintptr_t", "arg_uint", "0",
+     "static_cast<std::uintptr_t>(steammock::reply_uint(reply))",
+     "static_cast<std::uintptr_t>(steammock::as_uint64(*value))"},
     {"float", "float", "arg_real", "0.0f", "static_cast<float>(steammock::reply_real(reply))",
      "static_cast<float>(steammock::as_double(*value))"},
     {"double", "double", "arg_real", "0.0", "steammock::reply_real(reply)",
      "steammock::as_double(*value)"},
+    // An SDK enum is a four-byte integer under a name its own header gave it, and
+    // a flat trampoline cannot name that type from the surface alone. It travels
+    // as the integer it already is on the ABI - which is what the caller is
+    // passing - while a *slot* keeps the name, because a vtable entry is a C++
+    // declaration and has to spell the type it overrides.
+    {"enum", "std::int32_t", "arg_int", "0",
+     "static_cast<std::int32_t>(steammock::reply_int(reply))",
+     "static_cast<std::int32_t>(steammock::as_int64(*value))"},
     // A returned string is copied by the stub before the reply dies with the
     // call, so the game gets its own text (see bridge/call.hpp).
     {"cstring", "const char*", "arg_cstring", "kEmptyString",
