@@ -174,8 +174,45 @@ function Drive([IntPtr] $hwnd, [int[]] $keys, [string] $what) {
     if ($keys.Count -eq 2) { $shape = 'a down and a return' } else { $shape = "$($keys.Count - 1) downs and a return" }
     Say ("  {0}: posting {1}" -f $what, $shape)
     if (-not $foreground) { Say '  (warning: the window never came to the front, the keys will be dropped)' }
-    foreach ($key in $keys) { Key $hwnd $key }
+    # Re-asserted before every key rather than once for the batch: the game decides per
+    # frame whether to keep a key (see Key), so a window that loses the front halfway
+    # through keeps the keys before it and drops the ones after - which is how a drive
+    # ends up one item off rather than not landing at all. The count of keys that went
+    # out without the front is the evidence a run needs when it goes wrong.
+    $lost = 0
+    foreach ($key in $keys) {
+        if ([Win]::GetForegroundWindow() -ne $hwnd) {
+            [void] [Win]::SetForegroundWindow($hwnd)
+            [void] [Win]::BringWindowToTop($hwnd)
+            if ([Win]::GetForegroundWindow() -ne $hwnd) { $lost++ }
+        }
+        Key $hwnd $key
+    }
+    if ($lost -gt 0) { Say ("  warning: {0} of {1} keys went out without the front - the menu may be on the wrong item" -f $lost, $keys.Count) }
     Start-Sleep -Milliseconds 400
+}
+
+# What the game did with a batch, read out of the stub's own log. A failed drive has
+# two shapes and they mean different things: the game started a server instead of a
+# lobby (the batch landed on Start New Server - it registers the game server's own
+# callbacks, GSPolicyResponse_t and ValidateAuthTicketResponse_t), or it never moved at
+# all (nothing was taken out of its queue of payloads). Without this a run only says
+# 'the drive did not land', which is a guess about which of the two happened. It is
+# only read when no lobby appeared, which is what makes the first shape conclusive: a
+# game that registered the game server's callbacks without a lobby was driven onto
+# Start New Server, since nothing else offers it.
+function Drive-Diagnosis([string] $logPath) {
+    if (-not (Test-Path $logPath)) { return 'there is no stub log to read' }
+    $lines = @(Get-Content $logPath -ErrorAction SilentlyContinue)
+    $took = @($lines | Select-String -Pattern 'taking a payload out of the queue').Count
+    $ranServer = @($lines | Select-String -Pattern 'callback id 115: first|callback id 143: first').Count -gt 0
+    if ($ranServer) {
+        return ("the game started a server, so the batch landed on Start New Server - {0} payload(s) were taken" -f $took)
+    }
+    if ($took -eq 0) {
+        return 'the game took nothing out of its queue, so the whole batch was dropped'
+    }
+    return ("the game took {0} payload(s) but never made a lobby" -f $took)
 }
 
 # The two windows on one screen, half each. The rig's keys need the foreground and the
@@ -350,17 +387,58 @@ if ($Record) {
 }
 
 # Main menu: Start New Server, Find LAN Servers, Find Internet Servers, Create Lobby.
-Drive $hwndA @($VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_RETURN) 'instance A: Create Lobby'
+# The keys only land if the game is pumping frames when they arrive - it throws a batch
+# away on any frame where its window is not the front one (see Key) - and a client that
+# is still starting up is the one shape where every key is dropped. Its frame loop is in
+# the transcript as RunCallbacks, so the drive waits for that instead of assuming the
+# window appearing means the game is ready for keys.
+$pumping = $false
+for ($i = 0; $i -lt 40 -and -not $pumping; $i++) {
+    Start-Sleep -Milliseconds 250
+    $pumping = (Read-Transcript).Contains('"call":"SteamAPI_RunCallbacks"')
+}
+if ($pumping) { Say 'instance A: its frame loop is running - driving the menu' }
+else { Say 'instance A: no RunCallbacks in ten seconds - the game never started pumping' }
+Start-Sleep -Milliseconds 700
 
-Say 'waiting for the lobby the world mints'
+# Three tries. A batch that lands nowhere or one item off costs a ten minute run, and a
+# relaunch costs eight seconds, so a failed try is retried rather than written off -
+# and what it did is read out of its own stub log first, which is why each try keeps
+# its log (a.log for the first, a-try2.log and so on after it).
+$attempts = 3
 $lobby = $null
-for ($i = 0; $i -lt 40 -and -not $lobby; $i++) {
-    Start-Sleep -Seconds 1
-    $match = [regex]::Match((Read-Transcript), '"steamIDLobby":(\d{10,})')
-    if ($match.Success) { $lobby = $match.Groups[1].Value }
+$why = 'nothing was tried'
+for ($attempt = 1; $attempt -le $attempts -and -not $lobby; $attempt++) {
+    if ($attempt -gt 1) {
+        Say ("instance A: trying again for try {0} - {1}" -f $attempt, $why)
+        Stop-Process -Id $a.Id -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+        $a = Start-Game 'default' @() ("a-try{0}.log" -f $attempt)
+        $hwndA = Wait-Window $a
+        if ($hwndA -eq [IntPtr]::Zero) {
+            Say 'instance A never showed a window on this try - stopping'
+            Stop-Rig @($a, $backend)
+            exit 1
+        }
+        Say ("instance A: pid {0}, window {1}, exited {2}" -f $a.Id, $hwndA, $a.HasExited)
+        if ($Record) { Tile @($hwndA, $guiHwnd) }
+        Start-Sleep -Seconds 3
+    }
+    Drive $hwndA @($VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_RETURN) 'instance A: Create Lobby'
+    Say 'waiting for the lobby the world mints'
+    for ($i = 0; $i -lt 12 -and -not $lobby; $i++) {
+        Start-Sleep -Seconds 1
+        $match = [regex]::Match((Read-Transcript), '"steamIDLobby":(\d{10,})')
+        if ($match.Success) { $lobby = $match.Groups[1].Value }
+    }
+    if (-not $lobby) {
+        $log = if ($attempt -eq 1) { 'a.log' } else { "a-try{0}.log" -f $attempt }
+        $why = Drive-Diagnosis (Join-Path $RigDir $log)
+        Say ("instance A: no lobby after try {0} - {1}" -f $attempt, $why)
+    }
 }
 if (-not $lobby) {
-    Say 'no lobby was created - the menu drive did not land'
+    Say ("no lobby was created in {0} tries - {1}" -f $attempts, $why)
     Stop-Rig @($a, $backend)
     exit 1
 }
