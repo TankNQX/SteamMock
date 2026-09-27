@@ -1753,6 +1753,10 @@ def render_surface(surface: Surface, labels: Sequence[str]) -> str:
     document = {
         "source": "Steamworks SDK headers, read by tools/steamworks_sdk_import.py",
         "format": "the flat API the stub exports: one entry per S_API function the SDK declares",
+        # The newest SDK read is the one whose spelling of a name won, where two of
+        # them disagreed: that is what the surface is *of*, and the whole list is
+        # kept beside it so the provenance is not lost.
+        "surface": list(labels)[-1] if labels else "?",
         "sdks": list(labels),
         "calls": surface.calls,
     }

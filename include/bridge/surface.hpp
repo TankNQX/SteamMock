@@ -8,7 +8,7 @@ namespace steammock {
 //  What the stub exports, as the backend sees it.
 // ---------------------------------------------------------------------------
 //  This is the hand-written shape; the table itself is generated from
-//  gen/steam_api.idl.json into src/generated/api_surface.cpp, so `--list-api`
+//  gen/steam_api_surface.json into src/generated/api_surface.cpp, so `--list-api`
 //  can print the surface without reading a file at run time and without the
 //  backend having to parse the IDL.
 //
@@ -31,7 +31,6 @@ struct SurfaceCall {
 };
 
 const char* api_surface_name() noexcept;
-int api_surface_revision() noexcept;
 const SurfaceCall* api_surface_calls(std::size_t& count) noexcept;
 
 }  // namespace steammock

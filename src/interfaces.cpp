@@ -232,7 +232,7 @@ bool read_size(const Json& object, int& out, std::string& error, const std::stri
 //    ["GetSteamID", "CSteamID"]
 //    ["GetInstalledApps", "uint32", [["pvecAppID", "uint32", "out"], ["unMaxAppIDs", "uint32"]]]
 //    ["GetStat", "bool", [["steamIDUser", "CSteamID"], ["pchName", "cstring"]],
-//     {"call": "SteamAPI_ISteamUserStats_GetStatInt32"}]
+//     {"call": "SteamAPI_ISteamUserStats_GetStat"}]
 //    ["~"]                                  the vtable's destructor slot
 //    ["~", {"call": "..."}]                 the same, with the name the SDK gives it
 //

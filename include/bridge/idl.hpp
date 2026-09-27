@@ -55,14 +55,12 @@ public:
     static bool from_json(const Json& document, Idl& out, std::string& error);
 
     const std::string& surface() const noexcept { return _surface; }
-    int revision() const noexcept { return _revision; }
 
     // Sorted by name: the order every generated file is written in.
     const std::vector<IdlCall>& calls() const noexcept { return _calls; }
 
 private:
     std::string _surface = "?";
-    int _revision = 0;
     std::vector<IdlCall> _calls;
 };
 

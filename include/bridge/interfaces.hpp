@@ -12,7 +12,8 @@ namespace steammock {
 // ---------------------------------------------------------------------------
 //  gen/steam_interfaces.json - the interface layouts the stub hands out.
 // ---------------------------------------------------------------------------
-//  Where gen/steam_api.idl.json is hand-written (one entry per exported call),
+//  Where the surface file (gen/steam_api_surface.json) is read out of an SDK, this
+//  is hand-maintained data:
 //  this file is hand-maintained data: one entry per interface *version*, with the
 //  slots in vtable order and the argument kinds each one carries. It was imported
 //  from Steamworks SDK headers when the surface was laid out, and adding a version

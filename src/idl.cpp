@@ -336,9 +336,8 @@ std::vector<std::string> generated_header(const Idl& idl, const char* regenerate
     return {open,
             kGeneratedNote,
             "//",
-            std::string("//  Source:   gen/steam_api.idl.json (surface '") + idl.surface() +
-                "', revision " + std::to_string(idl.revision()) + ", " +
-                std::to_string(idl.calls().size()) + " calls)",
+            std::string("//  Source:   gen/steam_api_surface.json (surface '") + idl.surface() +
+                "', " + std::to_string(idl.calls().size()) + " calls)",
             regenerate,
             close};
 }
@@ -361,13 +360,11 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
     }
 
     Idl parsed;
+    // Which API this is: the name of the surface it was read from - the SDK's own
+    // version, or whatever a hand-written one calls itself.
     if (const Json* surface = json_member(document, "surface");
         surface != nullptr && surface->is_string()) {
         parsed._surface = as_string(*surface);
-    }
-    if (const Json* revision = json_member(document, "revision");
-        revision != nullptr && revision->is_number()) {
-        parsed._revision = static_cast<int>(as_int64(*revision));
     }
 
     for (const Json& entry : *calls_json) {
@@ -523,6 +520,13 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
         parsed._calls.push_back(std::move(call));
     }
 
+    // A surface with calls and no name is a file nobody could review: the table
+    // travels into the stub and out of --list-api, and "?" there says nothing
+    // about which API this build exports.
+    if (!parsed._calls.empty() && parsed._surface == "?") {
+        error = "a surface with calls needs a 'surface' name - which SDK it was read from";
+        return false;
+    }
     std::sort(parsed._calls.begin(), parsed._calls.end(),
               [](const IdlCall& left, const IdlCall& right) { return left.name < right.name; });
     out = std::move(parsed);
@@ -557,8 +561,16 @@ bool Idl::load_file(const std::string& path, Idl& out, std::string& error) {
 
 std::string render_api_stub(const Idl& idl) {
     bool needs_interfaces = false;
+    bool needs_empty_string = false;
     for (const IdlCall& call : idl.calls()) {
         needs_interfaces = needs_interfaces || call.fallback == "interface";
+        // A string a call returns, or a string it takes: both reach for the empty
+        // text - one as the value a game reads when nobody answered, the other as
+        // the argument a null pointer is spelled with.
+        needs_empty_string = needs_empty_string || call.returns == "cstring";
+        for (const IdlParam& param : call.params) {
+            needs_empty_string = needs_empty_string || param.type == "cstring";
+        }
     }
 
     std::vector<std::string> out = generated_header(
@@ -574,10 +586,15 @@ std::string render_api_stub(const Idl& idl) {
     out.push_back("");
     out.push_back("namespace {");
     out.push_back("");
-    out.push_back("// Handed back for a string-returning call nobody answered, so a game that");
-    out.push_back("// skips its null check still reads empty text instead of faulting.");
-    out.push_back("const char kEmptyString[] = \"\";");
-    out.push_back("");
+    // Only when something can return one: with no calls at all - a checkout with no
+    // surface imported - a constant nobody reads is a warning, and this project
+    // treats one as an error.
+    if (needs_empty_string) {
+        out.push_back("// Handed back for a string-returning call nobody answered, so a game that");
+        out.push_back("// skips its null check still reads empty text instead of faulting.");
+        out.push_back("const char kEmptyString[] = \"\";");
+        out.push_back("");
+    }
     out.push_back("}  // namespace");
     out.push_back("");
 
@@ -661,8 +678,6 @@ std::string render_api_surface(const Idl& idl) {
     out.push_back("");
     out.push_back("const char* api_surface_name() noexcept { return " +
                   cpp_string_literal(idl.surface()) + "; }");
-    out.push_back("int api_surface_revision() noexcept { return " + std::to_string(idl.revision()) +
-                  "; }");
     out.push_back("const SurfaceCall* api_surface_calls(std::size_t& count) noexcept {");
     out.push_back("    count = " + std::to_string(calls.size()) + ";");
     out.push_back("    return kCalls;");

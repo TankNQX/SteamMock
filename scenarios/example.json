@@ -19,11 +19,7 @@
       "scripted": {
         "SteamAPI_Init": { "ret": true },
         "SteamAPI_IsSteamRunning": { "ret": true },
-        "SteamAPI_RestartAppIfNecessary": { "ret": false },
-        "SteamAPI_ISteamUser": { "ret": 4660 },
-        "SteamAPI_ISteamUtils": { "ret": 4661 },
-        "SteamAPI_ISteamUserStats": { "ret": 4662 },
-        "SteamAPI_ISteamApps": { "ret": 4663 }
+        "SteamAPI_RestartAppIfNecessary": { "ret": false }
       }
     },
     "second_game": {
@@ -41,11 +37,7 @@
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
-        "SteamAPI_IsSteamRunning": { "ret": true },
-        "SteamAPI_ISteamUser": { "ret": 4660 },
-        "SteamAPI_ISteamUtils": { "ret": 4661 },
-        "SteamAPI_ISteamUserStats": { "ret": 4662 },
-        "SteamAPI_ISteamApps": { "ret": 4663 }
+        "SteamAPI_IsSteamRunning": { "ret": true }
       }
     }
   },

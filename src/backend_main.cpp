@@ -207,8 +207,7 @@ ParseResult parse_args(int argc, char** argv, Options& options) {
 int print_api() {
     std::size_t count = 0;
     const steammock::SurfaceCall* calls = steammock::api_surface_calls(count);
-    std::printf("# surface '%s' revision %d, %zu calls\n", steammock::api_surface_name(),
-                steammock::api_surface_revision(), count);
+    std::printf("# surface '%s', %zu calls\n", steammock::api_surface_name(), count);
     for (std::size_t index = 0; index < count; ++index) {
         const steammock::SurfaceCall& call = calls[index];
         std::string params;

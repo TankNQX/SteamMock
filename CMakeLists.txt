@@ -13,7 +13,7 @@ project(SteamMock VERSION 0.1.0 LANGUAGES CXX)
 #
 #    steam_api64.dll        loaded by the game, forwards the calls
 #    steammock(.exe)      the backend that answers them
-#    steammock_codegen    regenerates the stub from gen/steam_api.idl.json
+#    steammock_codegen    regenerates the stub from gen/steam_api_surface.json
 #
 #  Windows only, on purpose: the stub is a DLL a game loads by name, and the
 #  backend answers it over loopback Winsock. Neither half has a meaningful build
@@ -118,17 +118,20 @@ target_link_libraries(steammock_codegen PRIVATE steammock_core)
 #  The generated files, written by that generator before anything reads them
 # ---------------------------------------------------------------------------
 #  Nothing under src/generated/ is committed: they are outputs, and the build runs
-#  the generator for them. Neither is gen/steam_interfaces.json, because it holds
-#  Valve's own interface layouts - whoever builds this imports them from an SDK
-#  they have:
+#  the generator for them. Neither is anything under gen/, because both files
+#  there hold Valve's own API - one is the surface the SDK declares, the other its
+#  interface layouts - and whoever builds this imports them from an SDK they have:
 #
-#    python tools/steamworks_sdk_import.py --sdk <sdk>/public/steam --out gen/steam_interfaces.json
+#    python tools/steamworks_sdk_import.py --sdk <sdk>/public/steam \
+#        --out gen/steam_interfaces.json --surface gen/steam_api_surface.json
 #
-#  Without one the stub hands out no interface objects - a game built against a
-#  recent SDK gets null where it asks for a version string - and the end-to-end
-#  test says so and skips those checks. Everything else works the same.
-set(STEAMMOCK_IDL "${CMAKE_CURRENT_SOURCE_DIR}/gen/steam_api.idl.json"
-    CACHE FILEPATH "The API surface the stub is generated from")
+#  Either import is optional and the build says what is missing when one is:
+#  without the surface the stub exports nothing (a game that imports a Steam name
+#  does not start), and without the layouts it hands out no interface objects (a
+#  game built against a recent SDK gets null where it asks for a version string).
+#  The end-to-end test says which half it could not check rather than failing.
+set(STEAMMOCK_SURFACE "${CMAKE_CURRENT_SOURCE_DIR}/gen/steam_api_surface.json"
+    CACHE FILEPATH "The flat API the stub exports, read from an SDK")
 set(STEAMMOCK_INTERFACES "${CMAKE_CURRENT_SOURCE_DIR}/gen/steam_interfaces.json"
     CACHE FILEPATH "The interface layouts the stub is generated from (imported from an SDK)")
 
@@ -139,10 +142,16 @@ set(STEAMMOCK_GENERATED
     "${CMAKE_CURRENT_SOURCE_DIR}/src/generated/steam_api_exports.def"
 )
 
-# The layouts are an input only when they are there: a checkout with none still
-# builds, and re-importing them means configuring again (or running the generator
-# by hand), which is what regeneration has always meant here.
-set(STEAMMOCK_GENERATED_INPUTS "${STEAMMOCK_IDL}")
+# Both imports are inputs only when they are there: a checkout with neither still
+# builds, and importing one means configuring again (or running the generator by
+# hand), which is what regeneration has always meant here.
+set(STEAMMOCK_GENERATED_INPUTS "")
+if(EXISTS "${STEAMMOCK_SURFACE}")
+    list(APPEND STEAMMOCK_GENERATED_INPUTS "${STEAMMOCK_SURFACE}")
+else()
+    message(STATUS "steammock: no API surface at ${STEAMMOCK_SURFACE} - "
+                   "the stub will export nothing")
+endif()
 if(EXISTS "${STEAMMOCK_INTERFACES}")
     list(APPEND STEAMMOCK_GENERATED_INPUTS "${STEAMMOCK_INTERFACES}")
 else()
@@ -153,11 +162,11 @@ endif()
 add_custom_command(
     OUTPUT ${STEAMMOCK_GENERATED}
     COMMAND steammock_codegen
-            --idl "${STEAMMOCK_IDL}"
+            --idl "${STEAMMOCK_SURFACE}"
             --interfaces "${STEAMMOCK_INTERFACES}"
             --root "${CMAKE_CURRENT_SOURCE_DIR}"
     DEPENDS steammock_codegen ${STEAMMOCK_GENERATED_INPUTS}
-    COMMENT "steammock_codegen: ${STEAMMOCK_IDL}"
+    COMMENT "steammock_codegen: ${STEAMMOCK_SURFACE}"
     VERBATIM
 )
 add_custom_target(steammock_generated DEPENDS ${STEAMMOCK_GENERATED})
@@ -255,11 +264,13 @@ if(STEAMMOCK_BUILD_TESTS)
     add_test(NAME server COMMAND test_server)
 
     # The generated files are outputs of the build, and this compares them against
-    # the inputs they were generated from - so it fails if the IDL was edited and
-    # the tree not rebuilt. Same inputs as the build, by the same paths.
+    # the inputs they were generated from - so it fails if the surface was
+    # re-imported and the tree not rebuilt. Same inputs as the build, by the same
+    # paths, so a checkout with neither import compares two empty surfaces and
+    # agrees with itself.
     add_test(NAME generated_files_are_current
              COMMAND $<TARGET_FILE:steammock_codegen> --check
-                     --idl "${STEAMMOCK_IDL}" --interfaces "${STEAMMOCK_INTERFACES}")
+                     --idl "${STEAMMOCK_SURFACE}" --interfaces "${STEAMMOCK_INTERFACES}")
     set_tests_properties(generated_files_are_current PROPERTIES
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 

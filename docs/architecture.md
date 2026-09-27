@@ -12,7 +12,7 @@
 | Server | `src/server.cpp` | Accepts sessions, resolves each call, writes a transcript, and hands out snapshots of what it has seen. |
 | Session | `src/session.cpp` | The per-game state machine: identity, language, app id, stats, achievements. |
 | Scenario | `src/scenario.cpp` | Which profile a connecting game gets, and which calls a scenario overrides. |
-| Generator | `src/idl.cpp`, `src/codegen_main.cpp` | Turns `gen/steam_api.idl.json` into the trampolines, the `.def` and the surface table. |
+| Generator | `src/idl.cpp`, `src/codegen_main.cpp` | Turns `gen/steam_api_surface.json` into the trampolines, the `.def` and the surface table - and holds the mock's own decisions, by call name. |
 
 Everything above is one CMake project and one toolchain. The only thing the two halves do not share
 is their entry point: the stub is a DLL that a game loads, the backend is a program a person starts.
@@ -106,9 +106,9 @@ Three decisions keep that from being 2,115 hand-written functions:
 * **One name per call, whichever route reached it.** A slot is named what the newest imported SDK names
   that method with that signature - not what the game's own SDK called it, since the SDKs renamed these
   along the way: 1.47 says `SteamAPI_ISteamUserStats_GetStat` for the int32 overload where 1.51 and
-  later say `SteamAPI_ISteamUserStats_GetStatInt32`. Asking the same question through the flat import
+  later say `SteamAPI_ISteamUserStats_GetStat`. Asking the same question through the flat import
   and through the vtable therefore arrives as one call, a scenario that answers
-  `SteamAPI_ISteamUserStats_GetStatInt32` answers it either way, and the transcript does not have two
+  `SteamAPI_ISteamUserStats_GetStat` answers it either way, and the transcript does not have two
   vocabularies for one API. The slots with no flat entry point - the `STEAM_PRIVATE_API` ones - keep
   the name the layouts gave them.
 
@@ -161,7 +161,7 @@ told it instead of faulting on a null pointer.
 * A returned string is copied into a per-thread buffer that stays valid until the next call on that
   thread, because the reply it came from dies with the call. Games normally copy immediately; one
   that stores the pointer would read the next call's text.
-* Interface pointers are tokens, except where they are objects of ours. `SteamAPI_ISteamUser()`
+* Interface pointers are tokens, except where they are objects of ours. `SteamInternal_CreateInterface`
   returns whatever the scenario says, and the backend sees that same number back on every later call;
   it cannot dereference it. A version string the stub has layouts for is the other case: the game
   gets a real object whose vtable is ours, and its calls arrive as calls like any other.

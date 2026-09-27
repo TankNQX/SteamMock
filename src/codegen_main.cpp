@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 //  steammock_codegen - turn the two data files into the generated files.
 // ---------------------------------------------------------------------------
-//  gen/steam_api.idl.json is the source of truth for what the stub exports, and
+//  gen/steam_api_surface.json is the source of truth for what the stub exports, and
 //  gen/steam_interfaces.json for the interface versions it hands out. Adding a
 //  call means adding one entry there, and adding an interface version means the
 //  same in the other file; either way, then:
@@ -29,7 +29,7 @@
 
 namespace {
 
-const char* const kDefaultIdl = "gen/steam_api.idl.json";
+const char* const kDefaultIdl = "gen/steam_api_surface.json";
 const char* const kDefaultInterfaces = "gen/steam_interfaces.json";
 
 bool read_file_bytes(const std::string& path, std::string& out) {
@@ -87,7 +87,7 @@ void print_usage(std::FILE* out) {
                  "  --idl FILE         the API surface to read (default %s)\n"
                  "  --interfaces FILE  the interface layouts to read (default %s)\n"
                  "  --root DIR         the checkout the outputs belong to (default: the parent of\n"
-                 "                     the IDL's directory)\n"
+                 "                     the surface's directory)\n"
                  "  --check            do not write; fail if the generated files are out of date\n",
                  kDefaultIdl, kDefaultInterfaces);
 }
@@ -147,15 +147,27 @@ int run(int argc, char** argv) {
     }
 
     if (!root_given) {
-        // "gen/steam_api.idl.json" means the checkout is one level above gen/,
+        // "gen/steam_api_surface.json" means the checkout is one level above gen/,
         // which is how the tool is run from the repository root.
         root = parent_of(parent_of(idl_path));
     }
 
     steammock::Idl idl;
     std::string error;
-    if (!steammock::Idl::load_file(idl_path, idl, error)) {
-        std::fprintf(stderr, "idl error: %s\n", error.c_str());
+    if (!file_exists(idl_path)) {
+        // The surface is Valve's own API too, and is deliberately not part of the
+        // checkout either: whoever builds this imports theirs from an SDK they have,
+        // with `--surface`. Without one the stub exports nothing at all, which the
+        // tests say out loud rather than failing on - so this is a note, and the
+        // same shape as the layouts below.
+        std::fprintf(stderr,
+                     "steammock_codegen: no API surface at %s\n"
+                     "  the stub will export nothing; import yours with\n"
+                     "  python tools/steamworks_sdk_import.py --sdk <sdk>/public/steam "
+                     "--surface %s\n",
+                     idl_path.c_str(), idl_path.c_str());
+    } else if (!steammock::Idl::load_file(idl_path, idl, error)) {
+        std::fprintf(stderr, "surface error: %s\n", error.c_str());
         return 2;
     }
 

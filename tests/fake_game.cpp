@@ -95,7 +95,6 @@ namespace {
 using init_fn = bool (*)();
 using void_fn = void (*)();
 using bool_fn = bool (*)();
-using interface_fn = void* (*)();
 using bool_self_fn = bool (*)(void*);
 using steam_id_fn = std::uint64_t (*)(void*);
 using cstring_self_fn = const char* (*)(void*);
@@ -146,6 +145,17 @@ int run() {
         return 2;
     }
 
+    // The stub exports a Steam API only when an SDK's surface was imported into
+    // gen/steam_api_surface.json. Without one there is no flat API to call and
+    // nothing this stand-in can check, so it says so in one line and stops - the
+    // end-to-end test reads that and skips the half that needs a surface, rather
+    // than this process dying on the first export it cannot find.
+    if (GetProcAddress(stub, "SteamAPI_Init") == nullptr) {
+        std::printf("surface=none\n");
+        FreeLibrary(stub);
+        return 0;
+    }
+
     const auto api_init = resolve<init_fn>(stub, "SteamAPI_Init");
     const auto api_shutdown = resolve<void_fn>(stub, "SteamAPI_Shutdown");
     const auto api_run_callbacks = resolve<void_fn>(stub, "SteamAPI_RunCallbacks");
@@ -153,17 +163,16 @@ int run() {
     const auto get_h_user = resolve<count_fn>(stub, "SteamAPI_GetHSteamUser");
     const auto get_h_pipe = resolve<count_fn>(stub, "SteamAPI_GetHSteamPipe");
     const auto install_path = resolve<session_fn>(stub, "SteamAPI_GetSteamInstallPath");
-    const auto isteam_user = resolve<interface_fn>(stub, "SteamAPI_ISteamUser");
-    const auto isteam_utils = resolve<interface_fn>(stub, "SteamAPI_ISteamUtils");
-    const auto isteam_user_stats = resolve<interface_fn>(stub, "SteamAPI_ISteamUserStats");
     const auto get_steam_id = resolve<steam_id_fn>(stub, "SteamAPI_ISteamUser_GetSteamID");
     const auto get_persona =
         resolve<cstring_self_fn>(stub, "SteamAPI_ISteamFriends_GetPersonaName");
     const auto get_app_id = resolve<app_id_fn>(stub, "SteamAPI_ISteamUtils_GetAppID");
+    // The language a game is running in is ISteamApps' call, and that is the name
+    // the layouts put on the wire.
     const auto get_language =
-        resolve<cstring_self_fn>(stub, "SteamAPI_ISteamUtils_GetCurrentGameLanguage");
-    const auto get_stat = resolve<stat_get_fn>(stub, "SteamAPI_ISteamUserStats_GetStatInt32");
-    const auto set_stat = resolve<stat_set_fn>(stub, "SteamAPI_ISteamUserStats_SetStatInt32");
+        resolve<cstring_self_fn>(stub, "SteamAPI_ISteamApps_GetCurrentGameLanguage");
+    const auto get_stat = resolve<stat_get_fn>(stub, "SteamAPI_ISteamUserStats_GetStat");
+    const auto set_stat = resolve<stat_set_fn>(stub, "SteamAPI_ISteamUserStats_SetStat");
     const auto get_achievement =
         resolve<achievement_get_fn>(stub, "SteamAPI_ISteamUserStats_GetAchievement");
     const auto set_achievement =
@@ -194,9 +203,13 @@ int run() {
     const std::string session = bounded(session_id());
     std::printf("session_set=%s\n", session.empty() ? "false" : "true");
 
-    void* const user = isteam_user();
-    void* const utils = isteam_utils();
-    void* const user_stats = isteam_user_stats();
+    // An interface comes from the factory, the way this SDK's own inline accessors
+    // get one: the exported `SteamAPI_ISteamXxx()` functions only appear from 1.51
+    // on, and a game built against anything older asks for a version string.
+    void* const user = create_interface("SteamUser019");
+    void* const utils = create_interface("SteamUtils009");
+    void* const user_stats = create_interface("STEAMUSERSTATS_INTERFACE_VERSION011");
+    void* const apps = create_interface("STEAMAPPS_INTERFACE_VERSION008");
     std::printf("interfaces=%s\n",
                 (user != nullptr && utils != nullptr && user_stats != nullptr) ? "true" : "false");
 
@@ -204,7 +217,7 @@ int run() {
     std::printf("steam_id=%llu\n", static_cast<unsigned long long>(get_steam_id(user)));
     std::printf("persona=%s\n", bounded(get_persona(user)).c_str());
     std::printf("app_id=%u\n", get_app_id(utils));
-    std::printf("language=%s\n", bounded(get_language(utils)).c_str());
+    std::printf("language=%s\n", bounded(get_language(apps)).c_str());
 
     // --- stats, including an out-parameter --------------------------------
     // One `key=value` per line, each key unique: the end-to-end test parses this

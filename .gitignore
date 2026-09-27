@@ -5,13 +5,13 @@
 
 # Generated, and never committed
 #
-# src/generated/ is written by steammock_codegen at build time, and
-# gen/steam_interfaces.json is written by tools/steamworks_sdk_import.py from the
-# SDKs the builder has. Both carry Valve's own API surface - the second one is
-# Valve's interface layouts and the first is rendered from them - so neither
-# belongs in the tree. gen/steam_api.idl.json, the hand-written seed, is the input
-# and stays.
+# src/generated/ is written by steammock_codegen at build time, and gen/ holds the
+# two things tools/steamworks_sdk_import.py reads out of the SDKs the builder has:
+# the flat API surface the stub exports, and the interface layouts it hands out.
+# All three carry Valve's own API - one rendered from the other two - so none of
+# them belongs in the tree.
 /src/generated/
+/gen/steam_api_surface.json
 /gen/steam_interfaces.json
 
 # CMake in-tree artifacts

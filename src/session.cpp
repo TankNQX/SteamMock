@@ -233,15 +233,22 @@ constexpr HandlerEntry kHandlers[] = {
     {"SteamAPI_ISteamUser_GetSteamID", &h_steam_id},
     {"SteamAPI_ISteamFriends_GetPersonaName", &h_persona_name},
     {"SteamAPI_ISteamUtils_GetAppID", &h_app_id},
-    {"SteamAPI_ISteamUtils_GetCurrentGameLanguage", &h_language},
+    // The language a game is running in is ISteamApps' call in every SDK this has
+    // been read from, and the layouts put that name on the wire: answering the
+    // ISteamUtils spelling instead - which no SDK declares - is a call nobody can
+    // make and a game that is told nothing.
+    {"SteamAPI_ISteamApps_GetCurrentGameLanguage", &h_language},
     {"SteamAPI_ISteamUtils_GetSteamUILanguage", &h_ui_language},
     {"SteamAPI_ISteamUtils_GetSecondsSinceAppActive", &h_seconds_since_active},
     {"SteamAPI_ISteamUtils_GetServerRealTime", &h_server_real_time},
     {"SteamAPI_ISteamApps_GetAppBuildId", &h_build_id},
     {"SteamAPI_ISteamUserStats_RequestCurrentStats", &h_true},
     {"SteamAPI_ISteamUserStats_StoreStats", &h_true},
-    {"SteamAPI_ISteamUserStats_GetStatInt32", &h_get_stat},
-    {"SteamAPI_ISteamUserStats_SetStatInt32", &h_set_stat},
+    // The overloads are named after their types only from 1.51 on; every SDK read
+    // here spells the integer one `GetStat`, and it is that flat name the layouts
+    // travel under.
+    {"SteamAPI_ISteamUserStats_GetStat", &h_get_stat},
+    {"SteamAPI_ISteamUserStats_SetStat", &h_set_stat},
     {"SteamAPI_ISteamUserStats_GetAchievement", &h_get_achievement},
     {"SteamAPI_ISteamUserStats_SetAchievement", &h_set_achievement},
     {"SteamAPI_ISteamUserStats_GetNumAchievements", &h_num_achievements},

@@ -230,7 +230,7 @@ void test_identity() {
               session.handle("SteamAPI_ISteamUtils_GetAppID", Json::object()).ret) == 480);
     check("the language is the profile's",
           steammock::as_string(
-              session.handle("SteamAPI_ISteamUtils_GetCurrentGameLanguage", Json::object()).ret) ==
+              session.handle("SteamAPI_ISteamApps_GetCurrentGameLanguage", Json::object()).ret) ==
               "english");
     check("the install path is reported",
           !steammock::as_string(session.handle("SteamAPI_GetSteamInstallPath", Json::object()).ret)
@@ -249,18 +249,17 @@ void test_stats() {
     std::printf("[:] stats\n");
 
     Session session = make_session();
-    const Answer read =
-        session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths"));
+    const Answer read = session.handle("SteamAPI_ISteamUserStats_GetStat", name_argument("Deaths"));
     check("a known stat is answered", read.answered && steammock::as_bool(read.ret));
     check("a stat is read as named out parameters", out_int(read, "pData") == 3);
 
     Json write = name_argument("Deaths");
     write["nData"] = Json(9);
     check("writing a stat is accepted",
-          steammock::as_bool(session.handle("SteamAPI_ISteamUserStats_SetStatInt32", write).ret));
+          steammock::as_bool(session.handle("SteamAPI_ISteamUserStats_SetStat", write).ret));
 
     const Answer reread =
-        session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths"));
+        session.handle("SteamAPI_ISteamUserStats_GetStat", name_argument("Deaths"));
     check("reading it back sees the new value", out_int(reread, "pData") == 9);
     check("the write is remembered for a transcript",
           session.stats_written().size() == 1u && session.stats_written()[0].second == 9);
@@ -268,13 +267,12 @@ void test_stats() {
     // A game may invent a stat locally without the scenario listing it first.
     Json invented = name_argument("Invented");
     invented["nData"] = Json(1);
-    session.handle("SteamAPI_ISteamUserStats_SetStatInt32", invented);
-    check(
-        "a stat a game invents can be read back",
-        steammock::as_bool(session.handle("SteamAPI_ISteamUserStats_GetStatInt32", invented).ret));
+    session.handle("SteamAPI_ISteamUserStats_SetStat", invented);
+    check("a stat a game invents can be read back",
+          steammock::as_bool(session.handle("SteamAPI_ISteamUserStats_GetStat", invented).ret));
 
     const Answer missing =
-        session.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("NoSuchStat"));
+        session.handle("SteamAPI_ISteamUserStats_GetStat", name_argument("NoSuchStat"));
     check("an unknown stat is still answered", missing.answered);
     check("an unknown stat fails, like Steam", !steammock::as_bool(missing.ret));
     check("an unknown stat leaves the caller's variable alone", !has_out(missing));
@@ -460,14 +458,14 @@ void test_profiles_are_per_session() {
 
     Json write = name_argument("Deaths");
     write["nData"] = Json(77);
-    one.handle("SteamAPI_ISteamUserStats_SetStatInt32", write);
+    one.handle("SteamAPI_ISteamUserStats_SetStat", write);
 
     check("the game that wrote sees its own value",
           steammock::as_bool(
-              one.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths")).ret));
+              one.handle("SteamAPI_ISteamUserStats_GetStat", name_argument("Deaths")).ret));
     check("the other game is not handed that value",
           !steammock::as_bool(
-              two.handle("SteamAPI_ISteamUserStats_GetStatInt32", name_argument("Deaths")).ret));
+              two.handle("SteamAPI_ISteamUserStats_GetStat", name_argument("Deaths")).ret));
 }
 
 // The lobbies a run holds are the one piece of backend state that is not per game,
@@ -768,16 +766,25 @@ void test_surface_matches_the_idl() {
 
     std::size_t count = 0;
     const steammock::SurfaceCall* calls = steammock::api_surface_calls(count);
+    // Nothing to say about a surface that was not imported: it is Valve's API, it is
+    // not part of the checkout, and a build without one has a stub that exports
+    // nothing but its own diagnostics. Saying so is the check, rather than failing
+    // on a table that is empty on purpose - the same shape as the end-to-end test's
+    // half that needs an interface layout.
+    if (count == 0u) {
+        std::printf("  [skip] no API surface was imported, so there is nothing here to check\n");
+        return;
+    }
     std::set<std::string> names;
     for (std::size_t index = 0; index < count; ++index) {
         names.insert(calls[index].name);
     }
     check("the surface has calls", count > 0u);
-    check("it names the surface", std::string(steammock::api_surface_name()) == "seed");
-    check("it is the revision the IDL says", steammock::api_surface_revision() == 2);
+    // The name is the SDK the surface was read from, so it is a fact about the
+    // import rather than a constant a person maintains.
+    check("it names the surface it came from", std::string(steammock::api_surface_name()) != "?");
     check("a policy call is listed", names.count("SteamAPI_Init") == 1u);
-    check("an out-parameter call is listed",
-          names.count("SteamAPI_ISteamUserStats_GetStatInt32") == 1u);
+    check("an out-parameter call is listed", names.count("SteamAPI_ISteamUserStats_GetStat") == 1u);
     // Windows resolves a game's whole import table before it runs, so a name a
     // real game imports and the stub does not export is a game that will not
     // start. Both of these are in Spacewar's own executable.
@@ -800,7 +807,7 @@ void test_surface_matches_the_idl() {
 
     // And the surface has to describe the parameters --list-api prints.
     for (std::size_t index = 0; index < count; ++index) {
-        if (std::string(calls[index].name) != "SteamAPI_ISteamUserStats_GetStatInt32") {
+        if (std::string(calls[index].name) != "SteamAPI_ISteamUserStats_GetStat") {
             continue;
         }
         check("the out parameter is marked as one",
