@@ -782,6 +782,43 @@ void test_who_sent_a_packet() {
           read(host, LobbyWorld::kGameServerHSteamUser, then_the_guest));
     check("and it is the guest's, unchanged",
           remote_of(then_the_guest) == kGuestId && text_of(then_the_guest.out, "pubDest") == "5e");
+
+    // The auth handshake has two halves and both have to be answered: a game server asking
+    // about a player, and a player asking about the peer it is about to play with. Each is
+    // promised its answer as a ValidateAuthTicketResponse_t callback rather than as the
+    // return value, so a world that answers only the server's half leaves a client's auth
+    // player waiting for a validation that never comes - until the game's own ticket
+    // timeout drops the peer it asked about, which is a client leaving a server that had
+    // never registered it.
+    auto auth_args = [](std::uint64_t peer) {
+        Json args = Json::object();
+        args["pAuthTicket"] = Json(static_cast<std::int64_t>(0x1000));
+        args["cbAuthTicket"] = Json(14);
+        args["steamID"] = Json(static_cast<std::int64_t>(peer));
+        return args;
+    };
+
+    Answer server_half;
+    told.clear();
+    check("the server's half of the handshake is answered",
+          world.answer(host, "SteamAPI_ISteamGameServer_BeginAuthSession", auth_args(kGuestId),
+                       server_half, told));
+    check("and it announces the validation to the server",
+          told.size() == 1 && told[0].first == kHostId &&
+              text_of(told[0].second, "event") == "ValidateAuthTicketResponse_t");
+
+    Answer user_half;
+    told.clear();
+    check("so is a player's own half", world.answer(guest, "SteamAPI_ISteamUser_BeginAuthSession",
+                                                    auth_args(kHostId), user_half, told));
+    check("with the OK auth response", steammock::as_int64(user_half.ret) == 0);
+    check("announcing the validation to that player",
+          told.size() == 1 && told[0].first == kGuestId &&
+              text_of(told[0].second, "event") == "ValidateAuthTicketResponse_t");
+    const Json* named = told.empty() ? nullptr : steammock::json_member(told[0].second, "in");
+    const Json* peer = named == nullptr ? nullptr : steammock::json_member(*named, "m_SteamID");
+    check("and naming the peer it asked about",
+          peer != nullptr && steammock::as_uint64(*peer) == kHostId);
 }
 
 void test_surface_matches_the_idl() {

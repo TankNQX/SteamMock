@@ -255,6 +255,12 @@ Json validate_auth_ticket_payload(std::uint64_t user) {
 
 constexpr const char* kGetAuthSessionTicket = "SteamAPI_ISteamUser_GetAuthSessionTicket";
 constexpr const char* kBeginAuthSession = "SteamAPI_ISteamGameServer_BeginAuthSession";
+// The same question asked through the other interface: a game server asks it about a
+// player, and a player asks it about the peer it is about to play with. Both are promised
+// their answer as a ValidateAuthTicketResponse_t callback rather than as the return value,
+// so a world that answers one of them and not the other leaves the side it skipped
+// waiting for a validation that never comes.
+constexpr const char* kUserBeginAuthSession = "SteamAPI_ISteamUser_BeginAuthSession";
 
 constexpr const char* kCreateLobby = "SteamAPI_ISteamMatchmaking_CreateLobby";
 constexpr const char* kRequestLobbyList = "SteamAPI_ISteamMatchmaking_RequestLobbyList";
@@ -335,6 +341,7 @@ std::vector<std::string> LobbyWorld::handled_calls() {
         kGameServerGetHSteamPipe,
         kGetAuthSessionTicket,
         kBeginAuthSession,
+        kUserBeginAuthSession,
     };
 }
 
@@ -833,11 +840,13 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         return true;
     }
 
-    if (call == kBeginAuthSession) {
-        // A game server has been handed a ticket by a player and asks what to make of it.
-        // Nothing here refuses anyone, and the answer the server acts on is a callback:
-        // it is told who the ticket belongs to and that it is good, which is what lets the
-        // player in. The server finds the player it was waiting for by that id.
+    if (call == kBeginAuthSession || call == kUserBeginAuthSession) {
+        // A game server has been handed a ticket by a player and asks what to make of it,
+        // and a player asks the same about the peer it is about to play with. Nothing here
+        // refuses anyone, and the answer either side acts on is a callback: it is told who
+        // the ticket belongs to and that it is good, which is what lets the player in. The
+        // server finds the player it was waiting for by that id; so does a client, whose
+        // auth player would otherwise wait out the game's own ticket timeout and be dropped.
         const std::uint64_t user = id_member(args, "steamID");
         notifications.emplace_back(me, validate_auth_ticket_payload(user));
         out = from_lobby(Json(kAuthSessionResponseOk));
