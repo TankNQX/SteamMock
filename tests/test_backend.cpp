@@ -598,6 +598,116 @@ void test_the_lobbies_a_run_holds() {
     check("the world handles the lobby surface", LobbyWorld::handled_calls().size() >= 18);
 }
 
+// A packet is stamped with the end of the process that sent it, which is the handle the
+// call was made through - not something read off the destination. The difference is the
+// whole of it for a process that hosts, because that one is a customer and a game server
+// at once: Spacewar's own ticket exchange sends from the customer's ISteamNetworking to
+// another player, and a packet stamped with the game server's id instead is one the peer
+// reads as something the server sent, and drops.
+void test_who_sent_a_packet() {
+    std::printf("[:] who sent a packet\n");
+
+    auto profile_for = [](const char* persona, std::uint64_t steam_id) {
+        const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
+                                 std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
+                                 "\",\"language\":\"english\"}";
+        Json data;
+        check("the two-game fixture parses", steammock::parse(text, data));
+        return Profile::from_json(persona, data);
+    };
+    constexpr std::uint64_t kHostId = 76561198000000001ull;
+    constexpr std::uint64_t kGuestId = 76561198000000002ull;
+
+    auto session_for = [](const char* id, const Profile& profile) {
+        Json hello = Json::object();
+        hello["exe"] = Json("game.exe");
+        hello["pid"] = Json(1234);
+        return Session(id, hello, profile);
+    };
+
+    Session host = session_for("host", profile_for("Host", kHostId));
+    Session guest = session_for("guest", profile_for("Guest", kGuestId));
+
+    LobbyWorld world;
+    std::vector<std::pair<std::uint64_t, Json>> told;
+
+    auto ask = [&](Session& who, const char* call, const Json& args) {
+        Answer answer;
+        told.clear();
+        const bool handled = world.answer(who, call, args, answer, told);
+        check((std::string("the world answers ") + call).c_str(), handled);
+        return answer;
+    };
+    auto send = [](std::uint64_t to, const char* bytes, std::int32_t h_user) {
+        Json args = Json::object();
+        args["steamIDRemote"] = Json(static_cast<std::int64_t>(to));
+        args["pubData"] = Json(bytes);
+        args["nChannel"] = Json(0);
+        // What the stub puts on the wire for every ISteamNetworking call: the handle the
+        // object was handed out under, which is the only thing that says which end asked.
+        args["hSteamUser"] = Json(static_cast<std::int64_t>(h_user));
+        return args;
+    };
+    auto read_args = [](std::int32_t h_user, std::int32_t channel) {
+        Json args = Json::object();
+        args["hSteamUser"] = Json(static_cast<std::int64_t>(h_user));
+        args["nChannel"] = Json(channel);
+        return args;
+    };
+    auto read = [&](Session& who, std::int32_t h_user, Answer& into) {
+        told.clear();
+        return world.answer(who, "SteamAPI_ISteamNetworking_ReadP2PPacket", read_args(h_user, 0),
+                            into, told);
+    };
+    auto remote_of = [](const Answer& answer) {
+        const Json* value = steammock::json_member(answer.out, "psteamIDRemote");
+        return value != nullptr ? steammock::as_uint64(*value) : 0ull;
+    };
+
+    // The host's game server id, minted by the first call that asks - which is what
+    // Spacewar does when it puts that id in the lobby's payload.
+    const std::uint64_t server =
+        steammock::as_uint64(ask(host, "SteamAPI_ISteamGameServer_GetSteamID", Json::object()).ret);
+    check("a game server has an id of its own", server != 0 && server != kHostId);
+
+    // The customer's object, which is what the ticket exchange sends a ticket through.
+    ask(host, "SteamAPI_ISteamNetworking_SendP2PPacket",
+        send(kGuestId, "0f", LobbyWorld::kCustomerHSteamUser));
+
+    Answer read_back;
+    check("the guest reads what the customer sent",
+          read(guest, LobbyWorld::kCustomerHSteamUser, read_back));
+    check("and it is from the host rather than from its game server",
+          remote_of(read_back) == kHostId);
+    check("with the bytes that were sent", text_of(read_back.out, "pubDest") == "0f");
+
+    // The game server's object, which is what the server sends its clients through: that
+    // one has to arrive as the game server, or a client cannot tell the server's messages
+    // from another player's.
+    ask(host, "SteamAPI_ISteamNetworking_SendP2PPacket",
+        send(kGuestId, "2a", LobbyWorld::kGameServerHSteamUser));
+    check("the guest reads what the game server sent",
+          read(guest, LobbyWorld::kCustomerHSteamUser, read_back));
+    check("and that one is from the game server", remote_of(read_back) == server);
+    check("with the bytes that were sent", text_of(read_back.out, "pubDest") == "2a");
+
+    // And the other way: a packet addressed to the game server is the game server's to
+    // read, rather than the other end's of a process that has both.
+    ask(guest, "SteamAPI_ISteamNetworking_SendP2PPacket",
+        send(server, "3c", LobbyWorld::kCustomerHSteamUser));
+
+    Answer for_the_server;
+    check("the game server reads what a client addressed to it",
+          read(host, LobbyWorld::kGameServerHSteamUser, for_the_server));
+    check("and it came from the client", remote_of(for_the_server) == kGuestId);
+
+    Answer for_the_customer;
+    told.clear();
+    check("the host's own end is not handed it instead",
+          !world.answer(host, "SteamAPI_ISteamNetworking_ReadP2PPacket",
+                        read_args(LobbyWorld::kCustomerHSteamUser, 0), for_the_customer, told));
+}
+
 void test_surface_matches_the_idl() {
     std::printf("[:] the generated surface\n");
 
@@ -699,6 +809,7 @@ int main() {
     test_scenarios();
     test_profiles_are_per_session();
     test_the_lobbies_a_run_holds();
+    test_who_sent_a_packet();
     test_surface_matches_the_idl();
     test_numbers();
 

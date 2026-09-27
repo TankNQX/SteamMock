@@ -48,6 +48,13 @@ Every message has `type` and `v` (protocol version; currently `1`).
 | `args` | Object of the call's arguments, keyed by the names in the IDL. |
 | `session` | Session id from the welcome, echoed back for the transcript. |
 
+One argument is not in the IDL: an `SteamAPI_ISteamNetworking_*` call made through a `hSteamUser`
+handle other than `0` carries that handle in `args`, under the name the SDK's own accessor gives it.
+A process that hosts has a customer's `ISteamNetworking` and a game server's, both handed out for
+the same version string, and neither interface takes a user in any of its arguments - so the handle
+is the only thing that says which end asked. The end a read is served from and the end a send is
+stamped with are both read off it.
+
 ### `reply` - backend to stub
 
 | Field | Meaning |

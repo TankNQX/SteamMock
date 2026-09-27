@@ -101,6 +101,18 @@ gives a process's game server its own user handle, and that is the way in: a han
 of its own, an object per handle, the calls that need it carrying the handle they were
 made through, and the world reading from the queue of the end that asked.
 
+That is what the harness does now, and the run above is from before it. Each version
+string is handed out as one object per user handle, the handle rides along with every
+`ISteamNetworking` call - see `docs/protocol.md` - and a read is served from the queue of
+the end that asked, so the host's customer and its game server no longer read each
+other's mail. The end that *sent* a packet is read off the same handle rather than
+guessed from where the packet was addressed to, which costs a guest the host's P2P auth
+ticket when it is guessed: the ticket goes out through the customer's object to another
+player, and stamped with the game server's id instead it arrives looking like a server
+message. That is `Unhandled message from server` on each guest, then `P2P:: No ticket
+received for account=<the host>` thirty seconds later, and then the guests drop the
+owner off his own server.
+
 A shortcut worth knowing: the game's own `+connect` switch takes a **number** rather
 than a dotted address (`"+connect %d:%d"` in its string table), so
 `+connect 2130706433:27015` - 127.0.0.1 in host order, which is what the harness

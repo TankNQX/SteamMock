@@ -146,9 +146,10 @@ private:
                                  std::int32_t channel) const noexcept;
     void drop_packet(std::uint64_t user, std::int32_t hSteamUser, std::int32_t channel);
 
-    // The id a call made through this user handle is addressed to: the game server this
-    // world minted for the session when the handle is a game server's, and the
-    // session's own id otherwise - which is what a process without one of those is.
+    // The end a call made through this user handle belongs to: the game server this world
+    // minted for the session when the handle is a game server's, and the session's own id
+    // otherwise - which is what a process without one of those is. A read finds the queue
+    // this names and a send is stamped with it, because it is the same end either way.
     std::uint64_t endpoint_of(std::uint64_t user, std::int32_t hSteamUser) const noexcept;
 
     // The session behind a Steam id, which is the id itself unless it names a game server,

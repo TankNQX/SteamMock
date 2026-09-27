@@ -214,14 +214,6 @@ Json lobby_game_created_payload(const Lobby& lobby) {
 constexpr std::uint32_t kMemberEntered = 0x0001;
 constexpr std::uint32_t kMemberLeft = 0x0002;
 
-// The id an anonymous game server is known by, told from a player's by the account type in
-// the top bits - which is the only thing the wire carries about either.
-constexpr std::uint64_t kGameServerAccountType = 4;
-
-bool is_game_server_id(std::uint64_t id) noexcept {
-    return ((id >> 52) & 0xFu) == kGameServerAccountType;
-}
-
 // "somebody wants to talk to you": the callback a game answers by accepting the session,
 // which is what a server does before it will serve whoever just knocked.
 Json session_request_payload(std::uint64_t remote) {
@@ -433,9 +425,10 @@ void LobbyWorld::queue_packet(std::uint64_t to, std::uint64_t from, std::int32_t
 
 std::uint64_t LobbyWorld::endpoint_of(std::uint64_t user, std::int32_t hSteamUser) const noexcept {
     // A session that hosts is a customer and a game server at once and has an id for
-    // each, which are the two queues a packet can be waiting in. Which of them a call is
-    // for is the handle it was made through, and that is the only thing that survives the
-    // trip: the two interfaces answer to one name and neither takes a user.
+    // each, which are the two ends a packet can be waiting in and the two an id can
+    // have been sent by. Which of them a call belongs to is the handle it was made
+    // through, and that is the only thing that survives the trip: the two interfaces
+    // answer to one name and neither takes a user.
     if (hSteamUser == kGameServerHSteamUser) {
         const std::uint64_t server = known_game_server_id(user);
         if (server != 0) {
@@ -847,11 +840,17 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         // be inventing a rule the games cannot see anyway.
         const std::uint64_t to = id_member(args, "steamIDRemote");
         const std::int32_t channel = static_cast<std::int32_t>(int_member(args, "nChannel", 0));
-        // Who the receiver is told this came from: a client is a player to the server it
-        // talks to, and a server is the game server to the client that dialled it - the id
-        // the other side knows it by, and the one it can answer to.
-        const std::uint64_t mine = is_game_server_id(to) ? me : known_game_server_id(me);
-        const std::uint64_t from = mine != 0 ? mine : me;
+        // Who the receiver is told this came from: the end of this process that put it on
+        // the wire, which is the handle the call was made through - the same thing that
+        // says which queue a read is for, and for the same reason. Reading it off the
+        // destination is what this used to do, and it is wrong in both directions: a
+        // process that hosts has a customer and a game server, and the game's own ticket
+        // exchange sends from the customer's object to another player. Stamped with the
+        // game server's id instead, that packet arrives looking like something the server
+        // sent - which is a client that cannot read it and a peer that never gets the
+        // ticket it is waiting for.
+        const std::uint64_t from =
+            endpoint_of(me, static_cast<std::int32_t>(int_member(args, "hSteamUser", 0)));
         const std::uint64_t recipient = user_of(to);
 
         queue_packet(to, from, channel, string_member(args, "pubData"));
