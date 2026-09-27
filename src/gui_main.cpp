@@ -336,6 +336,11 @@ private:
                 }
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
+                // The session id is what makes a row its own. Three copies of one
+                // executable all label themselves the same, and ImGui routes hover
+                // and clicks by ID: without this the three rows are one item, and a
+                // new-enough ImGui says so out loud with an ID-conflict popup.
+                ImGui::PushID(game.id.c_str());
                 if (ImGui::Selectable(game.exe.c_str(), _selected == game.id,
                                       ImGuiSelectableFlags_SpanAllColumns)) {
                     _selected = game.id;
@@ -343,6 +348,7 @@ private:
                 if (ImGui::IsItemHovered()) {
                     ImGui::SetTooltip("session %s, %zu call(s)", game.id.c_str(), game.call_count);
                 }
+                ImGui::PopID();
                 ImGui::TableNextColumn();
                 ImGui::Text("%lld", static_cast<long long>(game.pid));
                 ImGui::TableNextColumn();
