@@ -29,8 +29,8 @@
         "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
 
         "SteamInternal_GameServer_Init": { "ret": true },
-        "SteamGameServer_GetHSteamUser": { "ret": 1 },
-        "SteamGameServer_GetHSteamPipe": { "ret": 1 },
+        "SteamGameServer_GetHSteamUser": { "ret": 2 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 2 },
 
         "SteamAPI_ISteamGameServer_LogOnAnonymous": {
           "ret": true,
@@ -63,8 +63,8 @@
         "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
 
         "SteamInternal_GameServer_Init": { "ret": true },
-        "SteamGameServer_GetHSteamUser": { "ret": 1 },
-        "SteamGameServer_GetHSteamPipe": { "ret": 1 }
+        "SteamGameServer_GetHSteamUser": { "ret": 2 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 2 }
       }
     },
   "third_player": {
@@ -91,8 +91,8 @@
         "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
 
         "SteamInternal_GameServer_Init": { "ret": true },
-        "SteamGameServer_GetHSteamUser": { "ret": 1 },
-        "SteamGameServer_GetHSteamPipe": { "ret": 1 }
+        "SteamGameServer_GetHSteamUser": { "ret": 2 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 2 }
       }
     }
   },
