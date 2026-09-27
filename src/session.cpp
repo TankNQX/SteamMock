@@ -15,7 +15,9 @@ namespace {
 //  do the same, and fall back to the default instead of raising, so a typo in a
 //  scenario cannot take the backend down in the middle of a run.
 
-std::int64_t to_int64(const Json& value, std::int64_t fallback) noexcept {
+// Not `noexcept`: reading a number out of a string allocates, and a `noexcept` here
+// would turn a failed allocation into `std::terminate` instead of telling the caller.
+std::int64_t to_int64(const Json& value, std::int64_t fallback) {
     if (value.is_number()) {
         return as_int64(value);
     }

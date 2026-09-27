@@ -115,12 +115,15 @@ std::mutex& registry_mutex() noexcept {
     return mutex;
 }
 
-std::map<std::int32_t, void*>& callbacks_by_id() noexcept {
+// Not `noexcept`, unlike the mutex above: building these two maps allocates on first
+// use, and every caller of them is inside a `try` that is meant to swallow that - a
+// `noexcept` here would terminate the game's process instead of letting the catch run.
+std::map<std::int32_t, void*>& callbacks_by_id() {
     static std::map<std::int32_t, void*> by_id;
     return by_id;
 }
 
-std::map<std::uint64_t, void*>& results_by_call() noexcept {
+std::map<std::uint64_t, void*>& results_by_call() {
     static std::map<std::uint64_t, void*> by_call;
     return by_call;
 }
@@ -206,6 +209,7 @@ void report_callback_fault(unsigned long code, const void* address) noexcept {
             text.push_back(digits[(where >> static_cast<unsigned>(shift)) & 0xFu]);
         }
         log_write(LogLevel::error, text);
+        // NOLINTNEXTLINE(bugprone-empty-catch) - a report must not become a second fault
     } catch (...) {
         // A logger that cannot say this must not turn a report into a second fault.
     }
@@ -325,6 +329,7 @@ void callback_registered(void* object, std::int32_t id) noexcept {
             log_write(LogLevel::debug, "callback id " + std::to_string(id) + ": first, " + address);
         }
         callbacks_by_id()[id] = object;
+        // NOLINTNEXTLINE(bugprone-empty-catch) - a game must not see the registry fail
     } catch (...) {
         // A registry that cannot grow is a game that gets no callbacks, which is
         // what it gets with no backend at all.
@@ -343,6 +348,7 @@ void callback_unregistered(void* object) noexcept {
                 ++entry;
             }
         }
+        // NOLINTNEXTLINE(bugprone-empty-catch) - the registry is the stub's, not the game's
     } catch (...) {
     }
 }
@@ -351,6 +357,7 @@ void call_result_registered(void* object, std::uint64_t call) noexcept {
     try {
         const std::lock_guard<std::mutex> lock(registry_mutex());
         results_by_call()[call] = object;
+        // NOLINTNEXTLINE(bugprone-empty-catch) - the registry is the stub's, not the game's
     } catch (...) {
     }
 }
@@ -362,6 +369,7 @@ void call_result_unregistered(void* object, std::uint64_t call) noexcept {
         if (found != results_by_call().end() && found->second == object) {
             results_by_call().erase(found);
         }
+        // NOLINTNEXTLINE(bugprone-empty-catch) - the registry is the stub's, not the game's
     } catch (...) {
     }
 }
@@ -384,6 +392,7 @@ void deliver_events() noexcept {
                                                                 : std::string("<no name>")));
             deliver_one(event);
         }
+        // NOLINTNEXTLINE(bugprone-empty-catch) - a payload that cannot be handed over is said so inside
     } catch (...) {
     }
 }

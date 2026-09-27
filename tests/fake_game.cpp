@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <exception>
 #include <string>
 
 // ---------------------------------------------------------------------------
@@ -115,6 +116,13 @@ template <typename Fn> Fn resolve(HMODULE module, const char* name) {
         std::printf("missing export: %s\n", name);
         std::exit(3);
     }
+    // Two casts, because Windows hands a function out as `FARPROC` and this is the
+    // documented way back to the pointer type the game's own import table would have
+    // had. The check is about losing the signature, and losing it is the point: the
+    // export's name is what says which signature it is, and the process exits 3 rather
+    // than calling through anything that was not there. What the name means is then
+    // pinned by the checks that call it, which is what makes this a test and not faith.
+    // NOLINTNEXTLINE(bugprone-casting-through-void)
     return reinterpret_cast<Fn>(reinterpret_cast<void*>(address));
 }
 
@@ -124,7 +132,7 @@ std::string bounded(const char* text) {
 
 }  // namespace
 
-int main() {
+int run() {
     const char* stub_path = std::getenv("STEAMMOCK_STUB");
     if (stub_path == nullptr || stub_path[0] == '\0') {
         std::printf("STEAMMOCK_STUB is not set\n");
@@ -315,4 +323,18 @@ int main() {
     api_shutdown();
     FreeLibrary(stub);
     return 0;
+}
+
+// A game does not get a message when `main` throws, and the end-to-end test reads this
+// program's output to decide what happened - so it says so rather than dying silently.
+int main() {
+    try {
+        return run();
+    } catch (const std::exception& error) {
+        std::printf("the fake game threw: %s\n", error.what());
+        return 2;
+    } catch (...) {
+        std::printf("the fake game threw something that is not a std::exception\n");
+        return 2;
+    }
 }

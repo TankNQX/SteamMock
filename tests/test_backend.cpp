@@ -15,6 +15,8 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <exception>
+#include <optional>
 #include <set>
 #include <string>
 #include <variant>
@@ -73,6 +75,15 @@ std::int64_t out_int(const Answer& answer, const char* key) {
 }
 
 bool has_out(const Answer& answer) { return steammock::carries_out(answer.out); }
+
+// The app id a scenario served a handshake, or a number no profile has when it served
+// none. A check should be able to say which identity a game resolved to without the
+// test dying of `bad_optional_access` when the answer is "none" - which, one line
+// down, is often exactly what is being checked.
+std::int64_t served_app_id(const Dispatcher& dispatcher, const Json& hello) {
+    const std::optional<Profile> profile = dispatcher.profile_for(hello);
+    return profile.has_value() ? profile->app_id : -1;
+}
 
 // The same fixture the Python tests used, so the ported expectations still mean
 // something: one game, one known stat, one locked achievement.
@@ -340,12 +351,11 @@ void test_scenarios() {
 
     Json special = Json::object();
     special["exe"] = Json("my_special_game.exe");
-    check("a match rule can pick a profile by executable",
-          dispatcher.profile_for(special).value().app_id == 2);
+    check("a match rule can pick a profile by executable", served_app_id(dispatcher, special) == 2);
 
     Json plain = Json::object();
     plain["exe"] = Json("game.exe");
-    check("the first matching rule wins", dispatcher.profile_for(plain).value().app_id == 1);
+    check("the first matching rule wins", served_app_id(dispatcher, plain) == 1);
 
     // A name asked for by name is not a hint. Substituting the default is how three
     // clients came to run as two players while every run still looked plausible, so a
@@ -353,7 +363,7 @@ void test_scenarios() {
     Json by_name = Json::object();
     by_name["profile"] = Json("other");
     check("a profile asked for by name is served before any match rule",
-          dispatcher.profile_for(by_name).value().app_id == 2);
+          served_app_id(dispatcher, by_name) == 2);
 
     Json missing = Json::object();
     missing["profile"] = Json("no_such_profile");
@@ -366,8 +376,7 @@ void test_scenarios() {
 
     Json unknown = Json::object();
     unknown["exe"] = Json("unknown.exe");
-    check("an unmatched game gets the default",
-          dispatcher.profile_for(unknown).value().app_id == 1);
+    check("an unmatched game gets the default", served_app_id(dispatcher, unknown) == 1);
 
     Json typo_document;
     check("the typo scenario parses",
@@ -392,8 +401,7 @@ void test_scenarios() {
                            "\"match\":[{\"exe_contains\":\"game\"}]}",
                            ruleless_document));
     const Dispatcher ruleless(ruleless_document);
-    check("a rule that names no profile takes the default",
-          ruleless.profile_for(game).value().app_id == 1);
+    check("a rule that names no profile takes the default", served_app_id(ruleless, game) == 1);
 
     const Dispatcher empty{Json::object()};
     check("an empty scenario still has a default profile", empty.has_profile("default"));
@@ -409,8 +417,13 @@ void test_scenarios() {
     }
     Json fake_game = Json::object();
     fake_game["exe"] = Json("fake_game.exe");
-    const Profile profile = loaded.profile_for(fake_game).value();
-    check("the example gives fake_game the default profile", profile.app_id == 480);
+    const std::optional<Profile> served = loaded.profile_for(fake_game);
+    check("the example gives fake_game the default profile",
+          served.has_value() && served->app_id == 480);
+    if (!served.has_value()) {
+        return;  // every check below would only say the same thing again
+    }
+    const Profile& profile = *served;
     check("the example scripts SteamAPI_Init",
           profile.scripted_for("SteamAPI_Init") != nullptr &&
               steammock::as_bool(
@@ -435,7 +448,12 @@ void test_profiles_are_per_session() {
     const Dispatcher dispatcher;
     Json game = Json::object();
     game["exe"] = Json("game.exe");
-    const Profile matched = dispatcher.profile_for(game).value();
+    const std::optional<Profile> served = dispatcher.profile_for(game);
+    if (!served.has_value()) {
+        check("the scenario serves this game a profile", false);
+        return;
+    }
+    const Profile& matched = *served;
 
     Session one("one", Json::object(), matched);
     Session two("two", Json::object(), matched);
@@ -835,7 +853,7 @@ void test_numbers() {
 
 }  // namespace
 
-int main() {
+int run() {
     std::printf("[+] SteamMock backend tests\n\n");
     test_replies();
     test_relabelling();
@@ -856,4 +874,19 @@ int main() {
         std::printf("\n[-] %d check(s) FAILED\n", g_failures);
     }
     return g_failures == 0 ? 0 : 1;
+}
+
+// An exception escaping `main` terminates the process with no message at all, and the
+// only realistic source in a test is a failed allocation. Report it the way a failing
+// check is reported instead, so ctest's output says what happened.
+int main() {
+    try {
+        return run();
+    } catch (const std::exception& error) {
+        std::printf("\n[-] the test itself threw: %s\n", error.what());
+        return 1;
+    } catch (...) {
+        std::printf("\n[-] the test itself threw something that is not a std::exception\n");
+        return 1;
+    }
 }

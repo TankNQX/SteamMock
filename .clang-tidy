@@ -1,7 +1,12 @@
 # ---------------------------------------------------------------------------
 #  What clang-tidy is asked to look for - and what it is deliberately not.
 # ---------------------------------------------------------------------------
-#  Run it against a build that exported its compile database:
+#  This is a gate, not a suggestion: `tools/clang-tidy.ps1` runs it over every
+#  hand-written translation unit and CI fails when it has something to say. A
+#  new finding is a decision to make - fix it, or say here why it is not one -
+#  rather than a number nobody reads.
+#
+#  By hand, against a build that exported its compile database:
 #
 #      cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang-cl \
 #            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
@@ -17,9 +22,19 @@ Checks: >
   bugprone-*,
   performance-*,
   -bugprone-easily-swappable-parameters,
-  -performance-enum-size
+  -performance-enum-size,
+  -performance-inefficient-string-concatenation
 
-# The two that are off, and why:
+CheckOptions:
+  # An allocation failure is fatal by design in a stub: it has to return a value to
+  # the game, so `Client::session_id()` and the exported boundaries that call it
+  # cannot hand an exception back - which is why `noexcept` is on them, and why the
+  # two allocations in src/client.cpp that would terminate say so out loud. A
+  # `noexcept` boundary that would terminate on an allocation that cannot be made is
+  # therefore not a finding. Anything *else* escaping a `noexcept` function still is.
+  bugprone-exception-escape.IgnoredExceptions: '::std::bad_alloc;::std::length_error'
+
+# The three that are off, and why:
 #
 #   bugprone-easily-swappable-parameters
 #     Flags make_reply(seq, answered, ret, out) and its neighbours. Every call
@@ -29,3 +44,10 @@ Checks: >
 #   performance-enum-size
 #     Asks for a uint8_t base on small enums. This is a debugging harness; one
 #     saved byte per enum is not a constraint it has.
+#
+#   performance-inefficient-string-concatenation
+#     Every one of its sites is in src/interfaces.cpp, composing a line of generated
+#     C++ out of parts: `out.push_back("Version_" + id + " g_" + id + "[...];")`. That
+#     is text assembled once per build, where the reading is the whole point and the
+#     temporaries are nothing next to the file it writes; spelling it as `+=` would
+#     bury the shape of the code being written.

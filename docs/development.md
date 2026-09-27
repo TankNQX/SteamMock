@@ -352,6 +352,11 @@ Everything below runs on a push, and all of it must be green.
   `.clang-format` describes. The files under `src/generated/` are **out of scope on purpose**: a
   test byte-compares them against what `steammock_codegen` writes, so an editor's format-on-save
   would break the build. Leave that setting off for those paths, or run the checker to find out.
+* **clang-tidy** (`tools/clang-tidy.ps1`), because the compiler cannot say everything: an exception
+  escaping a `noexcept` function, a `.value()` on an optional nobody checked. `.clang-tidy` is the
+  list, and it is a gate rather than a suggestion - what it flags is either fixed or written down
+  there with a reason. It configures its own Ninja tree in a temporary directory, since only the
+  Ninja and Makefile generators write the `compile_commands.json` clang-tidy reads.
 * **The live view** (`gui / msvc / x64`), built with `-DSTEAMMOCK_BUILD_GUI=ON` and warnings as
   errors. It is the only job that checks out the submodules, so the rest stay fast and need no
   third-party code.
@@ -365,6 +370,7 @@ Everything below runs on a push, and all of it must be green.
 | Path | What it does |
 | --- | --- |
 | `tools/check-format.ps1` | The clang-format gate CI runs. Also checks files that are not committed yet. |
+| `tools/clang-tidy.ps1` | The clang-tidy gate CI runs, over `.clang-tidy`. It makes the compile database it needs with Ninja and clang-cl, in a temporary directory. |
 | `tools/steamworks_sdk_import.py` | Reads installed Steamworks SDKs and writes the interface layouts, and `--wanted` reports the version strings a game asks for that they do not carry. `--diff` against the ones in use, `--list`, `--selftest` with no SDK (which also pins the array-extent, union-alignment and wanted rules). Needs `tools/requirements.txt` (cxxheaderparser and pcpp) and nothing else here does. |
 | `tools/two-instance-test.ps1` | Drives two copies of the real Spacewar through one lobby and a started game. What it shows, and the traps it encodes: [two-instance-test.md](two-instance-test.md). |
 | `.clang-format`, `.clang-tidy` | The style the transcript was written in, and the checks that are kept clean. |

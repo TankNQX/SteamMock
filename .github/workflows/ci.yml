@@ -13,6 +13,10 @@
 #  MSVC is the compiler the harness ships with; clang-cl is a second pair of eyes
 #  on the same ABI, and it is worth the job because it reports what /W4 cannot.
 #
+#  clang-format and clang-tidy are gates of their own rather than part of those
+#  jobs: each reads a config at the root of the tree and fails when a hand-written
+#  file disagrees with it.
+#
 #  The live view lives in its own job because it is the one target that needs the
 #  graphics submodules. JSON is a submodule too, and every job takes that one.
 # ============================================================================
@@ -115,6 +119,23 @@ jobs:
       - name: Check
         shell: pwsh
         run: pwsh -File tools/check-format.ps1
+
+  # The same kind of gate as clang-format, over the other config in the tree: what
+  # clang-tidy knows and the compiler has no equivalent of - an exception escaping a
+  # noexcept function, an optional read without a check. The graphics submodules are
+  # needed as well, because a source missing from the compile database is one that
+  # clang-tidy mis-reports rather than skips.
+  tidy:
+    name: clang-tidy
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check
+        shell: pwsh
+        run: pwsh -File tools/clang-tidy.ps1
 
   # On top of the JSON submodule every job takes, this one needs the graphics ones.
   gui:

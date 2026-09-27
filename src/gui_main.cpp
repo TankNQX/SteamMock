@@ -27,6 +27,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <exception>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -640,7 +641,7 @@ void window_size_for_display(int& width, int& height) {
 
 }  // namespace
 
-int main(int argc, char** argv) {
+int run(int argc, char** argv) {
     LiveView view;
     for (int index = 1; index < argc; ++index) {
         const std::string argument = argv[index];
@@ -715,4 +716,18 @@ int main(int argc, char** argv) {
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
+}
+
+// The window is the one thing here that allocates on a path nothing catches, and an
+// exception escaping `main` says nothing at all. Say what happened instead.
+int main(int argc, char** argv) {
+    try {
+        return run(argc, argv);
+    } catch (const std::exception& error) {
+        std::fprintf(stderr, "steammock_gui: unexpected failure (%s)\n", error.what());
+        return 2;
+    } catch (...) {
+        std::fprintf(stderr, "steammock_gui: unexpected failure\n");
+        return 2;
+    }
 }

@@ -16,6 +16,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <exception>
 #include <string>
 #include <thread>
 
@@ -218,7 +219,7 @@ void test_what_the_server_saw() {
 
 }  // namespace
 
-int main() {
+int run() {
     std::printf("[+] SteamMock server tests\n\n");
     test_what_the_server_saw();
 
@@ -228,4 +229,19 @@ int main() {
         std::printf("\n[-] %d check(s) FAILED\n", g_failures);
     }
     return g_failures == 0 ? 0 : 1;
+}
+
+// An exception escaping `main` terminates the process with no message at all, and the
+// only realistic source in a test is a failed allocation. Report it the way a failing
+// check is reported instead, so ctest's output says what happened.
+int main() {
+    try {
+        return run();
+    } catch (const std::exception& error) {
+        std::printf("\n[-] the test itself threw: %s\n", error.what());
+        return 1;
+    } catch (...) {
+        std::printf("\n[-] the test itself threw something that is not a std::exception\n");
+        return 1;
+    }
 }
