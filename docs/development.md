@@ -60,6 +60,12 @@ Match rules come in three kinds, and a rule with none of them matches every game
 of one executable cannot be told apart that way; `pid` compares the game's process id, which is how
 two instances of the same game get different profiles.
 
+A rule that names a profile, and a handshake that asks for one by name, both have to find it: a name
+the scenario does not define refuses the connection rather than quietly serving the default profile
+(and the backend logs which name it could not serve). A rule that names no profile at all is not that
+case - saying nothing is a request for the default. Handing one identity out for another is how three
+clients came to run as two players while every run still looked plausible.
+
 ## Tests
 
 ```sh

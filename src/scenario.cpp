@@ -162,7 +162,7 @@ bool Dispatcher::has_profile(const std::string& name) const {
     return find_profile(name) != nullptr;
 }
 
-std::optional<Profile> Dispatcher::profile_for(const Json& hello) const {
+std::optional<Profile> Dispatcher::profile_for(const Json& hello, std::string* refused) const {
     std::string exe;
     std::int64_t pid = 0;
     std::string requested;
@@ -194,6 +194,9 @@ std::optional<Profile> Dispatcher::profile_for(const Json& hello) const {
         if (const Profile* profile = find_profile(requested)) {
             return *profile;
         }
+        if (refused != nullptr) {
+            *refused = requested;
+        }
         return std::nullopt;
     }
 
@@ -212,6 +215,15 @@ std::optional<Profile> Dispatcher::profile_for(const Json& hello) const {
         if (const Profile* profile = find_profile(wanted)) {
             return *profile;
         }
+        // A rule that matched the game and names a profile the scenario does not have is
+        // the same silence one step further along: falling through to the next rule, or to
+        // the default, runs a player nobody asked for while every run still looks
+        // plausible. It is the half of the bug that took a day to find that a name asked
+        // for by name does not cover, so it is refused in the same way.
+        if (refused != nullptr) {
+            *refused = wanted;
+        }
+        return std::nullopt;
     }
 
     if (const Profile* profile = find_profile(_default_profile)) {

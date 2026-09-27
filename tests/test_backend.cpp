@@ -360,6 +360,10 @@ void test_scenarios() {
     check("a profile asked for by name and not there is refused, not replaced",
           !dispatcher.profile_for(missing).has_value());
 
+    std::string named;
+    check("and the name that could not be served is reported",
+          !dispatcher.profile_for(missing, &named).has_value() && named == "no_such_profile");
+
     Json unknown = Json::object();
     unknown["exe"] = Json("unknown.exe");
     check("an unmatched game gets the default",
@@ -373,8 +377,23 @@ void test_scenarios() {
     const Dispatcher typo(typo_document);
     Json game = Json::object();
     game["exe"] = Json("game.exe");
-    check("a rule naming an unknown profile falls back to the default",
-          typo.profile_for(game).value().app_id == 1);
+    // The same silence as a name asked for by name, one step further along: a rule that
+    // matched the game and names a profile the scenario does not have used to fall through
+    // to the default, which runs a player nobody asked for.
+    std::string rule_named_it;
+    check("a rule naming a profile the scenario does not have is refused, not replaced",
+          !typo.profile_for(game, &rule_named_it).has_value() && rule_named_it == "typo");
+
+    // A rule that names no profile at all is not that: saying nothing is a request for the
+    // default, and only a name the scenario lacks is a mistake.
+    Json ruleless_document;
+    check("the ruleless scenario parses",
+          steammock::parse("{\"profiles\":{\"default\":{\"app_id\":1}},"
+                           "\"match\":[{\"exe_contains\":\"game\"}]}",
+                           ruleless_document));
+    const Dispatcher ruleless(ruleless_document);
+    check("a rule that names no profile takes the default",
+          ruleless.profile_for(game).value().app_id == 1);
 
     const Dispatcher empty{Json::object()};
     check("an empty scenario still has a default profile", empty.has_profile("default"));
@@ -706,6 +725,24 @@ void test_who_sent_a_packet() {
     check("the host's own end is not handed it instead",
           !world.answer(host, "SteamAPI_ISteamNetworking_ReadP2PPacket",
                         read_args(LobbyWorld::kCustomerHSteamUser, 0), for_the_customer, told));
+
+    // And the other direction of the same fact: a packet addressed to the host's own id
+    // belongs to the customer end, which is where the game's ticket exchange puts a
+    // guest's ticket - `p2pauth` addresses the server owner's SteamID, not the game
+    // server's, and a guest's auth player is told that id by the world update.
+    ask(guest, "SteamAPI_ISteamNetworking_SendP2PPacket",
+        send(kHostId, "4d", LobbyWorld::kCustomerHSteamUser));
+
+    Answer for_the_owner;
+    check("the host's own end reads what a guest addressed to it",
+          read(host, LobbyWorld::kCustomerHSteamUser, for_the_owner));
+    check("and it came from the guest", remote_of(for_the_owner) == kGuestId);
+
+    Answer not_for_the_server;
+    told.clear();
+    check("the game server end is not handed that one either",
+          !world.answer(host, "SteamAPI_ISteamNetworking_ReadP2PPacket",
+                        read_args(LobbyWorld::kGameServerHSteamUser, 0), not_for_the_server, told));
 }
 
 void test_surface_matches_the_idl() {

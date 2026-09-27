@@ -458,15 +458,15 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
         session_id = make_session_id();
         // The profile is resolved before the session exists, because a name the scenario
-        // does not have is refused rather than answered with the default one. Silently
-        // serving the default meant two clients could run as the same player, and from
-        // outside that looks like a lobby with a member missing.
-        const std::optional<Profile> profile = _dispatcher.profile_for(hello);
+        // does not have is refused rather than answered with the default one - whether the
+        // game asked for it by name or a match rule named it. Silently serving the default
+        // meant two clients could run as the same player, and from outside that looks like
+        // a lobby with a member missing.
+        std::string refused;
+        const std::optional<Profile> profile = _dispatcher.profile_for(hello, &refused);
         if (!profile) {
-            const Json* asked = json_member(hello, "profile");
-            log(LogLevel::error, "refusing a handshake that asked for profile '" +
-                                     (asked != nullptr ? as_string(*asked) : std::string("?")) +
-                                     "', which the scenario does not have");
+            log(LogLevel::error, "refusing a handshake: the scenario has no profile '" +
+                                     (refused.empty() ? std::string("?") : refused) + "'");
             close_socket(socket);
             return;
         }

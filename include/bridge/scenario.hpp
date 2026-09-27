@@ -64,9 +64,13 @@ public:
     // Picks the profile a connecting process should get. The profile is returned
     // by value, and every Session keeps its own copy: two games matched to the
     // same profile must not share stats.
-    // The profile a session runs as, or nothing when the handshake asked for a name
-    // the scenario does not have - a refusal rather than a substitution.
-    std::optional<Profile> profile_for(const Json& hello) const;
+    //
+    // Nothing comes back when the scenario cannot serve this game: a name the handshake
+    // asked for and the scenario does not have, or one a matching rule names and it does
+    // not have. That is a refusal rather than a substitution - the reason the three-client
+    // bug took a day to find. `refused`, when given, is filled with the name that could not
+    // be served, so a caller can say which one it was.
+    std::optional<Profile> profile_for(const Json& hello, std::string* refused = nullptr) const;
 
     Answer answer(Session& session, const std::string& name, const Json& args) const;
 
