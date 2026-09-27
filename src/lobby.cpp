@@ -409,11 +409,12 @@ bool LobbyWorld::needs_session_request(std::uint64_t from, std::uint64_t to) {
 }
 
 void LobbyWorld::queue_packet(std::uint64_t to, std::uint64_t from, std::int32_t channel,
-                              const std::string& bytes) {
+                              const std::string& bytes, bool loopback) {
     P2PPacket packet;
     packet.remote = from;
     packet.channel = channel;
     packet.bytes = bytes;
+    packet.loopback = loopback;
     for (auto& entry : _packets) {
         if (entry.first == to) {
             entry.second.push_back(std::move(packet));
@@ -443,27 +444,44 @@ std::uint64_t LobbyWorld::endpoint_of(std::uint64_t user, std::int32_t hSteamUse
 const P2PPacket* LobbyWorld::peek_packet(std::uint64_t user, std::int32_t hSteamUser,
                                          std::int32_t channel) const noexcept {
     const std::uint64_t end = endpoint_of(user, hSteamUser);
+    // The first packet on this end and channel is the one to serve, with one exception:
+    // a packet whose ends are the same process never left the machine, so it is already
+    // here when the read happens rather than arriving behind anything else. Serving it
+    // first is what keeps a session's own exchange from queueing behind another game's.
+    const P2PPacket* from_elsewhere = nullptr;
     for (const auto& entry : _packets) {
         if (entry.first != end) {
             continue;
         }
         for (const P2PPacket& packet : entry.second) {
-            if (packet.channel == channel) {
+            if (packet.channel != channel) {
+                continue;
+            }
+            if (packet.loopback) {
                 return &packet;
+            }
+            if (from_elsewhere == nullptr) {
+                from_elsewhere = &packet;
             }
         }
     }
-    return nullptr;
+    return from_elsewhere;
 }
 
 void LobbyWorld::drop_packet(std::uint64_t user, std::int32_t hSteamUser, std::int32_t channel) {
+    // The packet a read would hand over, found the same way: a drop that picked a different
+    // one would leave the game reading what it had already taken.
+    const P2PPacket* chosen = peek_packet(user, hSteamUser, channel);
+    if (chosen == nullptr) {
+        return;
+    }
     const std::uint64_t end = endpoint_of(user, hSteamUser);
     for (auto& entry : _packets) {
         if (entry.first != end) {
             continue;
         }
         for (auto packet = entry.second.begin(); packet != entry.second.end(); ++packet) {
-            if (packet->channel == channel) {
+            if (&*packet == chosen) {
                 entry.second.erase(packet);
                 return;
             }
@@ -853,7 +871,10 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             endpoint_of(me, static_cast<std::int32_t>(int_member(args, "hSteamUser", 0)));
         const std::uint64_t recipient = user_of(to);
 
-        queue_packet(to, from, channel, string_member(args, "pubData"));
+        // Marked here, because this is the one place that knows both ends: the session
+        // making the call and the session the packet is addressed to. Same session means
+        // the packet never leaves the machine, which is the case the queue serves first.
+        queue_packet(to, from, channel, string_member(args, "pubData"), me == recipient);
 
         // Steam asks a game whether it will talk to a peer it has not heard from before, and
         // a server that is never asked has no client to hand the packet to - which is what

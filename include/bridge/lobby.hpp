@@ -63,6 +63,14 @@ struct P2PPacket {
     std::uint64_t remote = 0;
     std::int32_t channel = 0;
     std::string bytes;
+    // Whether the two ends are in one process. A packet a session sends to one of its own
+    // ends never leaves the machine, so it is already here when that end next reads, and
+    // the read serves it before anything that came over the wire. It matters because a
+    // session that hosts is a server and a client at once: the owner's own ticket reaches
+    // its own game server by a round trip inside one process, while a guest's comes from
+    // another machine - and a game that acts on the roster before its own update lands is
+    // a game in the wrong slot. Real Steam has that asymmetry whether it says so or not.
+    bool loopback = false;
 };
 
 // What one lobby call resolved to, plus what the *other* members have to be told.
@@ -135,9 +143,10 @@ private:
     // One game's packets, by the Steam id they were addressed to. A session that hosts
     // is a customer and a game server at once and has an id for each, and a packet
     // addressed to either of them is for this process - but not for both of its ends,
-    // which is why every read says which handle it was made through.
+    // which is why every read says which handle it was made through. A packet whose ends
+    // are the same process is marked at the send, and a read serves it first.
     void queue_packet(std::uint64_t to, std::uint64_t from, std::int32_t channel,
-                      const std::string& bytes);
+                      const std::string& bytes, bool loopback);
     const P2PPacket* peek_packet(std::uint64_t user, std::int32_t hSteamUser,
                                  std::int32_t channel) const noexcept;
     void drop_packet(std::uint64_t user, std::int32_t hSteamUser, std::int32_t channel);

@@ -759,6 +759,29 @@ void test_who_sent_a_packet() {
     check("the game server end is not handed that one either",
           !world.answer(host, "SteamAPI_ISteamNetworking_ReadP2PPacket",
                         read_args(LobbyWorld::kGameServerHSteamUser, 0), not_for_the_server, told));
+
+    // A session's own exchange does not queue behind another game's. A guest's packet
+    // reaches the host's game server first, and then the host's own customer end sends it
+    // one: the read hands back the host's own, because that one never left the machine.
+    // That is the ordering a game relies on without saying so - its server is in its own
+    // process and a peer's is not - and it is why a hosting game's own ticket beats a
+    // guest's to the slot its server hands out first.
+    ask(guest, "SteamAPI_ISteamNetworking_SendP2PPacket",
+        send(server, "5e", LobbyWorld::kCustomerHSteamUser));
+    ask(host, "SteamAPI_ISteamNetworking_SendP2PPacket",
+        send(server, "6f", LobbyWorld::kCustomerHSteamUser));
+
+    Answer own_first;
+    check("the host's own packet to its game server is served first",
+          read(host, LobbyWorld::kGameServerHSteamUser, own_first));
+    check("and it is the host's own, not the guest's",
+          remote_of(own_first) == kHostId && text_of(own_first.out, "pubDest") == "6f");
+
+    Answer then_the_guest;
+    check("the guest's packet is still waiting behind it",
+          read(host, LobbyWorld::kGameServerHSteamUser, then_the_guest));
+    check("and it is the guest's, unchanged",
+          remote_of(then_the_guest) == kGuestId && text_of(then_the_guest.out, "pubDest") == "5e");
 }
 
 void test_surface_matches_the_idl() {
