@@ -195,6 +195,11 @@ Json CallRecord::to_json() const {
     json["answered"] = Json(answered);
     json["via"] = Json(via);
     json["ms"] = Json(ms);
+    // When the call was handled, in unix milliseconds. `ms` is how long it took and
+    // `seq` counts within one session, so without this there is no way to order two
+    // sessions' calls against each other - and a race between sessions is exactly what
+    // a transcript is read for once the two are behaving differently.
+    json["at_unix_ms"] = Json(at_unix_ms);
     if (answered) {
         json["ret"] = ret;
         if (carries_out(out)) {
