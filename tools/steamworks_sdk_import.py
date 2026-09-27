@@ -213,9 +213,12 @@ def normalise(node) -> Ty:
     if name == "FunctionType":
         return Ty("function", const=getattr(node, "const", False))
     if name == "Reference":
-        # A reference is a pointer by another name for what a row says; none of
-        # the SDK's slots take one, so it is reported rather than mapped.
-        return Ty("unknown")
+        # A reference is a pointer by another name: the callee is handed an address,
+        # and that is all a row needs to say about it. No interface *slot* in these
+        # SDKs takes one, which is why this used to be reported as unknown - but the
+        # flat header does: `..._ServerResponded( intptr_t, gameserveritem_t & server )`.
+        inner = normalise(node.ref_to) if hasattr(node, "ref_to") else Ty("unknown")
+        return Ty("pointer", const=getattr(node, "const", False), pointee=inner)
     if name == "FundamentalSpecifier":
         spelling = getattr(node, "name", "")
         if spelling == "void":
@@ -298,6 +301,15 @@ class FlatFunction:
     interface: str
     params: List[Ty]
     returns: Ty
+    # The names the header gives its parameters, in the same order. They are what
+    # the wire carries - `pchName`, `pData` - so a surface entry keeps them; a
+    # parameter nobody named (a bare `void (*)()`) keeps an empty string here and
+    # is named by where it sits when the surface is written.
+    names: List[str] = field(default_factory=list)
+    # Where it was declared, which says which DLL exports it: the call families in
+    # steam_api_flat.h are the interface trampolines, steam_gameserver.h's are the
+    # game server's, and sdkencryptedappticket.h's belong to another DLL.
+    header: str = ""
 
 
 @dataclass
@@ -320,6 +332,10 @@ class Sdk:
     interfaces: List[Interface] = field(default_factory=list)
     callbacks: Dict[str, Callback] = field(default_factory=dict)
     flat: Dict[str, List[FlatFunction]] = field(default_factory=dict)
+    # Every function the headers declare and do not define, in the order the
+    # headers were read: what the SDK's DLLs export, which is what a game built
+    # against this SDK can be importing.
+    exports: List[FlatFunction] = field(default_factory=list)
     unread: List[str] = field(default_factory=list)
 
     # A payload declares its id as `k_iCallback = k_iSteamXxxCallbacks + n`, and the
@@ -590,6 +606,26 @@ def _absorb(sdk: Sdk, header: str, path: str, parsed) -> None:
         name = _typename_text(typedef.name)
         sdk.typedefs[name] = normalise(typedef.type)
 
+    # Every function an SDK's header *declares* and does not define is an export of
+    # one of its DLLs: `S_API bool SteamAPI_Init();` is a declaration, while
+    # `inline ISteamUser *SteamUser()` is Valve's own shorthand and carries its
+    # body in the header. This is the whole point of reading the headers rather
+    # than a list somebody kept: `SteamAPI_Init`, `SteamInternal_ContextInit` and
+    # the whole `SteamGameServer_*` family are not in steam_api_flat.h at all.
+    for function in namespace.functions:
+        if getattr(function, "inline", False) or getattr(function, "body", None):
+            continue
+        sdk.exports.append(
+            FlatFunction(
+                name=_typename_text(function.name),
+                interface="",
+                params=[normalise(parameter.type) for parameter in function.parameters],
+                returns=normalise(function.return_type) if function.return_type else Ty("void"),
+                names=[parameter.name or "" for parameter in function.parameters],
+                header=header,
+            )
+        )
+
     for variable in namespace.variables:
         number = _enum_number(variable.value)
         if number is not None:
@@ -703,6 +739,7 @@ def _read_flat_header(sdk: Sdk, options: ParserOptions, steam_dir: str) -> None:
             interface=interface,
             params=[normalise(parameter.type) for parameter in function.parameters],
             returns=normalise(function.return_type) if function.return_type else Ty("void"),
+            names=[parameter.name or "" for parameter in function.parameters],
         )
         sdk.flat.setdefault(interface, []).append(entry)
 
@@ -1572,6 +1609,157 @@ def report_wanted(paths: Sequence[str], carried: Sequence[str], what: str) -> No
 
 
 # ---------------------------------------------------------------------------
+#  The flat surface the stub exports
+# ---------------------------------------------------------------------------
+#  What the stub exports used to be hand-written (`gen/steam_api.idl.json`) and it
+#  drifted, because there was nothing to be right about: it named a call no SDK
+#  declares - `SteamAPI_ISteamUtils_GetCurrentGameLanguage`, where both 1.39 and
+#  1.41 declare `SteamAPI_ISteamApps_GetCurrentGameLanguage` - and nothing could
+#  tell. This reads the same facts out of the SDK instead: every `S_API` function
+#  the headers declare, with the parameter names and the kind each one travels as.
+#
+#  What is *not* here is what a mock decides rather than copies: which calls it
+#  answers itself, the register/unregister and event-draining hooks, the
+#  ContextInit and CreateInterface fallbacks, and the surface's own name and
+#  revision. Those belong to the harness and live in its code, keyed by call name.
+
+
+def describe(ty: Ty) -> str:
+    """A type as a person writes it, for a report about one this cannot carry."""
+    if ty.form == "pointer":
+        inner = describe(ty.pointee) if ty.pointee is not None else "void"
+        return "%s *" % inner
+    if ty.count is not None:
+        return "%s[%s]" % (ty.name or "?", ty.count)
+    return ty.name or "?"
+
+
+def _resolved(sdk: Sdk, ty: Ty, seen: Optional[Set[str]] = None) -> Ty:
+    """Follow a typedef to the type it names: `intptr_t` is `int64` under it."""
+    seen = set() if seen is None else seen
+    if ty.form == "named" and ty.name in sdk.typedefs and ty.name not in seen:
+        return _resolved(sdk, sdk.typedefs[ty.name], seen | {ty.name})
+    return ty
+
+
+def _flat_scalar(sdk: Sdk, mapper: Mapper, ty: Ty) -> Optional[str]:
+    """The kind of a type that is not a pointer, or None when nothing carries it."""
+    if ty.form == "fundamental":
+        # `char` is a fundamental and lands on int8, which is why a `char *` is
+        # answered before this is asked (see below).
+        return FUNDAMENTAL_KINDS.get(ty.name)
+    if ty.form == "named":
+        if mapper.is_enum(ty.name):
+            return "enum"
+        if ty.name in mapper.value_types:
+            return "uint64"  # CSteamID, CGameID: the one integer they are
+    return None
+
+
+def _flat_travel(sdk: Sdk, mapper: Mapper, ty: Ty) -> Tuple[Optional[str], bool]:
+    """`(kind, out)` for one parameter or return, or `(None, False)` for neither.
+
+    A pointer to something the wire carries is how a call writes back, so the
+    pointer is the out-ness. A pointer to anything else - a structure, an
+    interface, a function - is an address the mock reports and never reads,
+    which is what makes the exotic parameters survivable.
+    """
+    resolved = _resolved(sdk, ty)
+    if resolved.name == "void":
+        return "void", False
+    if resolved.count is not None and resolved.form != "pointer":
+        return "opaque_ptr", False  # an array parameter decays to a pointer
+    if resolved.form == "pointer":
+        inner = _resolved(sdk, resolved.pointee) if resolved.pointee is not None else None
+        if inner is None:
+            return "opaque_ptr", False
+        if inner.name in ("char", "wchar_t", "TCHAR"):
+            # A string the game reads, or a buffer the mock has nothing to put in.
+            return ("cstring", False) if inner.const else ("opaque_ptr", False)
+        scalar = _flat_scalar(sdk, mapper, inner)
+        return (scalar, True) if scalar is not None else ("opaque_ptr", False)
+    scalar = _flat_scalar(sdk, mapper, resolved)
+    return (scalar, False) if scalar is not None else (None, False)
+
+
+@dataclass
+class Surface:
+    calls: List[Dict[str, object]]
+    refused: List[str]
+    kinds: Set[str]
+
+
+def build_surface(sdks: Sequence[Sdk]) -> Surface:
+    """Every function the SDKs export, read oldest first so the newest wins."""
+    calls: Dict[str, Dict[str, object]] = {}
+    refused: Dict[str, str] = {}
+    kinds: Set[str] = set()
+
+    for sdk in sdks:
+        mapper = Mapper(sdk)
+        for function in sdk.exports:
+            params: List[Dict[str, object]] = []
+            reason: Optional[str] = None
+            for index, param in enumerate(function.params):
+                kind, out = _flat_travel(sdk, mapper, param)
+                if kind is None:
+                    reason = "no kind for parameter %d (%s)" % (index, describe(param))
+                    break
+                entry: Dict[str, object] = {
+                    "name": (function.names[index] if index < len(function.names) else "")
+                    or "arg%d" % index,
+                    "type": kind,
+                }
+                if out:
+                    entry["dir"] = "out"
+                params.append(entry)
+            returns, _ = _flat_travel(sdk, mapper, function.returns)
+            if reason is None and returns is None:
+                reason = "no kind for the return (%s)" % describe(function.returns)
+
+            if reason is not None:
+                calls.pop(function.name, None)
+                refused[function.name] = "%s (%s): %s" % (function.name, sdk.label, reason)
+                continue
+            kinds.update(str(entry["type"]) for entry in params)
+            kinds.add(str(returns))
+            calls[function.name] = {
+                "name": function.name,
+                "returns": returns,
+                "params": params,
+                "header": function.header,
+            }
+            refused.pop(function.name, None)
+
+    return Surface(
+        calls=[calls[name] for name in sorted(calls)],
+        refused=sorted(refused.values()),
+        kinds=kinds,
+    )
+
+
+# The kinds a flat trampoline can carry: what `src/idl.cpp`'s type table knows,
+# and the ones the headers need that it does not have yet. A narrower width is
+# named rather than widened away - a uint8 written through a uint32 would put
+# four bytes where a game left one, which is a bug no compiler would catch.
+FLAT_KINDS_TODAY = {
+    "bool", "int32", "uint32", "uint16", "int64", "uint64",
+    "float", "double", "cstring", "opaque_ptr", "void",
+}
+FLAT_KINDS_NEEDED = FLAT_KINDS_TODAY | {"void", "int8", "uint8", "int16", "intptr", "uintptr", "enum"}
+
+
+def render_surface(surface: Surface, labels: Sequence[str]) -> str:
+    document = {
+        "source": "Steamworks SDK headers, read by tools/steamworks_sdk_import.py",
+        "format": "the flat API the stub exports: one entry per S_API function the SDK declares",
+        "sdks": list(labels),
+        "calls": surface.calls,
+    }
+    return json.dumps(document, indent=2) + "\n"
+
+
+# ---------------------------------------------------------------------------
 #  Finding an SDK
 # ---------------------------------------------------------------------------
 
@@ -1629,6 +1817,11 @@ def parse_arguments(argv: Sequence[str]) -> argparse.Namespace:
         help="an SDK, or a directory holding one (repeatable)",
     )
     parser.add_argument("--out", metavar="FILE", help="write the layouts, oldest SDK first")
+    parser.add_argument(
+        "--surface",
+        metavar="FILE",
+        help="write the flat API surface the stub exports, read out of the same headers",
+    )
     parser.add_argument("--diff", metavar="FILE", help="compare against a layout file")
     parser.add_argument("--list", action="store_true", help="print what was read, then stop")
     parser.add_argument(
@@ -1736,6 +1929,19 @@ def main(argv: Sequence[str]) -> int:
             arguments.diff if arguments.diff else "these SDKs' layouts",
         )
         print()
+
+    if arguments.surface:
+        surface = build_surface(sdks)
+        with open(arguments.surface, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(render_surface(surface, [sdk.label for sdk in sdks]))
+        print("wrote %s: %d call(s)" % (arguments.surface, len(surface.calls)))
+        if surface.refused:
+            print("  not expressible: %d call(s)" % len(surface.refused))
+            for line in surface.refused:
+                print("    " + line)
+        missing = sorted(surface.kinds - FLAT_KINDS_TODAY)
+        if missing:
+            print("  kinds the stub cannot carry yet: %s" % ", ".join(missing))
 
     if arguments.list:
         for version in sorted(merged.versions, key=lambda item: (item.name, _version_key(item.version))):
@@ -1873,6 +2079,71 @@ def selftest() -> int:
         builder = Builder(sdk, ["SteamTestDone_t"])
         layout = builder.build()
         versions = {version.version: version for version in layout.versions}
+
+        # The flat surface, read from the same headers: every S_API function with
+        # the kind each parameter travels as. The two that return a structure by
+        # value are refused rather than guessed at, and a `char *` is a buffer the
+        # mock has nothing to put in rather than a string it could read.
+        surface = build_surface([sdk])
+        if surface.calls != [
+            {
+                "name": "SteamAPI_ISteamTest_DestructISteamTest",
+                "returns": "void",
+                "params": [{"name": "self", "type": "opaque_ptr"}],
+                "header": "steam_api_flat.h",
+            },
+            {
+                "name": "SteamAPI_ISteamTest_FillBuffer",
+                "returns": "void",
+                "params": [
+                    {"name": "self", "type": "opaque_ptr"},
+                    {"name": "pchBuffer", "type": "opaque_ptr"},
+                    {"name": "cubBuffer", "type": "int32"},
+                ],
+                "header": "steam_api_flat.h",
+            },
+            {
+                "name": "SteamAPI_ISteamTest_GetStatFloat",
+                "returns": "bool",
+                "params": [
+                    {"name": "self", "type": "opaque_ptr"},
+                    {"name": "pchName", "type": "cstring"},
+                    {"name": "pData", "type": "float", "dir": "out"},
+                ],
+                "header": "steam_api_flat.h",
+            },
+            {
+                "name": "SteamAPI_ISteamTest_GetStatInt32",
+                "returns": "bool",
+                "params": [
+                    {"name": "self", "type": "opaque_ptr"},
+                    {"name": "pchName", "type": "cstring"},
+                    {"name": "pData", "type": "int32", "dir": "out"},
+                ],
+                "header": "steam_api_flat.h",
+            },
+            {
+                "name": "SteamAPI_ISteamTest_GetTable",
+                "returns": "bool",
+                "params": [
+                    {"name": "self", "type": "opaque_ptr"},
+                    {"name": "pTable", "type": "opaque_ptr"},
+                ],
+                "header": "steam_api_flat.h",
+            },
+            {
+                "name": "SteamAPI_ISteamTest_GetTestID",
+                "returns": "uint64",
+                "params": [{"name": "self", "type": "opaque_ptr"}],
+                "header": "steam_api_flat.h",
+            },
+        ]:
+            failures.append("the surface read differently:\n    read: %s"
+                            % json.dumps(surface.calls, indent=2))
+
+        refused = [line.split(" (")[0] for line in surface.refused]
+        if refused != ["SteamAPI_ISteamTest_GetAddress", "SteamAPI_ISteamTest_GetInside"]:
+            failures.append("the surface refused %s" % json.dumps(surface.refused))
 
         if "SteamTest001" not in versions:
             failures.append("the version define in isteamtest.h was not read")

@@ -49,6 +49,7 @@ compile_commands.json
 # A virtualenv for tools/steamworks_sdk_import.py, which is the only thing here
 # that needs one
 .venv/
+__pycache__/
 
 # Runtime output from the harness
 *.jsonl
