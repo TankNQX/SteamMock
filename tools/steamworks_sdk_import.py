@@ -63,34 +63,6 @@ except ImportError:  # pragma: no cover - the message is the point
     )
     raise SystemExit(2)
 
-# ---------------------------------------------------------------------------
-#  The kind table, mirrored from src/interfaces.cpp
-# ---------------------------------------------------------------------------
-#  A wire kind is what a layout carries. This is the same list the generator
-#  validates against, and it is duplicated rather than read out of the C++ so a
-#  disagreement between the two is something the diff can find.
-
-KINDS = (
-    "bool",
-    "int8",
-    "uint8",
-    "int16",
-    "uint16",
-    "int32",
-    "uint32",
-    "int64",
-    "uint64",
-    "float",
-    "double",
-    "intptr",
-    "uintptr",
-    "enum",
-    "cstring",
-    "opaque_ptr",
-    "bytes",
-    "out_bytes",
-)
-
 # The fundamental spellings an SDK uses, and the kind each lands on. `long` is
 # 32-bit on the targets this is about, which is why it is not int64.
 FUNDAMENTAL_KINDS = {
@@ -357,9 +329,6 @@ class Sdk:
     # ids are resolved once every header has been read, so the order headers are read
     # in cannot decide whether a payload is read at all.
     pending: List[Tuple[str, str, object, Aggregate]] = field(default_factory=list)
-
-    def find_aggregate(self, name: str) -> Optional[Aggregate]:
-        return self.aggregates.get(name)
 
     def extent(self, text: Optional[str]) -> Optional[int]:
         """An array extent as a number, against the tables this SDK declares.

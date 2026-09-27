@@ -1115,11 +1115,6 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("    return nullptr;");
     out.push_back("}");
     out.push_back("");
-    out.push_back("const InterfaceVersion* interface_versions(std::size_t& count) noexcept {");
-    out.push_back("    count = kVersionCount;");
-    out.push_back("    return kVersions;");
-    out.push_back("}");
-    out.push_back("");
     out.push_back("}  // namespace steammock");
     return joined(out) + "\n";
 }

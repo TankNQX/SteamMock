@@ -424,9 +424,6 @@ Return slot(std::int32_t hSteamUser, const SlotInfo& info, Parameters... paramet
 // has claimed yet, and the object remembers the handle from then on.
 void* interface_object(const char* version, std::int32_t hSteamUser) noexcept;
 
-// Every version string the stub can answer, for a harness that wants to say so.
-const InterfaceVersion* interface_versions(std::size_t& count) noexcept;
-
 // ---------------------------------------------------------------------------
 //  The payloads a call can be completed with.
 // ---------------------------------------------------------------------------

@@ -108,9 +108,7 @@ public:
     // those handles are given out, so it is also where a call can be read back to the
     // end that made it.
     static constexpr std::int32_t kCustomerHSteamUser = 1;
-    static constexpr std::int32_t kCustomerHSteamPipe = 1;
     static constexpr std::int32_t kGameServerHSteamUser = 2;
-    static constexpr std::int32_t kGameServerHSteamPipe = 2;
 
     // The calls this world answers, so a test can prove every one of them is a
     // name the stub can actually send.
@@ -118,8 +116,6 @@ public:
 
     bool answer(const Session& session, const std::string& call, const Json& args, Answer& out,
                 std::vector<std::pair<std::uint64_t, Json>>& notifications);
-
-    std::size_t lobby_count() const noexcept { return _lobbies.size(); }
 
 private:
     Lobby* find_lobby(std::uint64_t id) noexcept;

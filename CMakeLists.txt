@@ -40,10 +40,6 @@ option(STEAMMOCK_BUILD_TESTS "Build the C++ tests" ON)
 option(STEAMMOCK_WERROR "Treat warnings as errors" OFF)
 
 # ---------------------------------------------------------------------------
-#  Core: the wire format, the JSON subset, the transport and the client. Static,
-#  so the stub, the backend and the tests all share one copy.
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
 #  nlohmann/json - the JSON the bridge speaks, and the one third party library the
 #  stub and the backend share. Header only, so it is an interface target.
 # ---------------------------------------------------------------------------
@@ -51,6 +47,10 @@ add_library(nlohmann_json INTERFACE)
 target_include_directories(nlohmann_json INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/external/nlohmann_json/single_include)
 
+# ---------------------------------------------------------------------------
+#  Core: the wire format, the JSON subset, the transport and the client. Static,
+#  so the stub, the backend and the tests all share one copy.
+# ---------------------------------------------------------------------------
 add_library(steammock_core STATIC
     src/log.cpp
     src/transport_tcp.cpp
