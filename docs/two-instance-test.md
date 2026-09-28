@@ -26,6 +26,33 @@ It copies the game out of the Steam library into `%TEMP%\sw-two\game`, puts the
 It then stops everything - so the transcript can be read - and prints what the
 backend saw, per session, plus what the stub handed each game.
 
+## The short run, for work on one step of it
+
+Most of what a run is read for is decided in the second after *Start game*: the game
+server comes up, each client sends its ticket, and the game server passes the ones Steam
+says are good. On the recordings that is 42 ms of traffic (`t+30390` to `t+30432`), and it
+is the first thing a run can be judged by:
+
+```bat
+pwsh -File tools\two-instance-test.ps1 -Clients 3 -StopWhenDecided -WaitAfterStart 12
+```
+
+`-StopWhenDecided` stops the run as soon as every client has been passed (the host's
+`k_EMsgServerPassAuthentication` is message 3 at the front of its packets), or when
+`-WaitAfterStart` has elapsed if it never happens - so a run that holds is over in a few
+seconds past the keypress and one that does not is over at the ceiling. Around **40
+seconds** a run rather than two and a half minutes, with no recording and no live view,
+and the rig says which it was as it stops (`all 3 client(s) were passed authentication`,
+or `only 2 of 3 within 12s`).
+
+What it gives up is the part of the run after that: the loser's own 30-second ticket
+timeout, the ships, the round - the *symptom* rather than the outcome. Judge a run by
+which players the host's game server passed, and read the mechanism behind it out of the
+transcript with
+[`tools/transcript_timeline.py`](../tools/transcript_timeline.py) `--rig <dir>
+--summary --callbacks`; keep the long form for the runs that are evidence rather than
+iteration.
+
 ## What a good run looks like
 
 Measured on 24 Sep 2026, both instances on Steamworks SDK 1.46's Spacewar:

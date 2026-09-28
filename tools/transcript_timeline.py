@@ -430,7 +430,11 @@ def callback_verdict(lines, story, records, host):
         print("  %d payload(s) reached the host's id after a second object had registered,"
               % host_story["shadowed"])
         print("  and the registry hands those to the later object. The ones about a player")
-        print("  the game server asked about are the players above that were never passed.")
+        if left_out:
+            print("  the game server asked about are the players above that were never passed.")
+        else:
+            print("  the game server asked about reached it anyway - so the ones handed over")
+            print("  late were for the players this process asked about as a client.")
 
 
 def main(argv):

@@ -17,6 +17,11 @@
 #                                                       # three clients and the live view in a
 #                                                       # grid, filmed from the first menu on
 #
+#   pwsh -File tools\two-instance-test.ps1 -Clients 3 -StopWhenDecided -WaitAfterStart 12
+#                                                       # the shortest run that still answers
+#                                                       # "did every client get in": about a
+#                                                       # minute, no recording, no live view
+#
 # Everything below is Windows-only and needs a built tree: -RepoRoot\build\Release
 # (the backend) and -RepoRoot\build-w32\Release (the 32-bit stub). See the walkthrough
 # in docs/two-instance-test.md for what the run is meant to show and what it stops at.
@@ -28,6 +33,7 @@ param(
     [switch] $Shoot,
     [switch] $Record,
     [switch] $Gui,
+    [switch] $StopWhenDecided,
     [int] $Clients = 2
 )
 
@@ -497,7 +503,38 @@ if ($Shoot) {
 }
 Drive $hwndA @($VK_DOWN, $VK_RETURN) 'instance A: Start game'
 
-Start-Sleep -Seconds $WaitAfterStart
+# How long the match then runs for. With -StopWhenDecided it runs until the question this
+# is about is answered - every client has been passed authentication - or until
+# -WaitAfterStart has elapsed, whichever comes first, which is a second or two for a match
+# that holds and the ceiling for one that does not. The answer is in the transcript the
+# moment the game server has been told about each player, and that is the first second
+# after this keypress; waiting 25 seconds for it is 25 seconds that a run of ten pays
+# twenty times over, and it is also 25 seconds of the game playing that cannot change the
+# answer. What it does change is what the run *shows*: with the early stop the loser's own
+# 30-second ticket timeout is not in the run, so the symptom is missing and the outcome is
+# not.
+#
+# The host's k_EMsgServerPassAuthentication is message 3, little endian, at the front of
+# every packet it sends - the one call a game server makes per player it lets in.
+if ($StopWhenDecided) {
+    $deadline = (Get-Date).AddSeconds($WaitAfterStart)
+    $passed = 0
+    while ($true) {
+        Start-Sleep -Milliseconds 250
+        $passed = [regex]::Matches((Read-Transcript), '"pubData":"03000000').Count
+        if ($passed -ge $Clients) { break }
+        if ((Get-Date) -ge $deadline) { break }
+    }
+    if ($passed -ge $Clients) {
+        Say ("instance A: all {0} client(s) were passed authentication - stopping here" -f $passed)
+    }
+    else {
+        Say ("instance A: only {0} of {1} client(s) were passed within {2}s - stopping here" -f $passed, $Clients, $WaitAfterStart)
+    }
+}
+else {
+    Start-Sleep -Seconds $WaitAfterStart
+}
 
 if ($null -ne $recorder) {
     # q rather than a kill: ffmpeg closes the file on its own terms, and an mp4 whose index
