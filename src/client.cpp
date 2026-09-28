@@ -142,6 +142,7 @@ bool Client::ensure_connected() {
 
     std::string response;
     if (!_transport->exchange(hello.dump(), response)) {
+        log_write(LogLevel::warn, "hello failed - ignoring it");
         _transport->close();
         return false;
     }
@@ -161,10 +162,6 @@ bool Client::ensure_connected() {
 
 bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept {
     try {
-        configure();
-        if (!_enabled) {
-            return false;
-        }
 
         // Game calls arrive on whatever thread the game uses, so one round trip
         // is held under the lock. Steam callbacks are cheap and the transport is
@@ -172,6 +169,12 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         // reply/request pairing that cannot get confused.
         std::lock_guard<std::mutex> lock(*_mutex);
 
+        configure();
+
+        if (!_enabled) {
+            return false;
+        }
+        
         if (!ensure_connected()) {
             return false;
         }
@@ -252,11 +255,13 @@ bool Client::take_event(Json& out) noexcept {
 
 bool Client::backend_connected() noexcept {
     try {
+        std::lock_guard<std::mutex> lock(*_mutex);
+        
         configure();
+        
         if (!_enabled) {
             return false;
         }
-        std::lock_guard<std::mutex> lock(*_mutex);
         return ensure_connected();
     } catch (...) {
         return false;

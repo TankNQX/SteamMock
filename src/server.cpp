@@ -414,11 +414,18 @@ void Server::accept_loop(std::uintptr_t listener) {
     for (;;) {
         const socket_t client = ::accept(socket, nullptr, nullptr);
         if (client == kInvalidSocket) {
-            return;  // the listener was closed: we are stopping
+            {
+                std::scoped_lock lock(_mutex);
+                if (_stopping) return;
+            }
+            log(LogLevel::warn, "accept failed (" + std::to_string(WSAGetLastError()) + ") - still listening");
+            Sleep(50);
+            continue;
         }
 
         {
-            std::lock_guard<std::recursive_mutex> lock(_mutex);
+            std::scoped_lock lock(_mutex);
+            
             if (_stopping) {
                 close_socket(client);
                 return;
