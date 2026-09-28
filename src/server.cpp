@@ -22,13 +22,16 @@ namespace {
 using socket_t = SOCKET;
 constexpr socket_t kInvalidSocket = INVALID_SOCKET;
 
+// Once, however many threads arrive here: a function-local static's initialisation is
+// the one thing the language already serialises, where a flag read and then set was
+// two threads racing over whether this process had started Winsock.
 void ensure_winsock_started() noexcept {
-    static bool started = false;
-    if (!started) {
+    static const bool started = []() noexcept {
         WSADATA data{};
         (void)WSAStartup(MAKEWORD(2, 2), &data);
-        started = true;
-    }
+        return true;
+    }();
+    (void)started;
 }
 
 socket_t as_socket(std::uintptr_t value) noexcept { return static_cast<socket_t>(value); }
@@ -63,9 +66,39 @@ bool send_all(socket_t handle, const char* data, std::size_t size) noexcept {
     return true;
 }
 
-bool recv_all(socket_t handle, char* data, std::size_t size) noexcept {
+// How long a read waits before looking up again. Long enough that an idle connection is
+// not woken for nothing, short enough that stopping the server is over in a moment.
+constexpr long kReadSliceMicroseconds = 200 * 1000;
+
+// Reads exactly this many bytes off a socket that may have nothing to say yet.
+//
+// The wait is a select() slice rather than a plain blocking recv() because a blocked
+// recv() cannot be called off on this platform: shutdown() on a connected socket is
+// accepted and returns 0, and the thread reading it stays where it is. A stop() that
+// then waits to join that thread waits for the game to speak again - which for a game
+// sitting on a menu is forever - and a server that will not stop leaves its port bound
+// for whoever runs next. A slice that ends with nothing to read is not an idle game
+// dropped: it is the moment the reader looks up and asks whether it is still wanted.
+bool recv_all(socket_t handle, char* data, std::size_t size,
+              const std::atomic<bool>& stopping) noexcept {
     std::size_t received = 0;
     while (received < size) {
+        if (stopping.load(std::memory_order_acquire)) {
+            return false;
+        }
+        fd_set readable;
+        FD_ZERO(&readable);
+        FD_SET(handle, &readable);
+        timeval slice{};
+        slice.tv_sec = 0;
+        slice.tv_usec = kReadSliceMicroseconds;
+        const int ready = ::select(0, &readable, nullptr, nullptr, &slice);
+        if (ready == SOCKET_ERROR) {
+            return false;
+        }
+        if (ready == 0) {
+            continue;
+        }
         const std::size_t remaining = size - received;
         const int chunk = static_cast<int>(remaining > 0x7FFFFFFFu ? 0x7FFFFFFFu : remaining);
         const int got = ::recv(handle, data + received, chunk, 0);
@@ -87,12 +120,12 @@ bool send_frame(socket_t handle, const std::string& payload) noexcept {
            send_all(handle, payload.data(), payload.size());
 }
 
-// Reads exactly one frame. False means the peer went away, or sent something
-// that is not a frame - either way this connection is finished.
-bool recv_frame(socket_t handle, std::string& payload) noexcept {
+// Reads exactly one frame. False means the peer went away, the server is stopping, or
+// something arrived that is not a frame - either way this connection is finished.
+bool recv_frame(socket_t handle, std::string& payload, const std::atomic<bool>& stopping) noexcept {
     try {
         char header[4] = {};
-        if (!recv_all(handle, header, sizeof(header))) {
+        if (!recv_all(handle, header, sizeof(header), stopping)) {
             return false;
         }
         const std::uint32_t length = read_frame_length(header);
@@ -100,7 +133,7 @@ bool recv_frame(socket_t handle, std::string& payload) noexcept {
             return false;
         }
         payload.assign(length, '\0');
-        return recv_all(handle, payload.data(), length);
+        return recv_all(handle, payload.data(), length, stopping);
     } catch (...) {
         // A frame this process cannot hold is a frame it cannot serve, so the
         // connection ends - which is what a false return already means.
@@ -301,16 +334,29 @@ bool Server::start(std::string& error) {
 }
 
 void Server::stop() {
-    {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
-        if (_stopping && _listener == kNoSocket) {
-            return;  // already stopped
-        }
-        _stopping = true;
+    // Held for the whole of it. `_stopping` is what tells the accept loop to finish,
+    // and it cannot also be the "already stopped" test: it is set before any of this
+    // work is done, so a second caller arriving mid-stop would find it set, skip the
+    // early return and close the same sockets and join the same threads again. This
+    // lock is nobody else's, so waiting here cannot be a wait for a worker that is
+    // waiting on `_mutex`.
+    std::lock_guard<std::mutex> once(_stop_mutex);
+    if (_stopped) {
+        return;  // already stopped
     }
+    _stopped = true;
 
+    // Published before anything is closed, because the accept loop and every
+    // connection's reader decide what to do next by looking at it.
+    _stopping.store(true, std::memory_order_release);
+
+    // Only this thread can be here, and start() wrote the listener before any of this
+    // existed, so the handle needs no lock of its own.
     if (_listener != kNoSocket) {
-        // Shutting down first is what unblocks accept() on both platforms.
+        // The accept() parked on this handle is woken by the close, not by the shutdown:
+        // a listening socket has nothing for shutdown() to shut down, whatever it
+        // returns. Both are here because shutting down and then closing is the sequence
+        // that works on either platform.
         shutdown_socket(as_socket(_listener));
         close_socket(as_socket(_listener));
         _listener = kNoSocket;
@@ -324,6 +370,9 @@ void Server::stop() {
     {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
         for (const std::uintptr_t client : _clients) {
+            // The reader in that connection's thread is in a read slice and will look
+            // at `_stopping` on its own; this tells the game's end the connection is
+            // over, which is what makes it stop waiting for an answer.
             shutdown_socket(as_socket(client));
         }
     }
@@ -336,6 +385,7 @@ void Server::stop() {
 
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     _clients.clear();
+    // The workers were joined above, so nothing can still be writing to this.
     if (_transcript != nullptr) {
         std::fflush(_transcript);
         std::fclose(_transcript);
@@ -411,22 +461,36 @@ std::size_t Server::unanswered_count() const {
 
 void Server::accept_loop(std::uintptr_t listener) {
     const socket_t socket = as_socket(listener);
+    int reported_error = 0;  // the last accept failure this loop said out loud
     for (;;) {
         const socket_t client = ::accept(socket, nullptr, nullptr);
         if (client == kInvalidSocket) {
-            {
-                std::scoped_lock lock(_mutex);
-                if (_stopping) return;
+            // Read before anything else can touch it: this code is the only thing that
+            // says why the accept failed, and taking the lock can set the thread's own
+            // last error on the way in.
+            const int error = WSAGetLastError();
+            if (_stopping.load(std::memory_order_acquire)) {
+                return;  // the listener was closed: we are stopping
             }
-            log(LogLevel::warn, "accept failed (" + std::to_string(WSAGetLastError()) + ") - still listening");
+            // An accept that failed is not a listener that is finished. Returning here
+            // used to end this loop for the rest of the run on a single aborted
+            // connection, and with it every game that had not connected yet: the
+            // listener is still open, so the next accept is the same call made again.
+            if (error != reported_error) {
+                // Once per kind of failure rather than twenty times a second: a
+                // condition that persists is one line, not a log nobody can read.
+                reported_error = error;
+                log(LogLevel::warn,
+                    "accept failed (" + std::to_string(error) + ") - still listening");
+            }
             Sleep(50);
             continue;
         }
+        reported_error = 0;
 
         {
-            std::scoped_lock lock(_mutex);
-            
-            if (_stopping) {
+            std::lock_guard<std::recursive_mutex> lock(_mutex);
+            if (_stopping.load(std::memory_order_acquire)) {
                 close_socket(client);
                 return;
             }
@@ -447,7 +511,7 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
     std::string session_id;
 
     std::string payload;
-    if (!recv_frame(socket, payload)) {
+    if (!recv_frame(socket, payload, _stopping)) {
         log(LogLevel::warn, "a connection from " + peer + " closed before it said hello");
         close_socket(socket);
         return;
@@ -490,8 +554,8 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
 
     if (send_frame(socket, make_welcome(session_id, session->profile().name).dump())) {
         for (;;) {
-            if (!recv_frame(socket, payload)) {
-                break;  // the normal way a game leaves
+            if (!recv_frame(socket, payload, _stopping)) {
+                break;  // the normal way a game leaves, or the server is stopping
             }
             // One frame is not worth the process. This runs on a thread of its own,
             // so anything that escapes here - a parse that throws, an answer whose

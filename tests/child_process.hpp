@@ -165,7 +165,9 @@ private:
     std::thread _reader;
     mutable std::mutex _mutex;
     std::string _text;
-    bool _exited = false;
+    // Written from wait_for_exit() and read from running(), so it is atomic rather
+    // than merely small: the reader is not always the thread that waited.
+    std::atomic<bool> _exited{false};
 };
 
 }  // namespace steammock_test

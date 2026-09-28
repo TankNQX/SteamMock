@@ -39,8 +39,9 @@ STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamMock_Version(void) {
 
 // Empty until the handshake has succeeded. The pointer is valid until the next
 // call from this thread: the id belongs to a connection and the next one replaces
-// it, so what is handed back is this thread's own copy rather than the client's -
-// which another thread's reconnect may be rewriting while a caller reads it.
+// it, so what is handed back is this thread's own copy rather than the client's own
+// string - a pointer into that one would be pointing at whatever the next connection
+// leaves there, and the client copies its own out under the lock that replaces it.
 STEAMMOCK_EXPORT const char* STEAMMOCK_CALL SteamMock_SessionId(void) {
     steammock::Client& client = steammock::Client::instance();
     if (!client.backend_connected()) {

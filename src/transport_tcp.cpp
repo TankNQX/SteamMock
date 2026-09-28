@@ -19,9 +19,11 @@ constexpr socket_t kInvalidSocket = INVALID_SOCKET;
 
 constexpr std::uintptr_t kClosed = static_cast<std::uintptr_t>(~0ull);
 
+// Once, however many threads arrive here: a function-local static's initialisation is
+// the one thing the language already serialises, where a flag read and then set was
+// two threads racing over whether this process had started Winsock.
 void ensure_winsock_started() noexcept {
-    static bool started = false;
-    if (!started) {
+    static const bool started = []() noexcept {
         WSADATA data{};
         // The one thing a socket cannot work without, and the one failure that has
         // nowhere to be returned to: every call after it simply fails, which reads
@@ -29,8 +31,9 @@ void ensure_winsock_started() noexcept {
         if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
             log_write(LogLevel::error, "WSAStartup failed: no socket will work in this process");
         }
-        started = true;
-    }
+        return true;
+    }();
+    (void)started;
 }
 
 socket_t as_socket(std::uintptr_t value) noexcept { return static_cast<socket_t>(value); }

@@ -48,9 +48,11 @@ public:
 
     // The session id by value, not by reference: connecting is what replaces it, and
     // a reader holding the reference would be holding whatever the next connection
-    // leaves there. The counts are read from other threads - a diagnostic tool, a
-    // test - and written from the one the calls run on, so they are atomic.
-    std::string session_id() const noexcept { return _session_id; }
+    // leaves there. Read under the same lock the connection writes it under, because
+    // a string copied out while another thread reassigns it is not a copy of
+    // anything. The counts are read from other threads - a diagnostic tool, a test -
+    // and written from the one the calls run on, so they are atomic.
+    std::string session_id() const noexcept;
     unsigned call_count() const noexcept { return _call_count; }
     unsigned unhandled_count() const noexcept { return _unhandled_count; }
 

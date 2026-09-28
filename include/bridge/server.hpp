@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -156,13 +157,22 @@ private:
     // Recursive: a call resolves under it, and resolving one runs the world's own
     // answers, which may ask this server about itself (see the header's comment).
     mutable std::recursive_mutex _mutex;
+    // stop() is the one entry point a second thread may arrive at while the first is
+    // still inside it - the workers it joins need `_mutex`, so the "already stopped"
+    // test cannot live there. This is what makes it happen once.
+    std::mutex _stop_mutex;
+    bool _stopped = false;
     std::vector<std::thread> _workers;
     std::vector<std::uintptr_t> _clients;
     std::vector<std::unique_ptr<Session>> _sessions;
     std::vector<CallRecord> _records;
     std::size_t _total_calls = 0;
     std::size_t _unanswered_calls = 0;
-    bool _stopping = false;
+    // What everyone else looks at to find out the run is ending: the accept loop before
+    // it accepts again, and a connection's own reader each time a read slice ends. Atomic
+    // rather than merely guarded, because those readers have to see it without waiting
+    // for a lock the thread that is stopping them may be holding.
+    std::atomic<bool> _stopping{false};
 
     std::FILE* _transcript = nullptr;
 };

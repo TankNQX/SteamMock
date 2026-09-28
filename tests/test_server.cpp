@@ -13,12 +13,14 @@
 //  Exits non-zero if a check fails.
 // ============================================================================
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <exception>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "bridge/json_read.hpp"
 #include "bridge/log.hpp"
@@ -217,11 +219,82 @@ void test_what_the_server_saw() {
           server.summary().find("3 call(s)") != std::string::npos);
 }
 
+// Four threads stopping at once, which is what stop() used to be unable to survive:
+// `_stopping` is set before the work begins, so a second caller used to arrive at a
+// guard that was already true, skip it, and close the same sockets and join the same
+// std::thread a second time. A handle closed twice and a thread joined twice are both
+// faults that say nothing when they happen, so what this test asks for is no crash.
+void test_four_threads_stop_at_once() {
+    std::printf("[:] four threads calling stop() at once\n");
+
+    for (int attempt = 0; attempt < 5; ++attempt) {
+        Json scenario;
+        if (!steammock::parse(kScenario, scenario)) {
+            check("the test scenario parses", false);
+            return;
+        }
+
+        steammock::ServerOptions options;
+        options.port = 0;
+        options.log_level = steammock::LogLevel::error;
+        steammock::Server server(steammock::Dispatcher(scenario), options);
+
+        std::string error;
+        if (!server.start(error)) {
+            check("the server binds a free port", false);
+            std::printf("        %s\n", error.c_str());
+            return;
+        }
+
+        // A game is attached first, so there is a listening socket, a worker thread and a
+        // session for the four to share rather than an empty shell.
+        steammock::TcpTransport client;
+        Json reply;
+        const bool attached = client.connect("127.0.0.1", server.port()) &&
+                              exchange(client, hello_message(), reply) &&
+                              wait_until([&server] { return server.sessions().size() == 1u; }, 5.0);
+        if (!attached) {
+            check("a game is attached before anything stops", false);
+            return;
+        }
+
+        // Released together, so all four are inside stop() rather than queued behind
+        // whichever thread happened to get there first.
+        std::atomic<bool> go{false};
+        std::vector<std::thread> stoppers;
+        stoppers.reserve(4);
+        for (int index = 0; index < 4; ++index) {
+            stoppers.emplace_back([&server, &go] {
+                while (!go.load(std::memory_order_acquire)) {
+                    std::this_thread::yield();
+                }
+                server.stop();
+            });
+        }
+        go.store(true, std::memory_order_release);
+        for (std::thread& stopper : stoppers) {
+            stopper.join();
+        }
+
+        // The run's record is what a stop must not take with it, and the session it
+        // names has to be marked as gone - a game whose socket is shut down is the one
+        // thing every stop here has in common.
+        check("four stops at once leave the run's record readable",
+              server.summary().find("1 game session(s)") != std::string::npos);
+        const std::vector<steammock::SessionSnapshot> sessions = server.sessions();
+        check("and the session it names is marked as gone",
+              sessions.size() == 1u && !sessions[0].connected);
+        client.close();
+        server.stop();  // and a fifth, afterwards, is still harmless
+    }
+}
+
 }  // namespace
 
 int run() {
     std::printf("[+] SteamMock server tests\n\n");
     test_what_the_server_saw();
+    test_four_threads_stop_at_once();
 
     if (g_failures == 0) {
         std::printf("\n[+] all checks passed\n");

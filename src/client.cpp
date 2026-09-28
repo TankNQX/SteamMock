@@ -174,7 +174,7 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         if (!_enabled) {
             return false;
         }
-        
+
         if (!ensure_connected()) {
             return false;
         }
@@ -253,12 +253,27 @@ bool Client::take_event(Json& out) noexcept {
     }
 }
 
-bool Client::backend_connected() noexcept {
+std::string Client::session_id() const noexcept {
+    // The lock can fail where an allocation cannot be allowed to: this returns a value
+    // to a game, so a mutex that cannot be taken answers "no session" rather than
+    // ending the process this DLL is loaded into - the same decision the allocation
+    // in instance() records.
     try {
         std::lock_guard<std::mutex> lock(*_mutex);
-        
+        return _session_id;
+    } catch (...) {
+        return std::string();
+    }
+}
+
+bool Client::backend_connected() noexcept {
+    try {
+        // Under the lock, like call(): configure() decides whether this client is on at
+        // all, and it is not something a second thread may read half-written.
+        std::lock_guard<std::mutex> lock(*_mutex);
+
         configure();
-        
+
         if (!_enabled) {
             return false;
         }
