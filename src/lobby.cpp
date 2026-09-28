@@ -5,6 +5,8 @@
 #include <utility>
 #include <vector>
 
+#include "bridge/protocol.hpp"
+
 namespace steammock {
 
 // ---------------------------------------------------------------------------
@@ -233,7 +235,7 @@ constexpr std::int64_t kMockAuthTicketHandle = 1;
 // which is what it is for a ticket nobody else's account issued.
 constexpr std::int64_t kAuthSessionResponseOk = 0;
 
-Json validate_auth_ticket_payload(std::uint64_t user) {
+Json validate_auth_ticket_payload(std::uint64_t user, const char* side) {
     Json fields = Json::object();
     fields["m_SteamID"] = id_value(user);
     fields["m_eAuthSessionResponse"] = Json(kAuthSessionResponseOk);
@@ -241,6 +243,10 @@ Json validate_auth_ticket_payload(std::uint64_t user) {
 
     Json event = Json::object();
     event["event"] = Json("ValidateAuthTicketResponse_t");
+    // Which end asked for this. The two answers to the two BeginAuthSession calls carry the
+    // same fields, so this is the only thing that says which one it is - and the end that
+    // asked is the end whose callback object should hear it: see bridge/protocol.hpp.
+    event["side"] = Json(side);
     event["in"] = std::move(fields);
     return event;
 }
@@ -837,8 +843,14 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         // the ticket belongs to and that it is good, which is what lets the player in. The
         // server finds the player it was waiting for by that id; so does a client, whose
         // auth player would otherwise wait out the game's own ticket timeout and be dropped.
+        //
+        // Which of the two asked is carried on the answer, because the end that asked is the
+        // end whose callback object should hear it - and a process that hosts is both ends at
+        // once, with an object registered for each. See bridge/protocol.hpp and, for what the
+        // stub does with it, bridge/synth.hpp.
         const std::uint64_t user = id_member(args, "steamID");
-        notifications.emplace_back(me, validate_auth_ticket_payload(user));
+        const char* side = call == kBeginAuthSession ? kSideGameServer : kSideClient;
+        notifications.emplace_back(me, validate_auth_ticket_payload(user, side));
         out = from_lobby(Json(kAuthSessionResponseOk));
         return true;
     }

@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "bridge/log.hpp"
+#include "bridge/protocol.hpp"
 
 namespace steammock {
 namespace {
@@ -122,22 +123,22 @@ std::mutex& registry_mutex() noexcept {
 // use, and every caller of them is inside a `try` that is meant to swallow that - a
 // `noexcept` here would terminate the game's process instead of letting the catch run.
 //
-// Several objects can be registered for one callback id. This registry keeps them all,
-// but delivers only to the last one registered - and that is the shape of the defect this
-// harness is chasing: a process that hosts registers ValidateAuthTicketResponse_t on both
-// of its halves (its game server, and its client once per peer), so the last registration
-// decides which of them is told, and when the client's object registered last the game
-// server is never told that a player's ticket came back good. That player sits at the
-// lobby until the game's own 30-second ticket timeout and leaves the match it had already
-// joined.
+// Several objects can be registered for one callback id, and which of them hears a payload
+// is the whole of what this registry is for. A process that hosts registers
+// ValidateAuthTicketResponse_t on both of its halves - its game server, and its client once
+// per peer - so one id can have three objects on it in one process, and the answer to a
+// ticket check belongs to the end that asked. That end's object is the FIRST registered,
+// because a hosting process's game server comes up before its client has any peers at all:
+// the answer carries the side it was asked from (bridge/protocol.hpp) and that picks it.
+// Every other payload is the customer's and goes to the LAST object registered - which is
+// what this registry has always done, and what a hosted game's two LobbyDataUpdate_t
+// objects need, because with both of them called that game's lobby stops starting games.
 //
-// Calling every object registered for an id is what the real SDK does, and it was tried:
-// it fixes the player above, and it stops a hosted game's lobby dead - the host has two
-// objects on LobbyDataUpdate_t, both asking for the same payload size, and calling both
-// leaves its menu unable to start a game. So the fix has to be narrower than "everyone":
-// the real SDK keeps one list per pipe, and the two halves of a hosting process are two
-// pipes. See the log lines this leaves behind: "callback id N: first/adding ... wants M
-// bytes" at registration, and "to 1 of K callback(s) registered for id N" at delivery.
+// The first rule going wrong is what leaves a player out of a three-player match: its
+// ticket comes back validated and the game server is never told, so the player sits in the
+// lobby until the game's own 30-second ticket timeout and then leaves. What a run leaves
+// behind to read it back: "callback id N: first/adding ... wants M bytes" at registration,
+// and "delivering ... to the first/last of K callback(s)" at delivery.
 std::map<std::int32_t, std::vector<void*>>& callbacks_by_id() {
     static std::map<std::int32_t, std::vector<void*>> by_id;
     return by_id;
@@ -333,20 +334,20 @@ void deliver_one(const Json& event) noexcept {
                                                 : info->callback;
                 const auto found = callbacks_by_id().find(wanted);
                 if (found != callbacks_by_id().end()) {
-                    // The last object registered for the id, which is the one that has been
-                    // taking every event for it since this registry began - and the count
-                    // beside it, because that is what says the others exist: a hosting
-                    // process registers its auth response on both halves and a game's
-                    // client registers one object per peer, and only one of them is being
-                    // told. See the note on callbacks_by_id.
-                    objects.assign(1, found->second.back());
+                    // Which object hears it. An answer to a game server's ticket check is for
+                    // the end that asked, and that end is the first registered - a hosting
+                    // process's game server comes up before its client has any peers.
+                    // Everything else is the customer's and goes to the last registered.
+                    const bool for_game_server = as_string_member(event, "side") == kSideGameServer;
+                    const std::size_t index = for_game_server ? 0u : found->second.size() - 1u;
+                    objects.assign(1, found->second[index]);
                     log_write(LogLevel::debug,
                               "delivering " + as_string(*name) + subject_of(fields) + " (" +
-                                  std::to_string(info->size) + " bytes) to 1 of " +
+                                  std::to_string(info->size) + " bytes) to the " +
+                                  (for_game_server ? "first" : "last") + " of " +
                                   std::to_string(found->second.size()) +
                                   " callback(s) registered for id " + std::to_string(wanted) +
-                                  (found->second.size() > 1u ? " - the later one takes them all"
-                                                             : std::string()));
+                                  (for_game_server ? " - a game server's answer" : std::string()));
                 }
             }
         }

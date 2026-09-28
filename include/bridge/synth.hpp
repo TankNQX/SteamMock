@@ -481,10 +481,13 @@ const EventInfo* find_event(const char* name) noexcept;
 //  its pump, on its own thread - is where delivery happens. A game that never
 //  pumps is never told anything, which is what the real SDK does too.
 //
-//  One id can have several objects on it, and every one of them is called - which
-//  is what the real SDK does, and what a game that hosts depends on: its game
-//  server and its client register the same callback ids, each object deciding for
-//  itself whether a payload is about it.
+//  One id can have several objects on it, and which of them is called is decided by the
+//  payload: one that answers a game server's own call belongs to the end that asked, which
+//  is the object that registered first, and every other payload belongs to the customer,
+//  which is the object that registered last. That is what a game that hosts depends on -
+//  its game server and its client register the same callback ids, and each end's object
+//  waits for its own answers. See the registry in src/synth.cpp for why it is not simply
+//  "all of them".
 
 void callback_registered(void* object, std::int32_t id) noexcept;
 void callback_unregistered(void* object) noexcept;

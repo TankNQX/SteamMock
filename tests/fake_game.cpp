@@ -108,6 +108,49 @@ using achievement_name_fn = const char* (*)(void*, std::uint32_t);
 using session_fn = const char* (*)();
 using stats_fn = unsigned long (*)(unsigned long*);
 using create_interface_fn = void* (*)(const char*);
+using register_callback_fn = void (*)(void*, std::int32_t);
+using send_p2p_fn = bool (*)(void*, std::uint64_t, const void*, std::uint32_t, std::int32_t,
+                             std::int32_t);
+using begin_auth_fn = std::int32_t (*)(void*, void*, std::int32_t, std::uint64_t);
+
+#if defined(_M_IX86)
+#    define STEAMMOCK_TEST_CALL __thiscall
+#else
+#    define STEAMMOCK_TEST_CALL
+#endif
+
+// A callback object as the SDK lays one out, with its vtable written out here rather than
+// left to the compiler. CCallbackBase's slots are Run(pvParam), Run(pvParam, bIOFailure,
+// hSteamAPICall) and GetCallbackSizeBytes, and the stub reads them in that order: a class
+// that declares the virtuals itself gets whatever order the compiler chooses, and a class
+// that overrides two overloads of Run gets one that is not this - which is how this test
+// first read the stub's *size* query as a callback invocation and saw both of its objects
+// called for one delivery.
+struct CountedCallback {
+    const void* const* vtable;
+    int* calls;
+};
+
+void STEAMMOCK_TEST_CALL counted_run(void* self, void* /*payload*/) {
+    ++(*static_cast<CountedCallback*>(self)->calls);
+}
+
+void STEAMMOCK_TEST_CALL counted_run_of_a_call_result(void*, void*, bool, std::uint64_t) {}
+
+std::int32_t STEAMMOCK_TEST_CALL counted_size(void*) { return 0; }
+
+const void* const kCountedVtable[] = {
+    reinterpret_cast<const void*>(&counted_run),
+    reinterpret_cast<const void*>(&counted_run_of_a_call_result),
+    reinterpret_cast<const void*>(&counted_size),
+};
+
+// ValidateAuthTicketResponse_t and P2PSessionRequest_t, as the SDK numbers them. The
+// layouts are Valve's data and are not part of the checkout, so these cannot be read out of
+// them here - and if either number ever moved, the objects below would not be called at all
+// and the checks that follow would fail rather than pass quietly.
+constexpr std::int32_t kValidateAuthTicketResponse = 143;
+constexpr std::int32_t kP2PSessionRequest = 1202;
 
 template <typename Fn> Fn resolve(HMODULE module, const char* name) {
     const FARPROC address = GetProcAddress(module, name);
@@ -214,7 +257,10 @@ int run() {
                 (user != nullptr && utils != nullptr && user_stats != nullptr) ? "true" : "false");
 
     // --- identity ----------------------------------------------------------
-    std::printf("steam_id=%llu\n", static_cast<unsigned long long>(get_steam_id(user)));
+    // Asked once, and kept: the flat call and the vtable call below are checks about
+    // reaching the backend under one name, so a third call would move their count.
+    const std::uint64_t own_steam_id = get_steam_id(user);
+    std::printf("steam_id=%llu\n", static_cast<unsigned long long>(own_steam_id));
     std::printf("persona=%s\n", bounded(get_persona(user)).c_str());
     std::printf("app_id=%u\n", get_app_id(utils));
     std::printf("language=%s\n", bounded(get_language(apps)).c_str());
@@ -332,6 +378,56 @@ int run() {
     const unsigned long forwarded = bridge_stats(&unhandled);
     std::printf("forwarded=%lu\n", forwarded);
     std::printf("unhandled=%lu\n", unhandled);
+
+    // --- one callback id, two objects, and which of them hears it -----------
+    // A process that hosts registers ValidateAuthTicketResponse_t on both of its halves -
+    // its game server, and its client once per peer - so one id can have several objects on
+    // it, and which of them is called is the whole of what the registry is for. The answer
+    // to a *game server's* ticket check belongs to the end that asked, whose object is the
+    // first registered because a hosting process's game server comes up before its client
+    // has any peers. A payload that answers nothing in particular - a peer wanting to talk -
+    // belongs to the customer, which is the object registered last.
+    //
+    // Getting the first rule wrong is what leaves a player out of a three-player match: the
+    // ticket comes back validated, the game server is never told, and that player waits out
+    // the game's own 30-second ticket timeout and leaves.
+    const auto register_callback = resolve<register_callback_fn>(stub, "SteamAPI_RegisterCallback");
+    int server_first = 0;
+    int server_second = 0;
+    CountedCallback server_object{kCountedVtable, &server_first};
+    CountedCallback peer_object{kCountedVtable, &server_second};
+    register_callback(&server_object, kValidateAuthTicketResponse);
+    register_callback(&peer_object, kValidateAuthTicketResponse);
+
+    // A game server asking Steam about a ticket it was handed. The answer is a callback, and
+    // it arrives on the next pump.
+    const auto begin_auth =
+        resolve<begin_auth_fn>(stub, "SteamAPI_ISteamGameServer_BeginAuthSession");
+    char ticket[14] = {};
+    const std::int32_t begin_result = begin_auth(nullptr, ticket, sizeof(ticket), own_steam_id);
+    api_run_callbacks();
+    api_run_callbacks();
+    std::printf("callback.begin_auth_result=%d\n", static_cast<int>(begin_result));
+    std::printf("callback.server_first=%d\n", server_first);
+    std::printf("callback.server_second=%d\n", server_second);
+
+    int peer_first = 0;
+    int peer_second = 0;
+    CountedCallback first_customer{kCountedVtable, &peer_first};
+    CountedCallback second_customer{kCountedVtable, &peer_second};
+    register_callback(&first_customer, kP2PSessionRequest);
+    register_callback(&second_customer, kP2PSessionRequest);
+
+    // A packet addressed to this process's own id is the first thing these two ends say to
+    // each other, which is what makes the world tell the receiver to accept the session -
+    // and that payload answers no call, so it is the customer's.
+    const auto send_p2p = resolve<send_p2p_fn>(stub, "SteamAPI_ISteamNetworking_SendP2PPacket");
+    std::printf("callback.sent=%s\n",
+                send_p2p(nullptr, own_steam_id, "x", 1, 3, 0) ? "true" : "false");
+    api_run_callbacks();
+    api_run_callbacks();
+    std::printf("callback.peer_first=%d\n", peer_first);
+    std::printf("callback.peer_second=%d\n", peer_second);
 
     api_shutdown();
     FreeLibrary(stub);

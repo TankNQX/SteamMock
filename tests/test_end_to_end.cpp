@@ -400,6 +400,29 @@ int run(int argc, char** argv) {
                        value_of(values, "vtable.user_achievement.untouched") == "true");
     }
 
+    // --- one callback id, two objects, and which of them hears it -----------
+    // The one thing a hosted game cannot do without, and the one thing that left a player
+    // out of a three-player match: both of a hosting process's halves register the same
+    // callback ids, and the answer to a game server's own call has to reach the game
+    // server's object rather than the client's per-peer one. Two objects are registered for
+    // each of two ids here, and each payload goes to the object it is for - the first for a
+    // game server's answer, the last for a payload that answers nothing in particular.
+    std::printf("\n[:] one callback id, two objects\n");
+    check_flat("the game server's ticket check was answered",
+               value_of(values, "callback.begin_auth_result") == "0",
+               value_of(values, "callback.begin_auth_result"));
+    check_flat("its answer went to the object registered first, and not to the other",
+               value_of(values, "callback.server_first") == "1" &&
+                   value_of(values, "callback.server_second") == "0",
+               "first=" + value_of(values, "callback.server_first") +
+                   " second=" + value_of(values, "callback.server_second"));
+    check_flat("a payload that answers nothing went to the object registered last",
+               value_of(values, "callback.sent") == "true" &&
+                   value_of(values, "callback.peer_first") == "0" &&
+                   value_of(values, "callback.peer_second") != "0",
+               "first=" + value_of(values, "callback.peer_first") +
+                   " second=" + value_of(values, "callback.peer_second"));
+
     // --- what the backend recorded ----------------------------------------
     std::printf("\n[:] what the backend recorded\n");
     const int forwarded = std::atoi(value_of(values, "forwarded").c_str());
