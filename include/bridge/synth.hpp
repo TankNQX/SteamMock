@@ -480,6 +480,11 @@ const EventInfo* find_event(const char* name) noexcept;
 //  a call says which payload it wants delivered, and the game's own RunCallbacks -
 //  its pump, on its own thread - is where delivery happens. A game that never
 //  pumps is never told anything, which is what the real SDK does too.
+//
+//  One id can have several objects on it, and every one of them is called - which
+//  is what the real SDK does, and what a game that hosts depends on: its game
+//  server and its client register the same callback ids, each object deciding for
+//  itself whether a payload is about it.
 
 void callback_registered(void* object, std::int32_t id) noexcept;
 void callback_unregistered(void* object) noexcept;

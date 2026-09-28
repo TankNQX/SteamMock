@@ -21,8 +21,11 @@
 #define NOMINMAX
 #include <windows.h>
 
+#include <algorithm>
 #include <map>
 #include <mutex>
+#include <string>
+#include <vector>
 
 #include "bridge/log.hpp"
 
@@ -118,15 +121,52 @@ std::mutex& registry_mutex() noexcept {
 // Not `noexcept`, unlike the mutex above: building these two maps allocates on first
 // use, and every caller of them is inside a `try` that is meant to swallow that - a
 // `noexcept` here would terminate the game's process instead of letting the catch run.
-std::map<std::int32_t, void*>& callbacks_by_id() {
-    static std::map<std::int32_t, void*> by_id;
+//
+// Several objects can be registered for one callback id. This registry keeps them all,
+// but delivers only to the last one registered - and that is the shape of the defect this
+// harness is chasing: a process that hosts registers ValidateAuthTicketResponse_t on both
+// of its halves (its game server, and its client once per peer), so the last registration
+// decides which of them is told, and when the client's object registered last the game
+// server is never told that a player's ticket came back good. That player sits at the
+// lobby until the game's own 30-second ticket timeout and leaves the match it had already
+// joined.
+//
+// Calling every object registered for an id is what the real SDK does, and it was tried:
+// it fixes the player above, and it stops a hosted game's lobby dead - the host has two
+// objects on LobbyDataUpdate_t, both asking for the same payload size, and calling both
+// leaves its menu unable to start a game. So the fix has to be narrower than "everyone":
+// the real SDK keeps one list per pipe, and the two halves of a hosting process are two
+// pipes. See the log lines this leaves behind: "callback id N: first/adding ... wants M
+// bytes" at registration, and "to 1 of K callback(s) registered for id N" at delivery.
+std::map<std::int32_t, std::vector<void*>>& callbacks_by_id() {
+    static std::map<std::int32_t, std::vector<void*>> by_id;
     return by_id;
 }
 
+// One object per call handle, though: a handle names the call whose result the game
+// registered for, so there is no second object a result could be meant for.
 std::map<std::uint64_t, void*>& results_by_call() {
     static std::map<std::uint64_t, void*> by_call;
     return by_call;
 }
+
+// Who a payload is about, when it says: a validation response names the player it is
+// for, and delivery is where that has to be readable - "which id, to which object" is
+// the whole of who heard about what.
+std::string subject_of(const Json* fields) {
+    if (fields == nullptr) {
+        return std::string();
+    }
+    const Json* id = json_member(*fields, "m_SteamID");
+    if (id == nullptr || !id->is_number()) {
+        return std::string();
+    }
+    return " for steam id " + std::to_string(as_uint64(*id));
+}
+
+// What an object says it wants, or zero when it does not say - which is what a
+// hand-written object in a test does, and those are called.
+std::size_t wanted_size(void* object) noexcept;
 
 // A vtable slot holds a member function, so on x86 it takes `this` in ECX and pops
 // its own arguments - a plain function pointer would be the caller's convention
@@ -144,11 +184,27 @@ using RunFunction = void(STEAMMOCK_MEMBER_CALL*)(void* self, void* payload, bool
                                                  std::uint64_t call);
 using RunPayloadFunction = void(STEAMMOCK_MEMBER_CALL*)(void* self, void* payload);
 
-// The third slot is the SDK's GetCallbackSizeBytes, which the stub no longer asks
-// for: a payload nobody asked for names the callback it belongs to instead of being
-// matched by size, because two of them can be the same size and one of them is not
-// the one that was meant.
+// The third slot: how big a payload this object wants. It is the SDK's own filter -
+// several objects can be registered for one id, and this is what tells the one that
+// wants this event from the ones that were registered for the id and want something
+// else - so an object whose answer is not this payload's size is not called with it.
+using SizeFunction = std::int32_t(STEAMMOCK_MEMBER_CALL*)(void* self);
+
 static_assert(sizeof(RunFunction) == sizeof(void*), "a vtable slot is one pointer");
+static_assert(sizeof(RunPayloadFunction) == sizeof(void*), "a vtable slot is one pointer");
+static_assert(sizeof(SizeFunction) == sizeof(void*), "a vtable slot is one pointer");
+
+// What an object says it wants, or zero when it does not say - which is what a
+// hand-written object in a test does, and those are called.
+std::size_t wanted_size(void* object) noexcept {
+    void* const* const vtable = *reinterpret_cast<void* const* const*>(object);
+    if (vtable == nullptr || vtable[2] == nullptr) {
+        return 0;
+    }
+    const SizeFunction size = reinterpret_cast<SizeFunction>(vtable[2]);
+    const std::int32_t bytes = size(object);
+    return bytes > 0 ? static_cast<std::size_t>(bytes) : 0u;
+}
 
 void call_object(void* object, const EventInfo& event, const Json* fields, std::uint64_t call,
                  bool call_result) noexcept {
@@ -253,7 +309,7 @@ void deliver_one(const Json& event) noexcept {
         }
 
         const Json* fields = json_member(event, "in");
-        void* object = nullptr;
+        std::vector<void*> objects;
         std::uint64_t call = 0;
         bool call_result = false;
         {
@@ -264,33 +320,38 @@ void deliver_one(const Json& event) noexcept {
                 call = as_uint64(*handle);
                 const auto found = results_by_call().find(call);
                 if (found != results_by_call().end()) {
-                    object = found->second;
+                    objects.push_back(found->second);
                     call_result = true;
                 }
-            } else if (id != nullptr && id->is_number()) {
-                const auto found = callbacks_by_id().find(static_cast<std::int32_t>(as_int64(*id)));
-                if (found != callbacks_by_id().end()) {
-                    object = found->second;
-                    log_write(LogLevel::debug, "delivering " + as_string(*name) +
-                                                   " to the callback the game registered for id " +
-                                                   std::to_string(as_int64(*id)));
-                }
             } else {
-                // Nobody asked for this, because it is not an answer to anything: a room
-                // changed, a packet arrived. What ties it to an object is the payload's
-                // own name - the SDK's callback id - which is what the game registered
-                // under when it said it wanted to hear about this.
-                const auto found = callbacks_by_id().find(info->callback);
+                // The id the payload names, or - for one that is not an answer to anything,
+                // like a room changing or a packet arriving - the one the SDK gives it,
+                // which is what a game registered under when it said it wanted to hear
+                // about this.
+                const std::int32_t wanted = id != nullptr && id->is_number()
+                                                ? static_cast<std::int32_t>(as_int64(*id))
+                                                : info->callback;
+                const auto found = callbacks_by_id().find(wanted);
                 if (found != callbacks_by_id().end()) {
-                    object = found->second;
-                    log_write(LogLevel::debug, "delivering " + as_string(*name) +
-                                                   " to the callback registered for id " +
-                                                   std::to_string(info->callback));
+                    // The last object registered for the id, which is the one that has been
+                    // taking every event for it since this registry began - and the count
+                    // beside it, because that is what says the others exist: a hosting
+                    // process registers its auth response on both halves and a game's
+                    // client registers one object per peer, and only one of them is being
+                    // told. See the note on callbacks_by_id.
+                    objects.assign(1, found->second.back());
+                    log_write(LogLevel::debug,
+                              "delivering " + as_string(*name) + subject_of(fields) + " (" +
+                                  std::to_string(info->size) + " bytes) to 1 of " +
+                                  std::to_string(found->second.size()) +
+                                  " callback(s) registered for id " + std::to_string(wanted) +
+                                  (found->second.size() > 1u ? " - the later one takes them all"
+                                                             : std::string()));
                 }
             }
         }
 
-        if (object == nullptr) {
+        if (objects.empty()) {
             // Nobody is waiting: a result the game never registered, one it has already
             // unregistered, or something it never asked to hear about. The real SDK
             // drops those too - but it says so, because an event that goes nowhere is
@@ -301,7 +362,11 @@ void deliver_one(const Json& event) noexcept {
                                        : " (callback " + std::to_string(info->callback) + ")"));
             return;
         }
-        call_object_guarded(object, *info, fields, call, call_result);
+        // One object, the one this registry has always called: the change to calling every
+        // object registered for an id is the fix for the player this harness leaves out of
+        // a match, and it is not this commit - a hosted process registers several objects
+        // for one lobby id, and calling all of them stops that game's lobby dead.
+        call_object_guarded(objects.front(), *info, fields, call, call_result);
     } catch (...) {
         // A literal, so building the message cannot allocate on the way in, and
         // `log_write` catches its own failures: nothing here can throw again.
@@ -314,21 +379,33 @@ void deliver_one(const Json& event) noexcept {
 void callback_registered(void* object, std::int32_t id) noexcept {
     try {
         const std::lock_guard<std::mutex> lock(registry_mutex());
-        // Said out loud, because this is the one path in all of this with no other line - and
-        // because one id can have two objects on it. A process that runs a game server inside
-        // a game has both sides registering callbacks, and this map keeps only the last of
-        // them, so which one it is decides which side hears about an event. The addresses are
-        // here to tell the two apart: they are the only thing about them we can see.
-        const auto found = callbacks_by_id().find(id);
+        // Said out loud, because this is one of the few paths in all of this with no other
+        // line - and because one id can have several objects on it. A process that runs a
+        // game server inside a game has both sides registering callbacks, and the client's
+        // half registers one per peer, so how many are on an id and who hears about an
+        // event is worth being able to read back. The addresses are here to tell the
+        // objects apart: they are the only thing about them we can see.
+        std::vector<void*>& objects = callbacks_by_id()[id];
         const std::string address = std::to_string(reinterpret_cast<std::uintptr_t>(object));
-        if (found != callbacks_by_id().end()) {
-            log_write(LogLevel::debug,
-                      "callback id " + std::to_string(id) + ": keeping " + address + " over " +
-                          std::to_string(reinterpret_cast<std::uintptr_t>(found->second)));
-        } else {
-            log_write(LogLevel::debug, "callback id " + std::to_string(id) + ": first, " + address);
+        // What it wants, said beside it: with several objects on one id, the size each of
+        // them asks for is the only thing that says which of them the next payload is for.
+        const std::string wants = " wants " + std::to_string(wanted_size(object)) + " bytes";
+        if (std::find(objects.begin(), objects.end(), object) != objects.end()) {
+            // Registering one object twice for one id would have it called twice, which
+            // no game asks for and a handler that counts events would not survive.
+            log_write(LogLevel::debug, "callback id " + std::to_string(id) + ": " + address +
+                                           " is already registered");
+            return;
         }
-        callbacks_by_id()[id] = object;
+        if (objects.empty()) {
+            log_write(LogLevel::debug,
+                      "callback id " + std::to_string(id) + ": first, " + address + wants);
+        } else {
+            log_write(LogLevel::debug, "callback id " + std::to_string(id) + ": adding " + address +
+                                           wants + " beside " + std::to_string(objects.size()) +
+                                           " other(s)");
+        }
+        objects.push_back(object);
         // NOLINTNEXTLINE(bugprone-empty-catch) - a game must not see the registry fail
     } catch (...) {
         // A registry that cannot grow is a game that gets no callbacks, which is
@@ -340,9 +417,13 @@ void callback_unregistered(void* object) noexcept {
     try {
         const std::lock_guard<std::mutex> lock(registry_mutex());
         // By object, because that is all UnregisterCallback is given: the id lives
-        // in the object the game handed us, and it is not ours to read.
+        // in the object the game handed us, and it is not ours to read. An object can
+        // only have been registered under the ids it was registered for, so every list
+        // that holds it is the right one to take it out of.
         for (auto entry = callbacks_by_id().begin(); entry != callbacks_by_id().end();) {
-            if (entry->second == object) {
+            std::vector<void*>& objects = entry->second;
+            objects.erase(std::remove(objects.begin(), objects.end(), object), objects.end());
+            if (objects.empty()) {
                 entry = callbacks_by_id().erase(entry);
             } else {
                 ++entry;
