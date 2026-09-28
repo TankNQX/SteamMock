@@ -163,6 +163,14 @@ match, so the menus and the keypresses that drive them are in it too. It ends by
 ffmpeg for `q` rather than killing it, because an mp4 whose index never got written is a
 file nothing can play; a four minute ceiling is passed as well, in case the run dies.
 
+Those files are read back with `python tools/transcript_timeline.py --rig <the rig
+directory>`, which decodes the game's own message ids in the packet exchange and, with
+`--callbacks`, says which of the players the host's game server was handed a ticket for it
+never passed. It handles the two ways this evidence misleads on its own: an
+out-parameter's `args` is the caller's value rather than the answer (the peer a packet
+came from is in `out`), and `game-output.log` is the machine's debug buffer, so only the
+lines whose pid belongs to this run are read.
+
 `-Gui` puts the live view in the grid as the backend rather than beside it, and
 `-Clients 3` adds a third client the same way the second is there. A two-client match of a
 minute is about six megabytes; three clients and the window over a whole session came out
