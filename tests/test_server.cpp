@@ -289,12 +289,48 @@ void test_four_threads_stop_at_once() {
     }
 }
 
+// A server listens once. `_stopping` is what every reader decides by and nothing
+// clears it, so a second start() on a stopped server would bind a listener whose accept
+// loop refuses every game that arrived - a port that looks bound and serves nobody,
+// which is worse than a refusal. Starting one twice is the same leak on the other side:
+// the first listener and its thread would have nothing pointing at them.
+void test_a_run_is_not_restartable() {
+    std::printf("[:] a server starts once, and says so when asked twice\n");
+
+    Json scenario;
+    if (!steammock::parse(kScenario, scenario)) {
+        check("the test scenario parses", false);
+        return;
+    }
+
+    steammock::ServerOptions options;
+    options.port = 0;
+    options.log_level = steammock::LogLevel::error;
+    steammock::Server server(steammock::Dispatcher(scenario), options);
+
+    std::string error;
+    check("the first start binds a port", server.start(error));
+    const std::uint16_t port = server.port();
+
+    error.clear();
+    check("a second start is refused", !server.start(error));
+    check("and it says why", error.find("already started") != std::string::npos);
+    check("the running server is left alone", server.port() == port);
+
+    server.stop();
+    error.clear();
+    check("a start after a stop is refused too", !server.start(error));
+    check("and says the same thing", error.find("already started") != std::string::npos);
+    check("with nothing left listening", server.call_count() == 0u);
+}
+
 }  // namespace
 
 int run() {
     std::printf("[+] SteamMock server tests\n\n");
     test_what_the_server_saw();
     test_four_threads_stop_at_once();
+    test_a_run_is_not_restartable();
 
     if (g_failures == 0) {
         std::printf("\n[+] all checks passed\n");

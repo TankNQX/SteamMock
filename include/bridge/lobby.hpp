@@ -122,6 +122,14 @@ public:
     // name the stub can actually send.
     static std::vector<std::string> handled_calls();
 
+    // What one lobby call resolved to.
+    //
+    // False means "this world has nothing to say about it", and it covers two cases a
+    // caller cannot tell apart: a call that is not a lobby call at all, and one that is
+    // - for a room this run has never seen, or a room with no game server yet. Both are
+    // the same answer to the same question ("does the world have an opinion?"), and the
+    // scenario and the session then get their say, which is the order the harness
+    // promises. A caller that ever needs the difference has to ask for it explicitly.
     bool answer(const Session& session, const std::string& call, const Json& args, Answer& out,
                 std::vector<std::pair<std::uint64_t, Json>>& notifications);
 
@@ -147,6 +155,21 @@ private:
     // are the same process is marked at the send, and a read serves it first.
     void queue_packet(std::uint64_t to, std::uint64_t from, std::int32_t channel,
                       const std::string& bytes, bool loopback);
+
+    // Where the packet a read would take is, as two positions rather than a pointer:
+    // which queue, and where in it. Computed in one place so that a read and the drop
+    // that follows it cannot choose different packets - which is what erasing by
+    // address used to stand for, and what a queue that reallocated would have broken.
+    struct PacketPosition {
+        bool found = false;
+        std::size_t queue = 0;  // which entry of `_packets`
+        std::size_t index = 0;  // where in that entry's own vector
+    };
+    PacketPosition locate_packet(std::uint64_t user, std::int32_t hSteamUser,
+                                 std::int32_t channel) const noexcept;
+
+    // The packet a read would hand over - the first on this end and channel, except
+    // that one whose ends are the same process comes first - or null when there is none.
     const P2PPacket* peek_packet(std::uint64_t user, std::int32_t hSteamUser,
                                  std::int32_t channel) const noexcept;
     void drop_packet(std::uint64_t user, std::int32_t hSteamUser, std::int32_t channel);
@@ -159,9 +182,11 @@ private:
 
     // The session behind a Steam id, which is the id itself unless it names a game server,
     // and whether this pair has already talked - the question Steam's session request hangs
-    // on.
+    // on. `first_contact` is the whole of that question *and* the answer to it: asking it
+    // is what records that they now have, so it is named for what it does rather than for
+    // what it looks like.
     std::uint64_t user_of(std::uint64_t id) const noexcept;
-    bool needs_session_request(std::uint64_t from, std::uint64_t to);
+    bool first_contact(std::uint64_t from, std::uint64_t to);
 
     std::vector<Lobby> _lobbies;
     std::uint64_t _next_lobby_id = kFirstLobbyId;

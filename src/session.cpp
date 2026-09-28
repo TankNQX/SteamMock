@@ -74,6 +74,9 @@ std::string to_text(const Json& value, const std::string& fallback) {
 }
 
 std::string string_member(const Json& args, const char* key) {
+    // Deliberately not the shared as_string_member: a scenario is hand-written, so a
+    // value arrives as the "wrong" JSON kind - an app id spelled as a string, a name
+    // spelled as a number - and this coerces where the shared one would answer "".
     const Json* value = json_member(args, key);
     return value != nullptr ? to_text(*value, std::string()) : std::string();
 }

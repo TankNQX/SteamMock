@@ -8,7 +8,7 @@
 #
 #  Every job runs the full suite: the protocol test, the backend test, the server
 #  test, the end-to-end test with the real DLL, and the check that the generated
-#  files still match gen/steam_api.idl.json.
+#  files still match the imports under gen/ they were read from.
 #
 #  MSVC is the compiler the harness ships with; clang-cl is a second pair of eyes
 #  on the same ABI, and it is worth the job because it reports what /W4 cannot.

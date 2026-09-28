@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -66,10 +67,16 @@ constexpr std::size_t kInterfaceEndpoints = 2;
 // one per user handle, each remembering the handle it was handed out for. That
 // memory is what lets a call made through one of them say who made it, which is the
 // only way a packet queue can tell a customer's read from a game server's.
+//
+// The handle is written by whichever thread asks for the version and read by whatever
+// thread later makes a call through the object, and those two are not the same thread -
+// so it is atomic, and claiming an endpoint is a compare-exchange rather than a test
+// and a store. A plain std::int32_t here was the one piece of shared mutable state in
+// the stub outside the callback registry.
 struct InterfaceVersion {
     const char* version;
     void* object[kInterfaceEndpoints];
-    std::int32_t* user[kInterfaceEndpoints];
+    std::atomic<std::int32_t>* user[kInterfaceEndpoints];
 };
 
 // A game that skips its null check should read empty text rather than fault.
@@ -284,6 +291,10 @@ struct BytesOut {
 template <> struct Kind<Bytes> {
     static constexpr bool out() noexcept { return false; }
 
+    // The wire gets a pointer into the Bytes object's own text rather than a copy of it.
+    // That is safe for exactly one reason: the object was passed by value into
+    // call_slot's parameter storage, so it outlives the run_slot call this pointer is
+    // handed to, and nothing keeps it after that.
     static Arg arg(const Bytes& value) noexcept { return wire_cstring(value.text().c_str()); }
     static Bytes from(const Json& reply) noexcept {
         (void)reply;
@@ -382,6 +393,9 @@ void store_out(const SlotInfo& info, std::size_t index, const Json& reply,
 template <class Return, class... Parameters>
 Return call_slot(std::int32_t hSteamUser, const SlotInfo& info, Parameters... parameters) noexcept {
     try {
+        // One slot more than there are arguments, always: a call that takes none would
+        // otherwise declare a zero-length array, which is not standard C++ - and the
+        // extra element is never read, because the count is what run_slot goes by.
         const Arg packed[sizeof...(Parameters) + 1] = {Kind<Parameters>::arg(parameters)...};
         Json reply;
 

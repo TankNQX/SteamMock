@@ -21,15 +21,26 @@ namespace steammock_test {
 
 // Quotes one argument for a Win32 command line. Without this a path under
 // "C:\Program Files" splits into two arguments and the child never starts.
+//
+// The rules CommandLineToArgvW applies in reverse: a run of backslashes is only
+// doubled when it is followed by a quote, so `C:\dir\` keeps its single trailing
+// backslash and does not turn into an escaped quote.
 inline std::string quote(const std::string& argument) {
     std::string out = "\"";
+    std::size_t backslashes = 0;
     for (const char ch : argument) {
-        if (ch == '"') {
-            out += "\\\"";
-        } else {
+        if (ch == '\\') {
+            ++backslashes;
             out += ch;
+            continue;
         }
+        if (ch == '"') {
+            out.append(backslashes + 1u, '\\');
+        }
+        backslashes = 0;
+        out += ch;
     }
+    out.append(backslashes, '\\');
     out += '"';
     return out;
 }

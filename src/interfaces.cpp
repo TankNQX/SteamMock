@@ -528,6 +528,11 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
         named.emplace_back(structure.name, "struct");
     }
 
+    // Which version strings have been read already. A layouts file is dozens of versions
+    // and hundreds of slots, and comparing every new version against every earlier one is
+    // a scan of the whole file per version.
+    std::set<std::string> seen_versions;
+
     for (const Json& entry : *versions) {
         InterfaceVersion version;
         const std::string where = "interfaces[" + std::to_string(parsed._versions.size()) + "]";
@@ -550,11 +555,9 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
             version.slots.push_back(std::move(slot));
         }
 
-        for (const InterfaceVersion& existing : parsed._versions) {
-            if (existing.version == version.version) {
-                error = version.version + " appears twice";
-                return false;
-            }
+        if (!seen_versions.insert(version.version).second) {
+            error = version.version + " appears twice";
+            return false;
         }
         parsed._versions.push_back(std::move(version));
     }
@@ -680,6 +683,7 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         "",
         "#include \"bridge/synth.hpp\"",
         "",
+        "#include <atomic>",
         "#include <cstring>",
         "",
         "namespace steammock {",
@@ -867,7 +871,11 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         // through one of them say who made it. The underscore because the accessors
         // that take a handle name their parameter hSteamUser, and a member of the same
         // name would be hidden by it in every one of them.
-        out.push_back("    std::int32_t _hSteamUser = 0;");
+        //
+        // Atomic: the hand-out writes it on whichever thread asked, and a call through
+        // this object reads it on whatever thread the game makes that call from. See
+        // InterfaceVersion in bridge/synth.hpp.
+        out.push_back("    std::atomic<std::int32_t> _hSteamUser{0};");
         for (std::size_t index = 0; index < version.slots.size(); ++index) {
             const InterfaceSlot& slot = version.slots[index];
             if (slot.destructor) {
@@ -877,8 +885,12 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
 
             // The handle travels in front of the call name, which is what the two
             // overloads of slot() tell apart. Whether it reaches the wire is the
-            // marshaller's business - see needs_user_handle.
-            const std::string at = "_hSteamUser, kCall_" + number(slot_call[v][index]);
+            // marshaller's business - see needs_user_handle. A relaxed load: the value
+            // is written once, before the object is handed to anyone, and what makes
+            // the write visible to another thread is that thread being given the
+            // pointer in the first place.
+            const std::string at =
+                "_hSteamUser.load(std::memory_order_relaxed), kCall_" + number(slot_call[v][index]);
             std::string parameters;
             std::string arguments;
             for (const InterfaceParam& param : slot.params) {
@@ -1083,6 +1095,11 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("// handle is the user it is asked for under, or 0 when the caller did not say");
     out.push_back("// which: the object already holding that handle comes back, otherwise one");
     out.push_back("// nobody has claimed, and the object remembers the handle from then on.");
+    out.push_back("//");
+    out.push_back("// Claiming an endpoint is a compare-exchange, because two threads of one game");
+    out.push_back("// can ask for the same version at the same time and each has to get an object");
+    out.push_back(
+        "// of its own - a test followed by a store would hand both of them the same one.");
     out.push_back(
         "void* interface_object(const char* version, std::int32_t hSteamUser) noexcept {");
     out.push_back("    if (version == nullptr) {");
@@ -1095,16 +1112,19 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back(
         "        for (std::size_t endpoint = 0; endpoint < steammock::kInterfaceEndpoints;");
     out.push_back("             ++endpoint) {");
-    out.push_back(
-        "            if (hSteamUser != 0 && *kVersions[index].user[endpoint] == hSteamUser) {");
+    out.push_back("            if (hSteamUser != 0 && kVersions[index].user[endpoint]->load() == "
+                  "hSteamUser) {");
     out.push_back("                return kVersions[index].object[endpoint];");
     out.push_back("            }");
     out.push_back("        }");
     out.push_back(
         "        for (std::size_t endpoint = 0; endpoint < steammock::kInterfaceEndpoints;");
     out.push_back("             ++endpoint) {");
-    out.push_back("            if (*kVersions[index].user[endpoint] == 0) {");
-    out.push_back("                *kVersions[index].user[endpoint] = hSteamUser;");
+    out.push_back("            std::int32_t unclaimed = 0;");
+    out.push_back(
+        "            if (kVersions[index].user[endpoint]->compare_exchange_strong(unclaimed,");
+    out.push_back(
+        "                                                                   hSteamUser)) {");
     out.push_back("                return kVersions[index].object[endpoint];");
     out.push_back("            }");
     out.push_back("        }");

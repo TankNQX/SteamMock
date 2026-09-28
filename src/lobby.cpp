@@ -71,14 +71,6 @@ namespace {
 
 // --- the wire, read the way the state handlers read it ---------------------
 
-std::string string_member(const Json& object, const char* key) {
-    const Json* value = json_member(object, key);
-    if (value == nullptr || !value->is_string()) {
-        return std::string();
-    }
-    return as_string(*value);
-}
-
 std::uint64_t id_member(const Json& object, const char* key) {
     const Json* value = json_member(object, key);
     if (value == nullptr || !value->is_number()) {
@@ -402,7 +394,7 @@ std::uint64_t LobbyWorld::user_of(std::uint64_t id) const noexcept {
     return id;
 }
 
-bool LobbyWorld::needs_session_request(std::uint64_t from, std::uint64_t to) {
+bool LobbyWorld::first_contact(std::uint64_t from, std::uint64_t to) {
     for (const auto& pair : _contacts) {
         if (pair.first == from && pair.second == to) {
             return false;  // this direction has already been announced
@@ -450,50 +442,48 @@ std::uint64_t LobbyWorld::endpoint_of(std::uint64_t user, std::int32_t hSteamUse
 
 const P2PPacket* LobbyWorld::peek_packet(std::uint64_t user, std::int32_t hSteamUser,
                                          std::int32_t channel) const noexcept {
+    const PacketPosition at = locate_packet(user, hSteamUser, channel);
+    return at.found ? &_packets[at.queue].second[at.index] : nullptr;
+}
+
+// Where the packet a read would take is: the first on this end and channel, with one
+// exception - a packet whose ends are the same process never left the machine, so it is
+// already here when the read happens rather than arriving behind anything else, and
+// serving it first is what keeps a session's own exchange from queueing behind another
+// game's.
+LobbyWorld::PacketPosition LobbyWorld::locate_packet(std::uint64_t user, std::int32_t hSteamUser,
+                                                     std::int32_t channel) const noexcept {
     const std::uint64_t end = endpoint_of(user, hSteamUser);
-    // The first packet on this end and channel is the one to serve, with one exception:
-    // a packet whose ends are the same process never left the machine, so it is already
-    // here when the read happens rather than arriving behind anything else. Serving it
-    // first is what keeps a session's own exchange from queueing behind another game's.
-    const P2PPacket* from_elsewhere = nullptr;
-    for (const auto& entry : _packets) {
-        if (entry.first != end) {
+    PacketPosition elsewhere;
+    for (std::size_t queue = 0; queue < _packets.size(); ++queue) {
+        if (_packets[queue].first != end) {
             continue;
         }
-        for (const P2PPacket& packet : entry.second) {
-            if (packet.channel != channel) {
+        const std::vector<P2PPacket>& packets = _packets[queue].second;
+        for (std::size_t index = 0; index < packets.size(); ++index) {
+            if (packets[index].channel != channel) {
                 continue;
             }
-            if (packet.loopback) {
-                return &packet;
+            if (packets[index].loopback) {
+                return PacketPosition{true, queue, index};
             }
-            if (from_elsewhere == nullptr) {
-                from_elsewhere = &packet;
+            if (!elsewhere.found) {
+                elsewhere = PacketPosition{true, queue, index};
             }
         }
     }
-    return from_elsewhere;
+    return elsewhere;
 }
 
 void LobbyWorld::drop_packet(std::uint64_t user, std::int32_t hSteamUser, std::int32_t channel) {
-    // The packet a read would hand over, found the same way: a drop that picked a different
-    // one would leave the game reading what it had already taken.
-    const P2PPacket* chosen = peek_packet(user, hSteamUser, channel);
-    if (chosen == nullptr) {
+    // The packet a read would hand over, found the same way: a drop that picked a
+    // different one would leave the game reading what it had already taken.
+    const PacketPosition at = locate_packet(user, hSteamUser, channel);
+    if (!at.found) {
         return;
     }
-    const std::uint64_t end = endpoint_of(user, hSteamUser);
-    for (auto& entry : _packets) {
-        if (entry.first != end) {
-            continue;
-        }
-        for (auto packet = entry.second.begin(); packet != entry.second.end(); ++packet) {
-            if (&*packet == chosen) {
-                entry.second.erase(packet);
-                return;
-            }
-        }
-    }
+    std::vector<P2PPacket>& packets = _packets[at.queue].second;
+    packets.erase(packets.begin() + static_cast<std::ptrdiff_t>(at.index));
 }
 
 void LobbyWorld::notify_member_change(
@@ -646,7 +636,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (lobby == nullptr) {
             return false;
         }
-        const std::string* value = lobby->find_data(string_member(args, "pchKey"));
+        const std::string* value = lobby->find_data(as_string_member(args, "pchKey"));
         out = from_lobby(Json(value != nullptr ? *value : std::string()));
         return true;
     }
@@ -656,7 +646,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (lobby == nullptr) {
             return false;
         }
-        lobby->set_data(string_member(args, "pchKey"), string_member(args, "pchValue"));
+        lobby->set_data(as_string_member(args, "pchKey"), as_string_member(args, "pchValue"));
         out = from_lobby(Json(true));
         return true;
     }
@@ -683,7 +673,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (member == nullptr) {
             return false;
         }
-        const std::string key = string_member(args, "pchKey");
+        const std::string key = as_string_member(args, "pchKey");
         if (const std::string* value = member->find(key); value != nullptr) {
             out = from_lobby(Json(*value));
             return true;
@@ -705,7 +695,7 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         if (member == nullptr) {
             return false;
         }
-        member->set(string_member(args, "pchKey"), string_member(args, "pchValue"));
+        member->set(as_string_member(args, "pchKey"), as_string_member(args, "pchValue"));
         out = from_lobby(Json(true));
         return true;
     }
@@ -883,12 +873,12 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         // Marked here, because this is the one place that knows both ends: the session
         // making the call and the session the packet is addressed to. Same session means
         // the packet never leaves the machine, which is the case the queue serves first.
-        queue_packet(to, from, channel, string_member(args, "pubData"), me == recipient);
+        queue_packet(to, from, channel, as_string_member(args, "pubData"), me == recipient);
 
         // Steam asks a game whether it will talk to a peer it has not heard from before, and
         // a server that is never asked has no client to hand the packet to - which is what
         // "Received unknown message on our listen socket" is.
-        if (needs_session_request(from, recipient)) {
+        if (first_contact(from, recipient)) {
             notifications.emplace_back(recipient, session_request_payload(from));
         }
         out = from_lobby(Json(true));
@@ -930,6 +920,8 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         }
         // Copied out before the queue drops it, because the next read is a different
         // packet: the bytes go back as hex and the stub writes them into the game's buffer.
+        // The copy is what the order here is for - `drop_packet` moves on to the next
+        // packet, so what the game gets must be out of the queue first.
         Json values = Json::object();
         values["pubDest"] = Json(packet->bytes);
         values["pcubMsgSize"] = Json(static_cast<std::int64_t>(packet->bytes.size() / 2u));

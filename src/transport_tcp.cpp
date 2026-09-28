@@ -4,66 +4,25 @@
 
 #include "bridge/frame.hpp"
 #include "bridge/log.hpp"
-
-#ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#endif
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include "socket_io.hpp"
 
 namespace steammock {
 namespace {
 
-using socket_t = SOCKET;
-constexpr socket_t kInvalidSocket = INVALID_SOCKET;
+using socket_io::as_socket;
+using socket_io::close_socket;
+using socket_io::ensure_winsock_started;
+using socket_io::kInvalidSocket;
+using socket_io::send_all;
+using socket_io::socket_t;
 
 constexpr std::uintptr_t kClosed = static_cast<std::uintptr_t>(~0ull);
 
-// Once, however many threads arrive here: a function-local static's initialisation is
-// the one thing the language already serialises, where a flag read and then set was
-// two threads racing over whether this process had started Winsock.
-void ensure_winsock_started() noexcept {
-    static const bool started = []() noexcept {
-        WSADATA data{};
-        // The one thing a socket cannot work without, and the one failure that has
-        // nowhere to be returned to: every call after it simply fails, which reads
-        // as a server that is not listening. Say it here instead.
-        if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
-            log_write(LogLevel::error, "WSAStartup failed: no socket will work in this process");
-        }
-        return true;
-    }();
-    (void)started;
-}
-
-socket_t as_socket(std::uintptr_t value) noexcept { return static_cast<socket_t>(value); }
-
 bool is_open(std::uintptr_t value) noexcept { return value != kClosed; }
 
-void close_socket(std::uintptr_t value) noexcept {
-    if (!is_open(value)) {
-        return;
-    }
-    const socket_t handle = as_socket(value);
-    (void)closesocket(handle);
-}
-
-// A partially written or partially read frame would desync the stream for every
-// later call on this connection, so both directions loop until they are done.
-bool send_all(socket_t handle, const char* data, std::size_t size) noexcept {
-    std::size_t sent = 0;
-    while (sent < size) {
-        const std::size_t remaining = size - sent;
-        const int chunk = static_cast<int>(remaining > 0x7FFFFFFFu ? 0x7FFFFFFFu : remaining);
-        const int written = ::send(handle, data + sent, chunk, 0);
-        if (written <= 0) {
-            return false;
-        }
-        sent += static_cast<std::size_t>(written);
-    }
-    return true;
-}
-
+// Blocks in recv() and lets the socket's own SO_RCVTIMEO end the wait, which is the
+// other half of why this is not the same function the server uses: there it is a
+// slice and a flag, here it is the timeout the caller asked for. See src/socket_io.hpp.
 bool recv_all(socket_t handle, char* data, std::size_t size) noexcept {
     std::size_t received = 0;
     while (received < size) {
@@ -109,8 +68,10 @@ TcpTransport::TcpTransport() noexcept : _socket(kClosed), _timeout_ms(2000u) {
 TcpTransport::~TcpTransport() { close(); }
 
 void TcpTransport::close() noexcept {
-    close_socket(_socket);
-    _socket = kClosed;
+    if (is_open(_socket)) {
+        close_socket(as_socket(_socket));
+        _socket = kClosed;
+    }
 }
 
 bool TcpTransport::is_connected() const noexcept { return is_open(_socket); }
@@ -151,7 +112,7 @@ bool TcpTransport::connect(std::string_view host, std::uint16_t port) {
         if (::connect(handle, candidate->ai_addr, static_cast<int>(candidate->ai_addrlen)) == 0) {
             break;
         }
-        close_socket(static_cast<std::uintptr_t>(handle));
+        close_socket(handle);
         handle = kInvalidSocket;
     }
     freeaddrinfo(results);

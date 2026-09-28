@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "bridge/defaults.hpp"
 #include "bridge/log.hpp"
 #include "bridge/protocol.hpp"
 #include "bridge/scenario.hpp"
@@ -42,10 +43,11 @@ extern "C" void steammock_on_interrupt(int) { g_interrupted.store(true); }
 
 namespace {
 
+using steammock::kDefaultHost;
+using steammock::kDefaultPort;
 using steammock::LogLevel;
 
-constexpr const char* kDefaultHost = "127.0.0.1";
-constexpr std::uint16_t kDefaultPort = 50990;
+constexpr std::uint16_t kMaxPort = 65535;
 constexpr const char* kDefaultScenario = "scenarios/example.json";
 // The version this build reports, and the one DllMain answers through
 // SteamMock_Version: both come from the project version in CMake, so the two
@@ -85,18 +87,9 @@ struct Options {
 };
 
 bool parse_port(const std::string& text, std::uint16_t& out) {
-    if (text.empty()) {
-        return false;
-    }
     unsigned value = 0;
-    for (const char ch : text) {
-        if (ch < '0' || ch > '9') {
-            return false;
-        }
-        value = value * 10u + static_cast<unsigned>(ch - '0');
-        if (value > 65535u) {
-            return false;
-        }
+    if (!steammock::parse_number(text, kMaxPort, value)) {
+        return false;
     }
     out = static_cast<std::uint16_t>(value);
     return true;

@@ -9,62 +9,18 @@
 
 #include "bridge/frame.hpp"
 #include "bridge/protocol.hpp"
-
-#ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#endif
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include "socket_io.hpp"
 
 namespace steammock {
 namespace {
 
-using socket_t = SOCKET;
-constexpr socket_t kInvalidSocket = INVALID_SOCKET;
-
-// Once, however many threads arrive here: a function-local static's initialisation is
-// the one thing the language already serialises, where a flag read and then set was
-// two threads racing over whether this process had started Winsock.
-void ensure_winsock_started() noexcept {
-    static const bool started = []() noexcept {
-        WSADATA data{};
-        (void)WSAStartup(MAKEWORD(2, 2), &data);
-        return true;
-    }();
-    (void)started;
-}
-
-socket_t as_socket(std::uintptr_t value) noexcept { return static_cast<socket_t>(value); }
-
-void close_socket(socket_t handle) noexcept {
-    if (handle == kInvalidSocket) {
-        return;
-    }
-    (void)closesocket(handle);
-}
-
-// Half-closing wakes a thread parked in recv/accept without tearing the handle
-// out from under it, which is what makes stop() unblock cleanly.
-void shutdown_socket(socket_t handle) noexcept {
-    if (handle == kInvalidSocket) {
-        return;
-    }
-    (void)::shutdown(handle, SD_BOTH);
-}
-
-bool send_all(socket_t handle, const char* data, std::size_t size) noexcept {
-    std::size_t sent = 0;
-    while (sent < size) {
-        const std::size_t remaining = size - sent;
-        const int chunk = static_cast<int>(remaining > 0x7FFFFFFFu ? 0x7FFFFFFFu : remaining);
-        const int written = ::send(handle, data + sent, chunk, 0);
-        if (written <= 0) {
-            return false;
-        }
-        sent += static_cast<std::size_t>(written);
-    }
-    return true;
-}
+using socket_io::as_socket;
+using socket_io::close_socket;
+using socket_io::ensure_winsock_started;
+using socket_io::kInvalidSocket;
+using socket_io::send_all;
+using socket_io::shutdown_socket;
+using socket_io::socket_t;
 
 // How long a read waits before looking up again. Long enough that an idle connection is
 // not woken for nothing, short enough that stopping the server is over in a moment.
@@ -79,6 +35,9 @@ constexpr long kReadSliceMicroseconds = 200 * 1000;
 // sitting on a menu is forever - and a server that will not stop leaves its port bound
 // for whoever runs next. A slice that ends with nothing to read is not an idle game
 // dropped: it is the moment the reader looks up and asks whether it is still wanted.
+//
+// One recv() per slice rather than a loop to the end of the frame, because a partial
+// frame must not be able to park this thread any longer than a slice either.
 bool recv_all(socket_t handle, char* data, std::size_t size,
               const std::atomic<bool>& stopping) noexcept {
     std::size_t received = 0;
@@ -184,23 +143,6 @@ std::string make_session_id() {
     return std::string(buffer);
 }
 
-const char* level_name(LogLevel level) noexcept {
-    switch (level) {
-        case LogLevel::error: return "error";
-        case LogLevel::warn: return "warn";
-        case LogLevel::info: return "info";
-        case LogLevel::debug: return "debug";
-    }
-    return "info";
-}
-
-std::string text_member(const Json& value, const char* key) {
-    if (const Json* member = json_member(value, key)) {
-        return member->is_string() ? as_string(*member) : std::string();
-    }
-    return std::string();
-}
-
 }  // namespace
 
 // The backend's own line format, the one the console used to print.
@@ -211,7 +153,7 @@ void stderr_log_sink(LogLevel level, const std::string& message) {
     char stamp[16] = {};
     std::snprintf(stamp, sizeof(stamp), "%02d:%02d:%02d", parts.tm_hour, parts.tm_min,
                   parts.tm_sec);
-    std::fprintf(stderr, "%s %-7s %s\n", stamp, level_name(level), message.c_str());
+    std::fprintf(stderr, "%s %-7s %s\n", stamp, log_level_name(level), message.c_str());
     std::fflush(stderr);
 }
 
@@ -259,11 +201,35 @@ void Server::log(LogLevel level, const std::string& message) const {
     if (!_options.log || level > _options.log_level) {
         return;
     }
-    _options.log(level, message);
+    try {
+        _options.log(level, message);
+        // NOLINTNEXTLINE(bugprone-empty-catch) - losing the line is the whole of the failure
+    } catch (...) {
+        // The sink is somebody else's code - a console, a window's log panel - and this
+        // is called from the connection threads, where an exception has nothing to
+        // return to and ends the process. Losing the line is the whole of what can go
+        // wrong here, and it is what the rest of this tree does at every boundary it
+        // does not own.
+    }
 }
 
 bool Server::start(std::string& error) {
     ensure_winsock_started();
+
+    {
+        // A server listens once. Starting one that is already listening would leave the
+        // first listener and its thread with nothing pointing at them, and starting one
+        // that has been stopped cannot work either: `_stopping` is what every reader
+        // decides by, and it is never cleared, so the new accept loop would refuse every
+        // game that arrived and say nothing about why. Refusing outright is the honest
+        // answer to both; restarting a run means a new Server, which is what both front
+        // ends do.
+        std::lock_guard<std::mutex> once(_stop_mutex);
+        if (_stopped || _listener != kNoSocket) {
+            error = "the server was already started, and a run is not restartable";
+            return false;
+        }
+    }
 
     if (!_options.transcript.empty()) {
         _transcript = std::fopen(_options.transcript.c_str(), "ab");
@@ -272,6 +238,17 @@ bool Server::start(std::string& error) {
             return false;
         }
     }
+
+    // Every way out from here that is not a listening server has to leave what it
+    // opened behind it, because `stop()` is the only thing that closes these and a
+    // failed start never reaches it.
+    const auto give_up = [this](std::string message) {
+        if (_transcript != nullptr) {
+            std::fclose(_transcript);
+            _transcript = nullptr;
+        }
+        return message;
+    };
 
     char service[8] = {};
     std::snprintf(service, sizeof(service), "%u", static_cast<unsigned>(_options.port));
@@ -285,7 +262,7 @@ bool Server::start(std::string& error) {
     addrinfo* results = nullptr;
     const char* host = _options.host.empty() ? nullptr : _options.host.c_str();
     if (getaddrinfo(host, service, &hints, &results) != 0 || results == nullptr) {
-        error = "cannot resolve " + _options.host;
+        error = give_up("cannot resolve " + _options.host);
         return false;
     }
 
@@ -307,12 +284,12 @@ bool Server::start(std::string& error) {
     freeaddrinfo(results);
 
     if (listener == kInvalidSocket) {
-        error = "cannot bind " + _options.host + ":" + std::to_string(_options.port);
+        error = give_up("cannot bind " + _options.host + ":" + std::to_string(_options.port));
         return false;
     }
     if (::listen(listener, 16) != 0) {
         close_socket(listener);
-        error = "cannot listen on " + _options.host + ":" + std::to_string(_options.port);
+        error = give_up("cannot listen on " + _options.host + ":" + std::to_string(_options.port));
         return false;
     }
 
@@ -463,48 +440,86 @@ void Server::accept_loop(std::uintptr_t listener) {
     const socket_t socket = as_socket(listener);
     int reported_error = 0;  // the last accept failure this loop said out loud
     for (;;) {
-        const socket_t client = ::accept(socket, nullptr, nullptr);
-        if (client == kInvalidSocket) {
-            // Read before anything else can touch it: this code is the only thing that
-            // says why the accept failed, and taking the lock can set the thread's own
-            // last error on the way in.
-            const int error = WSAGetLastError();
-            if (_stopping.load(std::memory_order_acquire)) {
-                return;  // the listener was closed: we are stopping
+        // One connection's worth of work is not worth the process, and this runs on a
+        // thread: anything that escapes here would end the run for every game attached.
+        // An accept that failed says why and carries on, which is what a listener that
+        // is still open deserves.
+        try {
+            const socket_t client = ::accept(socket, nullptr, nullptr);
+            if (client == kInvalidSocket) {
+                // Read before anything else can touch it: this code is the only thing that
+                // says why the accept failed, and taking the lock can set the thread's own
+                // last error on the way in.
+                const int error = WSAGetLastError();
+                if (_stopping.load(std::memory_order_acquire)) {
+                    return;  // the listener was closed: we are stopping
+                }
+                // An accept that failed is not a listener that is finished. Returning here
+                // used to end this loop for the rest of the run on a single aborted
+                // connection, and with it every game that had not connected yet: the
+                // listener is still open, so the next accept is the same call made again.
+                if (error != reported_error) {
+                    // Once per kind of failure rather than twenty times a second: a
+                    // condition that persists is one line, not a log nobody can read.
+                    reported_error = error;
+                    log(LogLevel::warn,
+                        "accept failed (" + std::to_string(error) + ") - still listening");
+                }
+                Sleep(50);
+                continue;
             }
-            // An accept that failed is not a listener that is finished. Returning here
-            // used to end this loop for the rest of the run on a single aborted
-            // connection, and with it every game that had not connected yet: the
-            // listener is still open, so the next accept is the same call made again.
-            if (error != reported_error) {
-                // Once per kind of failure rather than twenty times a second: a
-                // condition that persists is one line, not a log nobody can read.
-                reported_error = error;
-                log(LogLevel::warn,
-                    "accept failed (" + std::to_string(error) + ") - still listening");
-            }
-            Sleep(50);
-            continue;
-        }
-        reported_error = 0;
+            reported_error = 0;
 
-        {
             std::lock_guard<std::recursive_mutex> lock(_mutex);
             if (_stopping.load(std::memory_order_acquire)) {
                 close_socket(client);
                 return;
             }
             _clients.push_back(static_cast<std::uintptr_t>(client));
-            _workers.emplace_back([this, client] {
-                const std::string peer = peer_name(client);
-                serve(static_cast<std::uintptr_t>(client), peer);
-            });
+            // The worker closes its own socket and forgets its own entry, so what is left
+            // here is the set of connections that are still attached - which is what stop()
+            // shuts down and what a snapshot is asked about.
+            _workers.emplace_back([this, client] { serve(static_cast<std::uintptr_t>(client)); });
+        } catch (const std::exception& error) {
+            log(LogLevel::error, "the accept loop threw: " + std::string(error.what()));
+            Sleep(50);
+        } catch (...) {
+            log(LogLevel::error, "the accept loop threw");
+            Sleep(50);
         }
     }
 }
 
-void Server::serve(std::uintptr_t client, const std::string& peer) {
+void Server::serve(std::uintptr_t client) {
     const socket_t socket = as_socket(client);
+    try {
+        serve_connection(client);
+    } catch (const std::exception& error) {
+        log(LogLevel::error, "a connection threw: " + std::string(error.what()));
+    } catch (...) {
+        log(LogLevel::error, "a connection threw");
+    }
+    {
+        // Forgotten *before* the handle is closed: the number a closed handle had is one
+        // the next socket this process opens can be given, and an entry erased after that
+        // would be the new connection's - which is how a live game goes missing from the
+        // set stop() shuts down.
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        for (auto entry = _clients.begin(); entry != _clients.end(); ++entry) {
+            if (*entry == client) {
+                _clients.erase(entry);
+                break;
+            }
+        }
+    }
+    // Closed exactly once per connection, on every way out including the exceptional
+    // one, and only after nothing else can still be using it.
+    close_socket(socket);
+}
+
+void Server::serve_connection(std::uintptr_t client) {
+    const socket_t socket = as_socket(client);
+    const std::string peer = peer_name(socket);
     const auto connected_at = std::chrono::steady_clock::now();
 
     Session* session = nullptr;
@@ -513,20 +528,17 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
     std::string payload;
     if (!recv_frame(socket, payload, _stopping)) {
         log(LogLevel::warn, "a connection from " + peer + " closed before it said hello");
-        close_socket(socket);
         return;
     }
 
     Json hello;
     if (!parse(payload, hello) || !hello.is_object()) {
         log(LogLevel::warn, "the first frame from " + peer + " was not a JSON object");
-        close_socket(socket);
         return;
     }
-    const std::string kind = text_member(hello, "type");
+    const std::string kind = as_string_member(hello, "type");
     if (kind != "hello") {
         log(LogLevel::warn, "first message from " + peer + " was '" + kind + "', not a hello");
-        close_socket(socket);
         return;
     }
 
@@ -543,7 +555,6 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
         if (!profile) {
             log(LogLevel::error, "refusing a handshake: the scenario has no profile '" +
                                      (refused.empty() ? std::string("?") : refused) + "'");
-            close_socket(socket);
             return;
         }
         auto created = std::make_unique<Session>(session_id, hello, *profile);
@@ -570,7 +581,7 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
                         "protocol error from " + session_id + ": an unparsable frame");
                     break;
                 }
-                const std::string message_kind = text_member(message, "type");
+                const std::string message_kind = as_string_member(message, "type");
                 if (message_kind == "bye") {
                     break;
                 }
@@ -603,18 +614,21 @@ void Server::serve(std::uintptr_t client, const std::string& peer) {
     {
         // The session stays: the transcript and the summary are about the whole
         // run, so a game that has left is still part of the picture. Only its
-        // "live" flag changes.
+        // "live" flag changes. What does not stay is what was queued for it: a game
+        // that has gone can never make the call that would have carried those
+        // payloads back, so leaving them here would be a leak that ends only when the
+        // run does.
         std::lock_guard<std::recursive_mutex> lock(_mutex);
         session->set_connected(false);
+        _inbox.erase(session_id);
     }
     log(LogLevel::info, "game disconnected: " + description + " (" +
                             std::to_string(static_cast<double>(elapsed) / 1000.0) + "s, " +
                             std::to_string(calls) + " calls)");
-    close_socket(socket);
 }
 
 std::string Server::handle_call(Session& session, const Json& message) {
-    const std::string name = text_member(message, "name");
+    const std::string name = as_string_member(message, "name");
 
     Json args = Json::object();
     if (const Json* value = json_member(message, "args"); value != nullptr && value->is_object()) {
@@ -630,11 +644,17 @@ std::string Server::handle_call(Session& session, const Json& message) {
 
     const auto started = std::chrono::steady_clock::now();
     Answer answer;
+    CallRecord record;
     {
         // Resolving a call reads the scenario, may write this session's stats, and
         // may now touch the lobbies other games are in - so it happens under the
         // lock, and so does telling the games that were not asking. The socket work
         // around it does not.
+        //
+        // The call is *published* here too - the session's own count, the run's totals
+        // and the history entry - rather than in a second critical section: a reader
+        // that took a snapshot between the two used to see a call that one part of the
+        // server knew about and the other did not.
         std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         std::vector<std::pair<std::uint64_t, Json>> notifications;
@@ -667,25 +687,20 @@ std::string Server::handle_call(Session& session, const Json& message) {
         }
 
         session.note_call();
-    }
-    const double elapsed_ms =
-        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
-            .count();
 
-    CallRecord record;
-    record.session = session.id();
-    record.seq = seq;
-    record.call = name;
-    record.args = args;
-    record.answered = answer.answered;
-    record.via = answer.via;
-    record.ms = elapsed_ms;
-    record.ret = answer.ret;
-    record.out = answer.out;
-    record.at_unix_ms = unix_milliseconds_now();
+        record.session = session.id();
+        record.seq = seq;
+        record.call = name;
+        record.args = args;
+        record.answered = answer.answered;
+        record.via = answer.via;
+        record.ms =
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
+                .count();
+        record.ret = answer.ret;
+        record.out = answer.out;
+        record.at_unix_ms = unix_milliseconds_now();
 
-    {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
         ++_total_calls;
         if (!answer.answered) {
             ++_unanswered_calls;
@@ -720,11 +735,25 @@ std::string Server::handle_call(Session& session, const Json& message) {
 }
 
 void Server::write_transcript(const CallRecord& record) {
+    // Serialised on its own lock rather than on `_mutex`: two games' threads write this
+    // file, and a line half of one call and half of another is not a transcript. The
+    // lock is not `_mutex`, because the write is to disk and a game's next call should
+    // not wait behind it. It also means the file's own order is the order the records
+    // were finished in, which is not the order `_records` holds them in - a record
+    // carries its sequence number and its arrival time, and that is what a reader
+    // orders by.
+    std::lock_guard<std::mutex> lock(_transcript_mutex);
     if (_transcript == nullptr) {
-        return;
+        return;  // the run has ended, or no file was ever asked for
     }
     const std::string line = record.to_json().dump() + "\n";
-    std::fwrite(line.data(), 1, line.size(), _transcript);
+    const std::size_t written = std::fwrite(line.data(), 1, line.size(), _transcript);
+    if (written != line.size() && !_transcript_failed) {
+        // Said once: a full disk is not twenty thousand lines' worth of news, and the
+        // return value used to be ignored outright.
+        _transcript_failed = true;
+        log(LogLevel::error, "the transcript is not being written in full: " + _options.transcript);
+    }
     std::fflush(_transcript);
 }
 

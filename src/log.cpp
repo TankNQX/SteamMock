@@ -61,6 +61,8 @@ const char* level_name(LogLevel level) noexcept {
 
 }  // namespace
 
+const char* log_level_name(LogLevel level) noexcept { return level_name(level); }
+
 bool log_enabled(LogLevel level) noexcept {
     return static_cast<int>(level) <= static_cast<int>(config().level);
 }

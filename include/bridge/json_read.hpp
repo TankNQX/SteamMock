@@ -38,17 +38,17 @@ constexpr int kMaxJsonDepth = 16;
 // that is what a caller can test in an `if` without touching the object's lifetime.
 // Named `json_member` rather than `member`: the lobby and server code has members
 // of its own, and a name that a local can shadow is a name that will be shadowed.
+//
+// One lookup, not two: `contains` followed by `at` is two scans of the ordered map
+// this harness reads with, and every argument of every call is read this way - which
+// made the most-executed function in the backend the one that walked a list twice.
 inline const Json* json_member(const Json& object, std::string_view key) noexcept {
     if (!object.is_object()) {
         return nullptr;
     }
-    // Through contains() and at() rather than find()/end(): an ordered_json's own
-    // iterators are its ordered_map's, and they do not compare with the json's.
     const std::string name(key);
-    if (!object.contains(name)) {
-        return nullptr;
-    }
-    return &object.at(name);
+    const auto found = object.find(name);
+    return found == object.end() ? nullptr : &*found;
 }
 
 inline std::int64_t as_int64(const Json& value, std::int64_t fallback = 0) noexcept {
@@ -122,6 +122,16 @@ inline std::string as_string(const Json& value, std::string fallback = std::stri
         return value.get<std::string>();
     }
     return fallback;
+}
+
+// The member named `key` when it is text, and the empty string otherwise - missing,
+// null, or a number where a name belongs. That is what the server and the lobby both
+// want from a field a game sent, and it is the same rule in one place rather than once
+// per reader: bridge/session.hpp's own reader coerces instead, deliberately, for the
+// hand-written values in a scenario.
+inline std::string as_string_member(const Json& object, std::string_view key) {
+    const Json* value = json_member(object, key);
+    return value != nullptr && value->is_string() ? as_string(*value) : std::string();
 }
 
 // Strict, and bounded: trailing text, an unterminated string and a bad escape are

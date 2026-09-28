@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdio>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -360,6 +361,9 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
     }
 
     Idl parsed;
+    // Which names have been read already: a surface is hundreds of calls, and comparing
+    // every new one against every earlier one is a scan of the whole file per entry.
+    std::set<std::string> seen;
     // Which API this is: the name of the surface it was read from - the SDK's own
     // version, or whatever a hand-written one calls itself.
     if (const Json* surface = json_member(document, "surface");
@@ -380,11 +384,9 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
 
         IdlCall call;
         call.name = as_string(*name);
-        for (const IdlCall& existing : parsed._calls) {
-            if (existing.name == call.name) {
-                error = call.name + " appears twice";
-                return false;
-            }
+        if (!seen.insert(call.name).second) {
+            error = call.name + " appears twice";
+            return false;
         }
 
         if (const Json* returns = json_member(entry, "returns"); returns != nullptr) {

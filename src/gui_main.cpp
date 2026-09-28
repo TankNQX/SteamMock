@@ -35,6 +35,7 @@
 #include <utility>
 #include <vector>
 
+#include "bridge/defaults.hpp"
 #include "bridge/log.hpp"
 #include "bridge/scenario.hpp"
 #include "bridge/server.hpp"
@@ -57,21 +58,18 @@ using steammock::SessionSnapshot;
 // game runs for hours.
 constexpr std::size_t kMaxLogLines = 2000;
 
-unsigned parse_port(const char* text, unsigned fallback) noexcept {
-    if (text == nullptr || text[0] == '\0') {
-        return fallback;
-    }
+// The calls list, bounded the same way and for the same reason: the run's own record is
+// the transcript, and this is a window on the newest of it. Generous, because scrolling
+// back through what a game asked is the point of the list.
+constexpr std::size_t kMaxCallRows = 20000;
+
+// The port field, read the way the console front end reads its own option. Empty
+// or unreadable means "let the operating system pick one", which is what the hint
+// beside the field says.
+std::uint16_t port_of(const char* text) {
     unsigned value = 0;
-    for (const char* cursor = text; *cursor != '\0'; ++cursor) {
-        if (*cursor < '0' || *cursor > '9') {
-            return fallback;
-        }
-        value = value * 10u + static_cast<unsigned>(*cursor - '0');
-        if (value > 65535u) {
-            return fallback;
-        }
-    }
-    return value;
+    return steammock::parse_number(text, 65535u, value) ? static_cast<std::uint16_t>(value)
+                                                        : static_cast<std::uint16_t>(0);
 }
 
 // `out` is only worth showing when the call had any.
@@ -106,7 +104,14 @@ using CallTallies = std::map<std::string, CallTally>;
 // ---------------------------------------------------------------------------
 class LiveView {
 public:
-    LiveView() = default;
+    // The two fields a person would type are seeded from the one place the default
+    // address lives, so the window and the console cannot disagree about where a
+    // game is expected to connect.
+    LiveView() {
+        std::snprintf(_host, sizeof(_host), "%s", steammock::kDefaultHost);
+        std::snprintf(_port, sizeof(_port), "%u", static_cast<unsigned>(steammock::kDefaultPort));
+    }
+
     ~LiveView() { stop(); }
 
     LiveView(const LiveView&) = delete;
@@ -210,7 +215,7 @@ private:
 
         ServerOptions options;
         options.host = _host;
-        options.port = static_cast<std::uint16_t>(parse_port(_port, 0));
+        options.port = port_of(_port);
         options.transcript = _transcript;
         options.log_level = LogLevel::debug;
         // The server logs from its own threads, so the sink has to be safe to
@@ -234,6 +239,7 @@ private:
         // A new server means a new history.
         _calls.clear();
         _shown.clear();
+        _shown_dirty = true;
         _tallies.clear();
         _function_order.clear();
         _tallies_dirty = false;
@@ -267,7 +273,12 @@ private:
             _selected = _games.front().id;
         }
         std::vector<CallRecord> fresh = _server->records_since(_seen);
-        _seen = _server->record_count();
+        // The cursor moves by what was actually taken rather than to wherever the
+        // history has got to by now. A call that arrived between these two reads used
+        // to be counted as read without ever having been copied, so it was missing from
+        // the live list for the rest of the run - a row silently dropped, which is the
+        // one thing a view of a call sequence must not do.
+        _seen += fresh.size();
         for (CallRecord& record : fresh) {
             CallTally& tally = _tallies[record.call];
             ++tally.calls;
@@ -275,10 +286,22 @@ private:
                 ++tally.answered;
             }
             tally.total_ms += record.ms;
+            // ...and the row the filter lets through joins the index here, so the list
+            // below does not have to be walked again on every frame that has new calls.
+            if (_filter.PassFilter(record.call.c_str())) {
+                _shown.push_back(_calls.size());
+            }
             _calls.push_back(std::move(record));
         }
         if (!fresh.empty()) {
             _tallies_dirty = true;
+        }
+        if (_calls.size() > kMaxCallRows) {
+            const std::size_t excess = _calls.size() - kMaxCallRows;
+            _calls.erase(_calls.begin(), _calls.begin() + static_cast<std::ptrdiff_t>(excess));
+            // Every index in the list has moved, so it is built again on the next frame
+            // rather than adjusted here.
+            _shown_dirty = true;
         }
     }
 
@@ -457,8 +480,12 @@ private:
         ImGui::TextDisabled("%zu seen", _calls.size());
 
         // The rows the filter lets through, so the clipper below can skip the
-        // ones it does not - clipping the raw list would count hidden rows.
-        if (filter_changed || _shown.size() != _calls.size()) {
+        // ones it does not - clipping the raw list would count hidden rows. Built
+        // again only when the filter changes or when the list has been trimmed, and
+        // added to in `pull()` otherwise: a frame with new calls used to walk the
+        // whole history to find out that it had.
+        if (filter_changed || _shown_dirty) {
+            _shown_dirty = false;
             _shown.clear();
             for (std::size_t index = 0; index < _calls.size(); ++index) {
                 if (_filter.PassFilter(_calls[index].call.c_str())) {
@@ -590,12 +617,12 @@ private:
         return nullptr;
     }
 
-    char _host[64] = "127.0.0.1";
-    // The same port the stub and the backend default to, because the whole point
-    // of the window is to be started and then forgotten while a game is run
-    // beside it. A port of 0 - whatever is free - is there for running two of
-    // these at once, and the field says so.
-    char _port[8] = "50990";
+    char _host[64] = {};
+    // The port the stub and the backend default to, because the whole point of the
+    // window is to be started and then forgotten while a game is run beside it. A
+    // port of 0 - whatever is free - is there for running two of these at once, and
+    // the field says so.
+    char _port[8] = {};
     char _scenario[512] = "scenarios/example.json";
 
     // Empty keeps no transcript, exactly as the console backend's own option does. A window
@@ -609,6 +636,8 @@ private:
     std::size_t _seen = 0;
     std::vector<CallRecord> _calls;
     std::vector<std::size_t> _shown;
+    // Set when `_calls` loses its oldest rows, which moves every index in `_shown`.
+    bool _shown_dirty = true;
     // What the "by function" view draws, and the order it draws it in: pointers
     // into the map, which a node-based container keeps valid as calls arrive.
     CallTallies _tallies;

@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "bridge/defaults.hpp"
 #include "bridge/json_read.hpp"
 #include "bridge/lobby.hpp"
 #include "bridge/log.hpp"
@@ -83,9 +84,9 @@ using LogFn = std::function<void(LogLevel, const std::string&)>;
 void stderr_log_sink(LogLevel level, const std::string& message);
 
 struct ServerOptions {
-    std::string host = "127.0.0.1";
-    std::uint16_t port = 50990;  // 0 lets the operating system pick one
-    std::string transcript;      // empty keeps no transcript
+    std::string host = kDefaultHost;
+    std::uint16_t port = kDefaultPort;  // 0 lets the operating system pick one
+    std::string transcript;             // empty keeps no transcript
     LogLevel log_level = LogLevel::info;
     LogFn log;  // empty uses timestamped lines on stderr
 };
@@ -125,7 +126,11 @@ public:
 private:
     void log(LogLevel level, const std::string& message) const;
     void accept_loop(std::uintptr_t listener);
-    void serve(std::uintptr_t client, const std::string& peer);
+    // One connection, with everything it can throw caught and its socket closed exactly
+    // once: a worker thread has nothing to return an exception to, and a handle closed
+    // twice is a handle whose next owner loses.
+    void serve(std::uintptr_t client);
+    void serve_connection(std::uintptr_t client);
 
     // Answers one call and records it. Returns the frame to send back, or an
     // empty string when the reply could not be built.
@@ -175,6 +180,12 @@ private:
     std::atomic<bool> _stopping{false};
 
     std::FILE* _transcript = nullptr;
+    // The transcript has a lock of its own: it is written from every connection's
+    // thread, after the state lock is released, so a game's next call does not wait on
+    // another game's write to disk. `stop()` closes the file after joining the workers,
+    // which is what makes that safe without holding this one.
+    std::mutex _transcript_mutex;
+    bool _transcript_failed = false;
 };
 
 }  // namespace steammock

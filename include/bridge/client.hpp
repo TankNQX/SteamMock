@@ -18,9 +18,10 @@ namespace steammock {
 // ---------------------------------------------------------------------------
 //  Configuration comes from the environment, read once on first use:
 //
-//    STEAMMOCK_HOST        default 127.0.0.1
-//    STEAMMOCK_PORT        default 50990
-//    STEAMMOCK_TIMEOUT_MS  default 2000 - a game is never blocked for longer
+//    STEAMMOCK_HOST        default 127.0.0.1 (kDefaultHost)
+//    STEAMMOCK_PORT        default 50990 (kDefaultPort)
+//    STEAMMOCK_TIMEOUT_MS  default 2000 - a game is never blocked for longer, up to
+//                          600000; anything else falls back to the default
 //    STEAMMOCK_OFF         1 disables the bridge entirely
 //
 //  The connection is lazy and retried, so a backend started after the game gets
@@ -70,7 +71,18 @@ private:
     // through the interface - so swapping in another one is a different object
     // to construct rather than a change to the call path.
     std::unique_ptr<Transport> _transport;
-    std::mutex* _mutex = nullptr;
+
+    // Two locks, and the order between them is only ever this one: a call holds
+    // `_mutex` for its round trip, and takes `_events_mutex` inside it to queue what
+    // came back. Nothing takes them the other way - which is what keeps a game's own
+    // pump from waiting behind another thread's call: `take_event` takes the queue's
+    // lock alone, so a frame that pumps callbacks is not blocked for as long as some
+    // other thread's socket is.
+    //
+    // `mutable`, because reading the session id is a logically-constant question that
+    // still has to be asked under the same lock the connection writes it under.
+    mutable std::mutex _mutex;
+    std::mutex _events_mutex;
 
     std::string _host;
     std::uint16_t _port = 0;
@@ -88,6 +100,7 @@ private:
     std::atomic<unsigned> _unhandled_count{0};
 
     // The payloads waiting for the game's next pump, in the order they arrived.
+    // Guarded by `_events_mutex` rather than by `_mutex` - see above.
     std::vector<Json> _events;
 };
 

@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <string>
 
+#include "bridge/defaults.hpp"
 #include "bridge/log.hpp"
 #include "bridge/protocol.hpp"
 
@@ -14,12 +15,23 @@
 namespace steammock {
 namespace {
 
-constexpr unsigned kDefaultPort = 50990u;
+// The port and the timeout a game gets when nothing says otherwise, and the
+// largest either may be: a sanity bound rather than a protocol one, so a typo in
+// the environment is a fallback to the default instead of a game parked on a
+// socket for an hour. Both live beside kDefaultPort, which the backend and both
+// front ends also read - see bridge/defaults.hpp.
+constexpr unsigned kMaxPort = 65535u;
 constexpr unsigned kDefaultTimeoutMs = 2000u;
+constexpr unsigned kMaxTimeoutMs = 600000u;
 
 std::string environment(const char* name) {
     const char* value = std::getenv(name);
     return value != nullptr ? std::string(value) : std::string();
+}
+
+unsigned environment_number(const char* name, unsigned ceiling, unsigned fallback) {
+    unsigned value = 0;
+    return parse_number(environment(name), ceiling, value) ? value : fallback;
 }
 
 std::string executable_path() {
@@ -33,23 +45,6 @@ std::string executable_path() {
 std::string file_name_of(const std::string& path) {
     const std::size_t slash = path.find_last_of("\\/");
     return slash == std::string::npos ? path : path.substr(slash + 1u);
-}
-
-unsigned parse_unsigned(const std::string& text, unsigned fallback) noexcept {
-    if (text.empty()) {
-        return fallback;
-    }
-    unsigned value = 0;
-    for (const char ch : text) {
-        if (ch < '0' || ch > '9') {
-            return fallback;
-        }
-        value = value * 10u + static_cast<unsigned>(ch - '0');
-        if (value > 65535u) {
-            return fallback;
-        }
-    }
-    return value;
 }
 
 }  // namespace
@@ -70,12 +65,9 @@ Client& Client::instance() noexcept {
 // Reached only from instance(), so a failed allocation here is the same
 // fatal-by-design case as the one above.
 // NOLINTNEXTLINE(bugprone-unhandled-exception-at-new)
-Client::Client() noexcept : _transport(new TcpTransport()), _mutex(new std::mutex()) {}
+Client::Client() noexcept : _transport(new TcpTransport()) {}
 
-Client::~Client() {
-    _transport->close();
-    delete _mutex;
-}
+Client::~Client() { _transport->close(); }
 
 // Deliberately not noexcept: this allocates, and a failure here is worth
 // catching in call(), which answers the game with a default. A noexcept here
@@ -99,10 +91,11 @@ void Client::configure() {
 
     _host = environment("STEAMMOCK_HOST");
     if (_host.empty()) {
-        _host = "127.0.0.1";
+        _host = kDefaultHost;
     }
-    _port = static_cast<std::uint16_t>(parse_unsigned(environment("STEAMMOCK_PORT"), kDefaultPort));
-    _timeout_ms = parse_unsigned(environment("STEAMMOCK_TIMEOUT_MS"), kDefaultTimeoutMs);
+    _port =
+        static_cast<std::uint16_t>(environment_number("STEAMMOCK_PORT", kMaxPort, kDefaultPort));
+    _timeout_ms = environment_number("STEAMMOCK_TIMEOUT_MS", kMaxTimeoutMs, kDefaultTimeoutMs);
     _transport->set_timeout_ms(_timeout_ms);
 
     log_write(LogLevel::debug, "backend target " + _host + ":" + std::to_string(_port));
@@ -167,7 +160,7 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         // is held under the lock. Steam callbacks are cheap and the transport is
         // loopback, so serialising them costs microseconds - and it buys a
         // reply/request pairing that cannot get confused.
-        std::lock_guard<std::mutex> lock(*_mutex);
+        std::lock_guard<std::mutex> lock(_mutex);
 
         configure();
 
@@ -212,12 +205,20 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         // the call it came back on. A game is told things while it is asking about
         // something else: a lobby host sits on calls nobody answers, and a payload that
         // rode back on one of those used to be dropped along with the reply.
+        std::size_t waiting = 0;
         if (const Json* events = json_member(message, "events");
             events != nullptr && events->is_array()) {
+            // The queue's own lock, inside the round trip's - never the other way round,
+            // so a game's pump does not wait for a call to come back before it can be
+            // told anything. See the note on the two locks in bridge/client.hpp.
+            const std::lock_guard<std::mutex> queued(_events_mutex);
             for (const Json& event : *events) {
                 _events.push_back(event);
             }
-            log_write(LogLevel::debug, "the backend sent " + std::to_string(_events.size()) +
+            waiting = _events.size();
+        }
+        if (waiting != 0u) {
+            log_write(LogLevel::debug, "the backend sent " + std::to_string(waiting) +
                                            " payload(s) for the game to be given next");
         }
 
@@ -239,9 +240,10 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
 
 bool Client::take_event(Json& out) noexcept {
     try {
-        // Copied out with the lock dropped before the caller dispatches, because a
-        // game may call back into the bridge from inside a callback it was given.
-        std::lock_guard<std::mutex> lock(*_mutex);
+        // The queue's own lock, and it is not held while the caller dispatches: taking
+        // one copies it out and returns, so a game that calls back into the bridge from
+        // inside a callback cannot deadlock on itself.
+        std::lock_guard<std::mutex> lock(_events_mutex);
         if (_events.empty()) {
             return false;
         }
@@ -259,7 +261,7 @@ std::string Client::session_id() const noexcept {
     // ending the process this DLL is loaded into - the same decision the allocation
     // in instance() records.
     try {
-        std::lock_guard<std::mutex> lock(*_mutex);
+        std::lock_guard<std::mutex> lock(_mutex);
         return _session_id;
     } catch (...) {
         return std::string();
@@ -270,7 +272,7 @@ bool Client::backend_connected() noexcept {
     try {
         // Under the lock, like call(): configure() decides whether this client is on at
         // all, and it is not something a second thread may read half-written.
-        std::lock_guard<std::mutex> lock(*_mutex);
+        std::lock_guard<std::mutex> lock(_mutex);
 
         configure();
 
