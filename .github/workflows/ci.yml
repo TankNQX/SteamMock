@@ -137,6 +137,33 @@ jobs:
         shell: pwsh
         run: pwsh -File tools/clang-tidy.ps1
 
+  # The tool that would put something in gen/ - and the one job here that can check it
+  # without an SDK: --selftest writes its own headers into a temporary directory and runs
+  # the reader, the merge, the builder and the surface over them. Every C++ job builds with
+  # whatever is in gen/, and on a runner that is nothing at all, so without this the reader
+  # that produces the API the stub exports is the one piece of the harness nothing checks.
+  #
+  # No submodules: this is the standard library plus the two packages below, and neither
+  # needs the tree.
+  importer:
+    name: importer / selftest
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      # The version tools/requirements.txt was written against, and the one this harness is
+      # developed on. The versions in that file are pinned, so this is about the interpreter
+      # rather than the packages.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install
+        run: python -m pip install --disable-pip-version-check -r tools/requirements.txt
+
+      - name: Selftest
+        run: python tools/steamworks_sdk_import.py --selftest
+
   # On top of the JSON submodule every job takes, this one needs the graphics ones.
   gui:
     name: gui / msvc / x64
