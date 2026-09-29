@@ -12,7 +12,9 @@
 | Server | `src/server.cpp` | Accepts sessions, resolves each call, writes a transcript, and hands out snapshots of what it has seen. |
 | Session | `src/session.cpp` | The per-game state machine: identity, language, app id, stats, achievements. |
 | Scenario | `src/scenario.cpp` | Which profile a connecting game gets, and which calls a scenario overrides. |
+| The world | `src/lobby.cpp`, `src/leaderboard.cpp` | The state no single session can answer: the lobbies and their members, and the leaderboards the run's players have posted scores to. Both outlive the sessions that made them, because "find the one somebody else made" is the whole point of both. |
 | Generator | `src/idl.cpp`, `src/codegen_main.cpp` | Turns `gen/steam_api_surface.json` into the trampolines, the `.def` and the surface table - and holds the mock's own decisions, by call name. |
+| Interface layouts | `src/interfaces.cpp`, `tools/steamworks_sdk_import.py` | Turns an SDK's headers into `gen/steam_interfaces.json` and then into `src/generated/api_interfaces.cpp`: the payloads a callback delivers, and the calls that can be made through an interface object. Where a call's `void *` is really one structure is decided here too - see [the note below](#a-structure-the-game-gets-back). |
 
 Everything above is one CMake project and one toolchain. The only thing the two halves do not share
 is their entry point: the stub is a DLL that a game loads, the backend is a program a person starts.
@@ -230,6 +232,31 @@ Spacewar's own `SteamworksExample.exe` is the case that exercised both: with `St
 true it now collects its interfaces, polls its controller through them, and exits on what the backend
 told it instead of faulting on a null pointer.
 
+## A structure the game gets back
+
+A call that hands the game a structure it owns - the caller's own memory, which the stub writes
+into - is the one parameter shape an SDK's declaration cannot describe. `steam_api_flat.h` declares
+these `void *`: `GetDownloadedLeaderboardEntry` is `void * pLeaderboardEntry` there and
+`LeaderboardEntry_t *` in the interface header, and a pointer to a structure is otherwise a *list*,
+whose count is the caller's business and which the wire has no shape for. So the file carries the
+answer, exactly as it carries the answer about which buffers travel as bytes:
+`SINGLE_STRUCTS` in `tools/steamworks_sdk_import.py` has one line per pointer that is a single
+structure, keyed by class, method and parameter name, and the row it writes names the structure
+instead of the pointer.
+
+Everything after that was already there. A structure has a `Kind<>` trait like any other type - it
+could be reported and defaulted, but not *set* - so a structure named by an out-parameter gains one
+method, `store`, and the generated file gains a `store_<Structure>(<Structure>*, const Json&)` that
+writes the members the layouts declare, field by field, with the same expression a callback payload
+is filled by. A member the wire cannot carry (an array, a `void *`) is left as the caller had it
+rather than zeroed: the game's memory is the game's.
+
+What this does not cover is the flat half of the same call - the flat generator's kinds have no
+notion of a structure, so a game that reaches the call through the flat spelling still gets an
+opaque pointer - and a structure passed or returned *by value*, which no SDK call in the layouts
+uses. A buffer with a length is the same problem one step further out: the bytes are the game's,
+and so is the room for them.
+
 ## Where the next features attach
 
 * **A live view** is the reason `Server` is front-end free. It already exposes the two snapshots a
@@ -248,8 +275,14 @@ told it instead of faulting on a null pointer.
   `steam_api64.dll` loaded under a different name, records both directions to the same JSON the
   transcript uses, and a `ReplayTransport` serves that file back. The backend then never has to
   invent anything for the recorded session.
-* **Struct and buffer parameters** are new IDL kinds (`kind: "buffer"`, with a length expression)
-  plus generator support. The type table in `src/idl.cpp` is the only place that has to grow.
+* **Struct and buffer parameters** are the mirror of [what a structure the game gets back](#a-structure-the-game-gets-back)
+  now does. A structure handed *back* through a pointer is done: the layouts name it, the generated
+  trait has a store, and the fields are written into the game's own memory. What is left is a
+  *buffer* - a `void *` with a length the call also carries, which is what `FileWrite`,
+  `GetHTTPResponseBodyData` and the HTML surface's paint all hand over - and a structure passed or
+  returned *by value*, which nothing in the layouts does. A buffer is a kind in the layouts (there is
+  already `bytes` for one that travels) plus a write-back of that many bytes into the caller's
+  memory, which is the same one-method-per-structure shape the store above has.
 
 ## Known limitations
 
@@ -263,6 +296,11 @@ told it instead of faulting on a null pointer.
 * Scalars, C strings, pointers and out-parameters travel; a structure passed or returned *by value*
   does not. The call is reported, with the structure's bytes going over as null, and the caller gets
   a zeroed one back - the same answer a game gets with Steam absent, rather than an invented value.
+  A structure the *layouts name as an out-parameter* is the exception and now works: the generated
+  trait writes its declared members into the game's own memory, which is how a leaderboard row
+  arrives (see [a structure the game gets back](#a-structure-the-game-gets-back)). A structure behind
+  a `void *` the layouts do not name - a length-prefixed buffer, a list nobody sized - is still the
+  opaque pointer it was, and so is a structure returned by value.
 * The ABI those objects present was checked once, by compiling a client from Valve's own headers and
   watching where its calls landed: the compiler lays the calls out as that SDK says to, so the slots
   it reaches are the slots a shipped game reaches. That is what settled the overload order above, and

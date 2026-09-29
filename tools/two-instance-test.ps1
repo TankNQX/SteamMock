@@ -191,7 +191,9 @@ Add-Type -AssemblyName System.Drawing
 [void] [Win]::SetProcessDPIAware()
 
 $VK_DOWN = 0x28
+$VK_UP = 0x26
 $VK_RETURN = 0x0D
+$VK_ESCAPE = 0x1B
 $VK_MENU = 0x12
 $KEYEVENTF_KEYUP = 2
 
@@ -228,6 +230,17 @@ function Key([IntPtr] $hwnd, [int] $vk) {
     Start-Sleep -Milliseconds 80
     [void] [Win]::PostMessage($hwnd, 0x0101, [IntPtr] $vk, [IntPtr] 0)
     Start-Sleep -Milliseconds 350
+}
+
+# One key on a window that is brought forward first.
+#
+# Key() on its own posts to whatever happens to have the front, and a window that does not
+# have it drops what it is sent (see the note above it) - which is fine inside Drive, which
+# focuses once for the whole batch, and wrong for a key sent on its own a long time after the
+# last drive. The reader's Escape was the first case of that, and it cost a run to see.
+function Press([IntPtr] $hwnd, [int] $vk) {
+    Focus $hwnd
+    Key $hwnd $vk
 }
 
 function Drive([IntPtr] $hwnd, [int[]] $keys, [string] $what) {
@@ -509,6 +522,44 @@ for ($attempt = 1; $attempt -le $attempts -and -not $lobby; $attempt++) {
         if ($Record) { Tile @($hwndA, $guiHwnd) }
         Start-Sleep -Seconds 3
     }
+
+    # The leaderboard menu, before the lobby, because this is the only moment in a run when
+    # it is reachable: a client that has joined a game cannot walk back to the main menu.
+    #
+    # Spacewar's main menu is a list of seventeen and Leaderboards is the eighth, so this is
+    # seven downs and a return. What comes up is a board with nothing on it - nobody has
+    # finished a round yet, so nobody has posted - and the way out is countable because of
+    # that: a header ("Leaderboard: Quickest Win, Top 10"), the line a board with no rows
+    # draws, "Next leaderboard" and "Return to main menu". Four items, so three downs and a
+    # return - and a fifth item would be a row, which is what the count of board calls below
+    # says did or did not happen.
+    #
+    # It is also the pass that matters for the rest of the run, whatever it shows: every
+    # client finds the two boards and keeps their handles, and a client that has them posts a
+    # score when the round it was in ends - which Spacewar's own server ends as a draw the
+    # moment a second player joins, so a run of four has posted scores before anybody plays a
+    # shot.
+    #
+    # The way *out* is Escape rather than a count of downs, and that is not laziness: this
+    # menu is a list whose item count changes with the board, while Escape is read by the
+    # client's own state machine (`k_EClientLeaderboards` -> `k_EClientGameMenu`). A count
+    # cannot be right for both an empty board and a full one.
+    Drive $hwndA @($VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_RETURN) 'instance A: Leaderboards'
+    Start-Sleep -Seconds 4
+    if ($Shoot) { Shoot $hwndA (Join-Path $RigDir 'leaderboard-empty.png') }
+    $boardCalls = [regex]::Matches((Read-Transcript), 'SteamAPI_ISteamUserStats_(FindOrCreateLeaderboard|DownloadLeaderboardEntries|GetDownloadedLeaderboardEntry)').Count
+    Say ("  the leaderboard menu was reached: {0} board call(s) so far" -f $boardCalls)
+    Press $hwndA $VK_ESCAPE
+    Start-Sleep -Seconds 2
+    # Escape leaves the menu where it was, and the main menu keeps its own cursor: instance A
+    # left it on Leaderboards, so the drive below has to start from the top. Seven ups rather
+    # than four, because a menu that stops at the first item and one that wraps both end at the
+    # top this way - the first absorbs the extra keys and the second comes around to it. A guest
+    # never gets a key at the main menu (it joins on the command line), which is why the reader
+    # further down can count from index zero without any of this.
+    Say '  instance A: seven ups, back to the top of the menu'
+    foreach ($unused in 1..7) { Press $hwndA $VK_UP }
+
     Drive $hwndA @($VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_RETURN) 'instance A: Create Lobby'
     Say 'waiting for the lobby the world mints'
     for ($i = 0; $i -lt 12 -and -not $lobby; $i++) {
@@ -650,6 +701,47 @@ else {
     Start-Sleep -Seconds $WaitAfterStart
 }
 
+# The board as a player sees it, which is the whole point of one.
+#
+# The reader is a guest that was in the round - not a new window - and that matters twice over.
+# A client has to have *played* to be on the board: Spacewar's server ends a round as a draw the
+# moment a second player joins, and the game posts what it earned to the "Feet Traveled" board
+# when a round ends, so the client that was there when the draw happened has a score. And a
+# guest's main menu cursor is still at the top, because joining on the command line takes no
+# keys at all, which is what makes the seven downs below count from a known place.
+#
+# The way out of the match is the way a player leaves one: Escape opens the quit menu ("Resume
+# Game", "Exit To Menu", "Exit To Desktop"), so one down and a return is "Exit To Menu" and the
+# client keeps its score on the board.
+#
+# What it then shows is the two boards Spacewar keeps: the quickest win first, which is empty
+# because a draw is nobody's win and so nobody uploaded to it, and then - through "Next
+# leaderboard" - the feet travelled, which it reads *around itself*. That last part is why the
+# reader had to be somebody who played: a real Steam returns nothing for a user with no entry
+# on the board (Spacewar's own menu says so), and this world does the same.
+$reader = @($instances | Where-Object { $_.Number -eq 2 })[0]
+if ($null -eq $reader) { $reader = $instances[-1] }
+if ($null -ne $reader -and $reader.Window -ne [IntPtr]::Zero) {
+    Say ("the reader: instance {0}, leaving the match the way a player does" -f $reader.Name)
+    Press $reader.Window $VK_ESCAPE
+    Start-Sleep -Seconds 2
+    Drive $reader.Window @($VK_DOWN, $VK_RETURN) 'the reader: Exit To Menu'
+    Start-Sleep -Seconds 3
+    Drive $reader.Window @($VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_RETURN) 'the reader: Leaderboards'
+    Start-Sleep -Seconds 5
+    if ($Shoot) { Shoot $reader.Window (Join-Path $RigDir 'leaderboard-quickest-win.png') }
+    # "Next leaderboard" is the third of the four items a board with no rows draws: the header,
+    # the line a board with no scores draws, then it.
+    Drive $reader.Window @($VK_DOWN, $VK_DOWN, $VK_RETURN) 'the reader: the next leaderboard'
+    Start-Sleep -Seconds 5
+    if ($Shoot) { Shoot $reader.Window (Join-Path $RigDir 'leaderboard-rows.png') }
+    $rows = [regex]::Matches((Read-Transcript), 'SteamAPI_ISteamUserStats_GetDownloadedLeaderboardEntry').Count
+    Say ("  it asked for {0} row(s) out of the downloads it was handed" -f $rows)
+}
+else {
+    Say 'no window to read the board from - the board was not read'
+}
+
 if ($null -ne $recorder) {
     # q rather than a kill: ffmpeg closes the file on its own terms, and an mp4 whose index
     # never got written is a file nothing can play. The recording has been running since the
@@ -686,6 +778,16 @@ $byID = [ordered] @{}
 if (Test-Path $transcript) {
     $lines = [System.IO.File]::ReadAllLines($transcript)
     Say ("transcript: {0} calls" -f $lines.Count)
+    # What the boards did, which the per-session table below does not show: it counts the
+    # lobby's own calls, and a leaderboard is not the lobby's. A run that reached the menu has
+    # finds and downloads; a run whose rounds ended has uploads; a board with somebody on it
+    # has rows read out.
+    $board = [ordered] @{}
+    foreach ($name in 'FindOrCreateLeaderboard', 'GetLeaderboardName', 'GetLeaderboardEntryCount',
+        'DownloadLeaderboardEntries', 'GetDownloadedLeaderboardEntry', 'UploadLeaderboardScore') {
+        $board[$name] = [regex]::Matches(($lines -join "`n"), "SteamAPI_ISteamUserStats_$name`"").Count
+    }
+    Say ("the boards: " + (($board.Keys | ForEach-Object { "{0}={1}" -f $_, $board[$_] }) -join ' '))
     foreach ($line in $lines) {
         $id = $sessionRe.Match($line)
         if (-not $id.Success) { continue }

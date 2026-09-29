@@ -120,6 +120,74 @@ unseated client. What the crowd does *not* change is the routing: the host's id 
 four objects, the same four answers go to the first of them and the same three to the last,
 exactly as in the four-client set.
 
+## The board
+
+Every run now walks the leaderboard menu, and it is the first thing in a run that reflects
+what happened in the match rather than who was let into it.
+
+Two walks, in fact. The first is instance A's, before it creates the lobby, because that is
+the only moment a client can reach the main menu with the run still ahead of it:
+`Leaderboards` is the eighth of seventeen items, so it is seven downs and a return. What
+comes up is a board with nothing on it - nobody has finished a round yet - and that is what
+`leaderboard-empty.png` shows: the header, `No scores for this leaderboard`, `Next
+leaderboard`, `Return to main menu`. The way *out* is Escape, not a count of downs: this
+menu's item count changes with the board, while Escape is read by the client's own state
+machine (`k_EClientLeaderboards` → `k_EClientGameMenu`).
+
+The second is a guest's, at the end of the run, and it is the one worth looking at. It has
+to be a guest that **played**: Spacewar's server ends a round as a draw the moment a second
+player joins - it does that so that one player cannot float around and keep the next one
+out - and the game posts what it earned to the `Feet Traveled` board when a round ends, so
+the clients that were there when the draw happened have real scores on a real board. It
+also has to be a guest rather than the host, because a guest never gets a key at the main
+menu (it joins on the command line), which is what lets the reader's seven downs count from
+index zero.
+
+Leaving the match is how a player leaves one: Escape opens the quit menu (`Resume Game`,
+`Exit To Menu`, `Exit To Desktop`), so one down and a return is `Exit To Menu` and the
+client keeps the score it posted. It then shows the quickest win first - empty, because a
+draw is nobody's win and so nothing was uploaded to it - and, through `Next leaderboard`,
+the feet travelled, read **around itself**. That last part is why the reader had to have
+played: a real Steam returns nothing for a user with no entry on the board, Spacewar's own
+menu says so in a comment, and this world does the same.
+
+Here is the whole thing on a two-client run:
+
+```
+Leaderboard: Feet Traveled, Around User
+(1) DebugPlayer2 - 277
+(2) DebugPlayer - 43
+{ Next leaderboard }
+Return to main menu
+```
+
+Two real rows, in rank order, with the score each player earned in the round that drew and
+the name of the profile it was launched as - and the names come from the run's roster rather
+than from a lobby, because neither player is in a room by then. That is the leaderboard, the
+async call results and the persona roster all visible in one screen.
+
+The report has a line per board call, which is what a reader checks a run by:
+
+```
+the boards: FindOrCreateLeaderboard=4 GetLeaderboardName=10 GetLeaderboardEntryCount=0
+            DownloadLeaderboardEntries=3 GetDownloadedLeaderboardEntry=2 UploadLeaderboardScore=11
+```
+
+The counts are the shape of the run: four finds (both boards, once per client), three
+downloads (A's pass and the reader's two boards), **two row reads** - the thing that needs a
+board with somebody on it - and eleven uploads, which is what a round ending does.
+
+Three traps, all of which cost a run to find:
+
+* A board is empty until a round ends, so a run that never seats a second player has nothing
+  to download and nothing to read. The line above is the thing to read, not the screenshot.
+* `Next leaderboard` is second from the bottom, so the downs it takes depend on how many rows
+  are drawn above it. The reader's first board is the one board that is reliably empty, which
+  is what makes its two downs a count rather than a guess.
+* The main menu keeps its cursor. A client driven to `Leaderboards` and then back is still on
+  `Leaderboards`, so a drive that "starts from the top" has to put it there: seven ups, which
+  is the top whether the menu clamps at the first item or wraps around to it.
+
 ## What a good run looks like
 
 Measured on 24 Sep 2026, both instances on Steamworks SDK 1.46's Spacewar:
@@ -225,6 +293,11 @@ without the lobby dance.
 * **The menu has a rate limit.** A return is taken at most once per 220 ms and a down
   once per 140 ms (`BaseMenu::RunFrame`), so keys closer together than that are
   swallowed. 350 ms apart is safe.
+* **A key on its own needs the window brought forward, not just posted.** `Key()` posts to
+  whatever has the front, and only `Drive()` focuses first - so a `Key()` sent a while after
+  the last drive goes to a window that is not in front and is dropped. `Press()` is the
+  helper that focuses and posts one key; the reader's Escape is what found this, by not
+  happening at all while its screenshot showed a match that was still running.
 * **The menu keeps its item across a rebuild** (`CBaseMenu::PopSelectedItem`). Key
   counts are therefore relative to where the *previous* batch left the cursor, not
   from the top of the list - which is what made three attempts in a row open

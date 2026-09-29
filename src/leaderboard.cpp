@@ -38,12 +38,18 @@ constexpr const char* kGetDownloadedLeaderboardEntry =
 constexpr const char* kUploadLeaderboardScore = "SteamAPI_ISteamUserStats_UploadLeaderboardScore";
 
 // The SDK's enumerations written out, because this tree carries no Valve enumeration and
-// a value typed as a number is what the wire has anyway. Ascending is the fast one: the
-// lowest number wins.
+// a value typed as a number is what the wire has anyway.
+//
+// Ascending is the fast one: the lowest number wins, which is what a "quickest win" board
+// means. Descending is therefore what this file calls "not ascending", because there is no
+// third sort method for it to be confused with.
 constexpr std::int32_t kSortMethodAscending = 1;
-constexpr std::int32_t kSortMethodDescending = 2;
+
+// An upload is one of three things, and two of them are named because they are the ones that
+// decide something: told not to write at all, or told to write whatever was sent. The third,
+// keep-best, is the game asking this world to judge - replace the score only if the new one is
+// better - and that is what happens to every upload that is not one of these two.
 constexpr std::int32_t kUploadScoreNone = 0;
-constexpr std::int32_t kUploadScoreKeepBest = 1;
 constexpr std::int32_t kUploadScoreForceUpdate = 2;
 constexpr std::int32_t kDataRequestGlobal = 0;
 constexpr std::int32_t kDataRequestGlobalAroundUser = 1;
