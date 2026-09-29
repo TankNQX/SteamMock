@@ -53,6 +53,48 @@ transcript with
 --summary --callbacks`; keep the long form for the runs that are evidence rather than
 iteration.
 
+## The full room
+
+`-Clients 4` fills the game: `SpaceWar.h` declares `MAX_PLAYERS_PER_SERVER` as 4, so a
+fourth client is the last one it has a slot for and a fifth would be listed in the lobby
+and never given one - which the rig refuses rather than run and misreport. The fourth
+instance is launched, tiled and stopped exactly as the third is, with its own profile in
+`scenarios/spacewar.json` (a client without one of its own becomes the default identity,
+which is how three clients once ran as two players).
+
+The form is the same run of record with one more client:
+
+```bat
+pwsh -File tools\two-instance-test.ps1 -Clients 4 -Gui -WaitAfterStart 100
+```
+
+Ten of those, back to back, is what a set looks like -
+`.reasonix\scratch\soak.ps1 -Clients 4 -Runs 10 -KeepTranscripts -Root %TEMP%\sw-set4`
+records a row per run and writes `summary.txt`. The set of 29 Sep 2026 came out the same
+in every one of the ten:
+
+| | |
+| :-- | :-- |
+| the host's game, in its own words | `Auth completed for a client` **4** times (3 would be a player left out) |
+| the room as the host sees it | **4** members |
+| the host's game server asked Steam | `SteamAPI_ISteamGameServer_BeginAuthSession` **4** |
+| answers to those, and to the client's own | `ValidateAuthTicketResponse_t` delivered **7 / 1 / 1 / 1** (host / B / C / D) |
+| on the host's id 143, which has **4** objects on it | **4** answers to the first (each a game server's) and **3** to the last (the client's own peers) |
+| lobby notifications delivered per client | `LobbyDataUpdate_t` **7-11**, `LobbyChatUpdate_t` 2-5 |
+| crashes, callback faults, dropped keystrokes | **0 / 0 / 0** |
+| the run | ~200 s, 1.5-1.8 M calls, ~450 MB of transcript |
+
+So every player was let in, in all ten, at the largest room the game has - and the answer
+to "did every client get in" needs no transcript at all: it is one line, repeated once per
+player, in the host's own output (`lines.txt` folds it, `summary.txt` counts it as
+`auths`).
+
+What the four-client form does *not* add is a longer look at the match: the ships, the
+round and the score are the same blind spot the two- and three-client forms have, and a
+run is judged by who was let in rather than by who won. `-StopWhenDecided` and the deep
+form both exist for that reason; the difference between them is how much of the
+aftermath a reader wants to see.
+
 ## What a good run looks like
 
 Measured on 24 Sep 2026, both instances on Steamworks SDK 1.46's Spacewar:
@@ -199,11 +241,19 @@ came from is in `out`), and `game-output.log` is the machine's debug buffer, so 
 lines whose pid belongs to this run are read.
 
 `-Gui` puts the live view in the grid as the backend rather than beside it, and
-`-Clients 3` adds a third client the same way the second is there. A two-client match of a
-minute is about six megabytes; three clients and the window over a whole session came out
-at thirty. What that recording shows is worth knowing before watching it: the host plays a
-round, and the guests are told "Multiplayer authentication failed" and sit at the menus -
-the game's own words for the thing this rig has not worked out yet.
+`-Clients 3` adds a third client the same way the second is there - `-Clients 4` the
+fourth, as [the full room](#the-full-room) describes. A two-client match of a minute is
+about six megabytes of video; three clients and the window over a whole session came out
+at thirty.
+
+That paragraph used to end by saying what the recording showed - the host playing a round
+while the guests were told *"Multiplayer authentication failed"* and sat at the menus. It
+was true of the runs of 24 Sep 2026 and it is not true of the ones since the auth work
+and the sender stamp: in the ten four-client runs of 29 Sep 2026 no run said
+`authentication failed`, `No ticket` or `Nothing received` at all, and the host's game
+said `Auth completed for a client` once per player. A recording is still worth watching
+for the menus and the round; what it is not any more is the way to find out whether the
+guests got in.
 
 The games' own `OutputDebugString` lines *are* captured, by
 [`tools/debug-output.ps1`](../tools/debug-output.ps1) - the rig starts it before the
