@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <deque>
 #include <functional>
 #include <map>
 #include <memory>
@@ -117,8 +118,21 @@ public:
     // ...and the same history in pieces. A view that redraws has to ask sixty
     // times a second, and copying every record each time would get slower with
     // every call a game makes, so it keeps a cursor and takes only what is new.
+    //
+    // `index` is an absolute position in the run's history, not an offset into what is
+    // still held: the history keeps a window (kMaxRecords) and forgets its beginning, so
+    // a cursor that has fallen off the front reads from the start of the window, and
+    // records_begin() is what tells a reader it has fallen behind.
     std::size_t record_count() const;
+    std::size_t records_begin() const;
     std::vector<CallRecord> records_since(std::size_t index) const;
+
+    // How much call history stays in memory. A game can make a few thousand calls a
+    // second - 26,228 in fourteen seconds in one recording here - so this is a window
+    // rather than a log: the transcript is the record that keeps everything. Public
+    // because it is part of what the history means to a reader, and because a test that
+    // pins the window has to know where its edge is.
+    static constexpr std::size_t kMaxRecords = 20000;
 
     std::size_t call_count() const;
     std::size_t unanswered_count() const;
@@ -170,7 +184,15 @@ private:
     std::vector<std::thread> _workers;
     std::vector<std::uintptr_t> _clients;
     std::vector<std::unique_ptr<Session>> _sessions;
-    std::vector<CallRecord> _records;
+
+    // The call history, as a window rather than a log - kMaxRecords above is its size and
+    // its meaning. A deque, because the oldest go one at a time as new ones arrive and
+    // erasing the front of a vector would shift every remaining record on every call made
+    // past the edge. `_records_dropped` is what keeps a reader's cursor an absolute
+    // position in the run rather than in the window.
+    std::deque<CallRecord> _records;
+    std::size_t _records_dropped = 0;
+
     std::size_t _total_calls = 0;
     std::size_t _unanswered_calls = 0;
     // What everyone else looks at to find out the run is ending: the accept loop before

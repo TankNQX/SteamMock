@@ -309,8 +309,20 @@ bool Server::start(std::string& error) {
     }
 
     _listener = static_cast<std::uintptr_t>(listener);
-    _accept_thread =
-        std::thread([this, listener] { accept_loop(static_cast<std::uintptr_t>(listener)); });
+    try {
+        _accept_thread =
+            std::thread([this, listener] { accept_loop(static_cast<std::uintptr_t>(listener)); });
+    } catch (...) {
+        // The handle is published a line above and the thread that owns it is not, which
+        // is the one state stop() cannot clean up: it closes `_listener`, but `_listener`
+        // is also what refuses a second start(), so the run would be unstartable as well
+        // as unstopped. Both are undone, and the transcript with them - `give_up` is what
+        // every other way out of this function uses.
+        close_socket(listener);
+        _listener = kNoSocket;
+        error = give_up("cannot start the thread that accepts connections");
+        return false;
+    }
 
     log(LogLevel::info, "listening on " + _options.host + ":" + std::to_string(_port));
     return true;
@@ -411,22 +423,34 @@ std::vector<SessionSnapshot> Server::sessions() const {
 
 std::vector<CallRecord> Server::records() const {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
-    return _records;
+    return std::vector<CallRecord>(_records.begin(), _records.end());
 }
 
 std::size_t Server::record_count() const {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
-    return _records.size();
+    // What the run made, not what is still held: the count is a position in the
+    // history, and the history is allowed to forget its beginning.
+    return _records_dropped + _records.size();
+}
+
+std::size_t Server::records_begin() const {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    return _records_dropped;
 }
 
 std::vector<CallRecord> Server::records_since(std::size_t index) const {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::vector<CallRecord> tail;
-    if (index >= _records.size()) {
+    // `index` is an absolute position in the run's history, the same one record_count()
+    // and this cursor are in - so an index that has fallen off the front of the window
+    // reads as "from the beginning of what is here", not as nothing at all. A reader that
+    // wants to know it has fallen behind asks records_begin() and moves its cursor up.
+    const std::size_t first = index > _records_dropped ? index - _records_dropped : 0u;
+    if (first >= _records.size()) {
         return tail;
     }
-    tail.reserve(_records.size() - index);
-    for (std::size_t position = index; position < _records.size(); ++position) {
+    tail.reserve(_records.size() - first);
+    for (std::size_t position = first; position < _records.size(); ++position) {
         tail.push_back(_records[position]);
     }
     return tail;
@@ -712,6 +736,17 @@ std::string Server::handle_call(Session& session, const Json& message) {
             ++_unanswered_calls;
         }
         _records.push_back(record);
+        // The oldest fall off the front once the window is full. `_records` used to grow
+        // for the whole run - a game that polls an interface made 26,228 calls in
+        // fourteen seconds in one recording here, so a long run was hundreds of megabytes
+        // by the end - and every `records()` call copied all of it while holding the
+        // state lock. The transcript is the record that keeps everything; this is a
+        // window for a live view and a test, and `_records_dropped` is what keeps the
+        // positions in it absolute, so a reader's cursor still means something.
+        if (_records.size() > kMaxRecords) {
+            _records.pop_front();
+            ++_records_dropped;
+        }
     }
     // Outside the lock, because this is a blocking write to disk and the state it
     // was taken from is already recorded. A record carries its own sequence number,
@@ -752,13 +787,32 @@ void Server::write_transcript(const CallRecord& record) {
     if (_transcript == nullptr) {
         return;  // the run has ended, or no file was ever asked for
     }
+    if (_transcript_failed) {
+        // A line was left unfinished below. Appending more would put the next record
+        // straight after the part of this one that did make it, which is a truncated
+        // line merged into the following one - the file would stop being JSON lines at
+        // all, and every record after it unreadable.
+        return;
+    }
     const std::string line = record.to_json().dump() + "\n";
-    const std::size_t written = std::fwrite(line.data(), 1, line.size(), _transcript);
-    if (written != line.size() && !_transcript_failed) {
-        // Said once: a full disk is not twenty thousand lines' worth of news, and the
-        // return value used to be ignored outright.
-        _transcript_failed = true;
-        log(LogLevel::error, "the transcript is not being written in full: " + _options.transcript);
+    // In a loop, because `fwrite` is allowed to write less than it was given, and the
+    // count used to be compared and then dropped - a short write left the rest of the
+    // line in the buffer and the next record was appended after the partial bytes, so
+    // one full disk corrupted the framing of everything that followed it.
+    const char* cursor = line.data();
+    std::size_t remaining = line.size();
+    while (remaining > 0u) {
+        const std::size_t written = std::fwrite(cursor, 1, remaining, _transcript);
+        if (written == 0u) {
+            // Said once: a full disk is not twenty thousand lines' worth of news. The
+            // file is left as it is, and no further record is appended to it.
+            _transcript_failed = true;
+            log(LogLevel::error,
+                "the transcript is not being written in full: " + _options.transcript);
+            return;
+        }
+        cursor += written;
+        remaining -= written;
     }
     std::fflush(_transcript);
 }

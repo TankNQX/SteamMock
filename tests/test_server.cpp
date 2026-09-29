@@ -358,6 +358,93 @@ void test_a_connect_is_bounded_by_its_timeout() {
     std::printf("        gave up after %lld ms\n", static_cast<long long>(elapsed));
 }
 
+// The call history in memory is a window, and a reader's cursor is an absolute position
+// in the run rather than an offset into that window. It used to be an unbounded vector
+// that every snapshot copied whole while holding the state lock, and a game can make
+// thousands of calls a second: 26,228 in fourteen seconds in one recording here. The
+// edge is what this checks - the oldest are the ones dropped, the positions stay
+// absolute, and a cursor that has fallen off the front reads from the start of the
+// window instead of being told there is nothing left, which would silently stop a live
+// view drawing.
+//
+// It drives the real constant rather than a test-only window size, which is why it makes
+// 20,001 calls through a socket and takes a few seconds: a check on the edge of the actual
+// history is worth more than a fast one on an edge no run has.
+void test_the_history_is_a_window() {
+    std::printf("[:] the history in memory has an edge, and the positions stay absolute\n");
+
+    Json scenario;
+    if (!steammock::parse(kScenario, scenario)) {
+        check("the test scenario parses", false);
+        return;
+    }
+
+    steammock::ServerOptions options;
+    options.port = 0;
+    options.log_level = steammock::LogLevel::error;
+    steammock::Server server(steammock::Dispatcher(scenario), options);
+
+    std::string error;
+    if (!server.start(error)) {
+        check("the server binds a free port", false);
+        std::printf("        %s\n", error.c_str());
+        return;
+    }
+
+    steammock::TcpTransport client;
+    Json reply;
+    if (!client.connect("127.0.0.1", server.port()) || !exchange(client, hello_message(), reply)) {
+        check("a client is attached", false);
+        server.stop();
+        return;
+    }
+
+    // One more call than the window holds, so exactly one record has to have fallen off
+    // the front. The sequence number is the position, which is what lets the check below
+    // say *which* records are here rather than only how many.
+    const std::size_t calls = steammock::Server::kMaxRecords + 1u;
+    bool answered = true;
+    for (std::size_t index = 0; index < calls; ++index) {
+        if (!exchange(client,
+                      call_message("SteamAPI_Shutdown", static_cast<std::int64_t>(index + 1u)),
+                      reply)) {
+            answered = false;
+            break;
+        }
+    }
+    check("every call is answered", answered);
+
+    check("every call was counted", server.call_count() == calls);
+    check("the history says how many the run made, not how many it holds",
+          server.record_count() == calls);
+
+    const std::vector<steammock::CallRecord> held = server.records();
+    check("and it holds exactly the window's worth", held.size() == steammock::Server::kMaxRecords);
+    check("the oldest recorded call is the first one the window kept",
+          server.records_begin() == 1u);
+    if (held.size() == steammock::Server::kMaxRecords) {
+        check("the records it kept are the newest ones",
+              held.front().seq == 2 && held.back().seq == static_cast<std::int64_t>(calls));
+    }
+
+    // A cursor that has fallen off the front, and one that is exactly at the edge: both
+    // read the retained window, and neither is told the history is empty.
+    check("a cursor off the front reads the whole window",
+          server.records_since(0u).size() == steammock::Server::kMaxRecords);
+    check("a cursor at the edge reads the whole window too",
+          server.records_since(server.records_begin()).size() == steammock::Server::kMaxRecords);
+    check("a cursor at the end reads nothing", server.records_since(server.record_count()).empty());
+
+    // ...and the incremental read a live view actually makes still lines up with what the
+    // window holds, so a poll that is one record behind takes exactly one record.
+    const std::vector<steammock::CallRecord> tail = server.records_since(calls - 1u);
+    check("one behind the end is one record",
+          tail.size() == 1u && tail[0].seq == static_cast<std::int64_t>(calls));
+
+    client.close();
+    server.stop();
+}
+
 }  // namespace
 
 int run() {
@@ -366,6 +453,7 @@ int run() {
     test_four_threads_stop_at_once();
     test_a_run_is_not_restartable();
     test_a_connect_is_bounded_by_its_timeout();
+    test_the_history_is_a_window();
 
     if (g_failures == 0) {
         std::printf("\n[+] all checks passed\n");

@@ -272,6 +272,11 @@ private:
         if (_selected.empty() && !_games.empty()) {
             _selected = _games.front().id;
         }
+        // The server keeps a window of recent calls and forgets the oldest, so a cursor
+        // that fell off the front of it is moved up to the start of the window rather
+        // than left asking for records that no longer exist - which would hand the same
+        // retained ones back on every frame and show them twice.
+        _seen = std::max(_seen, _server->records_begin());
         std::vector<CallRecord> fresh = _server->records_since(_seen);
         // The cursor moves by what was actually taken rather than to wherever the
         // history has got to by now. A call that arrived between these two reads used
