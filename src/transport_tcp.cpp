@@ -134,6 +134,7 @@ void TcpTransport::close() noexcept {
     try {
         const std::lock_guard<std::mutex> lock(_handle_mutex);
         close_locked();
+        // NOLINTNEXTLINE(bugprone-empty-catch) - a game must not see a mutex failure
     } catch (...) {
         // A mutex that cannot be taken is not a reason to end the process this DLL
         // is loaded into: the handle is left open, which the process exit collects.
@@ -153,6 +154,7 @@ void TcpTransport::set_timeout_ms(unsigned timeout_ms) noexcept {
     try {
         const std::lock_guard<std::mutex> lock(_handle_mutex);
         _timeout_ms = timeout_ms;
+        // NOLINTNEXTLINE(bugprone-empty-catch) - a game must not see a mutex failure
     } catch (...) {
         // Same decision as close(): a timeout that could not be recorded leaves the
         // previous one in force rather than terminating a game.

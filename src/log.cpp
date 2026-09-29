@@ -179,7 +179,9 @@ void log_configure(const char* module_path) noexcept {
                                              std::memory_order_acquire)) {
             // Published, so the process owns both now - for the life of the process, which is
             // what a singleton is for. The guards are what let this be the only path that
-            // keeps them.
+            // keeps them, and the pointer `release()` hands back is deliberately dropped:
+            // `g_config` is the handle to this configuration from here on.
+            // NOLINTNEXTLINE(bugprone-unused-return-value) - release() is the hand-over itself
             (void)built.release();
             opened.file = nullptr;
         }
