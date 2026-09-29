@@ -324,6 +324,40 @@ void test_a_run_is_not_restartable() {
     check("with nothing left listening", server.call_count() == 0u);
 }
 
+// A connect has to be bounded by the timeout the caller asked for. It is not the
+// socket's own receive/send timeouts that do that - they are read and write timeouts,
+// and a `::connect` is neither, so on Windows a blocking one waits for the TCP stack
+// to give up on its SYN retransmissions (~21 seconds) whatever those say. The
+// transport makes the connect on a non-blocking socket and waits for the deadline
+// itself, and this is the check that it does: a game pointed at an address nothing
+// answers on is a game that gets its defaults back in the time it was promised, not
+// twenty seconds later.
+//
+// 192.0.2.0/24 is TEST-NET-1 (RFC 5737): reserved for documentation, routed nowhere,
+// so the SYN goes into a hole rather than being refused. A host with no route at all
+// fails this connect immediately instead, which is still a pass - the check is that
+// nothing here takes longer than the timeout says.
+void test_a_connect_is_bounded_by_its_timeout() {
+    std::printf("[:] a connect gives up when the timeout says, not when the stack does\n");
+
+    steammock::TcpTransport client;
+    client.set_timeout_ms(400);
+
+    const auto started = std::chrono::steady_clock::now();
+    const bool connected = client.connect("192.0.2.1", 50990);
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                             std::chrono::steady_clock::now() - started)
+                             .count();
+
+    check("nothing answers, so the connect fails", !connected);
+    check("it is not left connected", !client.is_connected());
+    // Generous against the 400 ms asked for and still well under the stack's own
+    // timer, so this fails on the old blocking connect and cannot fail on a slow
+    // machine with the deadline in place.
+    check("and it gave up on the transport's deadline, not the stack's", elapsed < 5000);
+    std::printf("        gave up after %lld ms\n", static_cast<long long>(elapsed));
+}
+
 }  // namespace
 
 int run() {
@@ -331,6 +365,7 @@ int run() {
     test_what_the_server_saw();
     test_four_threads_stop_at_once();
     test_a_run_is_not_restartable();
+    test_a_connect_is_bounded_by_its_timeout();
 
     if (g_failures == 0) {
         std::printf("\n[+] all checks passed\n");

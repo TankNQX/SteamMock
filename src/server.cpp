@@ -214,7 +214,13 @@ void Server::log(LogLevel level, const std::string& message) const {
 }
 
 bool Server::start(std::string& error) {
-    ensure_winsock_started();
+    // Before anything is opened, so a process whose socket layer never came up says
+    // exactly that - it used to be a log line and a `true`, and the failure arrived
+    // later as "cannot bind", which is a different problem with a different cause.
+    if (!ensure_winsock_started()) {
+        error = "the socket layer could not be started (WSAStartup failed)";
+        return false;
+    }
 
     {
         // A server listens once. Starting one that is already listening would leave the

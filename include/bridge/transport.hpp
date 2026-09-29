@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <mutex>
 #include <string>
 #include <string_view>
 
@@ -49,9 +50,20 @@ public:
     bool is_connected() const noexcept override;
     bool exchange(const std::string& request, std::string& response) override;
 
-    void set_timeout_ms(unsigned timeout_ms) noexcept override { _timeout_ms = timeout_ms; }
+    void set_timeout_ms(unsigned timeout_ms) noexcept override;
 
 private:
+    // Everything that touches the handle takes this, and holds it for as long as it
+    // uses it: the socket is closed and reassigned by `close`, `connect` and the
+    // destructor, and a reader of `_socket` that raced one of those either closed a
+    // handle it did not own or worked on a handle the OS had already handed to
+    // something else. A `mutable` mutex because `is_connected` is a const question
+    // that still has to be asked under it.
+    mutable std::mutex _handle_mutex;
+
+    // The handle with the lock *not* held, for the paths that already have it.
+    void close_locked() noexcept;
+
     // Held as an integer so this header stays free of winsock includes.
     std::uintptr_t _socket;
     unsigned _timeout_ms;

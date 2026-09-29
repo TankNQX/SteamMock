@@ -38,19 +38,25 @@ using socket_t = SOCKET;
 constexpr socket_t kInvalidSocket = INVALID_SOCKET;
 
 // Once, however many threads arrive here: a function-local static's initialisation
-// is the one thing the language already serialises. The one failure a socket cannot
-// work without has nowhere to be returned to from here, so it is said out loud -
-// every call after it simply fails, which otherwise reads as a server that is not
-// listening.
-inline void ensure_winsock_started() noexcept {
+// is the one thing the language already serialises. It answers whether the startup
+// worked, because every caller that got a true here can still fail to make a socket
+// work and has to be able to say which of the two it was: a WSAStartup that failed
+// used to be a line in the log and a `true` on the way out, so a server whose socket
+// layer never came up reported "cannot bind" - or, with a port of 0, said "listening"
+// and then never accepted anything. Once only, deliberately: a startup that failed is
+// not something the next call should try again.
+inline bool ensure_winsock_started() noexcept {
     static const bool started = []() noexcept {
         WSADATA data{};
         if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
-            log_write(LogLevel::error, "WSAStartup failed: no socket will work in this process");
+            log_write(LogLevel::error,
+                      "WSAStartup failed: no socket will work in this process, and none "
+                      "will be attempted again");
+            return false;
         }
         return true;
     }();
-    (void)started;
+    return started;
 }
 
 inline socket_t as_socket(std::uintptr_t value) noexcept { return static_cast<socket_t>(value); }
@@ -65,27 +71,41 @@ inline void close_socket(socket_t handle) noexcept {
 // Sends everything or nothing: a partial frame desyncs the stream for every call
 // that follows it on this connection, so a short write is a failure here rather
 // than something the caller has to finish.
+//
+// A `send` that the OS interrupted before it wrote anything is not a failure of the
+// connection: WSAEINTR means "ask again". It used to be read as one, which drops a
+// perfectly good connection - and, on the client, is the difference between a call
+// that answered and a game that falls back to its defaults for no reason.
 inline bool send_all(socket_t handle, const char* data, std::size_t size) noexcept {
     std::size_t sent = 0;
     while (sent < size) {
         const std::size_t remaining = size - sent;
         const int chunk = static_cast<int>(remaining > 0x7FFFFFFFu ? 0x7FFFFFFFu : remaining);
         const int written = ::send(handle, data + sent, chunk, 0);
-        if (written <= 0) {
-            return false;
+        if (written > 0) {
+            sent += static_cast<std::size_t>(written);
+            continue;
         }
-        sent += static_cast<std::size_t>(written);
+        if (written < 0 && WSAGetLastError() == WSAEINTR) {
+            continue;  // interrupted before a byte went out: the same call made again
+        }
+        return false;  // a closed socket, a timeout, or a real error
     }
     return true;
 }
 
 // Half-closing wakes a thread parked in recv/accept without tearing the handle out
 // from under it, which is what makes a clean stop possible at all.
+//
+// SD_RECEIVE and not SD_BOTH: what the stop path wants is to end the wait, and the
+// send direction is not its to abandon - a worker that is mid-reply when the server
+// stops still gets to finish writing it. A full shutdown would fail that send instead,
+// for no gain: the socket is closed by its own thread a moment later either way.
 inline void shutdown_socket(socket_t handle) noexcept {
     if (handle == kInvalidSocket) {
         return;
     }
-    (void)::shutdown(handle, SD_BOTH);
+    (void)::shutdown(handle, SD_RECEIVE);
 }
 
 }  // namespace socket_io

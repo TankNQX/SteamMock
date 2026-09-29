@@ -29,10 +29,17 @@ bool recv_all(socket_t handle, char* data, std::size_t size) noexcept {
         const std::size_t remaining = size - received;
         const int chunk = static_cast<int>(remaining > 0x7FFFFFFFu ? 0x7FFFFFFFu : remaining);
         const int got = ::recv(handle, data + received, chunk, 0);
-        if (got <= 0) {
-            return false;
+        if (got > 0) {
+            received += static_cast<std::size_t>(got);
+            continue;
         }
-        received += static_cast<std::size_t>(got);
+        if (got < 0 && WSAGetLastError() == WSAEINTR) {
+            // Interrupted before a byte arrived - not a reason to throw away a
+            // connection that is answering perfectly well. `got == 0` is the peer
+            // closing, and every other error (a receive timeout included) is real.
+            continue;
+        }
+        return false;
     }
     return true;
 }
@@ -53,6 +60,55 @@ void apply_timeout(std::uintptr_t value, unsigned timeout_ms) noexcept {
     }
 }
 
+// `::connect` to a port nobody is listening on does not return until the TCP stack
+// gives up on its SYN retransmissions, and on Windows SO_RCVTIMEO/SO_SNDTIMEO do not
+// bound it at all - they are read and write timeouts, and a connect is neither. The
+// socket's own timeouts used to be set here and trusted for it, so a game pointing at
+// an unreachable host was parked for the stack's own ~21 seconds instead of the 2 the
+// client asked for, and "never hangs forever" was a promise about the wrong call.
+//
+// So the connect is made on a non-blocking socket and waited for with the deadline
+// the caller gave, and the socket is put back in blocking mode before it is returned:
+// the timeouts above only mean anything on a blocking socket, and everything after
+// this - the framing, the receive - relies on them. A deadline of zero is taken at its
+// word - the attempt is made and not waited for - which is why the client reads a
+// STEAMMOCK_TIMEOUT_MS of 0 as its default rather than as "no time at all".
+bool connect_with_timeout(socket_t handle, const sockaddr* address, int address_length,
+                          unsigned timeout_ms) noexcept {
+    u_long nonblocking = 1;
+    if (ioctlsocket(handle, FIONBIO, &nonblocking) != 0) {
+        // No way to make it non-blocking: the blocking call is still the right one to
+        // make, and its own timeout is all this socket is going to get.
+        return ::connect(handle, address, address_length) == 0;
+    }
+
+    bool connected = false;
+    if (::connect(handle, address, address_length) == 0) {
+        connected = true;
+    } else if (WSAGetLastError() == WSAEWOULDBLOCK) {
+        fd_set writable;
+        FD_ZERO(&writable);
+        FD_SET(handle, &writable);
+        timeval wait{};
+        wait.tv_sec = static_cast<long>(timeout_ms / 1000u);
+        wait.tv_usec = static_cast<long>(timeout_ms % 1000u) * 1000L;
+        const int ready = ::select(0, nullptr, &writable, nullptr, &wait);
+        if (ready > 0) {
+            // Writability says the attempt finished, not that it succeeded: the
+            // failure a connect cannot report at the call is reported here.
+            int error = 0;
+            int error_size = static_cast<int>(sizeof(error));
+            connected = getsockopt(handle, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&error),
+                                   &error_size) == 0 &&
+                        error == 0;
+        }
+    }
+
+    u_long blocking = 0;
+    (void)ioctlsocket(handle, FIONBIO, &blocking);
+    return connected;
+}
+
 std::uint32_t read_length(const char header[4]) noexcept { return read_frame_length(header); }
 
 void write_length(char header[4], std::uint32_t length) noexcept {
@@ -62,23 +118,54 @@ void write_length(char header[4], std::uint32_t length) noexcept {
 }  // namespace
 
 TcpTransport::TcpTransport() noexcept : _socket(kClosed), _timeout_ms(2000u) {
-    ensure_winsock_started();
+    (void)ensure_winsock_started();
 }
 
 TcpTransport::~TcpTransport() { close(); }
 
-void TcpTransport::close() noexcept {
+void TcpTransport::close_locked() noexcept {
     if (is_open(_socket)) {
         close_socket(as_socket(_socket));
         _socket = kClosed;
     }
 }
 
-bool TcpTransport::is_connected() const noexcept { return is_open(_socket); }
+void TcpTransport::close() noexcept {
+    try {
+        const std::lock_guard<std::mutex> lock(_handle_mutex);
+        close_locked();
+    } catch (...) {
+        // A mutex that cannot be taken is not a reason to end the process this DLL
+        // is loaded into: the handle is left open, which the process exit collects.
+    }
+}
+
+bool TcpTransport::is_connected() const noexcept {
+    try {
+        const std::lock_guard<std::mutex> lock(_handle_mutex);
+        return is_open(_socket);
+    } catch (...) {
+        return false;
+    }
+}
+
+void TcpTransport::set_timeout_ms(unsigned timeout_ms) noexcept {
+    try {
+        const std::lock_guard<std::mutex> lock(_handle_mutex);
+        _timeout_ms = timeout_ms;
+    } catch (...) {
+        // Same decision as close(): a timeout that could not be recorded leaves the
+        // previous one in force rather than terminating a game.
+    }
+}
 
 bool TcpTransport::connect(std::string_view host, std::uint16_t port) {
-    close();
-    ensure_winsock_started();
+    const std::lock_guard<std::mutex> lock(_handle_mutex);
+    close_locked();
+    if (!ensure_winsock_started()) {
+        log_write(LogLevel::error, "cannot connect: the socket layer never started");
+        return false;
+    }
 
     const std::string hostname(host);
     char service[8] = {};
@@ -104,14 +191,16 @@ bool TcpTransport::connect(std::string_view host, std::uint16_t port) {
         const int enable = 1;
         (void)setsockopt(handle, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&enable),
                          sizeof(enable));
-        // Before the connect, not after: `::connect` blocks, and the timeouts are
-        // what say for how long. Setting them once the call has returned is a
-        // timeout on a conversation that may never have started - a peer that
-        // accepts nothing left the whole interface hanging on it.
+        // Before the connect, not after: the receive and send timeouts are what say
+        // how long the conversation may take, and the connect itself is bounded by
+        // the same number rather than by the TCP stack - see connect_with_timeout.
         apply_timeout(static_cast<std::uintptr_t>(handle), _timeout_ms);
-        if (::connect(handle, candidate->ai_addr, static_cast<int>(candidate->ai_addrlen)) == 0) {
+        if (connect_with_timeout(handle, candidate->ai_addr,
+                                 static_cast<int>(candidate->ai_addrlen), _timeout_ms)) {
             break;
         }
+        // A connect that timed out leaves a socket still trying in the background:
+        // closing it is what stops it.
         close_socket(handle);
         handle = kInvalidSocket;
     }
@@ -125,7 +214,11 @@ bool TcpTransport::connect(std::string_view host, std::uint16_t port) {
 }
 
 bool TcpTransport::exchange(const std::string& request, std::string& response) {
-    if (!is_connected()) {
+    // Held for the whole exchange, so the handle this is using cannot be closed and
+    // reassigned under it by another thread - `close` waits here for as long as the
+    // round trip takes, which is bounded by the timeout the socket was given.
+    const std::lock_guard<std::mutex> lock(_handle_mutex);
+    if (!is_open(_socket)) {
         return false;
     }
     const socket_t handle = as_socket(_socket);
@@ -138,20 +231,31 @@ bool TcpTransport::exchange(const std::string& request, std::string& response) {
     write_length(header, static_cast<std::uint32_t>(request.size()));
     if (!send_all(handle, header, sizeof(header)) ||
         (!request.empty() && !send_all(handle, request.data(), request.size()))) {
+        // The connection is not usable any more, and saying so here is the point:
+        // leaving it open meant the next call exchanged on a stream that was already
+        // out of step, so one failure became every later call's failure.
+        log_write(LogLevel::warn, "could not send a request to the backend; hanging up");
+        close_locked();
         return false;
     }
 
     char reply_header[4] = {};
     if (!recv_all(handle, reply_header, sizeof(reply_header))) {
+        close_locked();
         return false;
     }
     const std::uint32_t reply_length = read_length(reply_header);
     if (reply_length == 0u || reply_length > kMaxFrameBytes) {
         log_write(LogLevel::warn, "the backend sent an impossible frame length");
+        close_locked();
         return false;
     }
     response.assign(reply_length, '\0');
-    return recv_all(handle, response.data(), reply_length);
+    if (!recv_all(handle, response.data(), reply_length)) {
+        close_locked();
+        return false;
+    }
+    return true;
 }
 
 }  // namespace steammock
