@@ -81,6 +81,13 @@ public:
 
     Answer answer(Session& session, const std::string& name, const Json& args) const;
 
+    // How long a scripted entry says this call should take to answer; 0 for every call that
+    // does not say, which is every call in every scenario written so far. It is asked
+    // separately from `answer` because it has to be known *before* the call is resolved: a
+    // delay like this is what a slow backend looks like to the game, so the round trip is what
+    // has to take the time - see Server::handle_call, which waits outside its state lock.
+    std::int64_t delay_for(const Session& session, const std::string& name) const;
+
     const std::vector<MatchRule>& match_rules() const noexcept { return _match; }
     const std::string& default_profile() const noexcept { return _default_profile; }
 

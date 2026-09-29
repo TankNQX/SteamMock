@@ -13,15 +13,23 @@
 //  Exits non-zero if a check fails.
 // ============================================================================
 
+#include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <exception>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <memory>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include "bridge/client.hpp"
 #include "bridge/json_read.hpp"
 #include "bridge/log.hpp"
 #include "bridge/protocol.hpp"
@@ -358,6 +366,263 @@ void test_a_connect_is_bounded_by_its_timeout() {
     std::printf("        gave up after %lld ms\n", static_cast<long long>(elapsed));
 }
 
+// What a stalled backend costs a game's own threads: finding 16 of the review this tree went
+// through. `Client::call` holds one lock across a whole round trip, so a call that is out waiting
+// for an answer is what every other thread's call waits behind - and the price of that is not one
+// shared wait, it is *each* caller's own timeout, one after another.
+//
+// Two arms, against the same server in the same run, because one arm cannot tell a client's lock
+// from the backend's own queueing:
+//
+//   1. one client - the process-wide one a game gets - with three threads calling in it: the
+//      three timeouts come one after another;
+//   2. three clients of their own, a TcpTransport each, so three connections: the same three
+//      timeouts, but at the same time, because the server answers each connection on its own
+//      thread and a call it never answers in time costs each of those one timeout in parallel.
+//
+// The second arm is what says the server is not the serializer, so the difference between the
+// arms is the lock. The assertions are on the two figures rather than on the lock, on purpose:
+// the day the transport stops holding the whole round trip, the first figure comes down to the
+// second's and this is the test that will say so - see docs/architecture.md, "The socket layer".
+void test_a_stalled_backend_costs_each_queued_caller() {
+    std::printf("[:] a backend that never answers in time, and the calls queued behind it\n");
+
+    constexpr int kCallers = 3;
+    constexpr long long kTimeoutMs = 600;
+    // Longer than the timeout, so no call in either arm is ever answered: the delay is a stalled
+    // backend, not a slow one, and that is what finding 16 is about.
+    constexpr long long kDelayMs = 3000;
+
+    Json scenario;
+    const std::string text =
+        "{\"profiles\":{\"default\":{\"app_id\":480,\"scripted\":{\"SteamAPI_Init\":"
+        "{\"ret\":true,\"delay_ms\":" +
+        std::to_string(kDelayMs) + "}}}}}";
+    if (!steammock::parse(text, scenario)) {
+        check("the stalled scenario parses", false);
+        return;
+    }
+
+    steammock::ServerOptions options;
+    options.port = 0;
+    options.log_level = steammock::LogLevel::error;
+    steammock::Server server(steammock::Dispatcher(scenario), options);
+
+    std::string error;
+    if (!server.start(error)) {
+        check("the stalled server binds a free port", false);
+        return;
+    }
+
+    // The client is one process-wide object that reads its environment once, on its first call -
+    // which is the first line of the first arm below, so this is where the port and the timeout
+    // can still be chosen. The timeout is the whole of what the arms measure against.
+    const std::string port = std::to_string(server.port());
+    _putenv_s("STEAMMOCK_HOST", "127.0.0.1");
+    _putenv_s("STEAMMOCK_PORT", port.c_str());
+    _putenv_s("STEAMMOCK_TIMEOUT_MS", std::to_string(kTimeoutMs).c_str());
+    _putenv_s("STEAMMOCK_LOG_LEVEL", "error");
+
+    // --- arm 1: a game's own threads, behind the one lock ---------------------------------
+    const auto queued_started = std::chrono::steady_clock::now();
+    const int answered = [&] {
+        int count = 0;
+        std::vector<std::thread> callers;
+        callers.reserve(kCallers);
+        for (int index = 0; index < kCallers; ++index) {
+            callers.emplace_back([&count] {
+                Json reply;
+                if (steammock::invoke("SteamAPI_Init", Json::object(), reply)) {
+                    ++count;
+                }
+            });
+        }
+        for (std::thread& caller : callers) {
+            caller.join();
+        }
+        return count;
+    }();
+    const auto queued = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::steady_clock::now() - queued_started)
+                            .count();
+
+    // --- arm 2: three clients of their own, one connection each ---------------------------
+    // Attached and through the handshake *before* the clock starts, so what is measured is a
+    // call that times out and not three connections being made - the connect has its own
+    // deadline and its own test above.
+    std::array<steammock::TcpTransport, kCallers> transports;
+    bool attached = true;
+    Json welcome;
+    for (steammock::TcpTransport& transport : transports) {
+        transport.set_timeout_ms(static_cast<unsigned>(kTimeoutMs));
+        attached = attached && transport.connect("127.0.0.1", server.port()) &&
+                   exchange(transport, hello_message(), welcome);
+    }
+    check("three clients of their own attached", attached);
+
+    const auto own_started = std::chrono::steady_clock::now();
+    const int own_answered = [&] {
+        int count = 0;
+        std::vector<std::thread> callers;
+        callers.reserve(kCallers);
+        for (int index = 0; index < kCallers; ++index) {
+            callers.emplace_back([&transports, &count, index] {
+                Json answer;
+                if (exchange(transports[static_cast<std::size_t>(index)],
+                             call_message("SteamAPI_Init", 2), answer)) {
+                    ++count;
+                }
+            });
+        }
+        for (std::thread& caller : callers) {
+            caller.join();
+        }
+        return count;
+    }();
+    const auto own = std::chrono::duration_cast<std::chrono::milliseconds>(
+                         std::chrono::steady_clock::now() - own_started)
+                         .count();
+
+    check("nobody was answered: the backend is stalled, not slow",
+          answered == 0 && own_answered == 0);
+    // More than two timeouts for three threaded callers, and less than two for three that each
+    // have a connection. Both are about the shape rather than the exact figure, so a loaded
+    // machine cannot move either one across.
+    check("a game's three threads spent one timeout each, one after the other",
+          queued >= 2 * kTimeoutMs);
+    check("three clients of their own spent their timeouts at the same time",
+          own <= 2 * kTimeoutMs);
+    std::printf("        %d thread(s) behind one client: %lld ms | %d client(s) of their own:"
+                " %lld ms | %lld ms of timeout each\n",
+                kCallers, static_cast<long long>(queued), kCallers, static_cast<long long>(own),
+                kTimeoutMs);
+
+    server.stop();
+}
+
+// A megabyte through the wire, and the two caps that refuse more. Nothing in this harness has
+// ever sent one: the largest frame in a whole rig run is a 1 KB P2P packet carried as hex, and
+// the cap is 4 MB, so the middle of the range is untested in both directions - while a screenshot
+// buffer, the biggest thing this API hands over as a value, is about 1.2 MB. docs/architecture.md,
+// "The socket layer", is where this feeds in: whatever replaces the transport has to keep both
+// halves of it, so both are pinned here rather than assumed.
+void test_a_megabyte_goes_either_way() {
+    std::printf("[:] a megabyte through the wire, and the caps that refuse more\n");
+
+    // Carried as a size from the start: `1024 * 1024` in an int is a product that widens, which is
+    // the sort of arithmetic this check exists to keep out of a buffer length.
+    constexpr std::size_t kMegabyte = std::size_t{1024} * 1024;
+    const std::string big(kMegabyte, 'a');
+    const std::string over(5 * kMegabyte, 'b');  // more than kMaxFrameBytes
+
+    // One call answered with as much `out` as it was sent, so a single exchange covers both
+    // directions; and one answered with more than the wire allows, to see the cap refuse it.
+    Json answer;
+    answer["ret"] = Json(true);
+    answer["out"] = Json::object();
+    answer["out"]["pvData"] = Json(big);
+    Json too_big;
+    too_big["ret"] = Json(true);
+    too_big["out"] = Json::object();
+    too_big["out"]["pvData"] = Json(over);
+    Json scripted = Json::object();
+    scripted["SteamAPI_Test_A_Megabyte"] = answer;
+    scripted["SteamAPI_Test_Too_Big"] = too_big;
+    Json profile = Json::object();
+    profile["app_id"] = Json(480);
+    profile["scripted"] = scripted;
+    Json profiles = Json::object();
+    profiles["default"] = profile;
+    Json scenario = Json::object();
+    scenario["profiles"] = profiles;
+
+    const std::filesystem::path transcript =
+        std::filesystem::temp_directory_path() / "steammock-big-frame.jsonl";
+    std::error_code ignored;
+    std::filesystem::remove(transcript, ignored);
+
+    steammock::ServerOptions options;
+    options.port = 0;
+    options.log_level = steammock::LogLevel::error;
+    options.transcript = transcript.string();
+    steammock::Server server(steammock::Dispatcher(scenario), options);
+
+    std::string error;
+    if (!server.start(error)) {
+        check("the big-frame server binds a free port", false);
+        return;
+    }
+
+    steammock::TcpTransport client;
+    client.set_timeout_ms(5000);  // a megabyte is not a stall, but it is not a ping either
+    Json reply;
+    const bool attached =
+        client.connect("127.0.0.1", server.port()) && exchange(client, hello_message(), reply);
+    check("a client attached", attached);
+
+    // Both directions at a megabyte: the arguments carry one, the answer carries one back, and the
+    // server wrote one to the transcript on the way past.
+    Json big_call = call_message("SteamAPI_Test_A_Megabyte", 1);
+    big_call["args"]["pvData"] = Json(big);
+    Json big_reply;
+    check("a megabyte of arguments was answered", exchange(client, big_call, big_reply));
+    const Json* echoed = steammock::json_member(big_reply, "out");
+    check("and a megabyte of out-parameters came back intact",
+          echoed != nullptr && steammock::as_string_member(*echoed, "pvData").size() == big.size());
+    if (echoed != nullptr) {
+        check("  byte for byte", steammock::as_string_member(*echoed, "pvData") == big);
+    }
+
+    // ...and the transcript has the same megabyte in it, which is the other path a big frame
+    // travels on: one record for the one call so far, written whole by the same code a small one
+    // goes through.
+    const auto read_transcript = [&transcript] {
+        if (!std::filesystem::exists(transcript)) {
+            return std::string();
+        }
+        std::ifstream file(transcript, std::ios::binary);
+        return std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+    };
+    const std::string recorded = read_transcript();
+    check("the transcript holds the megabyte too", recorded.find(big) != std::string::npos);
+    check("one call, one line of it", std::count(recorded.begin(), recorded.end(), '\n') == 1);
+
+    // Over the cap, outbound: refused, and the connection is left usable rather than truncated -
+    // nothing was sent, so there is nothing to be out of step about.
+    Json over_call = call_message("SteamAPI_Test_A_Megabyte", 2);
+    over_call["args"]["pvData"] = Json(over);
+    Json over_reply;
+    check("a frame larger than the cap is refused rather than sent",
+          !exchange(client, over_call, over_reply));
+    check("and the connection is still good afterwards",
+          exchange(client, call_message("SteamAPI_Test_A_Megabyte", 3), reply));
+
+    // Over the cap, inbound: the answer is what is too big, and the client hangs up rather than
+    // reading a length it cannot honour - so the next call has to be a new connection.
+    steammock::TcpTransport other;
+    other.set_timeout_ms(5000);
+    Json other_reply;
+    const bool other_attached =
+        other.connect("127.0.0.1", server.port()) && exchange(other, hello_message(), other_reply);
+    check("a second client attached", other_attached);
+    check("an answer larger than the cap is refused",
+          !exchange(other, call_message("SteamAPI_Test_Too_Big", 4), other_reply));
+    check("and the client that refused it is not connected any more", !other.is_connected());
+
+    // Three calls the server answered (the refused request never left), three lines - and the
+    // megabyte one is still whole, with the records on either side of it intact.
+    const std::string all = read_transcript();
+    check("the records the server answered are all there",
+          std::count(all.begin(), all.end(), '\n') == 3);
+    check("and the megabyte in the middle of them is whole",
+          all.find(big) != std::string::npos && std::count(all.begin(), all.end(), '\n') == 3);
+
+    other.close();
+    client.close();
+    server.stop();
+    std::filesystem::remove(transcript, ignored);
+}
+
 // The call history in memory is a window, and a reader's cursor is an absolute position
 // in the run rather than an offset into that window. It used to be an unbounded vector
 // that every snapshot copied whole while holding the state lock, and a game can make
@@ -453,6 +718,8 @@ int run() {
     test_four_threads_stop_at_once();
     test_a_run_is_not_restartable();
     test_a_connect_is_bounded_by_its_timeout();
+    test_a_stalled_backend_costs_each_queued_caller();
+    test_a_megabyte_goes_either_way();
     test_the_history_is_a_window();
 
     if (g_failures == 0) {

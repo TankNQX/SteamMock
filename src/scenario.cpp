@@ -8,6 +8,10 @@
 namespace steammock {
 namespace {
 
+// How long a scenario may say an answer takes. A minute is not a service level - it is the
+// point past which a delay stops being something a game can be watched through.
+constexpr std::int64_t kMaxDelayMs = 60000;
+
 std::string lower_ascii(std::string text) {
     for (char& ch : text) {
         if (ch >= 'A' && ch <= 'Z') {
@@ -239,6 +243,25 @@ std::optional<Profile> Dispatcher::profile_for(const Json& hello, std::string* r
         *refused = _default_profile;
     }
     return std::nullopt;
+}
+
+std::int64_t Dispatcher::delay_for(const Session& session, const std::string& name) const {
+    const Json* scripted = session.profile().scripted_for(name);
+    if (scripted == nullptr || !scripted->is_object()) {
+        return 0;
+    }
+    const Json* delay = json_member(*scripted, "delay_ms");
+    if (delay == nullptr || !delay->is_number()) {
+        return 0;
+    }
+    const std::int64_t wanted = as_int64(*delay);
+    if (wanted <= 0) {
+        return 0;
+    }
+    // Clamped, because a delay is a condition to test a game against and not a way to park a
+    // run: a scenario asking for an hour is a scenario with a typo, and a backend that has
+    // stopped answering for an hour is not a state anybody can read evidence out of.
+    return wanted > kMaxDelayMs ? kMaxDelayMs : wanted;
 }
 
 Answer Dispatcher::answer(Session& session, const std::string& name, const Json& args) const {

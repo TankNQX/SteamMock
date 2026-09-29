@@ -673,6 +673,20 @@ std::string Server::handle_call(Session& session, const Json& message) {
     }
 
     const auto started = std::chrono::steady_clock::now();
+
+    // A scenario can say that answering this call takes a while, and this is where that is
+    // waited for: before the state lock, because what the knob is for is a *round trip* that
+    // takes longer - the thing a game's own calls queue behind (docs/architecture.md, finding
+    // 16 of the review this tree went through) - and a wait taken while holding `_mutex` would
+    // be a delay for every other game attached to the run instead. `started` is above it, so
+    // the transcript's `ms` counts the wait, which is what a reader comparing two calls is
+    // looking at.
+    if (const std::int64_t delay_ms = _dispatcher.delay_for(session, name); delay_ms > 0) {
+        log(LogLevel::debug, name + ": waiting " + std::to_string(delay_ms) +
+                                 " ms before answering, as the scenario says");
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
+    }
+
     Answer answer;
     CallRecord record;
     {

@@ -130,6 +130,26 @@ record/replay bullet below want the same seam, so replacing this layer, giving t
 thread and recording a session through a transport are one decision about the interface: several
 implementations, one contract.
 
+What that decision can be made *from*, instead of argued about: two measurements, both in
+`tests/test_server.cpp`, both against a real server over a real socket.
+
+* **A stalled backend and three threads.** A scripted answer can say how long it takes
+  (`"delay_ms": 3000`; the server waits before answering, outside its state lock, and the
+  transcript's `ms` counts the wait). With a delay longer than the client's timeout, three threads
+  calling through one client cost **three timeouts one after another** - 1,844 ms measured for
+  3 x 600 - while three clients with a connection of their own cost **one timeout**, 600 ms. The
+  second arm is what says the server is not the serializer (it answers each connection on its own
+  thread), so the difference between the arms is the lock. Note which condition that is: a *slow*
+  backend is the server's own queueing either way, and the lock costs nothing there; the price is
+  paid by a *stalled* one, where every queued caller waits out its own timeout in turn.
+* **A megabyte each way.** 1 MB of arguments answered with 1 MB of out-parameters, byte for byte,
+  and the same megabyte whole in one line of the transcript; a frame over `kMaxFrameBytes` refused
+  by the sender without costing the connection, and an answer over it refused by the receiver, which
+  hangs up rather than read a length it cannot honour. Nothing in a rig run has ever exceeded a
+  kilobyte - the largest frame in a whole set is a 1 KB packet carried as hex - while a screenshot
+  buffer, the biggest thing this API hands over as a value, is about 1.2 MB. That is the range a
+  replacement has to keep working in, and it is now pinned rather than assumed.
+
 ## Nothing in DllMain
 
 `DllMain` only calls `DisableThreadLibraryCalls`. The socket, the log file and the environment are all
