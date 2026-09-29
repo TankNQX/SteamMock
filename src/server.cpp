@@ -705,7 +705,9 @@ std::string Server::handle_call(Session& session, const Json& message) {
         if (!_world.answer(session, name, args, answer, notifications)) {
             // The world only speaks about rooms that games made. Everything else is
             // the scenario's to answer, and then this session's own state.
-            answer = _dispatcher.answer(session, name, args);
+            if (!_leaderboards.answer(session, name, args, answer)) {
+                answer = _dispatcher.answer(session, name, args);
+            }
         }
 
         // What the other members have to be told: theirs is not the call that did

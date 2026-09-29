@@ -138,6 +138,14 @@ private:
     const Lobby* find_lobby(std::uint64_t id) const noexcept;
     const LobbyMember* find_member_anywhere(std::uint64_t steam_id) const noexcept;
 
+    // The name this run knows for a player, whoever they are and whether or not they are
+    // still in a room. Empty means this run has never heard from them.
+    std::string player_name(std::uint64_t steam_id) const;
+
+    // Learn a player's name, once. The first name a run hears for an id is the one it keeps,
+    // which is what makes a name stable across the comings and goings of a room.
+    void remember_player(std::uint64_t steam_id, const std::string& persona);
+
     // What a member joining or leaving means for everyone else in the room.
     void notify_member_change(const Lobby& lobby, const LobbyMember& member,
                               std::uint64_t making_change, std::uint32_t state_change,
@@ -191,6 +199,19 @@ private:
     std::vector<Lobby> _lobbies;
     std::uint64_t _next_lobby_id = kFirstLobbyId;
     std::uint64_t _next_call = kFirstCallHandle;
+
+    // Every player this run has heard from, by Steam id, and the name they gave.
+    //
+    // This is here because a roster is asked for names by id, and the ids it asks about are
+    // not only the people standing in a room: Spacewar draws its scoreboard - and the rows
+    // of a leaderboard - from a fixed set of ids it collected as it played, and asks for
+    // each name every time it rebuilds the list. Answering only for current members of a
+    // room meant declining most of those, and a declined call is a game drawing an empty
+    // name. A player who has left the room is still a player the run knows.
+    //
+    // Nothing here invents an identity: a name is learned from the profile of a session
+    // that made a call, which is the identity the harness handed that process.
+    std::vector<std::pair<std::uint64_t, std::string>> _players;
 
     // Where each session's game server says it would be, by Steam id. A game that starts
     // a server tells the SDK its game port and often passes zero for the address when it

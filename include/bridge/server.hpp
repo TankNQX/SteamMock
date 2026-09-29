@@ -16,6 +16,7 @@
 
 #include "bridge/defaults.hpp"
 #include "bridge/json_read.hpp"
+#include "bridge/leaderboard.hpp"
 #include "bridge/lobby.hpp"
 #include "bridge/log.hpp"
 #include "bridge/scenario.hpp"
@@ -159,6 +160,13 @@ private:
     // is what makes two instances agree about the same lobby instead of each being
     // handed its own convenient story.
     LobbyWorld _world;
+
+    // The leaderboards the run's players have posted scores to. Here for the same reason
+    // as the rooms and beside them: a board is the one thing a single game cannot make,
+    // because a ranking is only worth having if somebody else is on it. It is also where
+    // every call's player is learned by name, which is what makes a roster row for a
+    // player who has already left answerable.
+    LeaderboardWorld _leaderboards;
 
     // What a game has been told but has not heard yet, by session. A game learns
     // things only when it asks, so anything said to it while it was busy waits here

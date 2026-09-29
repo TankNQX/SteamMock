@@ -25,6 +25,7 @@
 #include "bridge/call.hpp"
 #include "bridge/frame.hpp"
 #include "bridge/json_read.hpp"
+#include "bridge/leaderboard.hpp"
 #include "bridge/lobby.hpp"
 #include "bridge/protocol.hpp"
 #include "bridge/scenario.hpp"
@@ -41,6 +42,7 @@ namespace {
 using steammock::Answer;
 using steammock::Dispatcher;
 using steammock::Json;
+using steammock::LeaderboardWorld;
 using steammock::LobbyWorld;
 using steammock::Profile;
 using steammock::Session;
@@ -650,6 +652,198 @@ void test_the_lobbies_a_run_holds() {
     check("the world handles the lobby surface", LobbyWorld::handled_calls().size() >= 18);
 }
 
+// A board is the run's, not a game's: one game posts a score and another reads the ranking
+// it did not write. That is the whole reason it is not per session, and Spacewar's
+// leaderboard menu is the game that reads it.
+//
+// The calls here are the menu's own sequence - find the board, ask for its name, download a
+// range, read a row out of what came back - because the shape a game actually uses is the
+// shape that has to work.
+void test_the_boards() {
+    std::printf("[:] the boards\n");
+
+    auto profile_for = [](const char* persona, std::uint64_t steam_id) {
+        const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
+                                 std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
+                                 "\",\"language\":\"english\"}";
+        Json data;
+        check("the board fixture parses", steammock::parse(text, data));
+        return Profile::from_json(persona, data);
+    };
+    constexpr std::uint64_t kHostId = 76561198000000001ull;
+    constexpr std::uint64_t kGuestId = 76561198000000002ull;
+
+    auto session_for = [](const char* id, const Profile& profile) {
+        Json hello = Json::object();
+        hello["exe"] = Json("game.exe");
+        hello["pid"] = Json(1234);
+        return Session(id, hello, profile);
+    };
+
+    const Session host = session_for("host", profile_for("Host", kHostId));
+    const Session guest = session_for("guest", profile_for("Guest", kGuestId));
+
+    LeaderboardWorld boards;
+
+    auto ask = [&](const Session& who, const char* call, const Json& args) {
+        Answer answer;
+        const bool handled = boards.answer(who, call, args, answer);
+        check((std::string("the world answers ") + call).c_str(), handled);
+        return answer;
+    };
+    auto field_of = [](const Answer& answer, const char* field) -> const Json* {
+        if (!answer.events.is_array() || answer.events.empty()) {
+            return nullptr;
+        }
+        const Json* in = steammock::json_member(answer.events.front(), "in");
+        return in != nullptr ? steammock::json_member(*in, field) : nullptr;
+    };
+    // One call made the way a game makes it: the arguments it passes, and nothing else.
+    Json wanted = Json::object();
+    wanted["pchLeaderboardName"] = Json("Feet Traveled");
+
+    // A board nobody has asked for yet is not one. This is the call a game makes first, and
+    // the answer to it is what a menu draws "there is no such board" from.
+    const Answer missing = ask(guest, "SteamAPI_ISteamUserStats_FindLeaderboard", wanted);
+    const Json* missing_flag = field_of(missing, "m_bLeaderboardFound");
+    check("a board nobody asked for is not found",
+          missing_flag != nullptr && steammock::as_int64(*missing_flag) == 0);
+
+    Json create = wanted;
+    create["eLeaderboardSortMethod"] = Json(2);   // descending: the biggest wins
+    create["eLeaderboardDisplayType"] = Json(1);  // a plain number
+    const Answer created = ask(host, "SteamAPI_ISteamUserStats_FindOrCreateLeaderboard", create);
+    const std::uint64_t board = created.ret.is_number() ? steammock::as_uint64(created.ret) : 0;
+    check("find-or-create makes one and completes the call with it", board != 0);
+    const Json* board_in_payload = field_of(created, "m_hSteamLeaderboard");
+    check("  and the payload names the board it made",
+          board_in_payload != nullptr && steammock::as_uint64(*board_in_payload) != 0);
+    check("  and the two handles are different things: a call to wait on, a board to play on",
+          board_in_payload != nullptr && steammock::as_uint64(*board_in_payload) != board);
+
+    const std::uint64_t board_handle =
+        board_in_payload != nullptr ? steammock::as_uint64(*board_in_payload) : 0;
+    Json of_board = Json::object();
+    of_board["hSteamLeaderboard"] = Json(static_cast<std::int64_t>(board_handle));
+
+    check("it is called what the game asked for",
+          steammock::as_string(
+              ask(host, "SteamAPI_ISteamUserStats_GetLeaderboardName", of_board).ret) ==
+              "Feet Traveled");
+    check("and it is empty until somebody posts a score",
+          steammock::as_int64(
+              ask(host, "SteamAPI_ISteamUserStats_GetLeaderboardEntryCount", of_board).ret) == 0);
+    check("and it ranks the way the game asked it to",
+          steammock::as_int64(
+              ask(host, "SteamAPI_ISteamUserStats_GetLeaderboardSortMethod", of_board).ret) == 2);
+
+    // Two players post scores, and the board ranks them.
+    auto upload = [&](const Session& who, std::int64_t method, std::int64_t score) {
+        Json args = of_board;
+        args["eLeaderboardUploadScoreMethod"] = Json(method);
+        args["nScore"] = Json(score);
+        args["pScoreDetails"] = Json();
+        args["cScoreDetailsCount"] = Json(0);
+        return ask(who, "SteamAPI_ISteamUserStats_UploadLeaderboardScore", args);
+    };
+
+    const Answer host_first = upload(host, 1, 100);  // keep best
+    check("a player who was not on the board is ranked when they post",
+          steammock::as_int64(*field_of(host_first, "m_nGlobalRankNew")) == 1 &&
+              steammock::as_int64(*field_of(host_first, "m_nGlobalRankPrevious")) == 0);
+    check("and the board says a score it did not have changed it",
+          steammock::as_int64(*field_of(host_first, "m_bScoreChanged")) == 1);
+
+    const Answer guest_first = upload(guest, 1, 300);
+    check("and the better score takes the top",
+          steammock::as_int64(*field_of(guest_first, "m_nGlobalRankNew")) == 1);
+    check("which moves the other player down rather than deleting them",
+          steammock::as_int64(
+              ask(host, "SteamAPI_ISteamUserStats_GetLeaderboardEntryCount", of_board).ret) == 2);
+
+    const Answer host_worse = upload(host, 1, 50);
+    check("keep-best throws away a worse score",
+          steammock::as_int64(*field_of(host_worse, "m_bScoreChanged")) == 0);
+    check("  and says so by leaving the rank where it was",
+          steammock::as_int64(*field_of(host_worse, "m_nGlobalRankNew")) == 2 &&
+              steammock::as_int64(*field_of(host_worse, "m_nScore")) == 100);
+
+    const Answer host_forced = upload(host, 2, 900);
+    check("force-update replaces it anyway",
+          steammock::as_int64(*field_of(host_forced, "m_bScoreChanged")) == 1 &&
+              steammock::as_int64(*field_of(host_forced, "m_nGlobalRankNew")) == 1);
+    check("  and remembers where the player was before",
+          steammock::as_int64(*field_of(host_forced, "m_nGlobalRankPrevious")) == 2);
+
+    // Now the menu's own read: a range of global ranks, top first, and a row out of it.
+    Json download = of_board;
+    download["eLeaderboardDataRequest"] = Json(0);  // global
+    download["nRangeStart"] = Json(1);
+    download["nRangeEnd"] = Json(10);
+    const Answer rows = ask(guest, "SteamAPI_ISteamUserStats_DownloadLeaderboardEntries", download);
+    const Json* count = field_of(rows, "m_cEntryCount");
+    check("a download of the top ten is answered with what the board holds",
+          count != nullptr && steammock::as_int64(*count) == 2);
+    const Json* entries_handle = field_of(rows, "m_hSteamLeaderboardEntries");
+    check("  and the rows come back under a handle of their own",
+          entries_handle != nullptr && steammock::as_uint64(*entries_handle) != 0);
+    const std::uint64_t entries =
+        entries_handle != nullptr ? steammock::as_uint64(*entries_handle) : 0;
+
+    auto row_args = [&](std::int64_t index, std::int64_t details_max) {
+        Json args = Json::object();
+        args["hSteamLeaderboardEntries"] = Json(static_cast<std::int64_t>(entries));
+        args["index"] = Json(index);
+        args["cDetailsMax"] = Json(details_max);
+        return args;
+    };
+
+    const Answer first =
+        ask(guest, "SteamAPI_ISteamUserStats_GetDownloadedLeaderboardEntry", row_args(0, 0));
+    Answer unheard;
+    check("a row read out of the download is the player's", steammock::as_bool(first.ret));
+    const Json* entry = steammock::json_member(first.out, "pLeaderboardEntry");
+    check("  and the row itself is a structure the game's own memory gets filled with",
+          entry != nullptr && entry->is_object());
+    const Json* who = entry != nullptr ? steammock::json_member(*entry, "m_steamIDUser") : nullptr;
+    check("  with the player who earned it",
+          who != nullptr && steammock::as_uint64(*who) == kHostId);
+    const Json* score = entry != nullptr ? steammock::json_member(*entry, "m_nScore") : nullptr;
+    const Json* rank = entry != nullptr ? steammock::json_member(*entry, "m_nGlobalRank") : nullptr;
+    check("  and the score and the place it took",
+          score != nullptr && steammock::as_int64(*score) == 900 && rank != nullptr &&
+              steammock::as_int64(*rank) == 1);
+    check("and a row nobody downloaded is not invented",
+          !boards.answer(guest, "SteamAPI_ISteamUserStats_GetDownloadedLeaderboardEntry",
+                         row_args(5, 0), unheard));
+    check("and a handle nobody was given has no rows either",
+          !boards.answer(
+              guest, "SteamAPI_ISteamUserStats_GetDownloadedLeaderboardEntry",
+              [&] {
+                  Json args = row_args(0, 0);
+                  args["hSteamLeaderboardEntries"] = Json(static_cast<std::int64_t>(4242));
+                  return args;
+              }(),
+              unheard));
+    check("and a detail array is written only when the game asked for one",
+          steammock::json_member(
+              ask(guest, "SteamAPI_ISteamUserStats_GetDownloadedLeaderboardEntry", row_args(0, 4))
+                  .out,
+              "pDetails") != nullptr);
+
+    // The two ends of "there is no board here": a handle this run never gave out, and a
+    // board name it has never been asked for.
+    Json stranger = Json::object();
+    stranger["hSteamLeaderboard"] = Json(static_cast<std::int64_t>(4242));
+    check("a board handle nobody was given has no name",
+          !boards.answer(host, "SteamAPI_ISteamUserStats_GetLeaderboardName", stranger, unheard));
+    check("and a count is not invented for it either",
+          !boards.answer(host, "SteamAPI_ISteamUserStats_GetLeaderboardEntryCount", stranger,
+                         unheard));
+
+    check("the world handles the leaderboard surface",
+          LeaderboardWorld::handled_calls().size() >= 9);
+}
 // A packet is stamped with the end of the process that sent it, which is the handle the
 // call was made through - not something read off the destination. The difference is the
 // whole of it for a process that hosts, because that one is a customer and a game server
@@ -838,6 +1032,130 @@ void test_who_sent_a_packet() {
           peer != nullptr && steammock::as_uint64(*peer) == kHostId);
 }
 
+// A roster is asked for names by id, and the ids it asks about are not only the people
+// standing in a room. Spacewar draws its scoreboard from a set of ids it collected as it
+// played and re-asks for every name whenever it rebuilds the list, so answering only for
+// current members of a room means declining most of those - a game drawing an empty name
+// where a player's is.
+void test_names_after_the_room() {
+    std::printf("[:] names for players who have left\n");
+
+    auto profile_for = [](const char* persona, std::uint64_t steam_id) {
+        const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
+                                 std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
+                                 "\",\"language\":\"english\"}";
+        Json data;
+        check("the roster fixture parses", steammock::parse(text, data));
+        return Profile::from_json(persona, data);
+    };
+    constexpr std::uint64_t kHostId = 76561198000000001ull;
+    constexpr std::uint64_t kGuestId = 76561198000000002ull;
+    constexpr std::uint64_t kStrangerId = 76561198000000099ull;
+
+    auto session_for = [](const char* id, const Profile& profile) {
+        Json hello = Json::object();
+        hello["exe"] = Json("game.exe");
+        hello["pid"] = Json(1234);
+        return Session(id, hello, profile);
+    };
+
+    Session host = session_for("host", profile_for("Host", kHostId));
+    Session guest = session_for("guest", profile_for("Guest", kGuestId));
+
+    LobbyWorld world;
+    std::vector<std::pair<std::uint64_t, Json>> told;
+    auto ask = [&](Session& who, const char* call, const Json& args) {
+        Answer answer;
+        told.clear();
+        check((std::string("the world answers ") + call).c_str(),
+              world.answer(who, call, args, answer, told));
+        return answer;
+    };
+    auto name_of = [](std::uint64_t steam_id) {
+        Json args = Json::object();
+        args["steamIDFriend"] = Json(static_cast<std::int64_t>(steam_id));
+        return args;
+    };
+
+    // The two games meet in a room, and one of them leaves it.
+    Json create = Json::object();
+    create["eLobbyType"] = Json(2);
+    create["cMaxMembers"] = Json(4);
+    const Answer created = ask(host, "SteamAPI_ISteamMatchmaking_CreateLobby", create);
+    const Json* made =
+        created.events.is_array() && !created.events.empty()
+            ? steammock::json_member(*steammock::json_member(created.events.front(), "in"),
+                                     "m_ulSteamIDLobby")
+            : nullptr;
+    const std::uint64_t lobby = made != nullptr ? steammock::as_uint64(*made) : 0;
+    Json join = Json::object();
+    join["steamIDLobby"] = Json(static_cast<std::int64_t>(lobby));
+    ask(guest, "SteamAPI_ISteamMatchmaking_JoinLobby", join);
+
+    check("a member of the room is named",
+          steammock::as_string(
+              ask(host, "SteamAPI_ISteamFriends_GetFriendPersonaName", name_of(kGuestId)).ret) ==
+              "Guest");
+
+    Json leave = Json::object();
+    leave["steamIDLobby"] = Json(static_cast<std::int64_t>(lobby));
+    ask(guest, "SteamAPI_ISteamMatchmaking_LeaveLobby", leave);
+
+    Answer after;
+    told.clear();
+    check("and is still named after leaving the room the name came from",
+          world.answer(host, "SteamAPI_ISteamFriends_GetFriendPersonaName", name_of(kGuestId),
+                       after, told) &&
+              steammock::as_string(after.ret) == "Guest");
+
+    // What has not changed: nobody this run has ever heard from has a name, because
+    // inventing one would be a roster row for a player who does not exist.
+    Answer stranger;
+    told.clear();
+    check("an id nobody has heard from still has no name",
+          !world.answer(host, "SteamAPI_ISteamFriends_GetFriendPersonaName", name_of(kStrangerId),
+                        stranger, told));
+}
+
+// Every call the worlds claim to handle has to be one the stub can send: the stub is
+// generated from an SDK's own surface, and a world that answers a name nobody exports is a
+// world with an opinion no game can ever ask about.
+//
+// The surface is generated from gen/steam_api_surface.json, which is Valve's API and not in
+// this repository - so a checkout with no SDK has nothing to check against, and says so
+// rather than passing by default.
+void test_the_worlds_handle_calls_the_stub_has() {
+    std::printf("[:] the calls the worlds answer\n");
+
+    std::size_t count = 0;
+    const steammock::SurfaceCall* calls = steammock::api_surface_calls(count);
+    if (count == 0) {
+        std::printf("  [skip] no generated surface in this checkout: nothing to check against\n");
+        return;
+    }
+    auto exported = [calls, count](const std::string& name) {
+        for (std::size_t index = 0; index < count; ++index) {
+            if (name == calls[index].name) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    std::vector<std::string> claimed = LobbyWorld::handled_calls();
+    for (const std::string& call : LeaderboardWorld::handled_calls()) {
+        claimed.push_back(call);
+    }
+    std::size_t unknown = 0;
+    for (const std::string& call : claimed) {
+        if (!exported(call)) {
+            std::printf("        not in the surface: %s\n", call.c_str());
+            ++unknown;
+        }
+    }
+    check("every call the worlds answer is one the stub exports", unknown == 0);
+}
+
 void test_surface_matches_the_idl() {
     std::printf("[:] the generated surface\n");
 
@@ -948,7 +1266,10 @@ int run() {
     test_scenarios();
     test_profiles_are_per_session();
     test_the_lobbies_a_run_holds();
+    test_the_boards();
+    test_names_after_the_room();
     test_who_sent_a_packet();
+    test_the_worlds_handle_calls_the_stub_has();
     test_surface_matches_the_idl();
     test_numbers();
 

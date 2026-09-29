@@ -378,6 +378,29 @@ const LobbyMember* LobbyWorld::find_member_anywhere(std::uint64_t steam_id) cons
     return nullptr;
 }
 
+std::string LobbyWorld::player_name(std::uint64_t steam_id) const {
+    for (const auto& player : _players) {
+        if (player.first == steam_id) {
+            return player.second;
+        }
+    }
+    return std::string();
+}
+
+void LobbyWorld::remember_player(std::uint64_t steam_id, const std::string& persona) {
+    if (steam_id == 0 || persona.empty()) {
+        // An id of zero is not a player, and a name nobody gave is not a name: both would
+        // be a row in a roster that answers a question with an answer nobody made.
+        return;
+    }
+    for (auto& player : _players) {
+        if (player.first == steam_id) {
+            return;
+        }
+    }
+    _players.emplace_back(steam_id, persona);
+}
+
 std::uint64_t LobbyWorld::known_game_server_id(std::uint64_t user) const noexcept {
     for (const auto& entry : _game_server_ids) {
         if (entry.first == user) {
@@ -518,6 +541,11 @@ void LobbyWorld::notify_member_change(
 bool LobbyWorld::answer(const Session& session, const std::string& call, const Json& args,
                         Answer& out, std::vector<std::pair<std::uint64_t, Json>>& notifications) {
     const std::uint64_t me = session.profile().steam_id;
+
+    // Every call is also this run learning a name: the profile is the identity the harness
+    // handed this process, so whoever is speaking is a player the world now knows. That is
+    // what makes a name answerable after the room they were in is gone.
+    remember_player(me, session.profile().persona_name);
 
     if (call == kGameServerInit) {
         // Not answered here - the scenario decides whether a game server comes up at all -
@@ -836,13 +864,23 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
     }
 
     if (call == kGetFriendPersonaName) {
-        // The roster asks for the people in it by Steam id, and the only ids this
-        // run knows the names of are the ones that joined something.
+        // The roster asks for the people in it by Steam id. A name comes from the room when
+        // one of them is in it - a game can name a member, and that name is the room's - and
+        // from this run's own record of the players it has heard from otherwise, because a
+        // roster is drawn from ids collected over a whole session and most of them are not
+        // standing anywhere by the time it is drawn.
         const LobbyMember* member = find_member_anywhere(id_member(args, "steamIDFriend"));
-        if (member == nullptr || member->persona.empty()) {
+        if (member != nullptr && !member->persona.empty()) {
+            out = from_lobby(Json(member->persona));
+            return true;
+        }
+        const std::string known = player_name(id_member(args, "steamIDFriend"));
+        if (known.empty()) {
+            // Nobody this run has ever heard from: no opinion rather than an invented name,
+            // and the call is reported as one nobody answered.
             return false;
         }
-        out = from_lobby(Json(member->persona));
+        out = from_lobby(Json(known));
         return true;
     }
 

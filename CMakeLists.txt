@@ -74,6 +74,7 @@ add_library(steammock_backend STATIC
     src/session.cpp
     src/scenario.cpp
     src/lobby.cpp
+    src/leaderboard.cpp
     src/server.cpp
     src/generated/api_surface.cpp
 )
