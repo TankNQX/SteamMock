@@ -414,7 +414,15 @@ private:
     // often each was asked for.
     void draw_calls_by_function() {
         ImGui::SetNextItemWidth(180);
-        _filter.Draw("filter");
+        if (_filter.Draw("filter")) {
+            // The live tab builds its row index with this same filter, and the edit happens
+            // while *this* tab is the one on screen - so nothing there sees a change this
+            // frame. Without marking the index dirty, switching to "live" found no change and
+            // no dirty flag and kept the old subset: the rows that no longer match stayed in
+            // and the ones that now match were never added. A filter edited here is a filter
+            // edited, whichever view was asked for.
+            _shown_dirty = true;
+        }
         ImGui::SameLine();
         ImGui::TextDisabled("%zu function(s)", _tallies.size());
 
@@ -499,10 +507,6 @@ private:
             }
         }
 
-        // Scrolling to the bottom is only wanted when the view is already there;
-        // otherwise it fights whoever is reading further up.
-        const bool at_bottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f;
-
         const ImGuiTableFlags flags =
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
         if (ImGui::BeginTable("calls", 4, flags, ImVec2(0, -1))) {
@@ -512,6 +516,16 @@ private:
             ImGui::TableSetupColumn("via / ms", ImGuiTableColumnFlags_WidthFixed, 92);
             ImGui::TableSetupColumn("answer", ImGuiTableColumnFlags_WidthStretch, 2.0f);
             ImGui::TableHeadersRow();
+
+            // Read *inside* the table, which is where the scrolling is. The table owns an
+            // inner window of its own (ImGuiTableFlags_ScrollY) and it is sized to fill the
+            // child it sits in (ImVec2(0, -1)), so the child never overflows - which is why
+            // asking before BeginTable read 0 of 0, made `at_bottom` always true, and with
+            // `follow` on re-scrolled to the bottom every frame while somebody was trying to
+            // read further up.
+            //
+            // Scrolling to the bottom is only wanted when the view is already there.
+            const bool at_bottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f;
 
             // Only the rows on screen are drawn, so a game that has made tens of
             // thousands of calls still scrolls smoothly.
@@ -731,6 +745,23 @@ int run(int argc, char** argv) {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
+    // Declared after the backends are up, so it covers the frame loop and everything that
+    // can throw inside it - `view.draw()` allocates every frame, and a std::bad_alloc out of
+    // it used to leave `main`'s catch handing back a return code with the window, the GL
+    // context and the ImGui context still open and `glfwTerminate()` never run. The window is
+    // released on every way out of this function now, not only the one where the loop ended
+    // by itself.
+    struct LiveViewCleanup {
+        GLFWwindow* window;
+        ~LiveViewCleanup() {
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplGlfw_Shutdown();
+            ImGui::DestroyContext();
+            glfwDestroyWindow(window);
+            glfwTerminate();
+        }
+    } cleanup{window};
+
     while (glfwWindowShouldClose(window) == 0) {
         glfwPollEvents();
         ImGui_ImplOpenGL3_NewFrame();
@@ -750,11 +781,6 @@ int run(int argc, char** argv) {
         glfwSwapBuffers(window);
     }
 
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    glfwDestroyWindow(window);
-    glfwTerminate();
     return 0;
 }
 
