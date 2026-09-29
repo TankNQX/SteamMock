@@ -19,7 +19,6 @@ enum class LogLevel : int { error = 0, warn = 1, info = 2, debug = 3 };
 const char* log_level_name(LogLevel level) noexcept;
 
 void log_write(LogLevel level, std::string_view message) noexcept;
-bool log_enabled(LogLevel level) noexcept;
 void log_configure(const char* module_path) noexcept;  // reads the environment once
 
 }  // namespace steammock

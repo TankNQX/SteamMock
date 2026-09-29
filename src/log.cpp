@@ -64,10 +64,6 @@ const char* level_name(LogLevel level) noexcept {
 
 const char* log_level_name(LogLevel level) noexcept { return level_name(level); }
 
-bool log_enabled(LogLevel level) noexcept {
-    return static_cast<int>(level) <= static_cast<int>(config().level);
-}
-
 void log_write(LogLevel level, std::string_view message) noexcept {
     // Logging must never break the program. A failure here - an allocator that
     // cannot build the line - loses the line rather than terminating the game
@@ -75,11 +71,12 @@ void log_write(LogLevel level, std::string_view message) noexcept {
     // the noexcept would mean "terminate on failure", the opposite of the
     // promise.
     try {
-        // One read of the configuration, for both the level and the line. Two - a
-        // `log_enabled(level)` and then this - could straddle the publication of the first
-        // configuration by another thread, so the filter judged against the defaults while
-        // the line went to a file and a prefix that had just been installed: a line either
-        // written when the published level disables it, or dropped when it does not.
+        // One read of the configuration, for both the level and the line. There is no
+        // `log_enabled(level)` to ask first any more, and that is the point: two reads could
+        // straddle the publication of the first configuration by another thread, so the filter
+        // judged against the defaults while the line went to a file and a prefix that had just
+        // been installed - a line either written when the published level disables it, or
+        // dropped when it does not.
         const Config& settings = config();
         if (static_cast<int>(level) > static_cast<int>(settings.level)) {
             return;
