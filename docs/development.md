@@ -30,7 +30,7 @@ from where it runs and what is in its environment:
 | --- | --- |
 | `STEAMMOCK_HOST`, `STEAMMOCK_PORT` | Where the backend is. Default `127.0.0.1:50990`. |
 | `STEAMMOCK_OFF` | Set to `1` to bypass the bridge: every call answers as if Steam is absent. |
-| `STEAMMOCK_TIMEOUT_MS` | How long a call waits for the backend. Default `2000`. |
+| `STEAMMOCK_TIMEOUT_MS` | How long a call waits for the backend, the connect included. Default `2000`; the ceiling is `600000`, and `0` reads as the default. |
 | `STEAMMOCK_LOG` | A file to append the stub's own log to. |
 | `STEAMMOCK_LOG_LEVEL` | `error`, `warning`, `info` (default) or `debug`. |
 
@@ -76,9 +76,9 @@ ctest --test-dir build -C Release --output-on-failure
 | --- | --- |
 | `protocol` | The frame header, and the JSON the wire carries as this harness reads it: integer fidelity, escapes, and malformed input refused rather than half-read. The parser and the writer are nlohmann's (`external/nlohmann_json`); what is checked here is what the harness needs of them. |
 | `backend` | Replies, the session state machine, scenarios and match rules - and that every call the state machine answers is one the IDL actually exports. |
-| `server` | The server in process: a real port, a real connection through the stub's own transport, and the snapshots and summary the live view draws. |
+| `server` | The server in process: a real port, a real connection through the stub's own transport, the transport's own deadline (a connect to a host that answers nothing gives up on the timeout, not on the TCP stack's SYN timer), the snapshots and summary the live view draws, and the edge of the call history the live view reads through. |
 | `generated_files_are_current` | The generated files match `gen/steam_api_surface.json`. |
-| `end_to_end` | The real thing: the backend started as a subprocess, a game loading the real DLL, both sides checked, and the command line itself. |
+| `end_to_end` | The real thing: the backend started as a subprocess, a game loading the real DLL, both sides checked, and the command line itself - including what it refuses. |
 
 `fake_game` is also a smoke test you can run by hand, without a game of your own - it loads the stub
 the way a game's import table would and prints what it got:

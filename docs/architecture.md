@@ -7,7 +7,7 @@
 | Trampolines | `src/generated/api_stub.cpp` | One exported function per IDL entry. Marshals arguments, sends the call, reads the reply, falls back to a default. |
 | Interfaces | `src/generated/api_interfaces.cpp`, `include/bridge/synth.hpp` | One object per interface version, handed out for a version string, whose slots forward into the same protocol. The marshalling is a property of the declaration's types, so a generated slot body is one line. |
 | Client | `src/client.cpp` | One connection per process, the handshake, request/reply sequencing, offline behaviour, and the promise that nothing throws into the game. |
-| Transport | `src/transport_tcp.cpp` | Framed loopback TCP. Behind `bridge/transport.hpp` so named pipes or shared memory can replace it. |
+| Transport | `src/transport_tcp.cpp` | Framed loopback TCP. Behind `bridge/transport.hpp` so named pipes or shared memory can replace it - and [what such a replacement has to keep](#the-socket-layer-and-what-replacing-it-would-take). |
 | Protocol | `include/bridge/frame.hpp`, `include/bridge/protocol.hpp` | The 4-byte length prefix, the version stamp, and the shape of a reply. One definition, linked by both halves. |
 | Server | `src/server.cpp` | Accepts sessions, resolves each call, writes a transcript, and hands out snapshots of what it has seen. |
 | Session | `src/session.cpp` | The per-game state machine: identity, language, app id, stats, achievements. |
@@ -44,18 +44,91 @@ has one vocabulary for one API.
 Calls arrive on whatever thread the game uses, so one round trip is held under a mutex. That
 serialises Steam calls from different threads; for a debugging harness that is a feature rather than
 a limitation, because request/reply pairing cannot get confused and the transcript stays in the order
-a game made its calls.
+a game made its calls. What that costs a game whose backend has stopped answering, and what
+replacing the layer underneath it would take, is [the next section](#the-socket-layer-and-what-replacing-it-would-take).
 
 The server is the other way round: it accepts on one thread and serves each connection on its own,
 because a game per connection is the model and there are only ever a few. Everything mutable - the
 sessions, the records, the counters, the transcript - sits behind one mutex, and no lock is held
 while a frame is read or written. A front end that wants to draw the current state calls
 `sessions()` or `records()` and gets a copy, so it can never be looking at state that is being
-changed underneath it.
+changed underneath it. What it gets for the history is a window - the last 20,000 calls
+(`Server::kMaxRecords`), because a game that polls can make thousands a second and this is what a
+view draws; the transcript is the record that keeps every call, and a reader's cursor is an
+absolute position in the run rather than an offset into the window, which is what
+`records_begin()` and `records_since()` mean.
 
-The stub still has no background thread. That is deliberate for now: it means no unsolicited
-messages have to be handled, and it keeps the DLL's behaviour at load time free of surprises.
-Callback injection is what will change it (see below).
+The stub still has no background thread. That is deliberate: it means no unsolicited message has to be
+handled, and it keeps the DLL's behaviour at load time free of surprises. Callbacks arrive inside the
+game's own `RunCallbacks` because the backend sends them with a reply to a call the game already made
+(see below), and a thread that could reach a game which has stopped calling is the same thread the
+socket layer note prices.
+
+## The socket layer, and what replacing it would take
+
+Four things speak sockets, and only one of them is behind an interface:
+
+* **`bridge/transport.hpp`** - what the client uses: `connect`, `close`, `is_connected`,
+  `exchange`, `set_timeout_ms`. Deliberately narrow, and written so that a different implementation
+  is a different object to construct rather than a change to the call path.
+* **`src/transport_tcp.cpp`** - the one implementation. One socket, blocking, with a non-blocking
+  connect waited for against a `select()` deadline and the socket hung up on any framing or send
+  failure, so a later call dials again rather than exchanging on a stream that is out of step.
+* **`src/socket_io.hpp`** - the winsock prose both ends share: the process-wide startup, "a handle
+  lives in an integer", send-everything-or-nothing, and the half-close that wakes a thread parked in
+  `recv`.
+* **`src/server.cpp`** - the accept loop and each connection's reader, which are **not** behind the
+  interface. Synchronous winsock, and the reader waits in `select()` slices so it can look at
+  `_stopping` between them.
+
+Where a review of this tree pushed on it: `Client::call` holds one lock across the whole round trip,
+so a game with a stalled backend serializes every other call it makes. What bounds that is not the
+lock. The connect is bounded by the timeout the client asked for - it used to be the TCP stack's own
+SYN timer, 21,038 ms measured here against a host that answers nothing, whatever
+`STEAMMOCK_TIMEOUT_MS` said - and any failure hangs the socket up, so a caller queued behind a dead
+backend waits one timeout (2 s by default) rather than twenty-one seconds each. Releasing the lock
+while waiting is not a small change: there is one socket and one reply per request, in order, so two
+threads waiting at once would race for the same frame - whichever read first would take the other's
+reply, see a `seq` that is not its own, and leave both calls unanswered. Doing it means a reader
+thread and a map of pending replies, which is a concurrency model inside a DLL a game can unload.
+
+That is the case for replacing the layer rather than bending it further, and it is a change of its
+own. What a replacement has to keep, all of it pinned by `tests/test_server.cpp` and
+`tests/test_end_to_end.cpp` today:
+
+* `exchange()` blocks and has an upper bound; a failure leaves the connection **closed**, so the
+  next call dials again.
+* the connect is bounded by the timeout `set_timeout_ms` was given.
+* `close()` is safe from another thread, and from whichever thread is inside `exchange()` - it waits
+  for the round trip in flight rather than pulling the socket out from under it.
+* nothing throws across the exported boundary into the game, ever.
+* the server's stop contract: a stop never hangs, it wakes a reader parked in `recv`, joins the
+  workers, and flushes the transcript after them.
+
+The traps, when an async library is the replacement (Asio is the direction of record):
+
+* **The `io_context` and its threads would live inside a module a game can unload.** `FreeLibrary`
+  while a thread is running inside the stub is the crash the harness least wants, and it is the same
+  class of problem as the thread-local destructor a per-thread string used to leave registered in the
+  DLL. It needs a shutdown that is safe to reach from `DllMain`, or a reason to keep every thread the
+  game's own - which is what today's design does.
+* **Asio throws.** Its `error_code` overloads are the alternative, and they have to be used on every
+  call: "nothing throws into the game" is not negotiable here.
+* **The server's reader changes shape.** Cancellation and a completion handler replace the `select()`
+  slice and the `_stopping` flag, and `stop()` has to keep the contract above. That is where a
+  migration is most likely to hang, and the four-threads-stop-at-once test is what would say so.
+* **It is one more dependency.** Third-party code in this tree is submodules (nlohmann/json, GLFW,
+  Dear ImGui) and the system `ws2_32`. Standalone Asio is header-only and would be another, for x64
+  and Win32 under both MSVC and clang-cl.
+
+Two things to decide when it is picked up. Whether a transport that is async underneath keeps the
+client's blocking `exchange()` - a reader thread and a promise per request, which is the concurrency
+model above - or whether the client becomes async too, which reaches into every generated trampoline,
+since those are the calls that must not block a game. And whether the stub and the server take the
+same implementation, given that only the stub has the unload problem. The callback bullet and the
+record/replay bullet below want the same seam, so replacing this layer, giving the stub a reader
+thread and recording a session through a transport are one decision about the interface: several
+implementations, one contract.
 
 ## Nothing in DllMain
 
@@ -144,11 +217,13 @@ told it instead of faulting on a null pointer.
   and the call history with what each call resolved to - so a window is a way of drawing them, not a
   restructuring. Editing a profile's stats or scripting a call from that view is the replacement for
   the Python hook the port removed.
-* **Callback injection** needs two things the stub does not have yet: a reader thread, because a
-  callback arrives outside any call the game made, and a registry that remembers every
-  `SteamAPI_RegisterCallback(callback, id)` so the backend-pushed event can be dispatched through
-  the game's own `CCallbackBase`. Both are additive; the protocol already carries a `type` field, so
-  a new message type does not break the wire format.
+* **Callback injection** is done the roundabout way, and the shape of it is what a reader thread
+  would replace. A payload the backend wants a game to have rides back on the reply to a call the
+  game already made, waits in the stub's queue, and is handed to the game's own `CCallbackBase`
+  inside the game's own `RunCallbacks` - so no thread is needed and nothing is ever delivered while
+  the game is not pumping. What that cannot do is reach a game that has stopped calling anything,
+  which is what a reader thread in the stub would be for; it is the same thread the socket layer note
+  above prices.
 * **Record / replay** replaces the transport: a `PassthroughTransport` forwards to a real
   `steam_api64.dll` loaded under a different name, records both directions to the same JSON the
   transcript uses, and a `ReplayTransport` serves that file back. The backend then never has to
