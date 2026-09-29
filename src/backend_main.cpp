@@ -13,7 +13,6 @@
 //  this file is argument parsing, three printers and a sleep loop. A GUI is the
 //  other front end for the same Server.
 
-#include <atomic>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
@@ -36,10 +35,15 @@
 // is at file scope with C linkage because that is what signal() expects - it
 // cannot live in the unnamed namespace below.
 namespace {
-std::atomic<bool> g_interrupted{false};
-}
+// Not a std::atomic<bool>, which is what this was: a signal handler may only touch things
+// the standard says are safe in one, and lock-free-ness - the property that makes an atomic
+// one of them - is not guaranteed for std::atomic<bool> by anything but the implementation.
+// `volatile std::sig_atomic_t` is the type the standard names for exactly this: the handler
+// writes, the main thread reads, and neither needs more than that.
+volatile std::sig_atomic_t g_interrupted = 0;
+}  // namespace
 
-extern "C" void steammock_on_interrupt(int) { g_interrupted.store(true); }
+extern "C" void steammock_on_interrupt(int) { g_interrupted = 1; }
 
 namespace {
 
@@ -126,7 +130,18 @@ ParseResult parse_args(int argc, char** argv, Options& options) {
                 if (index + 1 >= argc) {
                     return false;
                 }
-                target = argv[++index];
+                const std::string next = argv[index + 1];
+                // A following token that starts with '-' is the next option, not this one's
+                // value. Taking it anyway is how `--host --port 80` assigned host = "--port"
+                // and then reported the bare `80` as an unknown option - a message about the
+                // second mistake, with the first one silently in the configuration. The
+                // `--host=--port` spelling still says what it means, for a value that really
+                // does begin with a dash.
+                if (!next.empty() && next[0] == '-') {
+                    return false;
+                }
+                target = next;
+                ++index;
                 return true;
             }
             target = value;
@@ -134,18 +149,37 @@ ParseResult parse_args(int argc, char** argv, Options& options) {
         };
 
         if (argument == "-h" || argument == "--help") {
+            // No attached value on any of the four flags: `--list-api=yes` used to be
+            // accepted with the value thrown away, so a typo read as a request that was
+            // granted and the answer looked like it agreed with it.
+            if (has_value) {
+                options.error = argument + " takes no value";
+                return ParseResult::exit_error;
+            }
             print_usage(stdout);
             return ParseResult::exit_ok;
         }
         if (argument == "--version") {
+            if (has_value) {
+                options.error = "--version takes no value";
+                return ParseResult::exit_error;
+            }
             std::printf("%s %s\n", kProgram, kVersion);
             return ParseResult::exit_ok;
         }
         if (argument == "--list-api") {
+            if (has_value) {
+                options.error = "--list-api takes no value";
+                return ParseResult::exit_error;
+            }
             options.list_api = true;
             continue;
         }
         if (argument == "--show-profiles") {
+            if (has_value) {
+                options.error = "--show-profiles takes no value";
+                return ParseResult::exit_error;
+            }
             options.show_profiles = true;
             continue;
         }
@@ -188,6 +222,13 @@ ParseResult parse_args(int argc, char** argv, Options& options) {
         }
 
         options.error = "unknown option '" + argument + "'";
+        return ParseResult::exit_error;
+    }
+    // Both are informational modes and either one prints its answer and exits, so asking for
+    // both is a question with no answer. It used to be resolved in silence in favour of
+    // --list-api, which drops what --show-profiles was asked for on the floor.
+    if (options.list_api && options.show_profiles) {
+        options.error = "--list-api and --show-profiles cannot both be asked for";
         return ParseResult::exit_error;
     }
     return ParseResult::run;
@@ -243,6 +284,18 @@ int show_profiles(const std::string& path) {
 // ---------------------------------------------------------------------------
 
 int serve(const Options& options) {
+    // Installed here, at the top, rather than after the server is listening. A SIGINT that
+    // arrives during the scenario load or inside server.start() used to meet the default
+    // disposition and end the process there and then - which is exactly the abrupt exit this
+    // whole path exists to avoid: no transcript flush, no summary, and a reader left to work
+    // out from the file what had happened. The flag is cleared with them, so a Ctrl+C from a
+    // previous life of the process cannot start this one already stopping.
+    g_interrupted = 0;
+    std::signal(SIGINT, steammock_on_interrupt);
+#if defined(SIGTERM)
+    std::signal(SIGTERM, steammock_on_interrupt);
+#endif
+
     steammock::Dispatcher dispatcher;
     std::string error;
     if (!steammock::Dispatcher::load_file(options.scenario, dispatcher, error)) {
@@ -286,11 +339,7 @@ int serve(const Options& options) {
     std::printf("listening on %s:%u\n", options.host.c_str(), static_cast<unsigned>(server.port()));
     std::fflush(stdout);
 
-    std::signal(SIGINT, steammock_on_interrupt);
-#if defined(SIGTERM)
-    std::signal(SIGTERM, steammock_on_interrupt);
-#endif
-    while (!g_interrupted.load()) {
+    while (g_interrupted == 0) {
         // The accept loop runs on its own thread; this one only has to notice a
         // Ctrl+C and stop the server cleanly, which flushes the transcript.
         std::this_thread::sleep_for(std::chrono::milliseconds(50));

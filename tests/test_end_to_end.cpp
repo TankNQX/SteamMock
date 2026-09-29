@@ -564,6 +564,37 @@ int run(int argc, char** argv) {
         check("--show-profiles can be started", false, error);
     }
 
+    // Three ways to ask for something this cannot answer, all of which used to be resolved in
+    // silence: a value attached to a flag that takes none, both informational modes at once,
+    // and an option whose value is actually the next option.
+    ChildProcess attached_value;
+    if (attached_value.start(quote(server_path) + " --list-api=yes", error)) {
+        const int exit = attached_value.wait_for_exit(timeout);
+        check("a flag that takes no value refuses one", exit != 0, "exit " + std::to_string(exit));
+    } else {
+        check("the attached-value run can be started", false, error);
+    }
+
+    ChildProcess both_modes;
+    if (both_modes.start(quote(server_path) + " --list-api --show-profiles", error)) {
+        const int exit = both_modes.wait_for_exit(timeout);
+        const std::string text = both_modes.output();
+        check("both informational modes at once is refused", exit != 0,
+              "exit " + std::to_string(exit));
+        check("  and it says which two", text.find("cannot both") != std::string::npos);
+    } else {
+        check("the both-modes run can be started", false, error);
+    }
+
+    ChildProcess option_as_value;
+    if (option_as_value.start(quote(server_path) + " --host --port 50990", error)) {
+        const int exit = option_as_value.wait_for_exit(timeout);
+        check("an option cannot be another option's value", exit != 0,
+              "exit " + std::to_string(exit));
+    } else {
+        check("the option-as-value run can be started", false, error);
+    }
+
     check_flat("the backend logged the connected game",
                backend.output().find("game connected") != std::string::npos);
     check_flat("the backend logged the game leaving",

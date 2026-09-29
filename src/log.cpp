@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 
 #include <windows.h>
 
@@ -74,12 +75,15 @@ void log_write(LogLevel level, std::string_view message) noexcept {
     // the noexcept would mean "terminate on failure", the opposite of the
     // promise.
     try {
-        if (!log_enabled(level)) {
+        // One read of the configuration, for both the level and the line. Two - a
+        // `log_enabled(level)` and then this - could straddle the publication of the first
+        // configuration by another thread, so the filter judged against the defaults while
+        // the line went to a file and a prefix that had just been installed: a line either
+        // written when the published level disables it, or dropped when it does not.
+        const Config& settings = config();
+        if (static_cast<int>(level) > static_cast<int>(settings.level)) {
             return;
         }
-        // Held for the whole line: the configuration cannot change under it,
-        // because nothing changes a configuration once it is published.
-        const Config& settings = config();
         std::string line;
         line.reserve(settings.prefix.size() + message.size() + 40u);
         line += "[steammock] ";
@@ -119,14 +123,41 @@ void log_configure(const char* module_path) noexcept {
         return;
     }
     try {
-        Config* built = new Config();
+        // Both owned by a guard until the configuration is published, because everything
+        // between building them and publishing them can throw - the prefix is a std::string
+        // built from the environment and the module path. They used to be released by hand on
+        // the path that lost the race and by nobody at all on any other way out, so an
+        // exception there leaked the configuration and left the log file open.
+        std::unique_ptr<Config> built(new Config());
+        // The file is held apart from the configuration: the Config outlives this function
+        // once it is published, and the handle inside it is what has to be closed only when it
+        // is not.
+        struct FileHandle {
+            std::FILE* file = nullptr;
+            ~FileHandle() {
+                if (file != nullptr) {
+                    std::fclose(file);
+                }
+            }
+        } opened;
+
         built->level = parse_level(std::getenv("STEAMMOCK_LOG_LEVEL"));
 
         if (const char* path = std::getenv("STEAMMOCK_LOG")) {
             if (path[0] != '\0') {
-                built->file = std::fopen(path, "ab");
+                opened.file = std::fopen(path, "ab");
+                if (opened.file == nullptr) {
+                    // Nothing else can report this: the logger is what would. A debugger
+                    // watching the process is the one place left to say it, and the
+                    // alternative is a run whose log never reached the file it was told to
+                    // write - which is exactly the kind of silence this whole file exists to
+                    // avoid.
+                    OutputDebugStringA(
+                        "[steammock] error: cannot open the log file STEAMMOCK_LOG names\r\n");
+                }
             }
         }
+        built->file = opened.file;
 
         char buffer[32] = {};
         std::snprintf(buffer, sizeof(buffer), "pid %lu",
@@ -144,14 +175,19 @@ void log_configure(const char* module_path) noexcept {
         }
 
         const Config* expected = nullptr;
-        if (!g_config.compare_exchange_strong(expected, built, std::memory_order_release,
-                                              std::memory_order_acquire)) {
-            if (built->file != nullptr) {
-                std::fclose(built->file);
-            }
-            delete built;
+        if (g_config.compare_exchange_strong(expected, built.get(), std::memory_order_release,
+                                             std::memory_order_acquire)) {
+            // Published, so the process owns both now - for the life of the process, which is
+            // what a singleton is for. The guards are what let this be the only path that
+            // keeps them.
+            (void)built.release();
+            opened.file = nullptr;
         }
     } catch (...) {
+        // A logger that cannot configure itself says so where a person can still see it: the
+        // line the logger would have written is not available to it, and losing the fact
+        // entirely is how a run is debugged against a log that was never written.
+        OutputDebugStringA("[steammock] error: the logger could not be configured\r\n");
         return;  // logging without a prefix is better than not running
     }
 }
