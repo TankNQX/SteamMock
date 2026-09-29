@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -52,10 +53,18 @@ public:
     // leaves there. Read under the same lock the connection writes it under, because
     // a string copied out while another thread reassigns it is not a copy of
     // anything. The counts are read from other threads - a diagnostic tool, a test -
-    // and written from the one the calls run on, so they are atomic.
+    // and written from the one the calls run on.
     std::string session_id() const noexcept;
-    unsigned call_count() const noexcept { return _call_count; }
-    unsigned unhandled_count() const noexcept { return _unhandled_count; }
+
+    // Both counts together, which is the only way they mean anything: a tool that read
+    // them one at a time could see a call counted before the "left to the stub's
+    // defaults" count it belongs to, and report a total that never existed. They are
+    // written under `_mutex` by call(), so they are read under it here.
+    struct Counts {
+        unsigned calls = 0;
+        unsigned unhandled = 0;
+    };
+    Counts counts() const noexcept;
 
 private:
     Client() noexcept;
@@ -94,14 +103,16 @@ private:
     std::string _exe_name;
     std::string _session_id;
     unsigned _sequence = 0;
-    // Written where the calls run, read from wherever a tool asks - so they are
-    // atomic rather than merely small.
+    // Written where the calls run, read from wherever a tool asks - through counts(),
+    // which takes the lock the writes happen under.
     std::atomic<unsigned> _call_count{0};
     std::atomic<unsigned> _unhandled_count{0};
 
     // The payloads waiting for the game's next pump, in the order they arrived.
-    // Guarded by `_events_mutex` rather than by `_mutex` - see above.
-    std::vector<Json> _events;
+    // Guarded by `_events_mutex` rather than by `_mutex` - see above. A deque rather
+    // than a vector: taking one is a pop from the front, and a game that let a burst
+    // queue up used to pay for shifting every remaining element on each take.
+    std::deque<Json> _events;
 };
 
 // The one call a generated trampoline makes.

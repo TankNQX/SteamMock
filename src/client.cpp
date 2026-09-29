@@ -36,10 +36,16 @@ unsigned environment_number(const char* name, unsigned ceiling, unsigned fallbac
 
 std::string executable_path() {
     char buffer[MAX_PATH] = {};
-    if (GetModuleFileNameA(nullptr, buffer, sizeof(buffer)) == 0) {
+    // The length it returns, not a zero test: GetModuleFileNameA answers with the
+    // buffer size when the path did not fit, and the path it wrote is then a
+    // truncated one that names a file that is not this DLL's - so it is treated as
+    // a failure rather than used for the log prefix and the exe name a scenario
+    // matches on.
+    const DWORD length = GetModuleFileNameA(nullptr, buffer, sizeof(buffer));
+    if (length == 0 || length >= sizeof(buffer)) {
         return std::string();
     }
-    return std::string(buffer);
+    return std::string(buffer, length);
 }
 
 std::string file_name_of(const std::string& path) {
@@ -77,7 +83,13 @@ void Client::configure() {
     if (_configured) {
         return;
     }
-    _configured = true;
+    // `_configured` is set at the end of each path below, not here: everything in
+    // between allocates (the environment strings, the log line), and `call()` catches
+    // a failure and answers the game with a default. Recording the client as
+    // configured before it had a host, a port and a timeout left every later call
+    // short-circuiting through here and then running on an empty host and port 0 -
+    // one failed allocation, and the bridge was silently dead for the whole run.
+    // Setting the flag last means a first configure that failed is simply tried again.
 
     const std::string path = executable_path();
     _exe_name = file_name_of(path);
@@ -85,6 +97,7 @@ void Client::configure() {
 
     if (environment("STEAMMOCK_OFF") == "1") {
         _enabled = false;
+        _configured = true;
         log_write(LogLevel::info, "STEAMMOCK_OFF=1 - every call answers with its default");
         return;
     }
@@ -96,9 +109,22 @@ void Client::configure() {
     _port =
         static_cast<std::uint16_t>(environment_number("STEAMMOCK_PORT", kMaxPort, kDefaultPort));
     _timeout_ms = environment_number("STEAMMOCK_TIMEOUT_MS", kMaxTimeoutMs, kDefaultTimeoutMs);
+    if (_timeout_ms == 0u) {
+        // A zero is not "wait forever" to this transport - it is a deadline that has
+        // already passed, so nothing would ever connect. The variable's contract is a
+        // number of milliseconds a game is never blocked for longer than, and its
+        // fallback is the default, so a zero reads as that default rather than as a
+        // bridge that is silently dead.
+        _timeout_ms = kDefaultTimeoutMs;
+    }
     _transport->set_timeout_ms(_timeout_ms);
 
-    log_write(LogLevel::debug, "backend target " + _host + ":" + std::to_string(_port));
+    // Built before the flag is set, because building it is the last thing that can
+    // fail: a log line about a target the client never finished adopting is worse
+    // than no line at all.
+    const std::string target = "backend target " + _host + ":" + std::to_string(_port);
+    _configured = true;
+    log_write(LogLevel::debug, target);
 }
 
 // Not noexcept, for the same reason as configure().
@@ -248,10 +274,24 @@ bool Client::take_event(Json& out) noexcept {
             return false;
         }
         out = std::move(_events.front());
-        _events.erase(_events.begin());
+        _events.pop_front();
         return true;
     } catch (...) {
         return false;
+    }
+}
+
+Client::Counts Client::counts() const noexcept {
+    // Locked, like session_id(): the counts are written inside call()'s critical
+    // section, so this is a state the client was actually in rather than one assembled
+    // from two reads that straddle a call. A lock that cannot be taken answers zero,
+    // for the same reason as everywhere else here - the caller is an exported
+    // diagnostic and a game must not see an exception.
+    try {
+        const std::lock_guard<std::mutex> lock(_mutex);
+        return Counts{_call_count.load(), _unhandled_count.load()};
+    } catch (...) {
+        return Counts{};
     }
 }
 
