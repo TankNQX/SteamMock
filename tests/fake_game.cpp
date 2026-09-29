@@ -114,9 +114,17 @@ using send_p2p_fn = bool (*)(void*, std::uint64_t, const void*, std::uint32_t, s
 using begin_auth_fn = std::int32_t (*)(void*, void*, std::int32_t, std::uint64_t);
 
 #if defined(_M_IX86)
-#    define STEAMMOCK_TEST_CALL __thiscall
+// x86: `this` is passed in ECX, which is what the stub's own vtable slots are declared with -
+// but MSVC allows __thiscall on a member function only (C3865), and these are free functions
+// whose addresses go into a vtable. The spelling for a hand-written slot is __fastcall with a
+// dummy second parameter, which is somewhere for the ignored EDX register to land: same
+// register for `this`, same stack arguments, same callee-pops cleanup as the __thiscall the
+// stub calls through. On x64 there is one convention and nothing to say.
+#    define STEAMMOCK_TEST_CALL __fastcall
+#    define STEAMMOCK_TEST_EDX , void*
 #else
 #    define STEAMMOCK_TEST_CALL
+#    define STEAMMOCK_TEST_EDX
 #endif
 
 // A callback object as the SDK lays one out, with its vtable written out here rather than
@@ -131,13 +139,14 @@ struct CountedCallback {
     int* calls;
 };
 
-void STEAMMOCK_TEST_CALL counted_run(void* self, void* /*payload*/) {
+void STEAMMOCK_TEST_CALL counted_run(void* self STEAMMOCK_TEST_EDX, void* /*payload*/) {
     ++(*static_cast<CountedCallback*>(self)->calls);
 }
 
-void STEAMMOCK_TEST_CALL counted_run_of_a_call_result(void*, void*, bool, std::uint64_t) {}
+void STEAMMOCK_TEST_CALL counted_run_of_a_call_result(void* STEAMMOCK_TEST_EDX, void*, bool,
+                                                      std::uint64_t) {}
 
-std::int32_t STEAMMOCK_TEST_CALL counted_size(void*) { return 0; }
+std::int32_t STEAMMOCK_TEST_CALL counted_size(void* STEAMMOCK_TEST_EDX) { return 0; }
 
 const void* const kCountedVtable[] = {
     reinterpret_cast<const void*>(&counted_run),
