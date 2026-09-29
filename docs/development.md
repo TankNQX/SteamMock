@@ -364,13 +364,23 @@ Everything below runs on a push, and all of it must be green.
   list, and it is a gate rather than a suggestion - what it flags is either fixed or written down
   there with a reason. It configures its own Ninja tree in a temporary directory, since only the
   Ninja and Makefile generators write the `compile_commands.json` clang-tidy reads.
+* **The importer** (`importer / selftest`), the one job about the half the others cannot reach: it
+  checks the tool that would put something in `gen/`. It needs no SDK to do it - `--selftest`
+  writes its own headers into a temporary directory and runs the reader, the merge, the builder and
+  the surface over them - and before this job the tool was the one piece of the harness no runner
+  had ever run.
 * **The live view** (`gui / msvc / x64`), built with `-DSTEAMMOCK_BUILD_GUI=ON` and warnings as
   errors. It is the only job that checks out the submodules, so the rest stay fast and need no
   third-party code.
-* **Nothing Valve wrote is on a runner**, so no job has interface layouts: every job builds and the
-  stub hands out no interface objects. The half of `end_to_end` that walks a vtable says so and skips,
-  and a job that wanted it would have to import an SDK first - which is why that check is worth
-  running on a machine that has one.
+* **Nothing Valve wrote is on a runner**, so no job has the imports, and the stub every job builds
+  has no API in it: it exports nothing, because there is no surface, and hands out no interface
+  objects, because there are no layouts. `end_to_end` prints a note and skips both halves that need
+  one - every flat call, and every call through a vtable - and `generated_files_are_current`
+  compares an empty surface against an empty surface, which is what the comment beside it in
+  `CMakeLists.txt` says. So a green run here is the transport, the protocol, the backend, the
+  command line, the tools and the sources; it is **not** a statement that a stub carrying a real
+  API works. Closing that would take imports on a runner: an SDK, which a runner does not have, or
+  a fixture small enough to live in the tree, which is a decision nobody has made.
 
 ## Tools
 
