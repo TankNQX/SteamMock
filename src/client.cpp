@@ -186,6 +186,26 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         // is held under the lock. Steam callbacks are cheap and the transport is
         // loopback, so serialising them costs microseconds - and it buys a
         // reply/request pairing that cannot get confused.
+        //
+        // A review of this tree called that out: one stalled backend serializes every other
+        // bridge call behind the same lock, for as long as the round trip can take. Two
+        // things bound it, and neither is the lock. The connect is bounded by the same
+        // configured timeout as the rest of the round trip, where it used to be the TCP
+        // stack's own SYN timer - 21,038 ms measured, whatever STEAMMOCK_TIMEOUT_MS said -
+        // and any failure at all hangs the socket up instead of leaving the next call to
+        // exchange on a stream that is out of step. So a caller that queues behind a dead
+        // backend waits one timeout (2 s by default), not twenty-one seconds each and not
+        // ten minutes: ten was STEAMMOCK_TIMEOUT_MS at its maximum, which is a number the
+        // operator chose.
+        //
+        // Releasing the lock while waiting is not a small change and is not made here. There
+        // is one socket and one reply per request, in order, so two threads waiting at once
+        // would race for the same frame: whoever read first would take the other's reply, see
+        // a `seq` that is not its own, and leave both calls unanswered. Doing it properly
+        // means a reader thread and a map of pending replies - a concurrency model inside the
+        // DLL that has to survive a game unloading it - and that belongs in the transport,
+        // which is the object this class only ever talks to through `Transport`. See the note
+        // on that interface, and the file it points at for what a second implementation means.
         std::lock_guard<std::mutex> lock(_mutex);
 
         configure();
