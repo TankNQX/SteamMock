@@ -22,6 +22,7 @@
 #include <windows.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <map>
 #include <mutex>
 #include <string>
@@ -114,8 +115,13 @@ namespace {
 
 constexpr std::size_t kMaxEventsPerPump = 64;
 
-std::mutex& registry_mutex() noexcept {
-    static std::mutex mutex;
+// Recursive, and held across a delivery rather than only across the lookup: a payload
+// is handed to a game's own object, and the game may unregister - and destroy - that
+// object while the delivery is on its way to it. See `deliver_one` for what that cost
+// and why the lock is recursive: the call is into the game's code, which may come back
+// in here to register or unregister before it returns.
+std::recursive_mutex& registry_mutex() noexcept {
+    static std::recursive_mutex mutex;
     return mutex;
 }
 
@@ -254,22 +260,17 @@ void call_object(void* object, const EventInfo& event, const Json* fields, std::
 // so the fault still ends up where it was already going. Swallowing it would hide the
 // one fact worth having.
 void report_callback_fault(unsigned long code, const void* address) noexcept {
-    try {
-        const char* const digits = "0123456789abcdef";
-        std::string text = "a callback faulted: 0x";
-        for (int shift = 28; shift >= 0; shift -= 4) {
-            text.push_back(digits[(code >> shift) & 0xFu]);
-        }
-        text += " at 0x";
-        const std::uintptr_t where = reinterpret_cast<std::uintptr_t>(address);
-        for (int shift = static_cast<int>(sizeof(where) * 8u) - 4; shift >= 0; shift -= 4) {
-            text.push_back(digits[(where >> static_cast<unsigned>(shift)) & 0xFu]);
-        }
-        log_write(LogLevel::error, text);
-        // NOLINTNEXTLINE(bugprone-empty-catch) - a report must not become a second fault
-    } catch (...) {
-        // A logger that cannot say this must not turn a report into a second fault.
-    }
+    // Nothing here allocates, and that is the point. This runs inside the `__except`
+    // filter expression, while the fault is still in flight and before anything has
+    // unwound: a std::string built here - which is what this used to do, one
+    // character at a time - can fault again or take a lock the faulting thread
+    // already holds, and turn the report of one crash into a second and less legible
+    // one. The text goes into a fixed buffer instead. What is left with an allocator
+    // is the line `log_write` builds for every other message in this tree, and that
+    // one is noexcept and loses its own failures rather than letting them out.
+    char text[96] = {};
+    std::snprintf(text, sizeof(text), "a callback faulted: exception 0x%08lx at %p", code, address);
+    log_write(LogLevel::error, text);
 }
 
 void call_object_guarded(void* object, const EventInfo& event, const Json* fields,
@@ -310,64 +311,80 @@ void deliver_one(const Json& event) noexcept {
         }
 
         const Json* fields = json_member(event, "in");
-        std::vector<void*> objects;
+
+        // The registry lock is held across the call at the bottom of this, not only
+        // across the lookup, and that is a fix rather than a style choice. It used to
+        // be released in between, with the object's address copied into a local: the
+        // game could unregister that object - and destroy it, which is what an
+        // unregistered callback's owner does next - in the window while this thread was
+        // on its way to calling it, and the vtable read and the call would both go
+        // through a pointer to freed memory. Holding the lock means an unregister waits
+        // for the delivery in flight instead of racing it. It is recursive because the
+        // call is into the game's own code, which may come back in here to register or
+        // unregister another object before it returns.
+        const std::lock_guard<std::recursive_mutex> lock(registry_mutex());
+
+        const Json* handle = json_member(event, "call");
+        const Json* id = json_member(event, "id");
+        // Whether the payload names a call, which is not the same question as whether
+        // a result is registered for it: an event that completes a call nobody
+        // registered a result for is a dropped call result, and saying "(callback N)"
+        // about it named the callback id and hid the handle that was dropped.
+        const bool names_a_call = handle != nullptr && handle->is_number();
+        void* object = nullptr;
         std::uint64_t call = 0;
         bool call_result = false;
-        {
-            const std::lock_guard<std::mutex> lock(registry_mutex());
-            const Json* handle = json_member(event, "call");
-            const Json* id = json_member(event, "id");
-            if (handle != nullptr && handle->is_number()) {
-                call = as_uint64(*handle);
-                const auto found = results_by_call().find(call);
-                if (found != results_by_call().end()) {
-                    objects.push_back(found->second);
-                    call_result = true;
-                }
-            } else {
-                // The id the payload names, or - for one that is not an answer to anything,
-                // like a room changing or a packet arriving - the one the SDK gives it,
-                // which is what a game registered under when it said it wanted to hear
-                // about this.
-                const std::int32_t wanted = id != nullptr && id->is_number()
-                                                ? static_cast<std::int32_t>(as_int64(*id))
-                                                : info->callback;
-                const auto found = callbacks_by_id().find(wanted);
-                if (found != callbacks_by_id().end()) {
-                    // Which object hears it. An answer to a game server's ticket check is for
-                    // the end that asked, and that end is the first registered - a hosting
-                    // process's game server comes up before its client has any peers.
-                    // Everything else is the customer's and goes to the last registered.
-                    const bool for_game_server = as_string_member(event, "side") == kSideGameServer;
-                    const std::size_t index = for_game_server ? 0u : found->second.size() - 1u;
-                    objects.assign(1, found->second[index]);
-                    log_write(LogLevel::debug,
-                              "delivering " + as_string(*name) + subject_of(fields) + " (" +
-                                  std::to_string(info->size) + " bytes) to the " +
-                                  (for_game_server ? "first" : "last") + " of " +
-                                  std::to_string(found->second.size()) +
-                                  " callback(s) registered for id " + std::to_string(wanted) +
-                                  (for_game_server ? " - a game server's answer" : std::string()));
-                }
+        if (names_a_call) {
+            call = as_uint64(*handle);
+            const auto found = results_by_call().find(call);
+            if (found != results_by_call().end()) {
+                object = found->second;
+                call_result = true;
+            }
+        } else {
+            // The id the payload names, or - for one that is not an answer to anything,
+            // like a room changing or a packet arriving - the one the SDK gives it,
+            // which is what a game registered under when it said it wanted to hear
+            // about this.
+            const std::int32_t wanted = id != nullptr && id->is_number()
+                                            ? static_cast<std::int32_t>(as_int64(*id))
+                                            : info->callback;
+            const auto found = callbacks_by_id().find(wanted);
+            if (found != callbacks_by_id().end()) {
+                // Which object hears it. An answer to a game server's ticket check is for
+                // the end that asked, and that end is the first registered - a hosting
+                // process's game server comes up before its client has any peers.
+                // Everything else is the customer's and goes to the last registered.
+                const bool for_game_server = as_string_member(event, "side") == kSideGameServer;
+                const std::size_t index = for_game_server ? 0u : found->second.size() - 1u;
+                object = found->second[index];
+                log_write(LogLevel::debug,
+                          "delivering " + as_string(*name) + subject_of(fields) + " (" +
+                              std::to_string(info->size) + " bytes) to the " +
+                              (for_game_server ? "first" : "last") + " of " +
+                              std::to_string(found->second.size()) +
+                              " callback(s) registered for id " + std::to_string(wanted) +
+                              (for_game_server ? " - a game server's answer" : std::string()));
             }
         }
 
-        if (objects.empty()) {
+        if (object == nullptr) {
             // Nobody is waiting: a result the game never registered, one it has already
             // unregistered, or something it never asked to hear about. The real SDK
             // drops those too - but it says so, because an event that goes nowhere is
             // the hardest kind of silence.
             log_write(LogLevel::warn,
                       "an event nobody is waiting for: " + as_string(*name) +
-                          (call_result ? std::string()
-                                       : " (callback " + std::to_string(info->callback) + ")"));
+                          (names_a_call
+                               ? " (the call result for handle " + std::to_string(call) + ")"
+                               : " (callback " + std::to_string(info->callback) + ")"));
             return;
         }
         // One object, the one this registry has always called: the change to calling every
         // object registered for an id is the fix for the player this harness leaves out of
         // a match, and it is not this commit - a hosted process registers several objects
         // for one lobby id, and calling all of them stops that game's lobby dead.
-        call_object_guarded(objects.front(), *info, fields, call, call_result);
+        call_object_guarded(object, *info, fields, call, call_result);
     } catch (...) {
         // A literal, so building the message cannot allocate on the way in, and
         // `log_write` catches its own failures: nothing here can throw again.
@@ -379,18 +396,25 @@ void deliver_one(const Json& event) noexcept {
 
 void callback_registered(void* object, std::int32_t id) noexcept {
     try {
-        const std::lock_guard<std::mutex> lock(registry_mutex());
-        // Said out loud, because this is one of the few paths in all of this with no other
-        // line - and because one id can have several objects on it. A process that runs a
-        // game server inside a game has both sides registering callbacks, and the client's
-        // half registers one per peer, so how many are on an id and who hears about an
-        // event is worth being able to read back. The addresses are here to tell the
-        // objects apart: they are the only thing about them we can see.
-        std::vector<void*>& objects = callbacks_by_id()[id];
+        // What the object wants is asked *before* the lock, because asking is a virtual
+        // call into the game's own object: a handler that registered another callback
+        // from inside its own GetCallbackSizeBytes would come back for this mutex, and
+        // it is recursive for the delivery path rather than for a call made while the
+        // registry is being written. The object is alive during its own registration -
+        // the game is inside RegisterCallback with it - so nothing is lost by asking now.
+        //
+        // Said beside the address, which is where the other line about this object goes:
+        // this is one of the few paths in all of this with no other line, and one id can
+        // have several objects on it. A process that runs a game server inside a game has
+        // both sides registering callbacks, and the client's half registers one per peer,
+        // so how many are on an id and which of them the next payload is for is worth
+        // being able to read back. The addresses are here to tell the objects apart: they
+        // are the only thing about them we can see.
         const std::string address = std::to_string(reinterpret_cast<std::uintptr_t>(object));
-        // What it wants, said beside it: with several objects on one id, the size each of
-        // them asks for is the only thing that says which of them the next payload is for.
         const std::string wants = " wants " + std::to_string(wanted_size(object)) + " bytes";
+
+        const std::lock_guard<std::recursive_mutex> lock(registry_mutex());
+        std::vector<void*>& objects = callbacks_by_id()[id];
         if (std::find(objects.begin(), objects.end(), object) != objects.end()) {
             // Registering one object twice for one id would have it called twice, which
             // no game asks for and a handler that counts events would not survive.
@@ -407,16 +431,19 @@ void callback_registered(void* object, std::int32_t id) noexcept {
                                            " other(s)");
         }
         objects.push_back(object);
-        // NOLINTNEXTLINE(bugprone-empty-catch) - a game must not see the registry fail
     } catch (...) {
-        // A registry that cannot grow is a game that gets no callbacks, which is
-        // what it gets with no backend at all.
+        // A registry that cannot grow is a game that gets no callbacks, which is what it
+        // gets with no backend at all - but it says so now. Crossing the DLL boundary with
+        // a `catch (...)` is the deliberate part: this must not throw into the game.
+        // `log_write` is noexcept and loses its own allocation failures, so saying so
+        // cannot become the throw it is here to prevent.
+        log_write(LogLevel::error, "the stub could not remember a callback registration");
     }
 }
 
 void callback_unregistered(void* object) noexcept {
     try {
-        const std::lock_guard<std::mutex> lock(registry_mutex());
+        const std::lock_guard<std::recursive_mutex> lock(registry_mutex());
         // By object, because that is all UnregisterCallback is given: the id lives
         // in the object the game handed us, and it is not ours to read. An object can
         // only have been registered under the ids it was registered for, so every list
@@ -430,23 +457,26 @@ void callback_unregistered(void* object) noexcept {
                 ++entry;
             }
         }
-        // NOLINTNEXTLINE(bugprone-empty-catch) - the registry is the stub's, not the game's
     } catch (...) {
+        // The registry is the stub's, not the game's - but an object the game believes it
+        // unregistered and this still holds is one it may destroy, and the next payload
+        // for that id would go to freed memory. Silence here is the expensive kind.
+        log_write(LogLevel::error, "the stub could not forget a callback registration");
     }
 }
 
 void call_result_registered(void* object, std::uint64_t call) noexcept {
     try {
-        const std::lock_guard<std::mutex> lock(registry_mutex());
+        const std::lock_guard<std::recursive_mutex> lock(registry_mutex());
         results_by_call()[call] = object;
-        // NOLINTNEXTLINE(bugprone-empty-catch) - the registry is the stub's, not the game's
     } catch (...) {
+        log_write(LogLevel::error, "the stub could not remember a call result");
     }
 }
 
 void call_result_unregistered(void* object, std::uint64_t call) noexcept {
     try {
-        const std::lock_guard<std::mutex> lock(registry_mutex());
+        const std::lock_guard<std::recursive_mutex> lock(registry_mutex());
         const auto found = results_by_call().find(call);
         if (found != results_by_call().end() && found->second == object) {
             results_by_call().erase(found);
