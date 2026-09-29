@@ -23,6 +23,14 @@
 #                                                       # (MAX_PLAYERS_PER_SERVER), as the
 #                                                       # stress form of the run of record
 #
+#   pwsh -File tools\two-instance-test.ps1 -Clients 11 -Overfill -Gui -Shoot -WaitAfterStart 60
+#                                                       # a crowd: eleven clients in one lobby,
+#                                                       # four of which the game seats and the
+#                                                       # rest are members only. -Shoot captures
+#                                                       # the tiled screen mid-match, the live
+#                                                       # view, and one seated and one unseated
+#                                                       # client
+#
 #   pwsh -File tools\two-instance-test.ps1 -Clients 3 -StopWhenDecided -WaitAfterStart 12
 #                                                       # the shortest run that still answers
 #                                                       # "did every client get in": about a
@@ -40,7 +48,12 @@ param(
     [switch] $Record,
     [switch] $Gui,
     [switch] $StopWhenDecided,
-    [int] $Clients = 2
+    [int] $Clients = 2,
+    # More clients than the game has seats for. The game holds MAX_PLAYERS_PER_SERVER (4) in a
+    # match whatever this says; the rest are lobby members and nothing else, so a run this way
+    # is a test of the harness holding a crowd - sessions, rosters, notifications, the live
+    # view - and not of a match. Without it, more than four is refused.
+    [switch] $Overfill
 )
 
 $ErrorActionPreference = 'Continue'
@@ -77,18 +90,37 @@ foreach ($needed in @($server, $stub, $scenario, (Join-Path $GamePath 'Steamwork
     }
 }
 
-# Four is the game's own ceiling - SpaceWar.h's MAX_PLAYERS_PER_SERVER is 4, and the fifth
+# Four is the game's own ceiling - SpaceWar.h's MAX_PLAYERS_PER_SERVER is 4, and a fifth
 # client would join the lobby (the world imposes no limit), be listed to everyone, and never
 # be given a slot. That is a lobby test wearing a client test's clothes, so it is refused
-# rather than run and misreported.
-if ($Clients -gt 4) {
-    Say ("-Clients {0} is more than the game has slots for (MAX_PLAYERS_PER_SERVER = 4)" -f $Clients)
+# rather than run and misreported - unless -Overfill asks for exactly that, in which case the
+# run says how many of its clients the game will seat and the rest are the point.
+$seats = 4
+if ($Clients -gt $seats -and -not $Overfill) {
+    Say ("-Clients {0} is more than the game has slots for (MAX_PLAYERS_PER_SERVER = {1}) - " -f $Clients, $seats)
+    Say '  use -Overfill for a crowd run, where the extra clients are lobby members only'
+    exit 2
+}
+if ($Clients -gt 16) {
+    Say ("-Clients {0}: sixteen games is already more than a desktop has room for" -f $Clients)
     exit 2
 }
 if ($Clients -lt 2) {
     Say ("-Clients {0}: this is a session with a lobby in it, which takes two" -f $Clients)
     exit 2
 }
+
+# One profile per client, in the order the clients are launched: the host is always the first
+# and always 'default' - it is the one that drives the menu and starts the game - and every
+# guest gets its own. They are in scenarios/spacewar.json, and a name the scenario does not
+# have fails the run loudly at the handshake rather than serving a client somebody else's
+# identity.
+$profiles = @(
+    'default', 'second_player', 'third_player', 'fourth_player', 'fifth_player', 'sixth_player',
+    'seventh_player', 'eighth_player', 'ninth_player', 'tenth_player', 'eleventh_player',
+    'twelfth_player', 'thirteenth_player', 'fourteenth_player', 'fifteenth_player',
+    'sixteenth_player'
+)
 
 Say 'setup: copying the game out of the library, so the install is never touched'
 Remove-Item -Recurse -Force $game -ErrorAction SilentlyContinue
@@ -143,11 +175,20 @@ public static class Win {
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
     [DllImport("user32.dll")] public static extern bool MoveWindow(IntPtr hWnd, int x, int y, int width, int height, bool repaint);
     [DllImport("user32.dll")] public static extern int GetSystemMetrics(int index);
+    [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
     [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
     public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
 }
 '@
 Add-Type -AssemblyName System.Drawing
+
+# Physical pixels, asked for once and before any window is touched. A PowerShell process is
+# DPI-unaware by default, which makes every coordinate here virtual - GetSystemMetrics answers
+# the *scaled* screen size while CopyFromScreen copies *physical* pixels - so on a display at
+# 150% a capture of the "whole screen" is the top-left of it, and GetWindowRect for a tiled
+# window points at a region another window is in. That is exactly what a crowd run's grid and
+# its per-window shots came out as: a screenshot of somebody else's cell, cropped.
+[void] [Win]::SetProcessDPIAware()
 
 $VK_DOWN = 0x28
 $VK_RETURN = 0x0D
@@ -248,9 +289,11 @@ function Tile([IntPtr[]] $windows) {
     $width = [Win]::GetSystemMetrics(0)
     $height = [Win]::GetSystemMetrics(1)
     if ($live.Count -eq 0 -or $width -le 0 -or $height -le 0) { return }
-    # Two across as soon as there are four of them, so each client gets a cell rather than a
-    # thin column; three still reads better as a row.
-    $columns = if ($live.Count -ge 4) { 2 } elseif ($live.Count -eq 3) { 3 } else { $live.Count }
+    # Three still reads better as a row, two as a pair. Past that the grid is squared off, so
+    # a crowd run's twelve windows come out four across and three down instead of six thin
+    # rows - which is the difference between a screenshot that reads and one that does not.
+    $columns = if ($live.Count -le 3) { $live.Count }
+               else { [int] [Math]::Ceiling([Math]::Sqrt($live.Count)) }
     $rows = [int] [Math]::Ceiling($live.Count / $columns)
     for ($index = 0; $index -lt $live.Count; ++$index) {
         $column = $index % $columns
@@ -283,6 +326,22 @@ function Shoot([IntPtr] $hwnd, [string] $path) {
     $graphics.Dispose()
     $bitmap.Dispose()
     Say ("  captured {0}" -f $path)
+}
+
+# The whole screen rather than one window: with the grid tiled, this is the one image that
+# shows every instance at once, which is the thing a crowd run is worth looking at for. Taken
+# before any Shoot() call, because those focus a window and the grid is what is wanted here.
+function Shoot-Desktop([string] $path) {
+    $width = [Win]::GetSystemMetrics(0)
+    $height = [Win]::GetSystemMetrics(1)
+    if ($width -le 0 -or $height -le 0) { return }
+    $bitmap = New-Object System.Drawing.Bitmap($width, $height)
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    $graphics.CopyFromScreen(0, 0, 0, 0, $bitmap.Size)
+    $bitmap.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
+    $graphics.Dispose()
+    $bitmap.Dispose()
+    Say ("  captured the whole screen: {0} ({1}x{2})" -f $path, $width, $height)
 }
 
 # The backend holds the transcript open for append, so it has to be read with sharing.
@@ -358,11 +417,11 @@ if ($Gui) {
     else { Say 'live view: the window never started listening - the games will not reach it' }
 }
 
-# The clients' windows, known one at a time; the live view's, if there is one. Tile takes
-# whatever is known, so the grid fills in as the run goes.
-$hwndB = [IntPtr]::Zero
-$hwndC = [IntPtr]::Zero
-$hwndD = [IntPtr]::Zero
+# The clients, known one at a time - the host first, then a guest per client - and the live
+# view, if there is one. Tile takes whatever is known, so the grid fills in as the run goes,
+# and everything after the lobby is driven off this list rather than off named variables, so
+# a crowd run is the same code as a pair.
+$instances = @()
 $recorder = $null
 $video = Join-Path $RigDir 'two-instances.mp4'
 
@@ -470,63 +529,56 @@ if (-not $lobby) {
 }
 Say "lobby: the world minted $lobby"
 
+# The host first, so the table below is the whole run in order - and it is the list every
+# later step walks: the grid, the ready drive, the report, the stop.
+$instances += [pscustomobject] @{
+    Number = 1; Name = 'instance A'; Letter = 'a'; Profile = 'default'
+    Process = $a; Window = $hwndA
+}
+
 # One guest per client after the first: each joins the same lobby by id - a number on the
 # command line, so it needs no keypresses - and a lobby menu lists one row per member, which
-# is what the key counts below are relative to.
-Say 'instance B: launching with +connect_lobby, which walks in with no keypresses'
-$b = Start-Game 'second_player' @("+connect_lobby $lobby") 'b.log'
-$joined = $false
-for ($i = 0; $i -lt 40 -and -not $joined; $i++) {
-    Start-Sleep -Seconds 1
-    $joined = (Read-Transcript).Contains('JoinLobby')
-}
-Say "instance B: pid $($b.Id), joined=$joined"
-Start-Sleep -Seconds 5
-
-$hwndB = Wait-Window $b
-Say "instance B: window $hwndB, exited $($b.HasExited)"
-
-if ($Clients -ge 3) {
-    Say 'instance C: launching with +connect_lobby too'
-    $c = Start-Game 'third_player' @("+connect_lobby $lobby") 'c.log'
+# is what the key counts below are relative to. The profile is per client, because a client
+# with no profile of its own silently becomes the default identity - which is how three
+# clients once ran as two players.
+for ($guest = 2; $guest -le $Clients; $guest++) {
+    $letter = [char] (96 + $guest)
+    $name = 'instance ' + [char] (64 + $guest)
+    $profile = $profiles[$guest - 1]
+    Say ("{0}: launching as '{1}' with +connect_lobby, which walks in with no keypresses" -f $name, $profile)
+    $process = Start-Game $profile @("+connect_lobby $lobby") ("{0}.log" -f $letter)
     $joined = $false
-    for ($i = 0; $i -lt 40 -and -not $joined; $i++) {
+    for ($i = 0; $i -lt 60 -and -not $joined; $i++) {
         Start-Sleep -Seconds 1
         $joins = [regex]::Matches((Read-Transcript), 'SteamAPI_ISteamMatchmaking_JoinLobby').Count
-        $joined = $joins -ge 2
+        $joined = $joins -ge ($guest - 1)
     }
-    Say "instance C: pid $($c.Id), joined=$joined"
+    Say ("{0}: pid {1}, joined={2}" -f $name, $process.Id, $joined)
     Start-Sleep -Seconds 5
-    $hwndC = Wait-Window $c
-    Say "instance C: window $hwndC, exited $($c.HasExited)"
-}
-if ($Clients -ge 4) {
-    Say 'instance D: launching with +connect_lobby too'
-    $d = Start-Game 'fourth_player' @("+connect_lobby $lobby") 'd.log'
-    $joined = $false
-    for ($i = 0; $i -lt 40 -and -not $joined; $i++) {
-        Start-Sleep -Seconds 1
-        $joins = [regex]::Matches((Read-Transcript), 'SteamAPI_ISteamMatchmaking_JoinLobby').Count
-        $joined = $joins -ge 3
+    $window = Wait-Window $process
+    Say ("{0}: window {1}, exited {2}" -f $name, $window, $process.HasExited)
+    $instances += [pscustomobject] @{
+        Number = $guest; Name = $name; Letter = $letter; Profile = $profile
+        Process = $process; Window = $window
     }
-    Say "instance D: pid $($d.Id), joined=$joined"
-    Start-Sleep -Seconds 5
-    $hwndD = Wait-Window $d
-    Say "instance D: window $hwndD, exited $($d.HasExited)"
+    if ($guest -eq $seats + 1) {
+        Say ("  the game seats {0}: from here on the {1} client(s) after it are lobby members and nothing more" -f `
+            $seats, ($Clients - $seats))
+    }
 }
 Start-Sleep -Seconds 2
 
 # Everyone is in, so the grid is what the rest of the run looks like.
-Tile @($hwndA, $hwndB, $hwndC, $hwndD, $guiHwnd)
+$tiles = @($instances | ForEach-Object { $_.Window })
+$tiles += $guiHwnd
+Tile $tiles
 
 # The lobby menu lists one row per member and then the ready toggle, so Ready is as many
 # downs in as there are clients - which is why this counts instead of being written twice.
+# The selection moves by index whether or not a crowd's rows fit on screen, so this holds
+# past the point where the menu stops drawing all of them.
 $ready = @($VK_DOWN) * $Clients + $VK_RETURN
-foreach ($which in @(
-        [pscustomobject] @{ Name = 'instance A'; Window = $hwndA },
-        [pscustomobject] @{ Name = 'instance B'; Window = $hwndB },
-        [pscustomobject] @{ Name = 'instance C'; Window = $hwndC },
-        [pscustomobject] @{ Name = 'instance D'; Window = $hwndD })) {
+foreach ($which in $instances) {
     if ($which.Window -ne [IntPtr]::Zero) {
         Drive $which.Window $ready ("{0}: Set myself as Ready" -f $which.Name)
     }
@@ -534,9 +586,36 @@ foreach ($which in @(
 Say 'instance A: Start game = down and return from the ready toggle, and the owner alone has it'
 if ($Shoot) {
     Shoot $hwndA (Join-Path $RigDir 'lobby-a.png')
-    Shoot $hwndB (Join-Path $RigDir 'lobby-b.png')
+    $second = @($instances | Where-Object { $_.Number -eq 2 })
+    if ($second.Count -gt 0 -and $second[0].Window -ne [IntPtr]::Zero) {
+        Shoot $second[0].Window (Join-Path $RigDir 'lobby-b.png')
+    }
 }
 Drive $hwndA @($VK_DOWN, $VK_RETURN) 'instance A: Start game'
+
+# The shot the crowd run is for: everyone attached and the match up, so the live view's own
+# table has a row per session and the grid has a window per client. The desktop capture comes
+# first because Shoot brings one window to the front, and the whole tiled screen is the point.
+if ($Shoot) {
+    Start-Sleep -Seconds 12
+    Shoot-Desktop (Join-Path $RigDir 'mid-game-screen.png')
+    if ($Gui) {
+        # The live view is the one window a crowd run needs legibly: at its tiled size its
+        # games table shows five rows of eleven. It is grown for this shot and left grown -
+        # the grid has already been photographed, and nothing after this needs it small.
+        [void] [Win]::MoveWindow($guiHwnd, 0, 0, 1180, 1040, $true)
+        [void] [Win]::BringWindowToTop($guiHwnd)
+        Start-Sleep -Milliseconds 900
+        Shoot $guiHwnd (Join-Path $RigDir 'mid-game-live-view.png')
+    }
+    Shoot $hwndA (Join-Path $RigDir 'mid-game-a.png')
+    if ($Overfill) {
+        $extra = @($instances | Where-Object { $_.Number -eq ($seats + 1) })
+        if ($extra.Count -gt 0 -and $extra[0].Window -ne [IntPtr]::Zero) {
+            Shoot $extra[0].Window (Join-Path $RigDir 'mid-game-first-unseated.png')
+        }
+    }
+}
 
 # How long the match then runs for. With -StopWhenDecided it runs until the question this
 # is about is answered - every client has been passed authentication - or until
@@ -585,15 +664,17 @@ if ($null -ne $recorder) {
 
 Say ''
 Say '--- the instances ---'
-foreach ($which in @($a, $b, $c, $d)) {
-    if ($null -ne $which) { $which.Refresh() }
+foreach ($which in $instances) {
+    $which.Process.Refresh()
 }
-Say ("instance A pid {0} exited={1}; instance B pid {2} exited={3}" -f $a.Id, $a.HasExited, $b.Id, $b.HasExited)
-if ($null -ne $c) { Say ("instance C pid {0} exited={1}" -f $c.Id, $c.HasExited) }
-if ($null -ne $d) { Say ("instance D pid {0} exited={1}" -f $d.Id, $d.HasExited) }
+foreach ($which in $instances) {
+    Say ("{0} pid {1} exited={2}" -f $which.Name, $which.Process.Id, $which.Process.HasExited)
+}
 
 Say 'stopping the instances and the backend, so the transcript can be read'
-Stop-Rig @($a, $b, $c, $d, $backend)
+$things = @($instances | ForEach-Object { $_.Process })
+$things += $backend
+Stop-Rig $things
 Start-Sleep -Seconds 1
 
 Say ''
@@ -653,10 +734,10 @@ else {
 
 Say ''
 Say '--- what the stub handed to each game ---'
-foreach ($log in 'a.log', 'b.log', 'c.log', 'd.log') {
-    $path = Join-Path $RigDir $log
+foreach ($which in $instances) {
+    $path = Join-Path $RigDir ("{0}.log" -f $which.Letter)
     if (-not (Test-Path $path)) { continue }
-    Say ("{0}:" -f $log)
+    Say ("{0}.log ({1}, {2}):" -f $which.Letter, $which.Name, $which.Profile)
     $handed = Select-String -Path $path -Pattern 'hand over: (\w+)' -AllMatches |
         ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[1].Value }
     if ($handed.Count -eq 0) { Say '  nothing was handed over' }
@@ -670,15 +751,10 @@ Say '--- what the games themselves said ---'
 $gameOutput = @()
 if (Test-Path $debugLog) { $gameOutput = [System.IO.File]::ReadAllLines($debugLog) }
 Say ("debug output: {0} line(s) in {1}" -f $gameOutput.Count, $debugLog)
-foreach ($which in @(
-        [pscustomobject] @{ Name = 'instance A'; Process = $a },
-        [pscustomobject] @{ Name = 'instance B'; Process = $b },
-        [pscustomobject] @{ Name = 'instance C'; Process = $c },
-        [pscustomobject] @{ Name = 'instance D'; Process = $d })) {
-    if ($null -eq $which.Process) { continue }
+foreach ($which in $instances) {
     $mine = $gameOutput | Where-Object { $_ -match "^$($which.Process.Id) " } |
         ForEach-Object { $_ -replace "^$($which.Process.Id) ", '' }
-    Say ("{0} (pid {1}): {2} line(s)" -f $which.Name, $which.Process.Id, $mine.Count)
+    Say ("{0} ({1}, pid {2}): {3} line(s)" -f $which.Name, $which.Profile, $which.Process.Id, $mine.Count)
     if ($mine.Count -gt 0) { $mine | Select-Object -Last 10 | ForEach-Object { Say "  $_" } }
 }
 

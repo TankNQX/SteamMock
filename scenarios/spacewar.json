@@ -122,6 +122,202 @@
         "SteamGameServer_GetHSteamUser": { "ret": 2 },
         "SteamGameServer_GetHSteamPipe": { "ret": 2 }
       }
+    },
+    "fifth_player": {
+      "steam_id": 76561198000000005,
+      "persona_name": "DebugPlayer5",
+      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": true },
+        { "name": "ACH_FINISHED", "achieved": false }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_RestartAppIfNecessary": { "ret": false },
+        "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
+        "SteamAPI_ISteamUserStats_RequestCurrentStats": { "ret": true },
+        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
+        "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
+        "SteamAPI_ISteamController_Init": { "ret": true },
+        "SteamAPI_ISteamController_Shutdown": { "ret": true },
+        "SteamAPI_ISteamController_GetActionSetHandle": { "ret": 11 },
+        "SteamAPI_ISteamController_GetDigitalActionHandle": { "ret": 22 },
+        "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
+        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
+
+        "SteamInternal_GameServer_Init": { "ret": true },
+        "SteamGameServer_GetHSteamUser": { "ret": 2 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 2 }
+      }
+    },
+    "sixth_player": {
+      "steam_id": 76561198000000006,
+      "persona_name": "DebugPlayer6",
+      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": true },
+        { "name": "ACH_FINISHED", "achieved": false }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_RestartAppIfNecessary": { "ret": false },
+        "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
+        "SteamAPI_ISteamUserStats_RequestCurrentStats": { "ret": true },
+        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
+        "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
+        "SteamAPI_ISteamController_Init": { "ret": true },
+        "SteamAPI_ISteamController_Shutdown": { "ret": true },
+        "SteamAPI_ISteamController_GetActionSetHandle": { "ret": 11 },
+        "SteamAPI_ISteamController_GetDigitalActionHandle": { "ret": 22 },
+        "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
+        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
+
+        "SteamInternal_GameServer_Init": { "ret": true },
+        "SteamGameServer_GetHSteamUser": { "ret": 2 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 2 }
+      }
+    },
+    "seventh_player": {
+      "steam_id": 76561198000000007,
+      "persona_name": "DebugPlayer7",
+      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": true },
+        { "name": "ACH_FINISHED", "achieved": false }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_RestartAppIfNecessary": { "ret": false },
+        "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
+        "SteamAPI_ISteamUserStats_RequestCurrentStats": { "ret": true },
+        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
+        "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
+        "SteamAPI_ISteamController_Init": { "ret": true },
+        "SteamAPI_ISteamController_Shutdown": { "ret": true },
+        "SteamAPI_ISteamController_GetActionSetHandle": { "ret": 11 },
+        "SteamAPI_ISteamController_GetDigitalActionHandle": { "ret": 22 },
+        "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
+        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
+
+        "SteamInternal_GameServer_Init": { "ret": true },
+        "SteamGameServer_GetHSteamUser": { "ret": 2 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 2 }
+      }
+    },
+    "eighth_player": {
+      "steam_id": 76561198000000008,
+      "persona_name": "DebugPlayer8",
+      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": true },
+        { "name": "ACH_FINISHED", "achieved": false }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_RestartAppIfNecessary": { "ret": false },
+        "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
+        "SteamAPI_ISteamUserStats_RequestCurrentStats": { "ret": true },
+        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
+        "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
+        "SteamAPI_ISteamController_Init": { "ret": true },
+        "SteamAPI_ISteamController_Shutdown": { "ret": true },
+        "SteamAPI_ISteamController_GetActionSetHandle": { "ret": 11 },
+        "SteamAPI_ISteamController_GetDigitalActionHandle": { "ret": 22 },
+        "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
+        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
+
+        "SteamInternal_GameServer_Init": { "ret": true },
+        "SteamGameServer_GetHSteamUser": { "ret": 2 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 2 }
+      }
+    },
+    "ninth_player": {
+      "steam_id": 76561198000000009,
+      "persona_name": "DebugPlayer9",
+      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": true },
+        { "name": "ACH_FINISHED", "achieved": false }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_RestartAppIfNecessary": { "ret": false },
+        "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
+        "SteamAPI_ISteamUserStats_RequestCurrentStats": { "ret": true },
+        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
+        "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
+        "SteamAPI_ISteamController_Init": { "ret": true },
+        "SteamAPI_ISteamController_Shutdown": { "ret": true },
+        "SteamAPI_ISteamController_GetActionSetHandle": { "ret": 11 },
+        "SteamAPI_ISteamController_GetDigitalActionHandle": { "ret": 22 },
+        "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
+        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
+
+        "SteamInternal_GameServer_Init": { "ret": true },
+        "SteamGameServer_GetHSteamUser": { "ret": 2 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 2 }
+      }
+    },
+    "tenth_player": {
+      "steam_id": 76561198000000010,
+      "persona_name": "DebugPlayer10",
+      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": true },
+        { "name": "ACH_FINISHED", "achieved": false }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_RestartAppIfNecessary": { "ret": false },
+        "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
+        "SteamAPI_ISteamUserStats_RequestCurrentStats": { "ret": true },
+        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
+        "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
+        "SteamAPI_ISteamController_Init": { "ret": true },
+        "SteamAPI_ISteamController_Shutdown": { "ret": true },
+        "SteamAPI_ISteamController_GetActionSetHandle": { "ret": 11 },
+        "SteamAPI_ISteamController_GetDigitalActionHandle": { "ret": 22 },
+        "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
+        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
+
+        "SteamInternal_GameServer_Init": { "ret": true },
+        "SteamGameServer_GetHSteamUser": { "ret": 2 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 2 }
+      }
+    },
+    "eleventh_player": {
+      "steam_id": 76561198000000011,
+      "persona_name": "DebugPlayer11",
+      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "achievements": [
+        { "name": "ACH_BOOTED", "achieved": true },
+        { "name": "ACH_FINISHED", "achieved": false }
+      ],
+      "scripted": {
+        "SteamAPI_Init": { "ret": true },
+        "SteamAPI_IsSteamRunning": { "ret": true },
+        "SteamAPI_RestartAppIfNecessary": { "ret": false },
+        "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
+        "SteamAPI_ISteamUserStats_RequestCurrentStats": { "ret": true },
+        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
+        "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
+        "SteamAPI_ISteamController_Init": { "ret": true },
+        "SteamAPI_ISteamController_Shutdown": { "ret": true },
+        "SteamAPI_ISteamController_GetActionSetHandle": { "ret": 11 },
+        "SteamAPI_ISteamController_GetDigitalActionHandle": { "ret": 22 },
+        "SteamAPI_ISteamController_GetAnalogActionHandle": { "ret": 33 },
+        "SteamAPI_ISteamController_ActivateActionSet": { "ret": true },
+
+        "SteamInternal_GameServer_Init": { "ret": true },
+        "SteamGameServer_GetHSteamUser": { "ret": 2 },
+        "SteamGameServer_GetHSteamPipe": { "ret": 2 }
+      }
     }
   },
   "match": [ { "exe_contains": "SteamworksExample", "profile": "default" } ],

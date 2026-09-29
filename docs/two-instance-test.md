@@ -95,6 +95,31 @@ run is judged by who was let in rather than by who won. `-StopWhenDecided` and t
 form both exist for that reason; the difference between them is how much of the
 aftermath a reader wants to see.
 
+### More clients than the game seats
+
+`-Overfill` lifts that ceiling for the one run it makes sense in: the extra clients join the
+lobby, are listed to everyone, and are never given a slot, because `MAX_PLAYERS_PER_SERVER`
+is the game's number and the harness does not overrule it. It is a test of one process
+holding a crowd - sessions, rosters, notification fan-out, the live view - and not of a
+match. Eleven clients, one lobby, one run of 29 Sep 2026:
+
+| | |
+| :-- | :-- |
+| the room as the host sees it | **11** members (`GetLobbyMemberByIndex` x329 on the host alone) |
+| the host's game server asked Steam about | **11** players (`SteamAPI_ISteamGameServer_BeginAuthSession` 11) |
+| the host's game, in its own words | `Auth completed for a client` **8** times, and 7 x `client leaving server msg, but couldn't find a matching client` |
+| seated | **4** - `StartAuthPlayer slot=1,2,3` beside the host's own slot 0, four ships on the host's screen mid-round |
+| the other seven | left the lobby after the game's own 30-second ticket timeout, each showing the game's `Connection failure / Multiplayer authentication failed` |
+| held at once | 11 sessions, ~1.9 M calls, 672 MB of rig dir |
+| crashes, callback faults, dropped keystrokes | 0 / 0 / 0 |
+
+`-Shoot` is what makes a crowd run worth looking at: mid-match it writes the tiled screen as
+one image (every window and the live view together), the live view grown big enough to read
+its games table - which is where the eleven rows are - the host's round, and the first
+unseated client. What the crowd does *not* change is the routing: the host's id 143 carries
+four objects, the same four answers go to the first of them and the same three to the last,
+exactly as in the four-client set.
+
 ## What a good run looks like
 
 Measured on 24 Sep 2026, both instances on Steamworks SDK 1.46's Spacewar:
