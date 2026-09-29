@@ -73,10 +73,19 @@ constexpr std::size_t kInterfaceEndpoints = 2;
 // so it is atomic, and claiming an endpoint is a compare-exchange rather than a test
 // and a store. A plain std::int32_t here was the one piece of shared mutable state in
 // the stub outside the callback registry.
+//
+// `claimed` is a second atomic per endpoint and not a second meaning for `user`, because
+// a zero in `user` is a real answer - "the caller did not say which handle" - so it cannot
+// also be "nobody has this one yet". It was both, and a claim that stored the zero it
+// found left the endpoint still looking unclaimed: two threads asking for the same version
+// with no handle were handed the same object, and a third that named a handle was handed
+// that object too, under its own handle, so the calls the first two made stopped being
+// theirs. See `interface_object`, which the generated file writes.
 struct InterfaceVersion {
     const char* version;
     void* object[kInterfaceEndpoints];
     std::atomic<std::int32_t>* user[kInterfaceEndpoints];
+    std::atomic<bool>* claimed[kInterfaceEndpoints];
 };
 
 // A game that skips its null check should read empty text rather than fault.

@@ -114,6 +114,11 @@ void test_rows() {
     check("no parameters at all is a row with two elements",
           reads_slots("[\"GetAppID\", \"uint32\"]", slot, error) && slot.params.empty() &&
               !slot.destructor);
+    check("a byte buffer names the parameter carrying its length",
+          reads_slots("[\"Send\", \"void\", [[\"pv\", \"bytes\", \"cb\"], [\"cb\", \"int32\"]]]",
+                      slot, error) &&
+              slot.params.size() == 2u && slot.params[0].kind == "bytes" &&
+              slot.params[0].length == "cb");
 }
 
 void test_notes() {
@@ -168,6 +173,14 @@ void test_refusals() {
     check("notes that are not an object", refuses("[\"Set\", \"void\", [], \"private\"]", error));
     check("a destructor with a return type", refuses("[\"~\", \"uint32\"]", error));
     check("a version with no slots", refuses("", error));
+    // A byte buffer is the bytes and how many of them, and the row says which of its
+    // siblings carries the second. Without one the generator wrote `steammock::Bytes{name, }`
+    // and the compiler answered - about the generated file rather than about the row.
+    check("a byte buffer with no length parameter",
+          refuses("[\"Send\", \"void\", [[\"pv\", \"bytes\"]]]", error));
+    check("a byte buffer whose length is not a parameter of the call",
+          refuses("[\"Send\", \"void\", [[\"pv\", \"bytes\", \"cb\"], [\"cub\", \"int32\"]]]",
+                  error));
 }
 
 void test_document() {
@@ -192,6 +205,38 @@ void test_document() {
           !reads("{\"interfaces\": [{\"version\": \"SteamUser020\", \"slots\": "
                  "[[\"GetSteamID\", \"uint64\"]]}]}",
                  layouts, error));
+
+    // Two version strings, one identifier. `identified()` turns everything that is not
+    // alphanumeric into an underscore, so these two name one class, one array of objects and
+    // one table entry between them - which the compiler reports as a redefinition in the
+    // generated file, where nothing points back at the layouts.
+    check("two versions that are one identifier are refused",
+          !reads("{\"interfaces\": ["
+                 "{\"name\": \"ISteamUser\", \"version\": \"SteamUser1.0\", \"slots\": "
+                 "[[\"GetSteamID\", \"uint64\"]]},"
+                 "{\"name\": \"ISteamUser\", \"version\": \"SteamUser1_0\", \"slots\": "
+                 "[[\"GetSteamID\", \"uint64\"]]}]}",
+                 layouts, error));
+    check("  and it names both of them", error.find("SteamUser1.0") != std::string::npos &&
+                                             error.find("SteamUser1_0") != std::string::npos);
+
+    // A size the generated file declares a structure to be, so it has to be an int the
+    // layouts meant: it used to be narrowed with a cast, and a negative or oversized one
+    // became a number the file's own declaration no longer matched.
+    const std::string one_version = "\"interfaces\": [{\"name\": \"ISteamUser\", "
+                                    "\"version\": \"SteamUser020\", \"slots\": "
+                                    "[[\"GetSteamID\", \"uint64\"]]}]}";
+    check("a structure with a negative size is refused",
+          !reads("{\"structures\": [{\"name\": \"Motion_t\", \"size\": -1, "
+                 "\"members\": [[\"float\", \"x\"]]}], " +
+                     one_version,
+                 layouts, error));
+    check("a structure whose size does not fit an int is refused",
+          !reads("{\"structures\": [{\"name\": \"Motion_t\", \"size\": 2147483648, "
+                 "\"members\": [[\"float\", \"x\"]]}], " +
+                     one_version,
+                 layouts, error));
+    check("  and it says the size is what it cannot use", error.find("size") != std::string::npos);
 
     // The version's own name is what an unrecorded call name is derived from.
     check("two versions, named by their own interfaces",

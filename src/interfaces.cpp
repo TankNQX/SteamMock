@@ -1,5 +1,6 @@
 #include "bridge/interfaces.hpp"
 
+#include <climits>
 #include <cstddef>
 #include <cstdio>
 #include <map>
@@ -109,12 +110,42 @@ std::string identified(const std::string& version) {
 std::string literal(const std::string& text) {
     std::string out = "\"";
     for (const char ch : text) {
-        if (ch == '\\' || ch == '"') {
-            out += '\\';
+        switch (ch) {
+            case '\\': out += "\\\\"; break;
+            case '"': out += "\\\""; break;
+            case '\n': out += "\\n"; break;
+            case '\t': out += "\\t"; break;
+            case '\r': out += "\\r"; break;
+            default:
+                // Anything else that is not printable, as an octal escape. A raw control
+                // byte inside a "..." literal is either a literal the compiler refuses or
+                // one that ends early and takes the rest of the line with it - and these
+                // strings are method, call, event and version names, which a layouts file
+                // is not supposed to be able to smuggle a newline into at all.
+                if (static_cast<unsigned char>(ch) < 0x20u ||
+                    static_cast<unsigned char>(ch) == 0x7Fu) {
+                    char escape[5] = {};
+                    std::snprintf(escape, sizeof(escape), "\\%03o", static_cast<unsigned char>(ch));
+                    out += escape;
+                } else {
+                    out += ch;
+                }
         }
-        out += ch;
     }
     out += '"';
+    return out;
+}
+
+// A string for a comment rather than for a literal: nothing here escapes, so a newline or
+// a control byte would end the comment and leave the rest of it as source. Version names
+// and strings go above every class the file writes.
+std::string commented(const std::string& text) {
+    std::string out;
+    out.reserve(text.size());
+    for (const char ch : text) {
+        const unsigned char byte = static_cast<unsigned char>(ch);
+        out += (byte < 0x20u || byte == 0x7Fu) ? ' ' : ch;
+    }
     return out;
 }
 
@@ -220,7 +251,16 @@ bool read_size(const Json& object, int& out, std::string& error, const std::stri
         error = where + ": no size - the file has to carry one before a declaration can be written";
         return false;
     }
-    out = static_cast<int>(as_int64(*value));
+    // A size is an int in every signature this writes, and this used to narrow without
+    // looking: a negative or oversized one became whatever the cast made of it and the
+    // generated file carried a structure whose size no longer matched the file's own
+    // declaration of it - which is exactly the thing these layouts are read for.
+    const std::int64_t size = as_int64(*value);
+    if (size <= 0 || size > static_cast<std::int64_t>(INT_MAX)) {
+        error = where + ": size " + std::to_string(size) + " is out of range";
+        return false;
+    }
+    out = static_cast<int>(size);
     return true;
 }
 
@@ -311,6 +351,16 @@ bool read_param(const Json& row, const std::vector<std::pair<std::string, std::s
                 "' is a buffer the wire cannot carry";
         return false;
     }
+    if ((out.kind == "bytes" || out.kind == "out_bytes") && out.length.empty()) {
+        // A byte buffer is two things on the wire, the bytes and how many of them, and the
+        // length parameter is how the row says which of its siblings carries the second -
+        // so a row without one cannot be written: the generator emitted
+        // `steammock::Bytes{name, }` and the compiler said so, with a message about
+        // generated code rather than about the row that produced it.
+        error =
+            param_where + ": a '" + out.kind + "' buffer names the parameter carrying its length";
+        return false;
+    }
     if (!declared_type(out.kind, out.decl, out.cpp, error, param_where)) {
         return false;
     }
@@ -399,6 +449,28 @@ bool read_slot(const Json& row, const std::string& interface_name,
         error = slot_where + ": a slot row carries a method, a return type, its parameters " +
                 "and at most one object of notes";
         return false;
+    }
+
+    // A byte buffer's length parameter has to be one of this slot's own: the generated
+    // signature reads it by name, so a length that names nothing is `Bytes{pv, cbLength}`
+    // with no `cbLength` in scope. That can only be checked now, once every parameter of
+    // the row has been read.
+    for (const InterfaceParam& param : out.params) {
+        if (param.length.empty()) {
+            continue;
+        }
+        bool found = false;
+        for (const InterfaceParam& other : out.params) {
+            if (other.name == param.length) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            error = slot_where + "." + param.name + ": '" + param.length +
+                    "' is not a parameter of this call, so there is no length to pass";
+            return false;
+        }
     }
 
     // The flat name the call travels under, which is the method's own unless the
@@ -500,12 +572,14 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
     // it has to: a payload that completes no call can only be handed over to the
     // object a game registered under that id, so an event without one could be
     // written but never delivered.
+    //
+    // There used to be a check here comparing this array's length against what read_layouts
+    // made of it, to catch "the array changed while it was being read". It cannot change:
+    // both reads are of the same in-memory Json, and read_layouts has already answered with
+    // an error for anything it would not read - so nothing reached the comparison that could
+    // have failed it.
     if (const Json* events = json_member(document, "events");
         events != nullptr && events->is_array()) {
-        if (events->size() != parsed._events.size()) {
-            error = "events: the array changed while it was being read";
-            return false;
-        }
         for (std::size_t index = 0; index < parsed._events.size(); ++index) {
             const std::string where = "events[" + std::to_string(index) + "]";
             const Json* callback = json_member((*events)[index], "callback");
@@ -532,6 +606,13 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
     // and hundreds of slots, and comparing every new version against every earlier one is
     // a scan of the whole file per version.
     std::set<std::string> seen_versions;
+    // ...and which *identifiers* they made, which is not the same question: `identified`
+    // turns every character that is not alphanumeric into an underscore, so "1.0" and
+    // "1_0" are two version strings and one identifier. Two versions with one identifier
+    // are two classes, two object arrays and two table rows with the same name - which the
+    // compiler refuses, with a message about the generated file rather than about the
+    // layouts that produced it.
+    std::map<std::string, std::string> seen_identifiers;
 
     for (const Json& entry : *versions) {
         InterfaceVersion version;
@@ -559,6 +640,15 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
             error = version.version + " appears twice";
             return false;
         }
+        const std::string identifier = identified(version.version);
+        const auto clash = seen_identifiers.find(identifier);
+        if (clash != seen_identifiers.end()) {
+            error = "'" + version.version + "' and '" + clash->second +
+                    "' are the same identifier ('" + identifier +
+                    "'): the classes and tables this writes are named after it";
+            return false;
+        }
+        seen_identifiers.emplace(identifier, version.version);
         parsed._versions.push_back(std::move(version));
     }
 
@@ -863,7 +953,9 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         const InterfaceVersion& version = interfaces.versions()[v];
         const std::string id = identified(version.version);
 
-        out.push_back("// " + version.name + " " + version.version);
+        // Through `commented`: a newline in either of these would end the comment and leave
+        // the rest of it as source, in a file whose whole point is that it is generated.
+        out.push_back("// " + commented(version.name) + " " + commented(version.version));
         out.push_back("class Version_" + id + " {");
         out.push_back("public:");
         // Which user handle this object was handed out for. One version string asked
@@ -876,6 +968,10 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         // this object reads it on whatever thread the game makes that call from. See
         // InterfaceVersion in bridge/synth.hpp.
         out.push_back("    std::atomic<std::int32_t> _hSteamUser{0};");
+        // Whether this object has been handed to anybody at all. `_hSteamUser` cannot say:
+        // zero there is a real answer - the caller did not say which handle - so a claim
+        // that stored zero would leave the object looking unclaimed and hand it out again.
+        out.push_back("    std::atomic<bool> _claimed{false};");
         for (std::size_t index = 0; index < version.slots.size(); ++index) {
             const InterfaceSlot& slot = version.slots[index];
             if (slot.destructor) {
@@ -1079,7 +1175,9 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("    {" + literal(version.version) + ", {&g_" +
                           identified(version.version) + "[0], &g_" + identified(version.version) +
                           "[1]}, {&g_" + identified(version.version) + "[0]._hSteamUser, &g_" +
-                          identified(version.version) + "[1]._hSteamUser}},");
+                          identified(version.version) + "[1]._hSteamUser}, {&g_" +
+                          identified(version.version) + "[0]._claimed, &g_" +
+                          identified(version.version) + "[1]._claimed}},");
         }
         out.push_back("};");
     } else {
@@ -1096,10 +1194,17 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("// which: the object already holding that handle comes back, otherwise one");
     out.push_back("// nobody has claimed, and the object remembers the handle from then on.");
     out.push_back("//");
-    out.push_back("// Claiming an endpoint is a compare-exchange, because two threads of one game");
-    out.push_back("// can ask for the same version at the same time and each has to get an object");
     out.push_back(
-        "// of its own - a test followed by a store would hand both of them the same one.");
+        "// Claiming an endpoint is a compare-exchange on whether it has been handed out");
+    out.push_back(
+        "// at all, and not on the handle it holds. The handle cannot be the test: 0 is a");
+    out.push_back("// real answer there - the caller did not say which - so a claim that stored 0");
+    out.push_back(
+        "// would leave the endpoint still looking unclaimed, and two threads of one game");
+    out.push_back("// asking for the same version with no handle would both succeed on the first");
+    out.push_back(
+        "// endpoint and be handed the same object, which is the opposite of what this is");
+    out.push_back("// for.");
     out.push_back(
         "void* interface_object(const char* version, std::int32_t hSteamUser) noexcept {");
     out.push_back("    if (version == nullptr) {");
@@ -1120,13 +1225,13 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back(
         "        for (std::size_t endpoint = 0; endpoint < steammock::kInterfaceEndpoints;");
     out.push_back("             ++endpoint) {");
-    out.push_back("            std::int32_t unclaimed = 0;");
-    out.push_back(
-        "            if (kVersions[index].user[endpoint]->compare_exchange_strong(unclaimed,");
-    out.push_back(
-        "                                                                   hSteamUser)) {");
-    out.push_back("                return kVersions[index].object[endpoint];");
+    out.push_back("            bool unclaimed = false;");
+    out.push_back("            if (!kVersions[index].claimed[endpoint]->compare_exchange_strong(");
+    out.push_back("                    unclaimed, true)) {");
+    out.push_back("                continue;");
     out.push_back("            }");
+    out.push_back("            kVersions[index].user[endpoint]->store(hSteamUser);");
+    out.push_back("            return kVersions[index].object[endpoint];");
     out.push_back("        }");
     out.push_back("        // Both are spoken for, which takes two game servers in one process to");
     out.push_back("        // reach. A stub has nothing better to say than the first of them.");

@@ -90,6 +90,28 @@ const TypeInfo* find_type(const std::string& name) noexcept {
     return nullptr;
 }
 
+// Whether a name can be written where this file writes names: as a C++ identifier
+// (`kParams_<name>` in the surface table), as an export in the .def, and inside the string
+// literals a call travels under (`steammock::invoke("<name>", ...)`, `context_init(...,
+// "<name>")`). An identifier is all three at once, so requiring one is what makes the
+// escaping elsewhere unnecessary rather than merely absent - a name with a quote, a
+// backslash or a space used to be written out raw, and the compiler's complaint about the
+// generated file was the only sign that the surface was the problem.
+bool is_identifier(const std::string& name) noexcept {
+    if (name.empty()) {
+        return false;
+    }
+    for (std::size_t index = 0; index < name.size(); ++index) {
+        const char ch = name[index];
+        const bool word = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                          (ch >= '0' && ch <= '9') || ch == '_';
+        if (!word || (index == 0u && ch >= '0' && ch <= '9')) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // The stub's own exports, which are not Steam API calls: they exist so the
 // harness can be asked which build is loaded and whether it reached a backend.
 const char* const kDiagnosticExports[] = {"SteamMock_SessionId", "SteamMock_Stats",
@@ -320,6 +342,29 @@ std::string hook_for(const std::string& name) {
     return std::string();
 }
 
+// The types each hook's own helper takes, in order, with the spelling a surface uses for
+// them. The renderer hands the declaration's parameters over by position, so this is what
+// the declaration has to match: callback_registered(void*, std::int32_t),
+// callback_unregistered(void*), call_result_registered(void*, std::uint64_t),
+// call_result_unregistered(void*, std::uint64_t) and deliver_events(), all in
+// bridge/synth.hpp.
+//
+// Both call-result calls take the object and the handle in every SDK read here - 1.39,
+// 1.41 and 1.46 all declare SteamAPI_UnregisterCallResult that way, which is where the
+// surface's own spelling comes from.
+std::vector<const char*> hook_parameter_types(const std::string& hook) {
+    if (hook == "register_callback") {
+        return {"opaque_ptr", "int32"};
+    }
+    if (hook == "unregister_callback") {
+        return {"opaque_ptr"};
+    }
+    if (hook == "register_call_result" || hook == "unregister_call_result") {
+        return {"opaque_ptr", "uint64"};
+    }
+    return {};  // deliver_events takes nothing
+}
+
 std::string fallback_for(const std::string& name) {
     if (name == "SteamInternal_CreateInterface" ||
         name == "SteamInternal_FindOrCreateUserInterface" ||
@@ -366,8 +411,15 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
     std::set<std::string> seen;
     // Which API this is: the name of the surface it was read from - the SDK's own
     // version, or whatever a hand-written one calls itself.
-    if (const Json* surface = json_member(document, "surface");
-        surface != nullptr && surface->is_string()) {
+    if (const Json* surface = json_member(document, "surface"); surface != nullptr) {
+        // Same as `dir` and `params` below: present and the wrong type is a file written
+        // wrongly, not a file that did not say. A non-string one used to be dropped, and the
+        // only complaint left was the "a surface with calls needs a 'surface' name" check
+        // further down - which names a different mistake.
+        if (!surface->is_string()) {
+            error = "'surface' has to name the API this was read from";
+            return false;
+        }
         parsed._surface = as_string(*surface);
     }
 
@@ -384,6 +436,16 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
 
         IdlCall call;
         call.name = as_string(*name);
+        if (!is_identifier(call.name)) {
+            // Only "not empty" used to be checked, and the name is written as a C++
+            // identifier, an export name and a string literal - so anything else produced a
+            // generated file that does not compile, with the complaint pointing at the
+            // generated file rather than at the surface.
+            error = "'" + call.name +
+                    "' cannot be a call name: letters, digits and "
+                    "underscores only, and not starting with a digit";
+            return false;
+        }
         if (!seen.insert(call.name).second) {
             error = call.name + " appears twice";
             return false;
@@ -401,8 +463,14 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
             return false;
         }
 
-        if (const Json* params = json_member(entry, "params");
-            params != nullptr && params->is_array()) {
+        if (const Json* params = json_member(entry, "params"); params != nullptr) {
+            // Present but not a list is a declaration written wrongly, and the two ways it
+            // was read before were both silent: a `params` that is not an array was skipped,
+            // which generates a signature with no arguments at all.
+            if (!params->is_array()) {
+                error = call.name + ": 'params' has to be a list of parameters";
+                return false;
+            }
             for (const Json& entry_param : *params) {
                 if (!entry_param.is_object()) {
                     error = call.name + ": every parameter has to be a JSON object";
@@ -416,6 +484,14 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                     return false;
                 }
                 param.name = as_string(*param_name);
+                if (!is_identifier(param.name)) {
+                    // The same reason a call name has to be one: a parameter's name is the
+                    // C++ parameter and the key in `args["<name>"]`.
+                    error = call.name + ": '" + param.name +
+                            "' cannot be a parameter name: letters, digits and underscores "
+                            "only, and not starting with a digit";
+                    return false;
+                }
 
                 const Json* param_type = json_member(entry_param, "type");
                 if (param_type == nullptr || !param_type->is_string() ||
@@ -430,8 +506,14 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                 param.type = as_string(*param_type);
 
                 std::string direction = "in";
-                if (const Json* dir = json_member(entry_param, "dir");
-                    dir != nullptr && dir->is_string()) {
+                if (const Json* dir = json_member(entry_param, "dir"); dir != nullptr) {
+                    // Present but not a string is not "no direction": it is a declaration
+                    // written wrongly, and reading it as `in` silently is how a row that
+                    // meant `out` becomes a call whose result nobody ever writes back.
+                    if (!dir->is_string()) {
+                        error = call.name + "." + param.name + ": 'dir' has to be a string";
+                        return false;
+                    }
                     direction = as_string(*dir);
                 }
                 if (direction != "in" && direction != "out") {
@@ -477,18 +559,27 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
         }
 
         // A hook is spelled with the parameters it needs, and the renderer indexes
-        // them by position: a call the rule hooks but whose SDK declaration takes
-        // fewer arguments than the hook reads is a crash in the generator rather
-        // than a message about the surface.
+        // them by position and hands them to helpers with fixed signatures -
+        // callback_registered(void*, std::int32_t), call_result_registered(void*,
+        // std::uint64_t) and their two opposites - so the count is not enough: a call the
+        // rule hooks whose declaration has the right number of arguments of the wrong types
+        // was accepted and generated code that does not compile, or worse, one that
+        // compiles after an implicit conversion nobody meant.
         if (!call.hook.empty()) {
-            const std::size_t needed = call.hook == "deliver_events"        ? 0u
-                                       : call.hook == "unregister_callback" ? 1u
-                                                                            : 2u;
-            if (call.params.size() < needed) {
+            const std::vector<const char*> wanted = hook_parameter_types(call.hook);
+            if (call.params.size() < wanted.size()) {
                 error = call.name + ": the '" + call.hook + "' hook reads " +
-                        std::to_string(needed) + " parameter(s) and this takes " +
+                        std::to_string(wanted.size()) + " parameter(s) and this takes " +
                         std::to_string(call.params.size());
                 return false;
+            }
+            for (std::size_t index = 0; index < wanted.size(); ++index) {
+                if (call.params[index].type != wanted[index]) {
+                    error = call.name + ": the '" + call.hook + "' hook takes " + wanted[index] +
+                            " as parameter " + std::to_string(index + 1u) +
+                            ", and this declares '" + call.params[index].type + "'";
+                    return false;
+                }
             }
         }
         // The calls that can answer themselves: a factory is handed the version
@@ -501,6 +592,16 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
             const IdlParam* version = nullptr;
             for (const IdlParam& param : call.params) {
                 if (param.type == "cstring" && !param.out) {
+                    // A factory is handed the version string a game wants an interface for,
+                    // and `version` is what the renderer passes to interface_object - so two
+                    // candidates are not a choice to make here. It used to keep the last one
+                    // silently, which hands the wrong version string to the world for every
+                    // call a game makes through that object.
+                    if (version != nullptr) {
+                        error = call.name + ": a factory takes one version string, and this "
+                                            "declares more than one";
+                        return false;
+                    }
                     version = &param;
                 }
             }
@@ -562,17 +663,23 @@ bool Idl::load_file(const std::string& path, Idl& out, std::string& error) {
 // ---------------------------------------------------------------------------
 
 std::string render_api_stub(const Idl& idl) {
-    bool needs_interfaces = false;
+    bool needs_synth = false;
     bool needs_empty_string = false;
     for (const IdlCall& call : idl.calls()) {
-        needs_interfaces = needs_interfaces || call.fallback == "interface";
-        // A string a call returns, or a string it takes: both reach for the empty
-        // text - one as the value a game reads when nobody answered, the other as
-        // the argument a null pointer is spelled with.
+        // synth.hpp is where every helper this file reaches for that is not in call.hpp
+        // is declared: context_init and interface_object for the calls that answer
+        // themselves, and the whole callback registry - deliver_events, the register
+        // and unregister calls, the two call-result ones - for the calls that are hooks.
+        // This used to be `fallback == "interface"` alone, so a surface whose calls use
+        // the context fallback, or only hooks, generated a stub that does not compile -
+        // and the surface read here is not the only one this is built from (see
+        // tools/steamworks_sdk_import.py).
+        needs_synth = needs_synth || !call.fallback.empty() || !call.hook.empty();
+        // A string a call *returns* is what reaches for the empty text: it is the value a
+        // game reads when nobody answered (`reply_cstring(reply, kEmptyString)`). A string
+        // it takes goes through arg_cstring and never reads the constant - and an unused
+        // constant is a warning here, which this project treats as an error.
         needs_empty_string = needs_empty_string || call.returns == "cstring";
-        for (const IdlParam& param : call.params) {
-            needs_empty_string = needs_empty_string || param.type == "cstring";
-        }
     }
 
     std::vector<std::string> out = generated_header(
@@ -582,7 +689,7 @@ std::string render_api_stub(const Idl& idl) {
     out.push_back("");
     out.push_back("#include \"bridge/call.hpp\"");
     out.push_back("#include \"bridge/export.hpp\"");
-    if (needs_interfaces) {
+    if (needs_synth) {
         out.push_back("#include \"bridge/synth.hpp\"");
     }
     out.push_back("");
