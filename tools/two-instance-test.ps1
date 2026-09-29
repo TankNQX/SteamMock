@@ -1,10 +1,11 @@
-# The two-instance Spacewar run, scripted.
+# The Spacewar run, scripted: two instances by default, up to the four the game has slots
+# for with -Clients.
 #
 # Two copies of Valve's own test app, one session, one lobby, then the owner
 # starting the game: the thing the harness exists for, driven end to end on a real
 # 32-bit game and reported from the backend's own transcript. It leaves the rig (a
 # copy of the game carrying the 32-bit stub) in -RigDir and the evidence beside it:
-# transcript.jsonl, a.log and b.log.
+# transcript.jsonl and one log per instance (a.log, b.log, c.log, d.log).
 #
 #   pwsh -File tools/two-instance-test.ps1
 #   pwsh -File tools/two-instance-test.ps1 -Shoot      # also capture each window
@@ -16,6 +17,11 @@
 #   pwsh -File tools\two-instance-test.ps1 -Clients 3 -Gui -Record -WaitAfterStart 90
 #                                                       # three clients and the live view in a
 #                                                       # grid, filmed from the first menu on
+#
+#   pwsh -File tools\two-instance-test.ps1 -Clients 4 -Gui -WaitAfterStart 100
+#                                                       # all four the game has slots for
+#                                                       # (MAX_PLAYERS_PER_SERVER), as the
+#                                                       # stress form of the run of record
 #
 #   pwsh -File tools\two-instance-test.ps1 -Clients 3 -StopWhenDecided -WaitAfterStart 12
 #                                                       # the shortest run that still answers
@@ -69,6 +75,19 @@ foreach ($needed in @($server, $stub, $scenario, (Join-Path $GamePath 'Steamwork
         Say "missing $needed - build the tree, or point -GamePath at the game"
         exit 2
     }
+}
+
+# Four is the game's own ceiling - SpaceWar.h's MAX_PLAYERS_PER_SERVER is 4, and the fifth
+# client would join the lobby (the world imposes no limit), be listed to everyone, and never
+# be given a slot. That is a lobby test wearing a client test's clothes, so it is refused
+# rather than run and misreported.
+if ($Clients -gt 4) {
+    Say ("-Clients {0} is more than the game has slots for (MAX_PLAYERS_PER_SERVER = 4)" -f $Clients)
+    exit 2
+}
+if ($Clients -lt 2) {
+    Say ("-Clients {0}: this is a session with a lobby in it, which takes two" -f $Clients)
+    exit 2
 }
 
 Say 'setup: copying the game out of the library, so the install is never touched'
@@ -343,6 +362,7 @@ if ($Gui) {
 # whatever is known, so the grid fills in as the run goes.
 $hwndB = [IntPtr]::Zero
 $hwndC = [IntPtr]::Zero
+$hwndD = [IntPtr]::Zero
 $recorder = $null
 $video = Join-Path $RigDir 'two-instances.mp4'
 
@@ -480,10 +500,24 @@ if ($Clients -ge 3) {
     $hwndC = Wait-Window $c
     Say "instance C: window $hwndC, exited $($c.HasExited)"
 }
+if ($Clients -ge 4) {
+    Say 'instance D: launching with +connect_lobby too'
+    $d = Start-Game 'fourth_player' @("+connect_lobby $lobby") 'd.log'
+    $joined = $false
+    for ($i = 0; $i -lt 40 -and -not $joined; $i++) {
+        Start-Sleep -Seconds 1
+        $joins = [regex]::Matches((Read-Transcript), 'SteamAPI_ISteamMatchmaking_JoinLobby').Count
+        $joined = $joins -ge 3
+    }
+    Say "instance D: pid $($d.Id), joined=$joined"
+    Start-Sleep -Seconds 5
+    $hwndD = Wait-Window $d
+    Say "instance D: window $hwndD, exited $($d.HasExited)"
+}
 Start-Sleep -Seconds 2
 
 # Everyone is in, so the grid is what the rest of the run looks like.
-Tile @($hwndA, $hwndB, $hwndC, $guiHwnd)
+Tile @($hwndA, $hwndB, $hwndC, $hwndD, $guiHwnd)
 
 # The lobby menu lists one row per member and then the ready toggle, so Ready is as many
 # downs in as there are clients - which is why this counts instead of being written twice.
@@ -491,7 +525,8 @@ $ready = @($VK_DOWN) * $Clients + $VK_RETURN
 foreach ($which in @(
         [pscustomobject] @{ Name = 'instance A'; Window = $hwndA },
         [pscustomobject] @{ Name = 'instance B'; Window = $hwndB },
-        [pscustomobject] @{ Name = 'instance C'; Window = $hwndC })) {
+        [pscustomobject] @{ Name = 'instance C'; Window = $hwndC },
+        [pscustomobject] @{ Name = 'instance D'; Window = $hwndD })) {
     if ($which.Window -ne [IntPtr]::Zero) {
         Drive $which.Window $ready ("{0}: Set myself as Ready" -f $which.Name)
     }
@@ -550,13 +585,15 @@ if ($null -ne $recorder) {
 
 Say ''
 Say '--- the instances ---'
-foreach ($which in @($a, $b, $c)) {
+foreach ($which in @($a, $b, $c, $d)) {
     if ($null -ne $which) { $which.Refresh() }
 }
 Say ("instance A pid {0} exited={1}; instance B pid {2} exited={3}" -f $a.Id, $a.HasExited, $b.Id, $b.HasExited)
+if ($null -ne $c) { Say ("instance C pid {0} exited={1}" -f $c.Id, $c.HasExited) }
+if ($null -ne $d) { Say ("instance D pid {0} exited={1}" -f $d.Id, $d.HasExited) }
 
 Say 'stopping the instances and the backend, so the transcript can be read'
-Stop-Rig @($a, $b, $c, $backend)
+Stop-Rig @($a, $b, $c, $d, $backend)
 Start-Sleep -Seconds 1
 
 Say ''
@@ -616,7 +653,7 @@ else {
 
 Say ''
 Say '--- what the stub handed to each game ---'
-foreach ($log in 'a.log', 'b.log', 'c.log') {
+foreach ($log in 'a.log', 'b.log', 'c.log', 'd.log') {
     $path = Join-Path $RigDir $log
     if (-not (Test-Path $path)) { continue }
     Say ("{0}:" -f $log)
@@ -627,7 +664,7 @@ foreach ($log in 'a.log', 'b.log', 'c.log') {
 }
 
 # The games' own words, which is where a game says why it is unhappy. Every line is
-# "<pid> <text>", and the two pids are the two instances this run started.
+# "<pid> <text>", and the pids are the instances this run started - one per -Clients.
 Say ''
 Say '--- what the games themselves said ---'
 $gameOutput = @()
@@ -636,7 +673,8 @@ Say ("debug output: {0} line(s) in {1}" -f $gameOutput.Count, $debugLog)
 foreach ($which in @(
         [pscustomobject] @{ Name = 'instance A'; Process = $a },
         [pscustomobject] @{ Name = 'instance B'; Process = $b },
-        [pscustomobject] @{ Name = 'instance C'; Process = $c })) {
+        [pscustomobject] @{ Name = 'instance C'; Process = $c },
+        [pscustomobject] @{ Name = 'instance D'; Process = $d })) {
     if ($null -eq $which.Process) { continue }
     $mine = $gameOutput | Where-Object { $_ -match "^$($which.Process.Id) " } |
         ForEach-Object { $_ -replace "^$($which.Process.Id) ", '' }
