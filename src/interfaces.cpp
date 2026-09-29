@@ -149,6 +149,56 @@ std::string commented(const std::string& text) {
     return out;
 }
 
+// One member of a structure, written from the field of that name - and one expression for the
+// two places that need it, because it is the same question twice: a field of this kind, into a
+// member of that declaration. A payload being filled (`value.m_x`, from a `fields` object) and
+// a structure a call fills in through the caller's pointer (`target->m_x`, from `value`) differ
+// only in the two expressions, which is why they are parameters.
+//
+// False means there was nothing to write: a member the wire cannot carry in one field, an
+// array, is left as the caller had it, and the caller is told so.
+bool push_member_write(const std::string& cpp, const std::string& member, const std::string& fields,
+                       const std::string& target, std::vector<std::string>& out) {
+    if (member.find('[') != std::string::npos) {
+        return false;
+    }
+    std::string read = "as_int64";
+    if (cpp == "bool") {
+        read = "as_bool";
+    } else if (cpp == "float" || cpp == "double") {
+        read = "as_double";
+    } else if (cpp.compare(0, 9, "std::uint") == 0 || cpp == "std::size_t") {
+        read = "as_uint64";
+    }
+    out.push_back("    if (const Json* field = steammock::json_member(" + fields + ", " +
+                  literal(member) + ")) {");
+    out.push_back("        " + target + member + " = static_cast<" + cpp + ">(steammock::" + read +
+                  "(*field));");
+    out.push_back("    }");
+    return true;
+}
+
+// The structures some call hands back through a pointer - the only ones the generated file can
+// *write*, and the reason a structure's trait has a store or does not. A structure is otherwise
+// a shape the wire has no answer for: it can be reported and defaulted, and not set.
+//
+// Which ones those are is the layouts' answer, not the declaration's: the layouts come from an
+// SDK, the SDK declares most of these as `void*` (see STRUCT_OUT in the importer for the ones
+// that are a single structure and not a list), and a parameter's kind is what says it.
+std::set<std::string> written_structures(const Interfaces& interfaces) {
+    std::set<std::string> names;
+    for (const InterfaceVersion& version : interfaces.versions()) {
+        for (const InterfaceSlot& slot : version.slots) {
+            for (const InterfaceParam& param : slot.params) {
+                if (param.out && param.kind == "struct") {
+                    names.insert(param.decl);
+                }
+            }
+        }
+    }
+    return names;
+}
+
 // The declaration type of a parameter, and of a return value.
 bool declared_type(const std::string& kind, const std::string& decl, std::string& out,
                    std::string& error, const std::string& where) {
@@ -692,6 +742,11 @@ bool Interfaces::load_file(const std::string& path, Interfaces& out, std::string
 //  the part that has to be exactly right.
 
 std::string render_api_interfaces(const Interfaces& interfaces) {
+    // Which structures this file has to be able to *write*, asked once: a call that fills one in
+    // through a pointer needs the trait below to have a store, and one that is only ever reported
+    // must not have one (an unused member write is a warning here, and a warning is an error).
+    const std::set<std::string> written = written_structures(interfaces);
+
     // -----------------------------------------------------------------------
     //  The pools.
     // -----------------------------------------------------------------------
@@ -837,6 +892,39 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
 
     out.push_back("#pragma pack(pop)");
     out.push_back("");
+
+    // The structures a call fills in through a pointer the caller owns. A payload is written
+    // into a buffer this stub borrowed; this is written into the game's own memory, which is why
+    // it is checked against null and why a member the wire cannot carry is left as the caller had
+    // it rather than zeroed. One function per structure rather than the work inline in the trait,
+    // because the trait is a template specialisation and this is where the type is complete.
+    for (const InterfaceStructure& structure : interfaces.structures()) {
+        if (written.find(structure.name) == written.end()) {
+            continue;
+        }
+        out.push_back("// " + structure.name + ", as a call fills it in: the fields the layouts");
+        out.push_back(
+            "// declare and nothing else - a member the wire cannot carry is left alone.");
+        out.push_back("void store_" + structure.name + "(" + structure.name +
+                      "* target, const Json& fields) noexcept {");
+        out.push_back("    if (target == nullptr) {");
+        out.push_back("        return;");
+        out.push_back("    }");
+        bool writes = false;
+        for (const auto& declared_member : structure.members) {
+            writes = push_member_write(declared_member.first, declared_member.second, "fields",
+                                       "target->", out) ||
+                     writes;
+        }
+        if (!writes) {
+            // A structure whose members are all arrays says nothing about itself, and an unused
+            // parameter is a warning this build treats as an error.
+            out.push_back("    (void)fields;");
+        }
+        out.push_back("}");
+        out.push_back("");
+    }
+
     out.push_back("}  // namespace");
     out.push_back("");
 
@@ -846,6 +934,14 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             "// wire carries it as, and a structure the wire cannot carry is a value the");
         out.push_back("// backend is told about but cannot set - so the call is reported and the");
         out.push_back("// caller gets a default, which is what a game sees with Steam absent.");
+        out.push_back("//");
+        out.push_back(
+            "// ...except a structure some call hands back through a pointer, which has a");
+        out.push_back(
+            "// store and is written field by field from the answer: the SDK declares most");
+        out.push_back("// of those as `void*`, so the layouts are what say it - see STRUCT_OUT in");
+        out.push_back("// tools/steamworks_sdk_import.py for the ones that are a single structure");
+        out.push_back("// and not a list of them.");
         out.push_back("");
         for (const InterfaceValueType& value : interfaces.value_types()) {
             out.push_back("template <> struct Kind<" + value.name + "> {");
@@ -879,6 +975,15 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("    static " + structure.name + " from(const Json&) noexcept {");
             out.push_back("        return " + structure.name + "{};");
             out.push_back("    }");
+            if (written.find(structure.name) != written.end()) {
+                // The structure a call fills in: the pointer is sent as the address it is, and
+                // the answer's fields are written through it - which is the whole of what makes
+                // an `out` structure different from one that is only ever reported.
+                out.push_back("    static void store(" + structure.name +
+                              "* target, const Json& value) noexcept {");
+                out.push_back("        store_" + structure.name + "(target, value);");
+                out.push_back("    }");
+            }
             out.push_back("    static " + structure.name + " fallback() noexcept { return " +
                           structure.name + "{}; }");
             out.push_back("};");
@@ -1098,25 +1203,9 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             // the clang job turns into an error.
             bool reads = false;
             for (const auto& declared_member : event.members) {
-                const std::string& cpp = declared_member.first;
-                const std::string& member = declared_member.second;
-                if (member.find('[') != std::string::npos) {
-                    continue;
-                }
-                std::string read = "as_int64";
-                if (cpp == "bool") {
-                    read = "as_bool";
-                } else if (cpp == "float" || cpp == "double") {
-                    read = "as_double";
-                } else if (cpp.compare(0, 9, "std::uint") == 0 || cpp == "std::size_t") {
-                    read = "as_uint64";
-                }
-                out.push_back("    if (const Json* field = steammock::json_member(fields, " +
-                              literal(member) + ")) {");
-                out.push_back("        value." + member + " = static_cast<" + cpp +
-                              ">(steammock::" + read + "(*field));");
-                out.push_back("    }");
-                reads = true;
+                reads = push_member_write(declared_member.first, declared_member.second, "fields",
+                                          "value.", out) ||
+                        reads;
             }
             if (!reads) {
                 out.push_back("    (void)fields;  // this payload carries nothing to read");

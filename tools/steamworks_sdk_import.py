@@ -141,6 +141,21 @@ BYTE_BUFFERS: Dict[Tuple[str, str, str], Tuple[str, str]] = {
     ("ISteamUser", "GetEncryptedAppTicket", "pTicket"): ("out_bytes", "cbMaxTicket"),
 }
 
+# The structures a call fills in through a pointer the caller owns, keyed the same way. A pointer
+# to a structure is otherwise a list: the count that sizes it is the caller's, and a shape the
+# wire has no answer for is what `row_type` says it is. Two of these are not lists but one
+# structure, and the declaration is no help in telling them apart - the SDK declares them `void *`
+# in the flat header and as the structure in the interface header, and a game reads through
+# whichever of the two its SDK offers. So the file carries the answer, and it is taken from the
+# call's own documentation: one entry, written back into the caller's own memory when the backend
+# answers with it.
+#
+# It is the layouts that a stub's struct write is generated from (src/interfaces.cpp: a structure
+# named here gets a `store`, and the one place a pointer is written *through* rather than read).
+SINGLE_STRUCTS: Dict[Tuple[str, str, str], str] = {
+    ("ISteamUserStats", "GetDownloadedLeaderboardEntry", "pLeaderboardEntry"): "LeaderboardEntry_t",
+}
+
 # The pack the layouts were measured at: a callback struct is read by a game at
 # eight, and so is anything nested in one. A pointer is eight bytes for the same
 # reason - the layouts describe the x64 ABI even where the game is 32-bit.
@@ -1195,6 +1210,22 @@ class Builder:
         if key in BYTE_BUFFERS:
             kind, length = BYTE_BUFFERS[key]
             return [name, kind, length]
+        if key in SINGLE_STRUCTS:
+            # One structure, written back through the pointer: the row names the structure, so
+            # the reader resolves it against the types the file declares and the generated stub
+            # knows how to fill it in. The structure has to be one the SDK declares, or this is a
+            # table entry that has gone stale - which is said out loud and then treated as the
+            # opaque pointer it would otherwise have been.
+            structure = SINGLE_STRUCTS[key]
+            aggregate = self.mapper.sdk.aggregates.get(structure)
+            if aggregate is None or aggregate.has_virtuals:
+                self.mapper.unmappable.append(
+                    "%s.%s: SINGLE_STRUCTS names '%s', which the SDK does not declare as a "
+                    "structure" % (where, name, structure)
+                )
+            else:
+                self.mapper.structures.setdefault(structure, aggregate)
+                return [name, structure, "out"]
         kind, flags = self.mapper.row_type(ty, "%s.%s" % (where, name))
         row = [name, kind]
         row.extend(flags)

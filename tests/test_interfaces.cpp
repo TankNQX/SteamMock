@@ -120,6 +120,15 @@ void test_rows() {
                       slot, error) &&
               slot.params.size() == 2u && slot.params[0].kind == "bytes" &&
               slot.params[0].length == "cb");
+    // A structure handed back through a pointer the caller owns. The SDK declares most of these
+    // as `void *` - steam_api_flat.h has no other way to spell "the caller's struct" - so the
+    // file is the only thing that can say it is one structure and which one it is. See
+    // SINGLE_STRUCTS in tools/steamworks_sdk_import.py and the store the generator writes for it.
+    check("a structure a call fills in reads as that structure",
+          reads_slots("[\"Get\", \"bool\", [[\"pEntry\", \"Motion_t\", \"out\"]]]", slot, error) &&
+              slot.params.size() == 1u && slot.params[0].kind == "struct" &&
+              slot.params[0].decl == "Motion_t" && slot.params[0].cpp == "Motion_t*" &&
+              slot.params[0].out);
 }
 
 void test_notes() {
@@ -182,6 +191,41 @@ void test_refusals() {
     check("a byte buffer whose length is not a parameter of the call",
           refuses("[\"Send\", \"void\", [[\"pv\", \"bytes\", \"cb\"], [\"cub\", \"int32\"]]]",
                   error));
+}
+
+// What the generator *writes* for a structure, which is the other half of the reading above and
+// the half no test has ever looked at directly: the file it renders is compared byte for byte
+// against the tree's own copy by `generated_files_are_current`, which says the generator agrees
+// with itself but not what it produced. A structure a call fills in has to come out with a way to
+// fill it - and one that is only ever reported must not, because a member write nobody reads is a
+// warning, and a warning is an error in this build.
+void test_what_is_written() {
+    std::printf("[:] what the generator writes for a structure\n");
+
+    steammock::Interfaces filled;
+    std::string error;
+    if (!reads(document("[\"Get\", \"bool\", [[\"pEntry\", \"Motion_t\", \"out\"]]]"), filled,
+               error)) {
+        check("the filling document reads", false);
+        return;
+    }
+    const std::string written = steammock::render_api_interfaces(filled);
+    check("a structure a call fills in is given a store to be filled by",
+          written.find("void store_Motion_t(") != std::string::npos);
+    check("  and it writes the members the layouts declare, by their kinds",
+          written.find("target->x = static_cast<float>(steammock::as_double(*field));") !=
+              std::string::npos);
+    check("  and the trait for it calls that store",
+          written.find("store_Motion_t(target, value);") != std::string::npos);
+
+    steammock::Interfaces reported;
+    if (!reads(document("[\"Get\", \"bool\"]"), reported, error)) {
+        check("the reporting document reads", false);
+        return;
+    }
+    const std::string plain = steammock::render_api_interfaces(reported);
+    check("a structure nothing fills in gets no store",
+          plain.find("store_Motion_t") == std::string::npos);
 }
 
 void test_document() {
@@ -266,6 +310,7 @@ int main() {
         test_rows();
         test_notes();
         test_refusals();
+        test_what_is_written();
         test_document();
 
         if (g_failures == 0) {
