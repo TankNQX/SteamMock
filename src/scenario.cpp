@@ -229,7 +229,16 @@ std::optional<Profile> Dispatcher::profile_for(const Json& hello, std::string* r
     if (const Profile* profile = find_profile(_default_profile)) {
         return *profile;
     }
-    return Profile{};
+    // A default the scenario does not have is the same silence one step further along: it
+    // used to answer with a default-constructed Profile, so a game ran as a blank identity -
+    // the app id nobody set, the persona nobody chose - while every run still looked
+    // plausible. That is the failure this whole function refuses for a name asked for by
+    // name and for a rule that named one, and there is no reason for the third way in to be
+    // the one that stays quiet.
+    if (refused != nullptr) {
+        *refused = _default_profile;
+    }
+    return std::nullopt;
 }
 
 Answer Dispatcher::answer(Session& session, const std::string& name, const Json& args) const {
@@ -264,8 +273,16 @@ Answer Dispatcher::answer(Session& session, const std::string& name, const Json&
                     continue;
                 }
                 Json event = entry;
-                if (json_member(event, "call") == nullptr && json_member(event, "id") == nullptr &&
-                    answer.ret.is_number()) {
+                if (json_member(event, "call") == nullptr && json_member(event, "id") == nullptr) {
+                    if (!answer.ret.is_number()) {
+                        // Nothing to route this by. A `then` entry is how a scenario says
+                        // "and now complete the call I just returned" - so an entry with
+                        // no call, no id and a return value that is not a handle has no
+                        // one to complete, and the payload would be delivered to whoever
+                        // registered for the event's own default id: some object that was
+                        // waiting for something else, or nobody at all. It is not sent.
+                        continue;
+                    }
                     event["call"] = answer.ret;
                 }
                 events.push_back(std::move(event));

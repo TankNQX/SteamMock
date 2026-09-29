@@ -227,7 +227,11 @@ Json session_request_payload(std::uint64_t remote) {
 // what a game server does is hand it back to be approved. So this is short, clearly fake
 // and the same every run, and the approval below is "yes" for anyone who asks.
 constexpr const char* kMockTicketHex = "6d6f636b2d7469636b65742d31";  // "mock-ticket-1"
-constexpr std::int64_t kMockTicketBytes = 14;
+// Counted from the literal rather than written down beside it, because it was written
+// down beside it and said 14: whoever took the ticket copied a length that ran one byte
+// past the data they were given. Two hex digits are one byte, so this cannot drift again.
+constexpr std::int64_t kMockTicketBytes =
+    static_cast<std::int64_t>((sizeof("6d6f636b2d7469636b65742d31") - 1u) / 2u);
 constexpr std::int64_t kMockAuthTicketHandle = 1;
 
 // The response a game server waits for between a client's connection attempt and letting it
@@ -329,6 +333,10 @@ std::vector<std::string> LobbyWorld::handled_calls() {
         kSetLobbyGameServer,
         kGetLobbyGameServer,
         kGetFriendPersonaName,
+        // Listened to without being answered - see answer() - and it belongs in this list
+        // all the same: this is the surface a test proves the world knows, and a call the
+        // world reads the port out of is one it handles.
+        kGameServerInit,
         kGameServerGetSteamID,
         kSendP2PPacket,
         kIsP2PPacketAvailable,
@@ -653,6 +661,15 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             return false;
         }
         lobby->set_data(as_string_member(args, "pchKey"), as_string_member(args, "pchValue"));
+        // Everyone in the room hears about it, the member who set it included, which is
+        // what the real API does and what `notify_member_change` already does for a room's
+        // membership. Without this the others kept whatever they had read the last time
+        // something else made them look, which for a lobby that never changes hands is
+        // never - the data a game publishes about itself reaches nobody. The member field
+        // is zero, because this is the room's data rather than any one member's.
+        for (const LobbyMember& other : lobby->members) {
+            notifications.emplace_back(other.steam_id, data_update_payload(lobby->id, 0));
+        }
         out = from_lobby(Json(true));
         return true;
     }
@@ -702,6 +719,14 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             return false;
         }
         member->set(as_string_member(args, "pchKey"), as_string_member(args, "pchValue"));
+        // The room hears about it, as it does for a room's own data - and the member field
+        // names whose data changed, because that is the difference between the two
+        // callbacks: LobbyDataUpdate_t says which member's entry moved, or zero for the
+        // room's.
+        for (const LobbyMember& other : lobby->members) {
+            notifications.emplace_back(other.steam_id,
+                                       data_update_payload(lobby->id, member->steam_id));
+        }
         out = from_lobby(Json(true));
         return true;
     }

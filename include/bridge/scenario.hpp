@@ -50,8 +50,15 @@ struct MatchRule {
 class Dispatcher {
 public:
     // A scenario with no name gives a dispatcher that knows only `default`, which
-    // is what every call then falls back to.
-    Dispatcher() = default;
+    // is what every call then falls back to. That is what the comment always said and
+    // what the code did not do: `= default` left the profile list empty, and `profile_for`
+    // answered out of a default-constructed Profile at the last moment instead. The blank
+    // identity was real, but it arrived by a route that could not be told apart from a
+    // scenario naming a `default_profile` it does not have - which is a typo, and is
+    // refused now. Building the default the way an empty scenario is built keeps the two
+    // meanings apart: no scenario at all has a default, and a scenario that names one it
+    // does not have does not.
+    Dispatcher() { configure(Json()); }
     explicit Dispatcher(const Json& scenario) { configure(scenario); }
 
     // Reads a scenario file. On failure `error` says what went wrong and the

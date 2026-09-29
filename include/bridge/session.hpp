@@ -53,8 +53,11 @@ public:
 
     static Profile from_json(const std::string& profile_name, const Json& data);
 
-    std::int64_t* find_stat(const std::string& key) noexcept;
-    const std::int64_t* find_stat(const std::string& key) const noexcept;
+    // By value, with a bool for "the scenario has it": this used to hand back a pointer
+    // into `stats`, and `set_stat` appends to that vector - so a pointer held across a
+    // write dangles. Reading is a value now and every write goes through `set_stat`, which
+    // is what leaves no pointer to keep.
+    bool find_stat(const std::string& key, std::int64_t& out) const noexcept;
     void set_stat(const std::string& key, std::int64_t value);
 
     int achievement_index(const std::string& achievement_name) const noexcept;

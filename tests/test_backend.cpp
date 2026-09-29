@@ -391,6 +391,21 @@ void test_scenarios() {
     check("a rule naming a profile the scenario does not have is refused, not replaced",
           !typo.profile_for(game, &rule_named_it).has_value() && rule_named_it == "typo");
 
+    // The third way in, and the last one that was still quiet: a scenario whose own
+    // `default_profile` names a profile it does not have. Every game that fell through to
+    // the default used to run as a default-constructed Profile - app id 0, persona
+    // "DebugPlayer", a blank identity that looks like a working run.
+    Json bad_default;
+    check("the bad-default scenario parses",
+          steammock::parse("{\"profiles\":{\"other\":{\"app_id\":2}},"
+                           "\"default_profile\":\"other_typo\"}",
+                           bad_default));
+    const Dispatcher stranded(bad_default);
+    std::string default_named_it;
+    check("a default profile the scenario does not have is refused, not replaced",
+          !stranded.profile_for(game, &default_named_it).has_value() &&
+              default_named_it == "other_typo");
+
     // A rule that names no profile at all is not that: saying nothing is a request for the
     // default, and only a name the scenario lacks is a mistake.
     Json ruleless_document;
@@ -426,8 +441,10 @@ void test_scenarios() {
           profile.scripted_for("SteamAPI_Init") != nullptr &&
               steammock::as_bool(
                   *steammock::json_member(*profile.scripted_for("SteamAPI_Init"), "ret")));
-    check("the example seeds a stat",
-          profile.find_stat("Deaths") != nullptr && *profile.find_stat("Deaths") == 0);
+    check("the example seeds a stat", [&profile] {
+        std::int64_t deaths = -1;
+        return profile.find_stat("Deaths", deaths) && deaths == 0;
+    }());
     check("the example names both games", loaded.profile_names().size() == 2u);
     check("the example carries match rules", loaded.match_rules().size() == 2u);
 

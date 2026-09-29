@@ -18,6 +18,17 @@ namespace {
 // Not `noexcept`: reading a number out of a string allocates, and a `noexcept` here
 // would turn a failed allocation into `std::terminate` instead of telling the caller.
 std::int64_t to_int64(const Json& value, std::int64_t fallback) {
+    if (value.is_number_unsigned()) {
+        // An unsigned JSON integer at or above 2^63 has no int64 to be. It used to go
+        // through as_int64, which for a value a JSON reader kept as unsigned is either
+        // implementation-defined or a wrap into a negative number - and a negative app id
+        // is not a reading of it. Everything else out of range here falls back, so this
+        // does too.
+        const std::uint64_t number = as_uint64(value, 0u);
+        return number > static_cast<std::uint64_t>(9223372036854775807ll)
+                   ? fallback
+                   : static_cast<std::int64_t>(number);
+    }
     if (value.is_number()) {
         return as_int64(value);
     }
@@ -69,6 +80,32 @@ std::string to_text(const Json& value, const std::string& fallback) {
         return static_cast<double>(as_int64(value)) == as_double(value)
                    ? std::to_string(as_int64(value))
                    : fallback;
+    }
+    return fallback;
+}
+
+// A scenario's own boolean, read the way the other fields here are read: a value can
+// arrive as the "wrong" JSON kind, so true/false, 1/0 and the words for them all count.
+// `achieved` was the one field handed straight to as_bool, which answers false for
+// anything that is not a boolean or a number - so an achievement the scenario wrote as
+// "achieved": "true" was silently read as not earned, and nothing said so.
+bool to_bool(const Json& value, bool fallback) {
+    if (value.is_boolean()) {
+        return as_bool(value);
+    }
+    if (value.is_number()) {
+        return as_int64(value) != 0;
+    }
+    if (value.is_string()) {
+        const std::string text = as_string(value);
+        if (text == "true" || text == "yes" || text == "on") {
+            return true;
+        }
+        if (text == "false" || text == "no" || text == "off") {
+            return false;
+        }
+        // ...or a number spelled as text, which is what the tolerant readers below are for.
+        return to_int64(value, fallback ? 1 : 0) != 0;
     }
     return fallback;
 }
@@ -146,7 +183,16 @@ Answer h_ui_language(Session& session, const Json&) {
 
 Answer h_seconds_since_active(Session& session, const Json&) {
     const auto elapsed = std::chrono::system_clock::now() - session.started();
-    const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+    if (seconds < 0) {
+        // The session's start is wall-clock, because that is what it also means to
+        // `sessions()` - connected_at_unix_ms is a system-clock reading, and it is the one
+        // thing here that has to be. Wall-clock is not monotonic, so an NTP correction or
+        // a clock change can put the start in the future and this difference negative,
+        // which is a game told it has been active for minus four seconds. Clamped rather
+        // than moved to a steady clock, which would make that snapshot meaningless.
+        seconds = 0;
+    }
     return from_state(Json(static_cast<std::int64_t>(seconds)));
 }
 
@@ -164,14 +210,14 @@ Answer h_build_id(Session& session, const Json&) {
 Answer h_true(Session&, const Json&) { return from_state(Json(true)); }
 
 Answer h_get_stat(Session& session, const Json& args) {
-    const std::int64_t* value = session.profile().find_stat(string_member(args, "pchName"));
-    if (value == nullptr) {
+    std::int64_t value = 0;
+    if (!session.profile().find_stat(string_member(args, "pchName"), value)) {
         // Steam reports failure for a name it does not know, and leaves the
         // caller's variable alone - which is exactly what we do here too.
         return from_state(Json(false));
     }
     Json out = Json::object();
-    out["pData"] = Json(*value);
+    out["pData"] = Json(value);
     return from_state_out(Json(true), std::move(out));
 }
 
@@ -214,7 +260,16 @@ Answer h_num_achievements(Session& session, const Json&) {
 
 Answer h_achievement_name(Session& session, const Json& args) {
     const Json* requested = json_member(args, "iAchievement");
-    const std::int64_t index = requested != nullptr ? to_int64(*requested, 0) : 0;
+    if (requested == nullptr) {
+        // A call that does not say which achievement is a call with no index, and Steam
+        // fails it and leaves the caller's buffer as it found it. This used to read the
+        // missing field as index 0, so a game that asked without saying which was handed
+        // the first achievement's name as if it had named it.
+        return from_state(Json(""));
+    }
+    // Anything the field says that is not a number is not an index either, so it fails the
+    // range check below the same way an out-of-range one does.
+    const std::int64_t index = to_int64(*requested, -1);
     if (index < 0 || index >= static_cast<std::int64_t>(session.profile().achievements.size())) {
         return from_state(Json(""));
     }
@@ -311,7 +366,7 @@ Profile Profile::from_json(const std::string& profile_name, const Json& data) {
                 achievement.name = to_text(*entry_name, std::string());
             }
             if (const Json* achieved = json_member(entry, "achieved")) {
-                achievement.achieved = as_bool(*achieved);
+                achievement.achieved = to_bool(*achieved, false);
             }
             profile.achievements.push_back(std::move(achievement));
         }
@@ -326,28 +381,25 @@ Profile Profile::from_json(const std::string& profile_name, const Json& data) {
     return profile;
 }
 
-std::int64_t* Profile::find_stat(const std::string& key) noexcept {
-    for (auto& entry : stats) {
-        if (entry.first == key) {
-            return &entry.second;
-        }
-    }
-    return nullptr;
-}
-
-const std::int64_t* Profile::find_stat(const std::string& key) const noexcept {
+bool Profile::find_stat(const std::string& key, std::int64_t& out) const noexcept {
     for (const auto& entry : stats) {
         if (entry.first == key) {
-            return &entry.second;
+            out = entry.second;
+            return true;
         }
     }
-    return nullptr;
+    return false;
 }
 
 void Profile::set_stat(const std::string& key, std::int64_t value) {
-    if (std::int64_t* existing = find_stat(key)) {
-        *existing = value;
-        return;
+    // The lookup and the write are the same loop rather than a call to find_stat() and a
+    // write through what it returned: `emplace_back` below can reallocate `stats`, and a
+    // pointer into it that outlived the lookup is exactly what used to be handed out here.
+    for (auto& entry : stats) {
+        if (entry.first == key) {
+            entry.second = value;
+            return;
+        }
     }
     stats.emplace_back(key, value);
 }

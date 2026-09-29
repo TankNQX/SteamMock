@@ -37,6 +37,11 @@ constexpr const char* kSideClient = "client";
 // or null, means "no out-parameters", and the protocol leaves the key out rather
 // than sending an empty object for a reader to ignore. The transcript applies
 // the same rule, so the two never disagree about whether a call had any.
+//
+// An `out` that is present and is not an object at all is the third case, and it is
+// not one either end writes: it is dropped - the reply cannot carry what it does not
+// know the shape of - and said out loud, because an upstream mistake that vanishes
+// without a word is the kind that takes a day to find.
 bool carries_out(const Json& out) noexcept;
 
 // The answer to one call. `answered == false` is the whole point of the
