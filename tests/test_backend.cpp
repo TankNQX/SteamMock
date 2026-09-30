@@ -324,6 +324,95 @@ void test_friends() {
           !typo.has_profile("default") && !typo.profile_for(hello).has_value());
 }
 
+// An invite goes from a member of a room to a friend who is not in it, and the friend is told.
+// The payload names the room and the person who asked, and the three ways of asking for an invite
+// that goes nowhere are answered false rather than half-done.
+void test_invites() {
+    std::printf("[:] invites\n");
+
+    auto profile_with_friend = [](const char* persona, std::uint64_t steam_id,
+                                  std::uint64_t friend_id) {
+        const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
+                                 std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
+                                 "\",\"friends\":[{\"steam_id\":" + std::to_string(friend_id) +
+                                 ",\"persona_name\":\"Friend\"}]}";
+        Json data;
+        check("the invite fixture parses", steammock::parse(text, data));
+        return Profile::from_json(persona, data);
+    };
+
+    constexpr std::uint64_t kHostId = 76561198000000001ull;
+    constexpr std::uint64_t kGuestId = 76561198000000002ull;
+    constexpr std::uint64_t kStrangerId = 76561198000000003ull;
+
+    Json hello = Json::object();
+    hello["exe"] = Json("game.exe");
+    hello["pid"] = Json(1234);
+    Session host("host", hello, profile_with_friend("Host", kHostId, kGuestId));
+    Session guest("guest", hello, profile_with_friend("Guest", kGuestId, kHostId));
+
+    LobbyWorld world;
+    std::vector<std::pair<std::uint64_t, Json>> told;
+    auto ask = [&](Session& who, const char* call, const Json& args) {
+        Answer answer;
+        told.clear();
+        check((std::string("the world answers ") + call).c_str(),
+              world.answer(who, call, args, answer, told));
+        return answer;
+    };
+    auto invitation = [](std::uint64_t room, std::uint64_t invitee) {
+        Json args = Json::object();
+        args["steamIDLobby"] = Json(static_cast<std::int64_t>(room));
+        args["steamIDInvitee"] = Json(static_cast<std::int64_t>(invitee));
+        return args;
+    };
+
+    Json create = Json::object();
+    create["eLobbyType"] = Json(2);
+    create["cMaxMembers"] = Json(4);
+    ask(host, "SteamAPI_ISteamMatchmaking_CreateLobby", create);
+    Json first_lobby = Json::object();
+    first_lobby["iLobby"] = Json(0);
+    const std::uint64_t room = steammock::as_uint64(
+        ask(host, "SteamAPI_ISteamMatchmaking_GetLobbyByIndex", first_lobby).ret);
+    check("the host has a room to invite into", room != 0);
+
+    // A friend and only a friend hears about it. Spacewar never calls this, because its own
+    // invite path is the overlay dialog, so what is tested here is the API's own shape.
+    const Answer invited =
+        ask(host, "SteamAPI_ISteamMatchmaking_InviteUserToLobby", invitation(room, kGuestId));
+    check("a friend is invited and the call says so", steammock::as_bool(invited.ret));
+    check("and the friend is the one told", told.size() == 1u && told[0].first == kGuestId);
+    check("the payload is a LobbyInvite_t",
+          !told.empty() && steammock::as_string(*steammock::json_member(told[0].second, "event")) ==
+                               "LobbyInvite_t");
+    const Json* fields = told.empty() ? nullptr : steammock::json_member(told[0].second, "in");
+    check("naming the room and the person who asked",
+          fields != nullptr &&
+              steammock::as_uint64(*steammock::json_member(*fields, "m_ulSteamIDLobby")) == room &&
+              steammock::as_uint64(*steammock::json_member(*fields, "m_ulSteamIDUser")) == kHostId);
+
+    // Nobody else hears about it: a game standing nowhere has no room to invite into and nothing
+    // to attribute the invite to, and a game has no claim on somebody it is not friends with.
+    const Answer standing_nowhere =
+        ask(guest, "SteamAPI_ISteamMatchmaking_InviteUserToLobby", invitation(room, kHostId));
+    check("a game that is not in the room cannot invite to it",
+          !steammock::as_bool(standing_nowhere.ret) && told.empty());
+
+    const Answer stranger =
+        ask(host, "SteamAPI_ISteamMatchmaking_InviteUserToLobby", invitation(room, kStrangerId));
+    check("somebody who is not a friend cannot be invited",
+          !steammock::as_bool(stranger.ret) && told.empty());
+
+    Json join = Json::object();
+    join["steamIDLobby"] = Json(static_cast<std::int64_t>(room));
+    ask(guest, "SteamAPI_ISteamMatchmaking_JoinLobby", join);
+    const Answer already_in =
+        ask(host, "SteamAPI_ISteamMatchmaking_InviteUserToLobby", invitation(room, kGuestId));
+    check("and a member is not invited to the room it is standing in",
+          !steammock::as_bool(already_in.ret) && told.empty());
+}
+
 void test_stats() {
     std::printf("[:] stats\n");
 
@@ -1601,6 +1690,7 @@ int run() {
     test_relabelling();
     test_identity();
     test_friends();
+    test_invites();
     test_stats();
     test_achievements();
     test_describe();

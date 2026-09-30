@@ -123,6 +123,22 @@ Answer from_lobby_calling(Json ret, Json event) {
     return answer;
 }
 
+// What a room's member sends a friend who is not in it. Steam's overlay is how a game normally
+// invites, and this is the payload either way: what the friend is told is who asked and which
+// room, and `m_ulGameID` is the game the room belongs to, which here is the app id - a CGameID
+// for a room is a shape this harness does not mint, and no game in the SDK reads the field.
+Json lobby_invite_payload(std::uint64_t inviter, std::uint64_t lobby, std::int64_t game) {
+    Json fields = Json::object();
+    fields["m_ulSteamIDUser"] = id_value(inviter);
+    fields["m_ulSteamIDLobby"] = id_value(lobby);
+    fields["m_ulGameID"] = Json(static_cast<std::uint64_t>(game));
+
+    Json event = Json::object();
+    event["event"] = Json("LobbyInvite_t");
+    event["in"] = std::move(fields);
+    return event;
+}
+
 Json lobby_created_payload(std::uint64_t lobby) {
     Json fields = Json::object();
     fields["m_eResult"] = Json(1);  // k_EResultOK
@@ -285,6 +301,7 @@ constexpr const char* kRequestLobbyData = "SteamAPI_ISteamMatchmaking_RequestLob
 constexpr const char* kSetLobbyGameServer = "SteamAPI_ISteamMatchmaking_SetLobbyGameServer";
 constexpr const char* kGetLobbyGameServer = "SteamAPI_ISteamMatchmaking_GetLobbyGameServer";
 constexpr const char* kGetFriendPersonaName = "SteamAPI_ISteamFriends_GetFriendPersonaName";
+constexpr const char* kInviteUserToLobby = "SteamAPI_ISteamMatchmaking_InviteUserToLobby";
 constexpr const char* kGameServerInit = "SteamInternal_GameServer_Init";
 constexpr const char* kGameServerGetSteamID = "SteamAPI_ISteamGameServer_GetSteamID";
 constexpr const char* kSendP2PPacket = "SteamAPI_ISteamNetworking_SendP2PPacket";
@@ -333,6 +350,7 @@ std::vector<std::string> LobbyWorld::handled_calls() {
         kSetLobbyGameServer,
         kGetLobbyGameServer,
         kGetFriendPersonaName,
+        kInviteUserToLobby,
         // Listened to without being answered - see answer() - and it belongs in this list
         // all the same: this is the surface a test proves the world knows, and a call the
         // world reads the port out of is one it handles.
@@ -860,6 +878,36 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         Answer answer = from_lobby(Json(true));
         answer.out = std::move(values);
         out = std::move(answer);
+        return true;
+    }
+
+    if (call == kInviteUserToLobby) {
+        // An invite comes from inside the room it is for: a call from a game standing nowhere
+        // has no room to name and no member to attribute the invite to, so it is declined the
+        // way every other call about a room this game is not in is.
+        Lobby* lobby = find_lobby(id_member(args, "steamIDLobby"));
+        const std::uint64_t invitee = id_member(args, "steamIDInvitee");
+        if (lobby == nullptr || lobby->find_member(me) == nullptr) {
+            out = from_lobby(Json(false));
+            return true;
+        }
+        // A friend is the only thing an invite can be sent to, which is Steam's own rule and
+        // the one that gives the friends list a reason to exist. Anything else is a game asking
+        // to invite somebody it has no claim on.
+        std::string friend_name;
+        if (invitee == 0 || !session.profile().find_friend(invitee, friend_name)) {
+            out = from_lobby(Json(false));
+            return true;
+        }
+        if (lobby->find_member(invitee) != nullptr) {
+            // Already in the room: there is nothing left to accept, and Steam treats an invite
+            // to somebody standing there as one that went nowhere.
+            out = from_lobby(Json(false));
+            return true;
+        }
+        notifications.emplace_back(invitee,
+                                   lobby_invite_payload(me, lobby->id, session.profile().app_id));
+        out = from_lobby(Json(true));
         return true;
     }
 
