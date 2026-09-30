@@ -3,8 +3,8 @@
 [![CI](https://github.com/TankNQX/SteamMock/actions/workflows/ci.yml/badge.svg)](https://github.com/TankNQX/SteamMock/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) ![Platform: Windows x64 and Win32](https://img.shields.io/badge/platform-Windows%20x64%20%2B%20Win32-0078d4) ![C++17](https://img.shields.io/badge/C%2B%2B-17-00599c) ![Steam client: not required](https://img.shields.io/badge/Steam%20client-not%20required-brightgreen) ![Steamworks SDK: required](https://img.shields.io/badge/Steamworks%20SDK-required-blue)
 
 Born out of the constraints of multiplayer development and the need for a second Steam account and a
-second PC to test the UI, invites most of all, this is a small Steam backend mock that speeds up
-development.
+second PC to test the UI/UX, invites most of all, this is a small Steam backend mock that speeds up
+that development.
 
 <img alt="The live view" src="docs/images/live-view.png" width="800">
 
