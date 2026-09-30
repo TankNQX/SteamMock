@@ -86,7 +86,29 @@ the tests, and what to check [when nothing appears](docs/development.md#when-not
   distribute.
 * **Not a Steam emulator.** It never talks to Valve, so anything that needs the real service is
   scripted call by call.
-* **Not Valve's code or data.** No SDK, header, library or interface layout is in this repository, and
-  nothing generated from them is committed.
+* **Not Valve's code or data.** No Valve SDK, header, library or interface layout is in this
+  repository, and nothing generated from them is committed.
 
 Licensed under MIT, see `LICENSE`.
+
+## Credits
+
+* **The live view.** [GLFW](https://github.com/glfw/glfw) 3.5.1, zlib/libpng, and
+  [Dear ImGui](https://github.com/ocornut/imgui) 1.92.9, MIT. Both are git submodules under
+  `external/`, and neither is needed for the stub or the backend.
+* **The wire.** [nlohmann/json](https://github.com/nlohmann/json) 3.12.0, MIT, is the format the
+  protocol, the scenarios and the transcripts are written in. Also under `external/`.
+* **The importer.** [cxxheaderparser](https://github.com/robotpy/cxxheaderparser) 2.0.0 and
+  [pcpp](https://github.com/ned14/pcpp) 1.30, both BSD, read the SDK headers. They are the only
+  Python anything here needs, and they are in `tools/requirements.txt`.
+* **The API and the game.** What this answers is Valve's interface, described by their
+  [Steamworks SDK](https://partner.steamgames.com/doc/sdk), and the game it is proved against is
+  Valve's own Spacewar, shipped in that SDK as `steamworksexample`.
+
+An agent wrote this code under human direction and review.
+[Reasonix](https://github.com/esengine/DeepSeek-Reasonix), MIT, a coding agent for the terminal, wrote
+it against DeepSeek's [deepseek-flash](https://api-docs.deepseek.com/) model. The review that closed
+59 findings came from [Open Code Review](https://github.com/alibaba/open-code-review), Apache-2.0,
+Alibaba's `ocr` tool, which `codereview.bat` in this repository runs over `src/`. The prose in these
+docs follows the `unslop` and `technical-writing` rules of the
+[pstack skills](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan, MIT.
