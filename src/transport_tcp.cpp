@@ -132,7 +132,7 @@ void TcpTransport::close_locked() noexcept {
 
 void TcpTransport::close() noexcept {
     try {
-        const std::lock_guard<std::mutex> lock(_handle_mutex);
+        const std::scoped_lock lock(_handle_mutex);
         close_locked();
         // NOLINTNEXTLINE(bugprone-empty-catch) - a game must not see a mutex failure
     } catch (...) {
@@ -143,7 +143,7 @@ void TcpTransport::close() noexcept {
 
 bool TcpTransport::is_connected() const noexcept {
     try {
-        const std::lock_guard<std::mutex> lock(_handle_mutex);
+        const std::scoped_lock lock(_handle_mutex);
         return is_open(_socket);
     } catch (...) {
         return false;
@@ -152,7 +152,7 @@ bool TcpTransport::is_connected() const noexcept {
 
 void TcpTransport::set_timeout_ms(unsigned timeout_ms) noexcept {
     try {
-        const std::lock_guard<std::mutex> lock(_handle_mutex);
+        const std::scoped_lock lock(_handle_mutex);
         _timeout_ms = timeout_ms;
         // NOLINTNEXTLINE(bugprone-empty-catch) - a game must not see a mutex failure
     } catch (...) {
@@ -162,7 +162,7 @@ void TcpTransport::set_timeout_ms(unsigned timeout_ms) noexcept {
 }
 
 bool TcpTransport::connect(std::string_view host, std::uint16_t port) {
-    const std::lock_guard<std::mutex> lock(_handle_mutex);
+    const std::scoped_lock lock(_handle_mutex);
     close_locked();
     if (!ensure_winsock_started()) {
         log_write(LogLevel::error, "cannot connect: the socket layer never started");
@@ -219,7 +219,7 @@ bool TcpTransport::exchange(const std::string& request, std::string& response) {
     // Held for the whole exchange, so the handle this is using cannot be closed and
     // reassigned under it by another thread - `close` waits here for as long as the
     // round trip takes, which is bounded by the timeout the socket was given.
-    const std::lock_guard<std::mutex> lock(_handle_mutex);
+    const std::scoped_lock lock(_handle_mutex);
     if (!is_open(_socket)) {
         return false;
     }

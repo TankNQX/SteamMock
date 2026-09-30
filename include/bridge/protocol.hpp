@@ -19,7 +19,7 @@ namespace steammock {
 
 // Bumped when a message changes shape in a way an older peer would misread.
 // Every message carries it.
-constexpr int kProtocolVersion = 1;
+inline constexpr int kProtocolVersion = 1;
 
 // Which end of a process a payload belongs to, when both ends of one process would have a
 // claim on it. A process that hosts is a customer and a game server at once, and each of
@@ -30,8 +30,8 @@ constexpr int kProtocolVersion = 1;
 // the same fields. So it says it in the event's "side", and a payload without one is the
 // customer's: that is every payload but these, since a room, a packet and a connection are
 // all a customer's business.
-constexpr const char* kSideGameServer = "game server";
-constexpr const char* kSideClient = "client";
+inline constexpr const char* kSideGameServer = "game server";
+inline constexpr const char* kSideClient = "client";
 
 // An `out` object is only carried when it actually says something: an empty one,
 // or null, means "no out-parameters", and the protocol leaves the key out rather

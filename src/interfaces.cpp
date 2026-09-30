@@ -405,9 +405,9 @@ bool resolve_type(const std::string& name,
         decl.clear();
         return true;
     }
-    for (const std::pair<std::string, std::string>& entry : named) {
-        if (entry.first == name) {
-            kind = entry.second;  // "value" or "struct"
+    for (const auto& [declared_name, declared_kind] : named) {
+        if (declared_name == name) {
+            kind = declared_kind;  // "value" or "struct"
             decl = name;
             return true;
         }
@@ -985,21 +985,25 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("// " + structure.name + ", as a call fills it in: the fields the layouts");
         out.push_back(
             "// declare and nothing else - a member the wire cannot carry is left alone.");
-        out.push_back("void store_" + structure.name + "(" + structure.name +
-                      "* target, const Json& fields) noexcept {");
-        out.push_back("    if (target == nullptr) {");
-        out.push_back("        return;");
-        out.push_back("    }");
+        // The body is written first so the signature can leave the parameter unnamed when
+        // nothing in it reads the object: a structure whose members are all arrays says nothing
+        // about itself, and an unused parameter is a warning this build treats as an error. A
+        // commented-out name is how a parameter that exists for the signature's sake says so.
+        std::vector<std::string> body;
         bool writes = false;
         for (const auto& declared_member : structure.members) {
             writes = push_member_write(declared_member.first, declared_member.second, "fields",
-                                       "target->", out) ||
+                                       "target->", body) ||
                      writes;
         }
-        if (!writes) {
-            // A structure whose members are all arrays says nothing about itself, and an unused
-            // parameter is a warning this build treats as an error.
-            out.push_back("    (void)fields;");
+        out.push_back("void store_" + structure.name + "(" + structure.name +
+                      "* target, const Json& " + (writes ? "fields" : "/*fields*/") +
+                      ") noexcept {");
+        out.push_back("    if (target == nullptr) {");
+        out.push_back("        return;");
+        out.push_back("    }");
+        for (const std::string& line : body) {
+            out.push_back(line);
         }
         out.push_back("}");
         out.push_back("");
@@ -1267,22 +1271,21 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("");
 
         for (const InterfaceEvent& event : interfaces.events()) {
-            out.push_back("void fill_" + event.name +
-                          "(const Json& fields, void* buffer) noexcept {");
-            out.push_back("    " + event.name + " value{};");
-            // A payload with nothing in it is a real shape - a notification the SDK
-            // sends to say something happened - and so is one whose members are all
-            // arrays, which no single field of the wire carries: either way nothing
-            // is read out of the object, and a parameter nobody reads is a warning
-            // the clang job turns into an error.
+            // The payload is written first for the same reason a structure's body is: a
+            // notification with no member of its own reads nothing, and the signature is what
+            // has to say so. The memcpy that hands the object over stays last either way.
+            std::vector<std::string> body;
             bool reads = false;
             for (const auto& declared_member : event.members) {
                 reads = push_member_write(declared_member.first, declared_member.second, "fields",
-                                          "value.", out) ||
+                                          "value.", body) ||
                         reads;
             }
-            if (!reads) {
-                out.push_back("    (void)fields;  // this payload carries nothing to read");
+            out.push_back("void fill_" + event.name + "(const Json& " +
+                          (reads ? "fields" : "/*fields*/") + ", void* buffer) noexcept {");
+            out.push_back("    " + event.name + " value{};");
+            for (const std::string& line : body) {
+                out.push_back(line);
             }
             out.push_back("    std::memcpy(buffer, &value, sizeof(value));");
             out.push_back("}");

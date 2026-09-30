@@ -221,7 +221,7 @@ private:
         // The server logs from its own threads, so the sink has to be safe to
         // call from any of them.
         options.log = [this](LogLevel, const std::string& message) {
-            std::lock_guard<std::mutex> lock(_log_mutex);
+            std::scoped_lock lock(_log_mutex);
             _log.push_back(message);
             if (_log.size() > kMaxLogLines) {
                 _log.erase(_log.begin(),
@@ -582,12 +582,12 @@ private:
             ImGui::TableSetupColumn("stat");
             ImGui::TableSetupColumn("value");
             ImGui::TableHeadersRow();
-            for (const auto& stat : game->stats) {
+            for (const auto& [stat_name, stat_value] : game->stats) {
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
-                ImGui::TextUnformatted(stat.first.c_str());
+                ImGui::TextUnformatted(stat_name.c_str());
                 ImGui::TableNextColumn();
-                ImGui::Text("%lld", static_cast<long long>(stat.second));
+                ImGui::Text("%lld", static_cast<long long>(stat_value));
             }
             ImGui::EndTable();
         }
@@ -614,7 +614,7 @@ private:
         // never wait on the window's drawing.
         std::vector<std::string> lines;
         {
-            std::lock_guard<std::mutex> lock(_log_mutex);
+            std::scoped_lock lock(_log_mutex);
             lines = _log;
         }
         for (const std::string& line : lines) {

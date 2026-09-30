@@ -1,6 +1,7 @@
 #include "bridge/session.hpp"
 
 #include <chrono>
+#include <iterator>
 #include <string>
 #include <utility>
 
@@ -411,9 +412,9 @@ Profile Profile::from_json(const std::string& profile_name, const Json& data) {
 }
 
 bool Profile::find_stat(const std::string& key, std::int64_t& out) const noexcept {
-    for (const auto& entry : stats) {
-        if (entry.first == key) {
-            out = entry.second;
+    for (const auto& [stored_key, stored_value] : stats) {
+        if (stored_key == key) {
+            out = stored_value;
             return true;
         }
     }
@@ -424,9 +425,9 @@ void Profile::set_stat(const std::string& key, std::int64_t value) {
     // The lookup and the write are the same loop rather than a call to find_stat() and a
     // write through what it returned: `emplace_back` below can reallocate `stats`, and a
     // pointer into it that outlived the lookup is exactly what used to be handed out here.
-    for (auto& entry : stats) {
-        if (entry.first == key) {
-            entry.second = value;
+    for (auto& [stored_key, stored_value] : stats) {
+        if (stored_key == key) {
+            stored_value = value;
             return;
         }
     }
@@ -448,9 +449,9 @@ Achievement* Profile::find_achievement(const std::string& achievement_name) noex
 }
 
 const Json* Profile::scripted_for(const std::string& call) const noexcept {
-    for (const auto& entry : scripted) {
-        if (entry.first == call) {
-            return &entry.second;
+    for (const auto& [call_name, script] : scripted) {
+        if (call_name == call) {
+            return &script;
         }
     }
     return nullptr;
@@ -476,9 +477,9 @@ Session::Session(std::string id, const Json& hello, Profile profile)
 }
 
 void Session::note_stat_written(const std::string& key, std::int64_t value) {
-    for (auto& entry : _stats_written) {
-        if (entry.first == key) {
-            entry.second = value;
+    for (auto& [stored_key, stored_value] : _stats_written) {
+        if (stored_key == key) {
+            stored_value = value;
             return;
         }
     }
@@ -510,7 +511,7 @@ Answer Session::handle(const std::string& name, const Json& args) {
 
 std::vector<std::string> state_handled_calls() {
     std::vector<std::string> names;
-    names.reserve(sizeof(kHandlers) / sizeof(kHandlers[0]));
+    names.reserve(std::size(kHandlers));
     for (const HandlerEntry& entry : kHandlers) {
         names.emplace_back(entry.name);
     }

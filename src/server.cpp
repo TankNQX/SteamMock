@@ -230,7 +230,7 @@ bool Server::start(std::string& error) {
         // game that arrived and say nothing about why. Refusing outright is the honest
         // answer to both; restarting a run means a new Server, which is what both front
         // ends do.
-        std::lock_guard<std::mutex> once(_stop_mutex);
+        std::scoped_lock once(_stop_mutex);
         if (_stopped || _listener != kNoSocket) {
             error = "the server was already started, and a run is not restartable";
             return false;
@@ -335,7 +335,7 @@ void Server::stop() {
     // early return and close the same sockets and join the same threads again. This
     // lock is nobody else's, so waiting here cannot be a wait for a worker that is
     // waiting on `_mutex`.
-    std::lock_guard<std::mutex> once(_stop_mutex);
+    std::scoped_lock once(_stop_mutex);
     if (_stopped) {
         return;  // already stopped
     }
@@ -363,7 +363,7 @@ void Server::stop() {
     // No new connection can arrive now, so both lists are stable and the workers
     // are waiting on their own sockets.
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
         for (const std::uintptr_t client : _clients) {
             // The reader in that connection's thread is in a read slice and will look
             // at `_stopping` on its own; this tells the game's end the connection is
@@ -378,7 +378,7 @@ void Server::stop() {
     }
     _workers.clear();
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::scoped_lock lock(_mutex);
     _clients.clear();
     // The workers were joined above, so nothing can still be writing to this.
     if (_transcript != nullptr) {
@@ -391,7 +391,7 @@ void Server::stop() {
 std::uint16_t Server::port() const noexcept { return _port; }
 
 std::string Server::summary() const {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::scoped_lock lock(_mutex);
     const std::size_t answered = _total_calls - _unanswered_calls;
     return std::to_string(_sessions.size()) + " game session(s), " + std::to_string(_total_calls) +
            " call(s), " + std::to_string(answered) + " answered, " +
@@ -399,7 +399,7 @@ std::string Server::summary() const {
 }
 
 std::vector<SessionSnapshot> Server::sessions() const {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::scoped_lock lock(_mutex);
     std::vector<SessionSnapshot> snapshots;
     snapshots.reserve(_sessions.size());
     for (const std::unique_ptr<Session>& session : _sessions) {
@@ -422,24 +422,24 @@ std::vector<SessionSnapshot> Server::sessions() const {
 }
 
 std::vector<CallRecord> Server::records() const {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::scoped_lock lock(_mutex);
     return std::vector<CallRecord>(_records.begin(), _records.end());
 }
 
 std::size_t Server::record_count() const {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::scoped_lock lock(_mutex);
     // What the run made, not what is still held: the count is a position in the
     // history, and the history is allowed to forget its beginning.
     return _records_dropped + _records.size();
 }
 
 std::size_t Server::records_begin() const {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::scoped_lock lock(_mutex);
     return _records_dropped;
 }
 
 std::vector<CallRecord> Server::records_since(std::size_t index) const {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::scoped_lock lock(_mutex);
     std::vector<CallRecord> tail;
     // `index` is an absolute position in the run's history, the same one record_count()
     // and this cursor are in - so an index that has fallen off the front of the window
@@ -457,12 +457,12 @@ std::vector<CallRecord> Server::records_since(std::size_t index) const {
 }
 
 std::size_t Server::call_count() const {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::scoped_lock lock(_mutex);
     return _total_calls;
 }
 
 std::size_t Server::unanswered_count() const {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::scoped_lock lock(_mutex);
     return _unanswered_calls;
 }
 
@@ -500,7 +500,7 @@ void Server::accept_loop(std::uintptr_t listener) {
             }
             reported_error = 0;
 
-            std::lock_guard<std::recursive_mutex> lock(_mutex);
+            std::scoped_lock lock(_mutex);
             if (_stopping.load(std::memory_order_acquire)) {
                 close_socket(client);
                 return;
@@ -534,7 +534,7 @@ void Server::serve(std::uintptr_t client) {
         // the next socket this process opens can be given, and an entry erased after that
         // would be the new connection's - which is how a live game goes missing from the
         // set stop() shuts down.
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
         for (auto entry = _clients.begin(); entry != _clients.end(); ++entry) {
             if (*entry == client) {
                 _clients.erase(entry);
@@ -573,7 +573,7 @@ void Server::serve_connection(std::uintptr_t client) {
     }
 
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
         session_id = make_session_id();
         // The profile is resolved before the session exists, because a name the scenario
         // does not have is refused rather than answered with the default one - whether the
@@ -648,7 +648,7 @@ void Server::serve_connection(std::uintptr_t client) {
         // that has gone can never make the call that would have carried those
         // payloads back, so leaving them here would be a leak that ends only when the
         // run does.
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
         session->set_connected(false);
         _inbox.erase(session_id);
     }
@@ -699,7 +699,7 @@ std::string Server::handle_call(Session& session, const Json& message) {
         // and the history entry - rather than in a second critical section: a reader
         // that took a snapshot between the two used to see a call that one part of the
         // server knew about and the other did not.
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
 
         std::vector<std::pair<std::uint64_t, Json>> notifications;
         // The worlds answer in turn, each speaking only about what it has grounds for: the
@@ -801,7 +801,7 @@ void Server::write_transcript(const CallRecord& record) {
     // were finished in, which is not the order `_records` holds them in - a record
     // carries its sequence number and its arrival time, and that is what a reader
     // orders by.
-    std::lock_guard<std::mutex> lock(_transcript_mutex);
+    std::scoped_lock lock(_transcript_mutex);
     if (_transcript == nullptr) {
         return;  // the run has ended, or no file was ever asked for
     }

@@ -154,9 +154,9 @@ std::vector<std::string> Dispatcher::profile_names() const {
 }
 
 const Profile* Dispatcher::find_profile(const std::string& name) const noexcept {
-    for (const auto& entry : _profiles) {
-        if (entry.first == name) {
-            return &entry.second;
+    for (const auto& [profile_name, profile] : _profiles) {
+        if (profile_name == name) {
+            return &profile;
         }
     }
     return nullptr;

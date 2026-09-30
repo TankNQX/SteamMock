@@ -13,7 +13,7 @@ namespace steammock {
 
 // A frame this large means someone is confused about the format; refusing it is
 // better than allocating whatever a wrong length prefix asks for.
-constexpr std::uint32_t kMaxFrameBytes = 4u * 1024u * 1024u;
+inline constexpr std::uint32_t kMaxFrameBytes = 4u * 1024u * 1024u;
 
 inline void write_frame_length(char header[4], std::uint32_t length) noexcept {
     header[0] = static_cast<char>(length & 0xFFu);

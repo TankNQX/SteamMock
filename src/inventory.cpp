@@ -256,9 +256,9 @@ std::int32_t InventoryWorld::remember(std::uint64_t owner, std::vector<ItemDetai
 }
 
 const InventoryWorld::Result* InventoryWorld::find_result(std::int32_t handle) const noexcept {
-    for (const auto& entry : _results) {
-        if (entry.first == handle) {
-            return &entry.second;
+    for (const auto& [stored_handle, result] : _results) {
+        if (stored_handle == handle) {
+            return &result;
         }
     }
     return nullptr;

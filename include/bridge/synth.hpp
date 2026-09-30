@@ -61,7 +61,7 @@ struct SlotInfo {
 // its own. Two is that number; a handle that arrives once both are spoken for reuses
 // the first object, which is where a process running two game servers would be
 // wrong, and nothing else is.
-constexpr std::size_t kInterfaceEndpoints = 2;
+inline constexpr std::size_t kInterfaceEndpoints = 2;
 
 // One interface version the stub can answer, and the objects to hand back for it -
 // one per user handle, each remembering the handle it was handed out for. That
@@ -196,7 +196,7 @@ template <class T, class = void> struct Kind {
 // A call that returns nothing: there is no value to read and no default to pick.
 template <> struct Kind<void> {
     static constexpr bool out() noexcept { return false; }
-    static void from(const Json& reply) noexcept { (void)reply; }
+    static void from(const Json& /*reply*/) noexcept {}
     static void fallback() noexcept {}
 };
 
@@ -314,28 +314,16 @@ template <> struct Kind<Bytes> {
     // call_slot's parameter storage, so it outlives the run_slot call this pointer is
     // handed to, and nothing keeps it after that.
     static Arg arg(const Bytes& value) noexcept { return wire_cstring(value.text().c_str()); }
-    static Bytes from(const Json& reply) noexcept {
-        (void)reply;
-        return Bytes(nullptr, 0);
-    }
-    static void store(Bytes target, const Json& value) noexcept {
-        (void)target;
-        (void)value;
-    }
+    static Bytes from(const Json& /*reply*/) noexcept { return Bytes(nullptr, 0); }
+    static void store(Bytes /*target*/, const Json& /*value*/) noexcept {}
     static Bytes fallback() noexcept { return Bytes(nullptr, 0); }
 };
 
 template <> struct Kind<BytesOut> {
     static constexpr bool out() noexcept { return true; }
 
-    static Arg arg(const BytesOut& value) noexcept {
-        (void)value;
-        return wire_null();
-    }
-    static BytesOut from(const Json& reply) noexcept {
-        (void)reply;
-        return BytesOut{};
-    }
+    static Arg arg(const BytesOut& /*value*/) noexcept { return wire_null(); }
+    static BytesOut from(const Json& /*reply*/) noexcept { return BytesOut{}; }
     // Called with the parameter the caller passed, which for one of these is the whole
     // thing: the game's pointer and the room it has, which is why this takes it by value.
     // The value here is the hex from the reply's out-block, not the reply itself - reading
@@ -389,14 +377,8 @@ struct TextOut {
 template <> struct Kind<TextOut> {
     static constexpr bool out() noexcept { return true; }
 
-    static Arg arg(const TextOut& value) noexcept {
-        (void)value;
-        return wire_null();
-    }
-    static TextOut from(const Json& reply) noexcept {
-        (void)reply;
-        return TextOut{};
-    }
+    static Arg arg(const TextOut& /*value*/) noexcept { return wire_null(); }
+    static TextOut from(const Json& /*reply*/) noexcept { return TextOut{}; }
     static void store(TextOut target, const Json& value) noexcept {
         const std::uint32_t needed = text_into(target.data, target.capacity, as_string(value));
         if (target.written != nullptr) {
@@ -428,14 +410,8 @@ template <class T> struct ArrayOut {
 template <class T> struct Kind<ArrayOut<T>> {
     static constexpr bool out() noexcept { return true; }
 
-    static Arg arg(const ArrayOut<T>& value) noexcept {
-        (void)value;
-        return wire_null();
-    }
-    static ArrayOut<T> from(const Json& reply) noexcept {
-        (void)reply;
-        return ArrayOut<T>{};
-    }
+    static Arg arg(const ArrayOut<T>& /*value*/) noexcept { return wire_null(); }
+    static ArrayOut<T> from(const Json& /*reply*/) noexcept { return ArrayOut<T>{}; }
     // Each element is written by the kind of the thing it is, which is the same store a
     // single structure handed back through a pointer goes through - so a list of them costs
     // one loop here and nothing per structure in the generated file.
@@ -530,19 +506,18 @@ inline const char* name_at(const SlotInfo& info, std::size_t index) noexcept {
 // it on the wire, so most calls carry it nowhere.
 bool run_slot(std::int32_t hSteamUser, const SlotInfo& info, const Arg* args, std::size_t count,
               Json& reply) noexcept;
+
+// The parameters are `[[maybe_unused]]` rather than unnamed because the parameters of an out
+// kind really are read below: a name that some instantiation of this needs cannot be commented
+// out, and the attribute is the language's own answer for "not every branch here uses it".
 template <class Parameter>
-void store_out(const SlotInfo& info, std::size_t index, const Json& reply,
-               Parameter parameter) noexcept {
+void store_out([[maybe_unused]] const SlotInfo& info, [[maybe_unused]] std::size_t index,
+               [[maybe_unused]] const Json& reply, [[maybe_unused]] Parameter parameter) noexcept {
     if constexpr (Kind<Parameter>::out()) {
         const Json* value = reply_out(reply, name_at(info, index));
         if (value != nullptr && !value->is_null()) {
             Kind<Parameter>::store(parameter, *value);
         }
-    } else {
-        (void)info;
-        (void)index;
-        (void)reply;
-        (void)parameter;
     }
 }
 

@@ -35,7 +35,7 @@ namespace socket_io {
 // does not include winsock.
 using socket_t = SOCKET;
 
-constexpr socket_t kInvalidSocket = INVALID_SOCKET;
+inline constexpr socket_t kInvalidSocket = INVALID_SOCKET;
 
 // Once, however many threads arrive here: a function-local static's initialisation
 // is the one thing the language already serialises. It answers whether the startup

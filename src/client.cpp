@@ -206,7 +206,7 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         // DLL that has to survive a game unloading it - and that belongs in the transport,
         // which is the object this class only ever talks to through `Transport`. See the note
         // on that interface, and the file it points at for what a second implementation means.
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
 
         configure();
 
@@ -257,7 +257,7 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
             // The queue's own lock, inside the round trip's - never the other way round,
             // so a game's pump does not wait for a call to come back before it can be
             // told anything. See the note on the two locks in bridge/client.hpp.
-            const std::lock_guard<std::mutex> queued(_events_mutex);
+            const std::scoped_lock queued(_events_mutex);
             for (const Json& event : *events) {
                 _events.push_back(event);
             }
@@ -289,7 +289,7 @@ bool Client::take_event(Json& out) noexcept {
         // The queue's own lock, and it is not held while the caller dispatches: taking
         // one copies it out and returns, so a game that calls back into the bridge from
         // inside a callback cannot deadlock on itself.
-        std::lock_guard<std::mutex> lock(_events_mutex);
+        std::scoped_lock lock(_events_mutex);
         if (_events.empty()) {
             return false;
         }
@@ -308,7 +308,7 @@ Client::Counts Client::counts() const noexcept {
     // for the same reason as everywhere else here - the caller is an exported
     // diagnostic and a game must not see an exception.
     try {
-        const std::lock_guard<std::mutex> lock(_mutex);
+        const std::scoped_lock lock(_mutex);
         return Counts{_call_count.load(), _unhandled_count.load()};
     } catch (...) {
         return Counts{};
@@ -321,7 +321,7 @@ std::string Client::session_id() const noexcept {
     // ending the process this DLL is loaded into - the same decision the allocation
     // in instance() records.
     try {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
         return _session_id;
     } catch (...) {
         return std::string();
@@ -332,7 +332,7 @@ bool Client::backend_connected() noexcept {
     try {
         // Under the lock, like call(): configure() decides whether this client is on at
         // all, and it is not something a second thread may read half-written.
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
 
         configure();
 

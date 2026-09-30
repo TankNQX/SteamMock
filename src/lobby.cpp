@@ -14,18 +14,18 @@ namespace steammock {
 // ---------------------------------------------------------------------------
 
 const std::string* LobbyMember::find(const std::string& key) const noexcept {
-    for (const auto& entry : data) {
-        if (entry.first == key) {
-            return &entry.second;
+    for (const auto& [stored_key, stored_value] : data) {
+        if (stored_key == key) {
+            return &stored_value;
         }
     }
     return nullptr;
 }
 
 void LobbyMember::set(std::string key, std::string value) {
-    for (auto& entry : data) {
-        if (entry.first == key) {
-            entry.second = std::move(value);
+    for (auto& [stored_key, stored_value] : data) {
+        if (stored_key == key) {
+            stored_value = std::move(value);
             return;
         }
     }
@@ -51,18 +51,18 @@ const LobbyMember* Lobby::find_member(std::uint64_t steam_id) const noexcept {
 }
 
 const std::string* Lobby::find_data(const std::string& key) const noexcept {
-    for (const auto& entry : data) {
-        if (entry.first == key) {
-            return &entry.second;
+    for (const auto& [stored_key, stored_value] : data) {
+        if (stored_key == key) {
+            return &stored_value;
         }
     }
     return nullptr;
 }
 
 void Lobby::set_data(std::string key, std::string value) {
-    for (auto& entry : data) {
-        if (entry.first == key) {
-            entry.second = std::move(value);
+    for (auto& [stored_key, stored_value] : data) {
+        if (stored_key == key) {
+            stored_value = std::move(value);
             return;
         }
     }
@@ -402,9 +402,9 @@ void LobbyWorld::remember_player(std::uint64_t steam_id, const std::string& pers
 }
 
 std::uint64_t LobbyWorld::known_game_server_id(std::uint64_t user) const noexcept {
-    for (const auto& entry : _game_server_ids) {
-        if (entry.first == user) {
-            return entry.second;
+    for (const auto& [known_user, server_id] : _game_server_ids) {
+        if (known_user == user) {
+            return server_id;
         }
     }
     return 0;
@@ -423,20 +423,20 @@ std::uint64_t LobbyWorld::game_server_id_of(std::uint64_t user) {
 }
 
 std::uint64_t LobbyWorld::user_of(std::uint64_t id) const noexcept {
-    for (const auto& entry : _game_server_ids) {
-        if (entry.second == id) {
-            return entry.first;
+    for (const auto& [known_user, server_id] : _game_server_ids) {
+        if (server_id == id) {
+            return known_user;
         }
     }
     return id;
 }
 
 bool LobbyWorld::first_contact(std::uint64_t from, std::uint64_t to) {
-    for (const auto& pair : _contacts) {
-        if (pair.first == from && pair.second == to) {
+    for (const auto& [peer_a, peer_b] : _contacts) {
+        if (peer_a == from && peer_b == to) {
             return false;  // this direction has already been announced
         }
-        if (pair.first == to && pair.second == from) {
+        if (peer_a == to && peer_b == from) {
             return false;  // they have talked, so Steam would not ask again
         }
     }
@@ -451,9 +451,9 @@ void LobbyWorld::queue_packet(std::uint64_t to, std::uint64_t from, std::int32_t
     packet.channel = channel;
     packet.bytes = bytes;
     packet.loopback = loopback;
-    for (auto& entry : _packets) {
-        if (entry.first == to) {
-            entry.second.push_back(std::move(packet));
+    for (auto& [sent_to, queued] : _packets) {
+        if (sent_to == to) {
+            queued.push_back(std::move(packet));
             return;
         }
     }
@@ -554,9 +554,9 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         const std::int64_t port = int_member(args, "usGamePort", 0);
         if (port > 0) {
             bool known = false;
-            for (auto& entry : _game_ports) {
-                if (entry.first == me) {
-                    entry.second = static_cast<std::uint16_t>(port);
+            for (auto& [listed_user, listed_port] : _game_ports) {
+                if (listed_user == me) {
+                    listed_port = static_cast<std::uint16_t>(port);
                     known = true;
                     break;
                 }
@@ -820,9 +820,9 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
             lobby->game_server_ip = kLoopback;
         }
         if (lobby->game_server_port == 0) {
-            for (const auto& entry : _game_ports) {
-                if (entry.first == me) {
-                    lobby->game_server_port = entry.second;
+            for (const auto& [listed_user, listed_port] : _game_ports) {
+                if (listed_user == me) {
+                    lobby->game_server_port = listed_port;
                     break;
                 }
             }

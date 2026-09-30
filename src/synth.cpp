@@ -322,7 +322,7 @@ void deliver_one(const Json& event) noexcept {
         // for the delivery in flight instead of racing it. It is recursive because the
         // call is into the game's own code, which may come back in here to register or
         // unregister another object before it returns.
-        const std::lock_guard<std::recursive_mutex> lock(registry_mutex());
+        const std::scoped_lock lock(registry_mutex());
 
         const Json* handle = json_member(event, "call");
         const Json* id = json_member(event, "id");
@@ -413,7 +413,7 @@ void callback_registered(void* object, std::int32_t id) noexcept {
         const std::string address = std::to_string(reinterpret_cast<std::uintptr_t>(object));
         const std::string wants = " wants " + std::to_string(wanted_size(object)) + " bytes";
 
-        const std::lock_guard<std::recursive_mutex> lock(registry_mutex());
+        const std::scoped_lock lock(registry_mutex());
         std::vector<void*>& objects = callbacks_by_id()[id];
         if (std::find(objects.begin(), objects.end(), object) != objects.end()) {
             // Registering one object twice for one id would have it called twice, which
@@ -443,7 +443,7 @@ void callback_registered(void* object, std::int32_t id) noexcept {
 
 void callback_unregistered(void* object) noexcept {
     try {
-        const std::lock_guard<std::recursive_mutex> lock(registry_mutex());
+        const std::scoped_lock lock(registry_mutex());
         // By object, because that is all UnregisterCallback is given: the id lives
         // in the object the game handed us, and it is not ours to read. An object can
         // only have been registered under the ids it was registered for, so every list
@@ -467,7 +467,7 @@ void callback_unregistered(void* object) noexcept {
 
 void call_result_registered(void* object, std::uint64_t call) noexcept {
     try {
-        const std::lock_guard<std::recursive_mutex> lock(registry_mutex());
+        const std::scoped_lock lock(registry_mutex());
         results_by_call()[call] = object;
     } catch (...) {
         log_write(LogLevel::error, "the stub could not remember a call result");
@@ -476,7 +476,7 @@ void call_result_registered(void* object, std::uint64_t call) noexcept {
 
 void call_result_unregistered(void* object, std::uint64_t call) noexcept {
     try {
-        const std::lock_guard<std::recursive_mutex> lock(registry_mutex());
+        const std::scoped_lock lock(registry_mutex());
         const auto found = results_by_call().find(call);
         if (found != results_by_call().end() && found->second == object) {
             results_by_call().erase(found);

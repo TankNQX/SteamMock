@@ -106,7 +106,7 @@ public:
 
     // Everything the child has said so far.
     std::string output() const {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
         return _text;
     }
 
@@ -117,7 +117,7 @@ public:
             std::chrono::milliseconds(static_cast<long long>(timeout_seconds * 1000.0));
         for (;;) {
             {
-                std::lock_guard<std::mutex> lock(_mutex);
+                std::scoped_lock lock(_mutex);
                 if (_text.find(needle) != std::string::npos) {
                     return true;
                 }
@@ -166,7 +166,7 @@ private:
         char buffer[4096];
         DWORD got = 0;
         while (ReadFile(_read, buffer, sizeof(buffer), &got, nullptr) && got > 0) {
-            std::lock_guard<std::mutex> lock(_mutex);
+            std::scoped_lock lock(_mutex);
             _text.append(buffer, got);
         }
     }

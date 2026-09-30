@@ -15,8 +15,8 @@ namespace steammock {
 //  port in particular is written into a comment in bridge/client.hpp and into
 //  docs/development.md as prose, so a change here is a change there too.
 
-constexpr const char* kDefaultHost = "127.0.0.1";
-constexpr std::uint16_t kDefaultPort = 50990;
+inline constexpr const char* kDefaultHost = "127.0.0.1";
+inline constexpr std::uint16_t kDefaultPort = 50990;
 
 // A whole decimal number no larger than `ceiling`, or nothing: `out` is written
 // only when the text is one. Nothing longer than the ceiling is ever accumulated,

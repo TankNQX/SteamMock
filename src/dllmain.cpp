@@ -15,8 +15,7 @@
 #include "bridge/export.hpp"
 #include "bridge/log.hpp"
 
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
-    (void)reserved;
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID /*reserved*/) {
     if (reason == DLL_PROCESS_ATTACH) {
         // Nothing else happens here on purpose: no sockets, no files, no
         // logging. The loader lock is not the place for any of it, so the

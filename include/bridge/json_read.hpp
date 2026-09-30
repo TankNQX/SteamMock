@@ -32,7 +32,7 @@ namespace steammock {
 //  harness has always refused beyond.
 using Json = nlohmann::ordered_json;
 
-constexpr int kMaxJsonDepth = 16;
+inline constexpr int kMaxJsonDepth = 16;
 
 // The member named `key`, or nullptr when the object has none - a pointer, because
 // that is what a caller can test in an `if` without touching the object's lifetime.

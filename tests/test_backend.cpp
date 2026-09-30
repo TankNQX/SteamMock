@@ -557,8 +557,7 @@ void test_the_lobbies_a_run_holds() {
         const Json* in = steammock::json_member(answer.events.front(), "in");
         return in != nullptr ? steammock::json_member(*in, field) : nullptr;
     };
-    auto lobby_argument = [](const char* key, std::uint64_t value, const char* call) {
-        (void)call;
+    auto lobby_argument = [](const char* key, std::uint64_t value, const char* /*call*/) {
         Json args = Json::object();
         args[key] = Json(static_cast<std::int64_t>(value));
         return args;

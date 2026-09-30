@@ -369,9 +369,9 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
         const std::uint64_t handle = id_member(args, "hSteamLeaderboardEntries");
         const auto index = int_member(args, "index", -1);
         const std::vector<LeaderboardRow>* rows = nullptr;
-        for (const auto& download : _downloads) {
-            if (download.first == handle) {
-                rows = &download.second;
+        for (const auto& [downloaded_handle, downloaded_rows] : _downloads) {
+            if (downloaded_handle == handle) {
+                rows = &downloaded_rows;
                 break;
             }
         }

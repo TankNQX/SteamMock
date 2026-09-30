@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdio>
+#include <iterator>
 #include <set>
 #include <string>
 #include <utility>
@@ -116,8 +117,7 @@ bool is_identifier(const std::string& name) noexcept {
 // harness can be asked which build is loaded and whether it reached a backend.
 const char* const kDiagnosticExports[] = {"SteamMock_SessionId", "SteamMock_Stats",
                                           "SteamMock_Version"};
-constexpr std::size_t kDiagnosticExportCount =
-    sizeof(kDiagnosticExports) / sizeof(kDiagnosticExports[0]);
+constexpr std::size_t kDiagnosticExportCount = std::size(kDiagnosticExports);
 
 constexpr const char* kGeneratedNote = "//  GENERATED FILE - do not edit by hand.";
 constexpr const char* kRegenerate = "//  Regenerate: steammock_codegen";
