@@ -398,6 +398,57 @@ int run(int argc, char** argv) {
         check_flat("a call nobody answers leaves a vtable call's out-parameter alone",
                    value_of(values, "vtable.user_achievement.answered") == "false" &&
                        value_of(values, "vtable.user_achievement.untouched") == "true");
+
+        // A buffer and a list the game owns, which is the other half of a call that fills
+        // something in: what comes back is not one value through one pointer but a run of bytes
+        // and structures written into memory the *game* allocated, with the count of them going
+        // back through a pointer of the game's own.
+        std::printf("\n[:] a buffer and a list the game owns\n");
+        check_flat("the stub hands out the inventory interface by its version string",
+                   value_of(values, "vtable.inventory") == "true");
+        check_flat("the item catalogue loads",
+                   value_of(values, "inventory.definitions_loaded") == "true");
+        check_flat("granting is answered, and the handle comes back through the game's pointer",
+                   value_of(values, "inventory.granted") == "true" &&
+                       value_of(values, "inventory.granted_handle") == "true");
+        check_flat("the result payload names the handle the call handed back",
+                   value_of(values, "inventory.ready_names_the_handle") == "true");
+        check_flat("and says the result is OK", value_of(values, "inventory.ready_result") == "1",
+                   value_of(values, "inventory.ready_result"));
+        check_flat("a null array asks how many items there are",
+                   value_of(values, "inventory.sized") == "true" &&
+                       value_of(values, "inventory.count") == "2",
+                   value_of(values, "inventory.count"));
+        check_flat("an array of that many is filled, and the count written back",
+                   value_of(values, "inventory.listed") == "true" &&
+                       value_of(values, "inventory.written") == "2",
+                   value_of(values, "inventory.written"));
+        check_flat("the game's own sixteen-byte elements carry what the catalogue says",
+                   value_of(values, "inventory.item0.definition") == "100" &&
+                       value_of(values, "inventory.item0.quantity") == "1" &&
+                       value_of(values, "inventory.item0.instance_set") == "true",
+                   value_of(values, "inventory.item0.definition") + " " +
+                       value_of(values, "inventory.item0.quantity"));
+        check_flat("text is written into the game's own buffer",
+                   value_of(values, "inventory.named") == "true" &&
+                       value_of(values, "inventory.name") == "Ship Decoration 1" &&
+                       value_of(values, "inventory.name_size") == "18",
+                   value_of(values, "inventory.name") + " " +
+                       value_of(values, "inventory.name_size"));
+        check_flat("a buffer with no room is reported, not overrun",
+                   value_of(values, "inventory.tiny_reported") == "true" &&
+                       value_of(values, "inventory.tiny_needed") == "18" &&
+                       value_of(values, "inventory.tiny_untouched") == "true",
+                   value_of(values, "inventory.tiny_needed"));
+        check_flat("everything held arrives as a full update",
+                   value_of(values, "inventory.all_answered") == "true" &&
+                       value_of(values, "inventory.full_updates") == "1",
+                   value_of(values, "inventory.full_updates"));
+        check_flat("a call with a null handle is answered without writing one",
+                   value_of(values, "inventory.all_answered") == "true");
+        check_flat("a handle nobody was given is not answered, and the game's count is untouched",
+                   value_of(values, "inventory.invented_answered") == "false" &&
+                       value_of(values, "inventory.invented_untouched") == "true");
     }
 
     // --- one callback id, two objects, and which of them hears it -----------

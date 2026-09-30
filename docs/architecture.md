@@ -254,8 +254,61 @@ rather than zeroed: the game's memory is the game's.
 What this does not cover is the flat half of the same call - the flat generator's kinds have no
 notion of a structure, so a game that reaches the call through the flat spelling still gets an
 opaque pointer - and a structure passed or returned *by value*, which no SDK call in the layouts
-uses. A buffer with a length is the same problem one step further out: the bytes are the game's,
-and so is the room for them.
+uses. A buffer with a length is the same problem one step further out - the bytes are the game's,
+and so is the room for them - and it is the next section.
+
+## A buffer the game owns, and its length
+
+A byte buffer is two values on the wire, the bytes and how many of them, so the layouts name both:
+the kind, and the parameter that carries the length. `BYTE_BUFFERS` in
+`tools/steamworks_sdk_import.py` is where a buffer that travels as hex is chosen, `TEXT_BUFFERS`
+the same for one that travels as text (which is what `char *` and a length really is -
+`GetItemDefinitionProperty( def, "name", buf, &bufSize )` is a string written into the game's own
+memory), and a *list* the game owns is one more string on the row, because a named type with a
+length is that many of them:
+
+    ["pchValueBuffer", "out_text", "punValueBufferSizeOut"]
+    ["pOutItemsArray", "SteamItemDetails_t", "out", "punOutItemsArraySize"]
+
+What the length parameter *is* then decides the rest, and the SDK uses both shapes: a plain
+capacity (`GetAppName( nAppID, pchName, cchNameMax )`) or the caller's own pointer, which is the
+two-call shape a game sizes a buffer with - `GetResultItems( handle, NULL, &count )` asks how many
+there are, allocates that many, and asks again. A length that is a pointer belongs to the buffer:
+it arrives as the room the caller has, and the number the value needs travels back through it. The
+buffer is the only writer, which is why the generated call wraps such a parameter
+(`BufferLength`) instead of passing it as an out-parameter - two writers of one number is one too
+many - and why the declared type stays the SDK's own (`char *`, `SteamItemDetails_t *`,
+`uint32 *`): what changed is the argument, not the ABI.
+
+The wrappers are in `bridge/synth.hpp` - `BytesOut`, `TextOut`, `ArrayOut<T>` - and each is the
+store of the kind it carries: hex into the game's bytes, text into its chars with the terminator,
+and one `Kind<T>::store` per element for a list, which is the store a single structure written
+through a pointer already had. The count that comes back means the same thing in all three: the
+number the value *needs*, terminator and all, so a caller that had the room is told what it got, a
+caller that did not is told what to ask for, and a caller that passed a null buffer gets the count
+with no write at all - which is the probe half of the two-call shape. A buffer with no room is
+written nowhere and reported, never overrun: the bytes past it belong to the game.
+
+`ISteamInventory` is what this was built for and the first feature on it: the catalogue of item
+definitions - an app's, and therefore not any one session's - beside what each player holds, which
+arrives the way a real inventory does, by the game asking for the promotions it is entitled to and
+this world granting them once (src/inventory.cpp, and it is where the two payloads that end a
+result are queued: `SteamInventoryFullUpdate_t` first, then `SteamInventoryResultReady_t`).
+Spacewar's own stats screen is the read-out: it lists one line per item, by the name the catalogue
+gave it, which is a `GetItemDefinitionProperty` into a buffer the game owns straight after a
+`GetResultItems` into an array the game owns.
+
+That screen also turned up what those two calls need before they are ever reached: Spacewar draws
+*nothing* on it - not even the inventory - until a `UserStatsReceived_t` payload has been handed to
+it, and answering `RequestCurrentStats` with `true` and stopping there leaves it saying "Unable to
+retrieve data from Steam". That payload is a session's own (the app id, the result, the player it
+is about), which is why it is the state machine's and not a scenario's - see
+`h_request_current_stats` in src/session.cpp.
+
+What is not covered is the flat half of any of these: the flat generator's kinds have no notion of
+a buffer with a length, so a game that reaches such a call through its flat spelling still gets the
+opaque pointer it always did. Spacewar reaches the inventory through the interface, which is why
+the interface path is the one that had to work.
 
 ## Where the next features attach
 
@@ -276,13 +329,12 @@ and so is the room for them.
   transcript uses, and a `ReplayTransport` serves that file back. The backend then never has to
   invent anything for the recorded session.
 * **Struct and buffer parameters** are the mirror of [what a structure the game gets back](#a-structure-the-game-gets-back)
-  now does. A structure handed *back* through a pointer is done: the layouts name it, the generated
-  trait has a store, and the fields are written into the game's own memory. What is left is a
-  *buffer* - a `void *` with a length the call also carries, which is what `FileWrite`,
-  `GetHTTPResponseBodyData` and the HTML surface's paint all hand over - and a structure passed or
-  returned *by value*, which nothing in the layouts does. A buffer is a kind in the layouts (there is
-  already `bytes` for one that travels) plus a write-back of that many bytes into the caller's
-  memory, which is the same one-method-per-structure shape the store above has.
+  and [what a buffer the game owns](#a-buffer-the-game-owns-and-its-length), both of which are done:
+  the layouts name the structure or the buffer and its length, the generated trait has a store, and
+  the value is written into the game's own memory. What is left there is the flat spelling of the
+  same calls (the flat generator's kinds know neither a structure nor a length) and a structure
+  passed or returned *by value*, which nothing in the layouts does. The features still blocked by
+  the socket layer rather than by a call shape are the ones the transport note prices.
 
 ## Known limitations
 

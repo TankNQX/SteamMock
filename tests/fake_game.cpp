@@ -90,8 +90,72 @@ struct ISteamUserStats011 {
     virtual bool GetUserAchievement(SteamID user, const char* name, bool* achieved);
 };
 
-namespace {
+// One item, as a game's own headers declare it - and as the layouts size it, which is the
+// assertion below. The members are the SDK's names because a game reads them by name.
+struct SteamItemDetails_t {
+    std::uint64_t m_itemId;
+    std::int32_t m_iDefinition;
+    std::uint16_t m_unQuantity;
+    std::uint16_t m_unFlags;
+};
+static_assert(sizeof(SteamItemDetails_t) == 16, "an item is sixteen bytes to the ABI");
 
+// The inventory interface, in the layouts' slot order for STEAMINVENTORY_INTERFACE_V002.
+// Four of the twenty-five are called and the rest are here for their offsets: a slot the stub
+// put in the wrong place is a call answered with something else, and two of the four are near
+// the bottom, past twenty others.
+struct ISteamInventory002 {
+    virtual std::int32_t GetResultStatus(std::int32_t resultHandle);
+    virtual bool GetResultItems(std::int32_t resultHandle, SteamItemDetails_t* pOutItemsArray,
+                                std::uint32_t* punOutItemsArraySize);
+    virtual bool GetResultItemProperty(std::int32_t resultHandle, std::uint32_t unItemIndex,
+                                       const char* pchPropertyName, char* pchValueBuffer,
+                                       std::uint32_t* punValueBufferSizeOut);
+    virtual std::uint32_t GetResultTimestamp(std::int32_t resultHandle);
+    virtual bool CheckResultSteamID(std::int32_t resultHandle, SteamID steamIDExpected);
+    virtual void DestroyResult(std::int32_t resultHandle);
+    virtual bool GetAllItems(std::int32_t* pResultHandle);
+    virtual bool GetItemsByID(std::int32_t* pResultHandle, const std::uint64_t* pInstanceIDs,
+                              std::uint32_t unCountInstanceIDs);
+    virtual bool SerializeResult(std::int32_t resultHandle, void* pOutBuffer,
+                                 std::uint32_t* punOutBufferSize);
+    virtual bool DeserializeResult(std::int32_t* pOutResultHandle, const void* pBuffer,
+                                   std::uint32_t unBufferSize, bool bRESERVED_MUST_BE_FALSE);
+    virtual bool GenerateItems(std::int32_t* pResultHandle, const std::int32_t* pArrayItemDefs,
+                               const std::uint32_t* punArrayQuantity, std::uint32_t unArrayLength);
+    virtual bool GrantPromoItems(std::int32_t* pResultHandle);
+    virtual bool AddPromoItem(std::int32_t* pResultHandle, std::int32_t itemDef);
+    virtual bool AddPromoItems(std::int32_t* pResultHandle, const std::int32_t* pArrayItemDefs,
+                               std::uint32_t unArrayLength);
+    virtual bool ConsumeItem(std::int32_t* pResultHandle, std::uint64_t itemConsume,
+                             std::uint32_t unQuantity);
+    virtual bool ExchangeItems(std::int32_t* pResultHandle, const std::int32_t* pArrayGenerate,
+                               const std::uint32_t* punArrayGenerateQuantity,
+                               std::uint32_t unArrayGenerateLength,
+                               const std::uint64_t* pArrayDestroy,
+                               const std::uint32_t* punArrayDestroyQuantity,
+                               std::uint32_t unArrayDestroyLength);
+    virtual bool TransferItemQuantity(std::int32_t* pResultHandle, std::uint64_t itemIdSource,
+                                      std::uint32_t unQuantity, std::uint64_t itemIdDest);
+    virtual void SendItemDropHeartbeat();
+    virtual bool TriggerItemDrop(std::int32_t* pResultHandle, std::int32_t dropListDefinition);
+    virtual bool TradeItems(std::int32_t* pResultHandle, SteamID steamIDTradePartner,
+                            const std::uint64_t* pArrayGive,
+                            const std::uint32_t* pArrayGiveQuantity, std::uint32_t nArrayGiveLength,
+                            const std::uint64_t* pArrayGet, const std::uint32_t* pArrayGetQuantity,
+                            std::uint32_t nArrayGetLength);
+    virtual bool LoadItemDefinitions();
+    virtual bool GetItemDefinitionIDs(std::int32_t* pItemDefIDs,
+                                      std::uint32_t* punItemDefIDsArraySize);
+    virtual bool GetItemDefinitionProperty(std::int32_t iDefinition, const char* pchPropertyName,
+                                           char* pchValueBuffer,
+                                           std::uint32_t* punValueBufferSizeOut);
+    virtual std::uint64_t RequestEligiblePromoItemDefinitionsIDs(SteamID steamID);
+    virtual bool GetEligiblePromoItemDefinitionIDs(SteamID steamID, std::int32_t* pItemDefIDs,
+                                                   std::uint32_t* punItemDefIDsArraySize);
+};
+
+namespace {
 using init_fn = bool (*)();
 using void_fn = void (*)();
 using bool_fn = bool (*)();
@@ -160,6 +224,46 @@ const void* const kCountedVtable[] = {
 // and the checks that follow would fail rather than pass quietly.
 constexpr std::int32_t kValidateAuthTicketResponse = 143;
 constexpr std::int32_t kP2PSessionRequest = 1202;
+
+// The same for the two payloads an inventory result arrives as. kInventoryResultReady carries
+// a handle and a result; kInventoryFullUpdate carries the handle alone, which is why one of the
+// objects below reads its payload and the other only counts.
+constexpr std::int32_t kInventoryResultReady = 4700;
+constexpr std::int32_t kInventoryFullUpdate = 4701;
+
+// SteamInventoryResultReady_t: the handle the result belongs to, and the SDK's EResult for it.
+struct ResultReady {
+    std::int32_t handle;
+    std::int32_t result;
+};
+
+struct ReadyCallback {
+    const void* const* vtable;
+    ResultReady* seen;
+};
+
+void STEAMMOCK_TEST_CALL ready_run(void* self STEAMMOCK_TEST_EDX, void* payload) {
+    const auto* fields = static_cast<const std::int32_t*>(payload);
+    ReadyCallback* object = static_cast<ReadyCallback*>(self);
+    object->seen->handle = fields[0];
+    object->seen->result = fields[1];
+}
+
+void STEAMMOCK_TEST_CALL ready_run_of_a_call_result(void* STEAMMOCK_TEST_EDX, void*, bool,
+                                                    std::uint64_t) {}
+
+// What this object says it wants, which the stub compares against the payload's own size
+// before calling it - so a payload whose layout came out the wrong size is a payload this is
+// never handed, and the check that reads it fails rather than passing on a stale field.
+std::int32_t STEAMMOCK_TEST_CALL ready_wants(void* STEAMMOCK_TEST_EDX) {
+    return static_cast<std::int32_t>(sizeof(ResultReady));
+}
+
+const void* const kReadyVtable[] = {
+    reinterpret_cast<const void*>(&ready_run),
+    reinterpret_cast<const void*>(&ready_run_of_a_call_result),
+    reinterpret_cast<const void*>(&ready_wants),
+};
 
 template <typename Fn> Fn resolve(HMODULE module, const char* name) {
     const FARPROC address = GetProcAddress(module, name);
@@ -437,6 +541,95 @@ int run() {
     api_run_callbacks();
     std::printf("callback.peer_first=%d\n", peer_first);
     std::printf("callback.peer_second=%d\n", peer_second);
+
+    // --- an inventory: a list and a text buffer the game itself owns -----------------------
+    // The two shapes a call writes *into* the caller's own memory, which nothing above this
+    // reaches: a list of structures whose count is the game's own pointer - the SDK's two-call
+    // shape, where a null array asks how many there are - and text written into a char buffer
+    // whose length is likewise the game's own pointer.
+    void* const inventory_object = create_interface("STEAMINVENTORY_INTERFACE_V002");
+    std::printf("vtable.inventory=%s\n", inventory_object != nullptr ? "true" : "false");
+    if (inventory_object != nullptr) {
+        auto* inventory = static_cast<ISteamInventory002*>(inventory_object);
+
+        // A game registers for a payload before it asks for anything, and the id is the only
+        // thing that can tie a payload nobody asked for to the object that wants it.
+        ResultReady ready{-1, -1};
+        ReadyCallback ready_object{kReadyVtable, &ready};
+        register_callback(&ready_object, kInventoryResultReady);
+        int full_updates = 0;
+        CountedCallback update_object{kCountedVtable, &full_updates};
+        register_callback(&update_object, kInventoryFullUpdate);
+
+        std::printf("inventory.definitions_loaded=%s\n",
+                    inventory->LoadItemDefinitions() ? "true" : "false");
+
+        std::int32_t granted = -1;
+        const bool asked = inventory->GrantPromoItems(&granted);
+        api_run_callbacks();
+        std::printf("inventory.granted=%s\n", asked ? "true" : "false");
+        std::printf("inventory.granted_handle=%s\n", granted >= 0 ? "true" : "false");
+        // Not only that the game's object was called, but what it was told: the payload carries
+        // the handle the call handed back, which is how a game ties a result to what it asked.
+        std::printf("inventory.ready_names_the_handle=%s\n",
+                    ready.handle == granted ? "true" : "false");
+        std::printf("inventory.ready_result=%d\n", static_cast<int>(ready.result));
+
+        // The two-call shape. A null array and a count of zero asks "how many?", and the answer
+        // comes back through the game's own pointer - which is what a game sizes its array with.
+        std::uint32_t count = 0;
+        const bool sized = inventory->GetResultItems(granted, nullptr, &count);
+        std::printf("inventory.sized=%s\n", sized ? "true" : "false");
+        std::printf("inventory.count=%u\n", static_cast<unsigned>(count));
+
+        // ...and then an array of that many: the game's own sixteen-byte elements, written by a
+        // call made through a slot of a vtable the stub built.
+        SteamItemDetails_t details[4] = {};
+        std::uint32_t filled = count;
+        const bool listed = inventory->GetResultItems(granted, details, &filled);
+        std::printf("inventory.listed=%s\n", listed ? "true" : "false");
+        std::printf("inventory.written=%u\n", static_cast<unsigned>(filled));
+        std::printf("inventory.item0.definition=%d\n", static_cast<int>(details[0].m_iDefinition));
+        std::printf("inventory.item0.quantity=%u\n",
+                    static_cast<unsigned>(details[0].m_unQuantity));
+        std::printf("inventory.item0.instance_set=%s\n",
+                    details[0].m_itemId != 0 ? "true" : "false");
+
+        // Text into the game's own buffer: the room it has going in, what the value needs coming
+        // back, both through the same pointer the game passed.
+        char name[64] = {};
+        std::uint32_t name_size = sizeof(name);
+        const bool named = inventory->GetItemDefinitionProperty(details[0].m_iDefinition, "name",
+                                                                name, &name_size);
+        std::printf("inventory.named=%s\n", named ? "true" : "false");
+        std::printf("inventory.name=%s\n", name);
+        std::printf("inventory.name_size=%u\n", static_cast<unsigned>(name_size));
+
+        // A buffer too small is reported rather than overrun: the game is told how much the value
+        // needs and its own bytes are left exactly as they were.
+        char tiny[4] = {'x', 'x', 'x', '\0'};
+        std::uint32_t tiny_size = sizeof(tiny);
+        const bool too_small = inventory->GetItemDefinitionProperty(details[0].m_iDefinition,
+                                                                    "name", tiny, &tiny_size);
+        std::printf("inventory.tiny_reported=%s\n", too_small ? "true" : "false");
+        std::printf("inventory.tiny_needed=%u\n", static_cast<unsigned>(tiny_size));
+        std::printf("inventory.tiny_untouched=%s\n", tiny[0] == 'x' ? "true" : "false");
+
+        // The whole inventory, which arrives as a full update rather than a delta - and the call
+        // a game makes with a *null* handle: there is nowhere to write one, and the payloads are
+        // what say what happened.
+        const bool everything = inventory->GetAllItems(nullptr);
+        api_run_callbacks();
+        std::printf("inventory.all_answered=%s\n", everything ? "true" : "false");
+        std::printf("inventory.full_updates=%d\n", full_updates);
+
+        // A handle this run never handed out has no list behind it, and the game's own count is
+        // not touched by an answer there is none of.
+        std::uint32_t invented_count = 999;
+        const bool invented = inventory->GetResultItems(999999, nullptr, &invented_count);
+        std::printf("inventory.invented_answered=%s\n", invented ? "true" : "false");
+        std::printf("inventory.invented_untouched=%s\n", invented_count == 999 ? "true" : "false");
+    }
 
     api_shutdown();
     FreeLibrary(stub);

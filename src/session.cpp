@@ -155,6 +155,11 @@ Answer from_state_out(Json ret, Json out) {
 // caller's variable alone, which is what the stub's "no out-parameter" rule
 // already does for us.
 
+// The SDK's own enumerations and payload names written out, because this tree carries no Valve
+// header and a value typed as a number is what the wire has anyway.
+constexpr std::int64_t kResultOK = 1;  // k_EResultOK
+constexpr const char* kUserStatsReceived = "UserStatsReceived_t";
+
 Answer h_const_one(Session&, const Json&) { return from_state(Json(1)); }
 
 Answer h_install_path(Session& session, const Json&) {
@@ -208,6 +213,30 @@ Answer h_build_id(Session& session, const Json&) {
 }
 
 Answer h_true(Session&, const Json&) { return from_state(Json(true)); }
+
+// The one call here whose answer is a *payload* rather than a value. A game asks for its stats
+// and Steam says they have arrived: `UserStatsReceived_t`, whose own fields are the app id, the
+// result and the player it is about - all of them this session's, which is why a scenario file
+// cannot say it and this is where it comes from.
+//
+// It is not decoration: Spacewar's stats screen draws *nothing at all* - not even the inventory
+// that is on it - until one of these has been handed to it, so a harness that answers `true` and
+// stops there leaves that screen saying "Unable to retrieve data from Steam".
+Answer h_request_current_stats(Session& session, const Json&) {
+    Json fields = Json::object();
+    fields["m_nGameID"] = Json(static_cast<std::uint64_t>(session.profile().app_id));
+    fields["m_eResult"] = Json(kResultOK);
+    fields["m_steamIDUser"] = Json(session.profile().steam_id);
+
+    Json event = Json::object();
+    event["event"] = Json(kUserStatsReceived);
+    event["in"] = std::move(fields);
+
+    Answer answer = from_state(Json(true));
+    answer.events = Json::array();
+    answer.events.push_back(std::move(event));
+    return answer;
+}
 
 Answer h_get_stat(Session& session, const Json& args) {
     std::int64_t value = 0;
@@ -300,7 +329,7 @@ constexpr HandlerEntry kHandlers[] = {
     {"SteamAPI_ISteamUtils_GetSecondsSinceAppActive", &h_seconds_since_active},
     {"SteamAPI_ISteamUtils_GetServerRealTime", &h_server_real_time},
     {"SteamAPI_ISteamApps_GetAppBuildId", &h_build_id},
-    {"SteamAPI_ISteamUserStats_RequestCurrentStats", &h_true},
+    {"SteamAPI_ISteamUserStats_RequestCurrentStats", &h_request_current_stats},
     {"SteamAPI_ISteamUserStats_StoreStats", &h_true},
     // The overloads are named after their types only from 1.51 on; every SDK read
     // here spells the integer one `GetStat`, and it is that flat name the layouts

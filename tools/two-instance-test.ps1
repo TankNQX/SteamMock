@@ -523,6 +523,29 @@ for ($attempt = 1; $attempt -le $attempts -and -not $lobby; $attempt++) {
         Start-Sleep -Seconds 3
     }
 
+    # The stats screen, which is where an inventory is drawn - and the one drive in this run
+    # that *is* the read-out rather than a way to get somewhere. Spacewar lists one line per
+    # item it holds, by the name the catalogue gave it: the list arrives as an array of
+    # sixteen-byte items written into the game's own memory (`GetResultItems`, asked for with a
+    # null array first to be told how many there are) and each name is read out of the catalogue
+    # into a buffer the game owns (`GetItemDefinitionProperty`). Both of those are the calls
+    # this run exists to exercise, so the screenshot and the two counts below are what say
+    # whether they landed.
+    #
+    # Stats and Achievements is the seventh of the seventeen - Leaderboards is the eighth, which
+    # is what the drive below counts from - so this is six downs and a return. Escape is the way
+    # out (`k_EClientStatsAchievements` -> `k_EClientGameMenu` in the client's own state
+    # machine), and six ups put the cursor back at the top where the leaderboard drive wants it.
+    Drive $hwndA @($VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_DOWN, $VK_RETURN) 'instance A: Stats and Achievements'
+    Start-Sleep -Seconds 4
+    if ($Shoot) { Shoot $hwndA (Join-Path $RigDir 'stats-inventory.png') }
+    $itemCalls = [regex]::Matches((Read-Transcript), 'SteamAPI_ISteamInventory_(LoadItemDefinitions|GrantPromoItems|GetAllItems|GetResultItems|GetItemDefinitionProperty)').Count
+    Say ("  the stats screen was reached: {0} inventory call(s) so far" -f $itemCalls)
+    Press $hwndA $VK_ESCAPE
+    Start-Sleep -Seconds 2
+    Say '  instance A: six ups, back to the top of the menu'
+    foreach ($unused in 1..6) { Press $hwndA $VK_UP }
+
     # The leaderboard menu, before the lobby, because this is the only moment in a run when
     # it is reachable: a client that has joined a game cannot walk back to the main menu.
     #
@@ -788,6 +811,17 @@ if (Test-Path $transcript) {
         $board[$name] = [regex]::Matches(($lines -join "`n"), "SteamAPI_ISteamUserStats_$name`"").Count
     }
     Say ("the boards: " + (($board.Keys | ForEach-Object { "{0}={1}" -f $_, $board[$_] }) -join ' '))
+    # What the inventory did, for the same reason and in the same shape: an item name that
+    # reached the game is a GetResultItems (the list) followed by a GetItemDefinitionProperty
+    # (the name), and a run that only ever shows the first is a run whose names never arrived.
+    # A player who holds nothing still has all of the first four, so the numbers that matter
+    # are the last two.
+    $item = [ordered] @{}
+    foreach ($name in 'LoadItemDefinitions', 'GrantPromoItems', 'GetAllItems', 'GetResultItems',
+        'GetItemDefinitionProperty', 'CheckResultSteamID', 'TriggerItemDrop', 'ExchangeItems') {
+        $item[$name] = [regex]::Matches(($lines -join "`n"), "SteamAPI_ISteamInventory_$name`"").Count
+    }
+    Say ("the items: " + (($item.Keys | ForEach-Object { "{0}={1}" -f $_, $item[$_] }) -join ' '))
     foreach ($line in $lines) {
         $id = $sessionRe.Match($line)
         if (-not $id.Success) { continue }

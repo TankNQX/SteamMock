@@ -155,7 +155,12 @@ the SDK's own declaration has. Which buffers get written back is policy rather t
 reading, and it is `BYTE_BUFFERS` in the tool: the auth tickets are `out_bytes` there,
 because a stub only fills a buffer the file calls one - as `opaque_ptr` the ticket comes
 back empty and both games print `Warning: Looks like GetAuthSessionTicket didn't give us
-a good ticket`.
+a good ticket`. Two tables sit beside it for the other two shapes a buffer has:
+`TEXT_BUFFERS`, for a buffer whose value is text rather than hex (a `char *` and the
+parameter that says how long it is are two halves of one string, which is what
+`GetItemDefinitionProperty` hands back), and `LISTS`, for an array the caller owns - one
+entry naming the structure it is a list of and the parameter that carries how many, as
+`GetResultItems` asks for one.
 
 What that leaves behind is *your* copy: a build with none still compiles, and the stub
 then hands out no interface objects (a game asking for a version string gets null, the

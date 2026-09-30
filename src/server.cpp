@@ -702,12 +702,14 @@ std::string Server::handle_call(Session& session, const Json& message) {
         std::lock_guard<std::recursive_mutex> lock(_mutex);
 
         std::vector<std::pair<std::uint64_t, Json>> notifications;
-        if (!_world.answer(session, name, args, answer, notifications)) {
-            // The world only speaks about rooms that games made. Everything else is
-            // the scenario's to answer, and then this session's own state.
-            if (!_leaderboards.answer(session, name, args, answer)) {
-                answer = _dispatcher.answer(session, name, args);
-            }
+        // The worlds answer in turn, each speaking only about what it has grounds for: the
+        // rooms and the packets games made, the boards they posted scores to, and the items
+        // they hold. A call none of them claims is the scenario's to answer, and then this
+        // session's own state.
+        if (!_world.answer(session, name, args, answer, notifications) &&
+            !_leaderboards.answer(session, name, args, answer) &&
+            !_inventory.answer(session, name, args, answer)) {
+            answer = _dispatcher.answer(session, name, args);
         }
 
         // What the other members have to be told: theirs is not the call that did

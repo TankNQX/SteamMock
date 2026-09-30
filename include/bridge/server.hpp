@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "bridge/defaults.hpp"
+#include "bridge/inventory.hpp"
 #include "bridge/json_read.hpp"
 #include "bridge/leaderboard.hpp"
 #include "bridge/lobby.hpp"
@@ -167,6 +168,12 @@ private:
     // every call's player is learned by name, which is what makes a roster row for a
     // player who has already left answerable.
     LeaderboardWorld _leaderboards;
+
+    // The catalogue of items, and what each player holds. Beside the other two because it is
+    // the same kind of thing: an app's item definitions are not any one session's, and an
+    // inventory outlives the screen that asked for it - a game that leaves and comes back is
+    // handed the items it was granted the first time.
+    InventoryWorld _inventory;
 
     // What a game has been told but has not heard yet, by session. A game learns
     // things only when it asks, so anything said to it while it was busy waits here

@@ -24,6 +24,7 @@
 
 #include "bridge/call.hpp"
 #include "bridge/frame.hpp"
+#include "bridge/inventory.hpp"
 #include "bridge/json_read.hpp"
 #include "bridge/leaderboard.hpp"
 #include "bridge/lobby.hpp"
@@ -41,6 +42,7 @@ namespace {
 
 using steammock::Answer;
 using steammock::Dispatcher;
+using steammock::InventoryWorld;
 using steammock::Json;
 using steammock::LeaderboardWorld;
 using steammock::LobbyWorld;
@@ -278,6 +280,26 @@ void test_stats() {
     check("an unknown stat is still answered", missing.answered);
     check("an unknown stat fails, like Steam", !steammock::as_bool(missing.ret));
     check("an unknown stat leaves the caller's variable alone", !has_out(missing));
+
+    // And the one answer here that is a payload rather than a value: a game asks for its stats
+    // and Steam tells it they have arrived. Spacewar's stats screen draws nothing at all -
+    // including the inventory that is drawn on it - until one of these has been handed to it.
+    {
+        const Answer asked =
+            session.handle("SteamAPI_ISteamUserStats_RequestCurrentStats", Json::object());
+        check("asking for the current stats is answered",
+              asked.answered && steammock::as_bool(asked.ret));
+        check("  and it says they have arrived, in the payload the SDK declares",
+              asked.events.is_array() && asked.events.size() == 1u &&
+                  text_of(asked.events[0], "event") == "UserStatsReceived_t");
+        const steammock::Json* in = asked.events.is_array() && !asked.events.empty()
+                                        ? steammock::json_member(asked.events[0], "in")
+                                        : nullptr;
+        check("  and the payload is about this session: the app and the player",
+              in != nullptr && int_of(*in, "m_nGameID") == 480 &&
+                  steammock::as_uint64(*steammock::json_member(*in, "m_steamIDUser")) != 0u);
+        check("  and it says the result was OK", in != nullptr && int_of(*in, "m_eResult") == 1);
+    }
 }
 
 void test_achievements() {
@@ -1117,6 +1139,247 @@ void test_names_after_the_room() {
                         stranger, told));
 }
 
+// Everything an inventory is, from the world's side: the catalogue a game reads names out of,
+// what a player holds and how it got there, and the two payloads that end a result.
+void test_the_items() {
+    std::printf("[:] the items\n");
+
+    auto profile_for = [](const char* persona, std::uint64_t steam_id) {
+        const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
+                                 std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
+                                 "\",\"language\":\"english\"}";
+        Json data;
+        check("the item fixture parses", steammock::parse(text, data));
+        return Profile::from_json(persona, data);
+    };
+    constexpr std::uint64_t kPlayerId = 76561198000000011ull;
+    constexpr std::uint64_t kStrangerId = 76561198000000012ull;
+
+    auto session_for = [](const char* id, const Profile& profile) {
+        Json hello = Json::object();
+        hello["exe"] = Json("game.exe");
+        hello["pid"] = Json(1234);
+        return Session(id, hello, profile);
+    };
+
+    const Session player = session_for("player", profile_for("Player", kPlayerId));
+    const Session stranger = session_for("stranger", profile_for("Stranger", kStrangerId));
+
+    InventoryWorld items;
+
+    auto ask = [&](const Session& who, const char* call, const Json& args) {
+        Answer answer;
+        const bool handled = items.answer(who, call, args, answer);
+        check((std::string("the world answers ") + call).c_str(), handled);
+        return answer;
+    };
+    auto handle_of = [](const Answer& answer) {
+        // The handle the answer handed this game, which is an out parameter rather than the
+        // return value: `GetAllItems( NULL )` is the call a game makes without wanting one.
+        const Json* value = steammock::json_member(answer.out, "pResultHandle");
+        return value != nullptr ? static_cast<std::int32_t>(steammock::as_int64(*value)) : -1;
+    };
+    auto events_of = [](const Answer& answer, const char* name) {
+        if (!answer.events.is_array()) {
+            return 0;
+        }
+        int count = 0;
+        for (const Json& event : answer.events) {
+            const Json* field = steammock::json_member(event, "event");
+            if (field != nullptr && steammock::as_string(*field) == name) {
+                ++count;
+            }
+        }
+        return count;
+    };
+    auto event_field = [](const Answer& answer, const char* name,
+                          const char* field) -> const Json* {
+        if (!answer.events.is_array()) {
+            return nullptr;
+        }
+        for (const Json& event : answer.events) {
+            const Json* what = steammock::json_member(event, "event");
+            if (what == nullptr || steammock::as_string(*what) != name) {
+                continue;
+            }
+            const Json* in = steammock::json_member(event, "in");
+            return in != nullptr ? steammock::json_member(*in, field) : nullptr;
+        }
+        return nullptr;
+    };
+
+    // A catalogue call, which is the first thing a game makes: it is answered yes, and *no* is
+    // the answer a game would stop asking after.
+    const Answer loaded =
+        ask(player, "SteamAPI_ISteamInventory_LoadItemDefinitions", Json::object());
+    check("the catalogue loads", steammock::as_bool(loaded.ret));
+    check("the catalogue is this run's own, not anything a game sent",
+          items.definitions().size() >= 8u);
+
+    // Nothing is held until something is granted, and the grant is what the game asks for.
+    check("a player holds nothing before anything is granted",
+          items.inventory_of(kPlayerId).empty());
+
+    const Answer granted = ask(player, "SteamAPI_ISteamInventory_GrantPromoItems", Json::object());
+    const std::int32_t granted_handle = handle_of(granted);
+    check("granting hands back a result handle and ends with a result ready",
+          granted_handle >= 0 && events_of(granted, "SteamInventoryResultReady_t") == 1);
+    check("  and the payload names that handle",
+          event_field(granted, "SteamInventoryResultReady_t", "m_handle") != nullptr &&
+              static_cast<std::int32_t>(steammock::as_int64(*event_field(
+                  granted, "SteamInventoryResultReady_t", "m_handle"))) == granted_handle);
+    check("  and it says the result is OK",
+          static_cast<std::int32_t>(steammock::as_int64(
+              *event_field(granted, "SteamInventoryResultReady_t", "m_result"))) == 1);
+
+    // What a game does next: read the result, twice - once with a null array to be told how
+    // many there are, and once with an array of that many. What the world answers is the same
+    // list both times; how much of it lands in the game's array is the buffer's business.
+    auto id_args = [](const char* name, std::int32_t handle) {
+        Json args = Json::object();
+        args[name] = Json(static_cast<std::int64_t>(handle));
+        return args;
+    };
+    auto item_list = [](const Answer& answer) -> const Json* {
+        return steammock::json_member(answer.out, "pOutItemsArray");
+    };
+    auto definition_of = [](const Json& item) {
+        const Json* value = steammock::json_member(item, "m_iDefinition");
+        return value != nullptr ? static_cast<std::int32_t>(steammock::as_int64(*value)) : -1;
+    };
+
+    const Answer listed = ask(player, "SteamAPI_ISteamInventory_GetResultItems",
+                              id_args("resultHandle", granted_handle));
+    check("the granted items come back as a list of items",
+          steammock::as_bool(listed.ret) && item_list(listed) != nullptr &&
+              item_list(listed)->is_array() && item_list(listed)->size() == 2u);
+    check("  and each one is the structure a game's own array is made of",
+          definition_of((*item_list(listed))[0]) == 100 &&
+              definition_of((*item_list(listed))[1]) == 101 &&
+              int_of((*item_list(listed))[0], "m_unQuantity") == 1 &&
+              int_of((*item_list(listed))[0], "m_unFlags") == 0 &&
+              steammock::as_uint64(*steammock::json_member((*item_list(listed))[0], "m_itemId")) !=
+                  0u);
+    check("  and the instances are different ones, not one item twice",
+          steammock::as_uint64(*steammock::json_member((*item_list(listed))[0], "m_itemId")) !=
+              steammock::as_uint64(*steammock::json_member((*item_list(listed))[1], "m_itemId")));
+    check("  and the count is not in the answer: the buffer owns it",
+          steammock::json_member(listed.out, "punOutItemsArraySize") == nullptr);
+
+    // Held, now - which is what makes the next answer different from the one before it.
+    check("the granted items are held", items.inventory_of(kPlayerId).size() == 2u);
+    check("  and the other player holds nothing", items.inventory_of(kStrangerId).empty());
+
+    // A full update is the whole inventory, and it arrives as two payloads in the SDK's order:
+    // the full update first, the result ready that ends it second.
+    const Answer everything = ask(player, "SteamAPI_ISteamInventory_GetAllItems", Json::object());
+    const std::int32_t full_handle = handle_of(everything);
+    check("everything held comes back as a full update",
+          events_of(everything, "SteamInventoryFullUpdate_t") == 1 &&
+              events_of(everything, "SteamInventoryResultReady_t") == 1);
+    check("  and the full update comes first",
+          everything.events.is_array() && everything.events.size() == 2u &&
+              steammock::as_string(*steammock::json_member(everything.events[0], "event")) ==
+                  "SteamInventoryFullUpdate_t");
+    check("  and both payloads name the handle the call was given",
+          event_field(everything, "SteamInventoryFullUpdate_t", "m_handle") != nullptr &&
+              static_cast<std::int32_t>(steammock::as_int64(*event_field(
+                  everything, "SteamInventoryFullUpdate_t", "m_handle"))) == full_handle);
+    const Answer full_list = ask(player, "SteamAPI_ISteamInventory_GetResultItems",
+                                 id_args("resultHandle", full_handle));
+    check("  and it carries every item held",
+          item_list(full_list) != nullptr && item_list(full_list)->size() == 2u &&
+              definition_of((*item_list(full_list))[0]) == 100 &&
+              definition_of((*item_list(full_list))[1]) == 101);
+
+    // Granting again grants nothing new: an inventory is a set of instances, and this is the
+    // call a game makes on every start.
+    const Answer again = ask(player, "SteamAPI_ISteamInventory_GrantPromoItems", Json::object());
+    const Answer again_list = ask(player, "SteamAPI_ISteamInventory_GetResultItems",
+                                  id_args("resultHandle", handle_of(again)));
+    check("granting twice does not grant twice", item_list(again_list) != nullptr &&
+                                                     item_list(again_list)->empty() &&
+                                                     items.inventory_of(kPlayerId).size() == 2u);
+
+    // The catalogue is read by name, which is the call a game makes to draw an item.
+    Json wanted = Json::object();
+    wanted["iDefinition"] = Json(100);
+    wanted["pchPropertyName"] = Json("name");
+    const Answer named = ask(player, "SteamAPI_ISteamInventory_GetItemDefinitionProperty", wanted);
+    check("a definition's name is read out of the catalogue",
+          steammock::as_bool(named.ret) && out_flag(named, "pchValueBuffer") == false &&
+              text_of(named.out, "pchValueBuffer") == "Ship Decoration 1");
+    check("  and the length is not in the answer: the buffer owns it",
+          steammock::json_member(named.out, "punValueBufferSizeOut") == nullptr);
+
+    // A definition the app does not have, and a property it does not carry: both are the
+    // catalogue's own "no", which a game turns into "(unknown)".
+    Json missing_definition = wanted;
+    missing_definition["iDefinition"] = Json(999);
+    const Answer unknown_definition =
+        ask(player, "SteamAPI_ISteamInventory_GetItemDefinitionProperty", missing_definition);
+    check("a definition this app does not have is answered no",
+          !steammock::as_bool(unknown_definition.ret));
+    Json missing_property = wanted;
+    missing_property["pchPropertyName"] = Json("colour");
+    const Answer unknown_property =
+        ask(player, "SteamAPI_ISteamInventory_GetItemDefinitionProperty", missing_property);
+    check("a property the definition does not carry is answered no",
+          !steammock::as_bool(unknown_property.ret));
+
+    // A result belongs to the player it was handed to.
+    Json check_args = Json::object();
+    check_args["resultHandle"] = Json(static_cast<std::int64_t>(granted_handle));
+    check_args["steamIDExpected"] = Json(kPlayerId);
+    check("a result belongs to the player it was handed to",
+          steammock::as_bool(
+              ask(player, "SteamAPI_ISteamInventory_CheckResultSteamID", check_args).ret));
+    check_args["steamIDExpected"] = Json(kStrangerId);
+    check("  and not to anybody else",
+          !steammock::as_bool(
+              ask(player, "SteamAPI_ISteamInventory_CheckResultSteamID", check_args).ret));
+
+    // A handle the run never handed out has no list behind it - and one that belongs to another
+    // player's inventory is the same answer, whatever the reader's own id is.
+    Answer invented;
+    Json invented_args = Json::object();
+    invented_args["resultHandle"] = Json(static_cast<std::int64_t>(999999));
+    check(
+        "a handle nobody was given is not something this world answers for",
+        !items.answer(player, "SteamAPI_ISteamInventory_GetResultItems", invented_args, invented));
+    check("  and another player's result is not this player's to read",
+          !items.answer(stranger, "SteamAPI_ISteamInventory_GetResultItems", check_args, invented));
+
+    // A game destroys what it has read, and a result that is gone is gone: Spacewar destroys
+    // every result it is given, and the second read of one is a read of nothing.
+    Json destroy_args = Json::object();
+    destroy_args["resultHandle"] = Json(static_cast<std::int64_t>(granted_handle));
+    check("a result is answered when it is destroyed",
+          steammock::as_bool(
+              ask(player, "SteamAPI_ISteamInventory_DestroyResult", destroy_args).ret));
+    check("  and reading it afterwards is not answered",
+          !items.answer(player, "SteamAPI_ISteamInventory_GetResultItems",
+                        id_args("resultHandle", granted_handle), invented));
+    check("  and destroying it did not empty the inventory",
+          items.inventory_of(kPlayerId).size() == 2u);
+
+    // The three calls that ask for an item to be made or moved: answered, and nothing changes.
+    // This is the whole of what keeps an inventory a record of what a game was given.
+    const std::size_t held = items.inventory_of(kPlayerId).size();
+    Json exchange = Json::object();
+    exchange["unArrayGenerateLength"] = Json(1);
+    const Answer exchanged = ask(player, "SteamAPI_ISteamInventory_ExchangeItems", exchange);
+    check("an exchange is answered and grants nothing",
+          handle_of(exchanged) >= 0 && items.inventory_of(kPlayerId).size() == held);
+    const Answer generated = ask(player, "SteamAPI_ISteamInventory_GenerateItems", Json::object());
+    check("items asked for are not minted", items.inventory_of(kPlayerId).size() == held);
+    const Answer dropped = ask(player, "SteamAPI_ISteamInventory_TriggerItemDrop", Json::object());
+    check("a drop is answered and there is none",
+          handle_of(dropped) >= 0 && items.inventory_of(kPlayerId).size() == held);
+
+    check("the world handles the inventory surface", InventoryWorld::handled_calls().size() >= 11);
+}
+
 // Every call the worlds claim to handle has to be one the stub can send: the stub is
 // generated from an SDK's own surface, and a world that answers a name nobody exports is a
 // world with an opinion no game can ever ask about.
@@ -1144,6 +1407,9 @@ void test_the_worlds_handle_calls_the_stub_has() {
 
     std::vector<std::string> claimed = LobbyWorld::handled_calls();
     for (const std::string& call : LeaderboardWorld::handled_calls()) {
+        claimed.push_back(call);
+    }
+    for (const std::string& call : InventoryWorld::handled_calls()) {
         claimed.push_back(call);
     }
     std::size_t unknown = 0;
@@ -1267,6 +1533,7 @@ int run() {
     test_profiles_are_per_session();
     test_the_lobbies_a_run_holds();
     test_the_boards();
+    test_the_items();
     test_names_after_the_room();
     test_who_sent_a_packet();
     test_the_worlds_handle_calls_the_stub_has();
