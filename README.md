@@ -21,15 +21,15 @@ own test app runs against it through a lobby, a match, a leaderboard and its inv
 
 | Status | Steam area | What a game gets |
 | --- | --- | --- |
-| 🟢 works | Lobbies and matchmaking | rooms, their members, ready-up, lobby chat |
-| 🟢 works | Peer to peer networking | connections, packets, and a session per end of a process |
-| 🟢 works | Login and identity | who the player is, names after they leave, a peer let in on its ticket |
-| 🟢 works | App id, language, build id | answered from the profile the game was matched to |
-| 🟢 works | Leaderboards | a real board, filled by the players in this run |
-| 🟢 works | Stats and achievements | read and written, per profile |
-| 🟢 works | Inventory | a catalogue, and what the player holds |
-| 🟡 in part | Controller, overlay, hosted logon | a scenario answers a few calls, the rest default |
-| 🔴 not yet | Music, video, screenshots, HTTP, UGC, Remote Storage, the HTML page, the server browser, parties, and the rest | nothing yet |
+| 🟢 | Lobbies and matchmaking | rooms, their members, ready-up, lobby chat |
+| 🟢 | Peer to peer networking | connections, packets, and a session per end of a process |
+| 🟢 | Login and identity | who the player is, names after they leave, a peer let in on its ticket |
+| 🟢 | App id, language, build id | answered from the profile the game was matched to |
+| 🟢 | Leaderboards | a real board, filled by the players in this run |
+| 🟢 | Stats and achievements | read and written, per profile |
+| 🟢 | Inventory | a catalogue, and what the player holds |
+| 🟡 | Controller, overlay, hosted logon | a scenario answers a few calls, the rest default |
+| 🔴 | Music, video, screenshots, HTTP, UGC, Remote Storage, the HTML page, the server browser, parties, and the rest | nothing yet |
 
 Valve's own test app exercises the green rows end to end. Two clients meet in a lobby, authenticate
 each other, play a match, post a score to a leaderboard, and read their inventory off its own stats
