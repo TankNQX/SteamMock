@@ -66,6 +66,19 @@ and the backend logs which name it could not serve. A rule that names no profile
 case, because saying nothing is a request for the default. Handing one identity out for another is how
 three clients came to run as two players while every run still looked plausible.
 
+## When nothing appears
+
+Five things account for almost every empty run.
+
+* The game has to be the one from your copy, with `steam_api.dll` beside it. Started from Steam, it
+  never sees this project at all.
+* The DLL has to be the 32-bit build. A 64-bit one will not load into Spacewar.
+* The window has to be running first. A game started before it still finds it, on its next call.
+* Nothing in the window and nothing in the transcript: check that both imports happened. Without the
+  surface the stub exports nothing, and a game that imports a Steam name does not start.
+* To see the other side of the conversation, run the game with `STEAMMOCK_LOG` set to a file, as in
+  `set STEAMMOCK_LOG=stub.log` before `SteamworksExample.exe`, and read what the stub did.
+
 ## Tests
 
 ```sh
