@@ -121,11 +121,44 @@ table first, so one name the flat API does not cover stops the game before `DllM
 game's `steam_api.dll` imports against `steammock --list-api` when a game will not start, which is
 what the 19 names Spacewar imports were checked against.
 
-### The calls nobody answers yet
+### What the backend answers
 
-The stub exports every call the flat API declares, and a call stops being declined only when a world
-or the session table answers it. Nothing is built in for these 17 interfaces, and the two-client
-Spacewar run the README's table comes from never asked for any of them:
+The README's traffic lights are coarse on purpose, because a reader wants to know what works before
+they want to know why. Per interface, and derived from this tree rather than from memory:
+
+| Interface | State | Answered by | Calls |
+| --- | --- | --- | --- |
+| `ISteamNetworking` | modelled | the lobby world: the P2P queues and sessions, one per end of a process | 446,134 |
+| `ISteamController` | scripted | Spacewar's scenario, for six calls, and declined for the rest | 117,452 |
+| `ISteamFriends` | modelled | the lobby world, and the roster it keeps names in after a player leaves | 41,204 |
+| `ISteamGameServer` | modelled | the lobby world: logon, tickets, and the roster it broadcasts | 37,285 |
+| `ISteamUser` | modelled | identity, and the auth tickets one peer is let in with | 21,793 |
+| `ISteamInventory` | modelled | the item catalogue, and what one player holds | 5,874 |
+| `ISteamUserStats` | modelled, session | the leaderboard world for the boards, the session for stats and achievements | 2,202 |
+| `ISteamMatchmaking` | modelled | the lobby world: the rooms, their members, their data, and their chat | 120 |
+| `ISteamClient` | stub | the stub itself, handing out one object per version string | 52 |
+| `ISteamParentalSettings` | declined | nobody | 10 |
+| `ISteamRemoteStorage` | declined | nobody | 4 |
+| `ISteamHTMLSurface` | declined | nobody | 4 |
+| `ISteamUGC` | declined | nobody | 2 |
+| `ISteamUtils` | session | the session, with the overlay flag scripted | 2 |
+| `ISteamApps` | session | the session: the app id, its language, its build id | never asked |
+| `SteamAPI_*` top level | stub, scripted | the stub's own entry points, and the scenario's answers for `Init` and its neighbours | 17,196 |
+
+The five states, in one line each. **Modelled** means a world answers from state that outlives one
+session, such as a room or a board. **Session** means the per-game state machine answers from the
+profile the game was matched to. **Stub** means the stub answers without asking the backend.
+**Scripted** means a scenario answers, and nothing is built in. **Declined** means nobody answers, so
+the game gets the value it would see with Steam absent.
+
+The counts come from one run's transcript: two clients, one lobby, one match, a walk through the
+leaderboard menu, and the stats screen. `tools/transcript_timeline.py --rig <dir>` reads a transcript
+back, and grouping the `call` field of every record by the interface in each name reproduces these
+numbers.
+
+### What nobody answers yet
+
+Nothing is built in for these 17 interfaces, and that run never asked for any of them:
 
 `ISteamMusic`, `ISteamMusicRemote`, `ISteamVideo`, `ISteamScreenshots`, `ISteamHTTP`, `ISteamInput`,
 `ISteamNetworkingSockets`, `ISteamNetworkingUtils`, `ISteamMatchmakingServers`, `ISteamGameSearch`,
@@ -136,9 +169,8 @@ A declined interface is not always a missing feature. `ISteamParentalSettings` i
 `BIsFeatureBlocked` answers false, every feature reads as unblocked, and that is why Spacewar's main
 menu keeps all 17 of its items instead of hiding six.
 
-The counts in that table come from one run's transcript, which
-`tools/transcript_timeline.py --rig <dir>` reads back. To reproduce the per-interface numbers, group
-the `call` field of every record by the interface in each name.
+The layouts this build imports carry 32 interfaces, and a game asking for a version string they do not
+have gets null, exactly what a Steam that does not know the string would give it.
 
 ## Interface layouts
 

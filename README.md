@@ -19,45 +19,30 @@ Point a game at one DLL and every Steam call it makes lands in a window: the cal
 how long it took. No Steam client, no account, no Valve service, and no game code to change. Valve's
 own test app runs against it through a lobby, a match, a leaderboard and its inventory screen.
 
-## What it answers today
+## What works today
 
-Every call reaches the backend. What differs is where the answer comes from:
+🟢 works. 🟡 in part. 🔴 not yet, so the game gets the value it would see with Steam absent.
 
-* **Modelled**: a world answers it from state that outlives one session, such as a room or a board.
-* **Session**: the per-game state machine answers it from the profile the game was matched to.
-* **Stub**: the stub answers it itself and never asks the backend.
-* **Scripted**: nothing is built in, and a scenario answers the calls that game makes.
-* **Declined**: nobody has an opinion, so the game gets the value it would see with Steam absent.
+| Status | Steam area | What a game gets |
+| --- | --- | --- |
+| 🟢 works | Lobbies and matchmaking | rooms, their members, ready-up, lobby chat |
+| 🟢 works | Peer to peer networking | connections, packets, and a session per end of a process |
+| 🟢 works | Login and identity | who the player is, names after they leave, a peer let in on its ticket |
+| 🟢 works | App id, language, build id | answered from the profile the game was matched to |
+| 🟢 works | Leaderboards | a real board, filled by the players in this run |
+| 🟢 works | Stats and achievements | read and written, per profile |
+| 🟢 works | Inventory | a catalogue, and what the player holds |
+| 🟡 in part | Controller, overlay, hosted logon | a scenario answers a few calls, the rest default |
+| 🔴 not yet | Music, video, screenshots, HTTP, UGC, Remote Storage, the HTML page, the server browser, parties, and the rest | nothing yet |
 
-The counts are from one run of the shipped Spacewar: two clients, one lobby, one match, a walk
-through the leaderboard menu, and the stats screen.
+Valve's own test app exercises the green rows end to end. Two clients meet in a lobby, authenticate
+each other, play a match, post a score to a leaderboard, and read their inventory off its own stats
+screen. [development.md](docs/development.md#what-the-backend-answers) has the per-interface detail,
+including the calls one run made and the 17 interfaces with nothing built in.
 
-| Interface | State | Answered by | Calls |
-| --- | --- | --- | --- |
-| `ISteamNetworking` | modelled | the lobby world: the P2P queues and sessions, one per end of a process | 446,134 |
-| `ISteamController` | scripted | Spacewar's scenario, for six calls, and declined for the rest | 117,452 |
-| `ISteamFriends` | modelled | the lobby world, and the roster it keeps names in after a player leaves | 41,204 |
-| `ISteamGameServer` | modelled | the lobby world: logon, tickets, and the roster it broadcasts | 37,285 |
-| `ISteamUser` | modelled | identity, and the auth tickets one peer is let in with | 21,793 |
-| `ISteamInventory` | modelled | the item catalogue, and what one player holds | 5,874 |
-| `ISteamUserStats` | modelled, session | the leaderboard world for the boards, the session for stats and achievements | 2,202 |
-| `ISteamMatchmaking` | modelled | the lobby world: the rooms, their members, their data, and their chat | 120 |
-| `ISteamClient` | stub | the stub itself, handing out one object per version string | 52 |
-| `ISteamParentalSettings` | declined | nobody | 10 |
-| `ISteamRemoteStorage` | declined | nobody | 4 |
-| `ISteamHTMLSurface` | declined | nobody | 4 |
-| `ISteamUGC` | declined | nobody | 2 |
-| `ISteamUtils` | session | the session, with the overlay flag scripted | 2 |
-| `ISteamApps` | session | the session: the app id, its language, its build id | never asked |
-| `SteamAPI_*` top level | stub, scripted | the stub's own entry points, and the scenario's answers for `Init` and its neighbours | 17,196 |
-
-A declined call is not a failure. The game gets the value it would see with Steam absent, so it keeps
-going rather than being told something invented. A scenario can answer any call, including one listed
-as declined, which is how Spacewar's controller and menus come up at all. Nothing here answers
-ownership, entitlement or licensing. Seventeen more interfaces have nothing built in and the run never
-asked for them, which [development.md](docs/development.md#the-calls-nobody-answers-yet) names. The
-layouts this build imports carry 32 interfaces, and a game asking for a string they do not have gets
-null, exactly what a Steam that does not know the string would give it.
+A red row is not a failure. The game gets the value it would see with Steam absent, so it keeps going
+rather than being told something invented. Nothing here answers ownership, entitlement or licensing,
+and a scenario can answer any call, red or green.
 
 ## Run it
 
