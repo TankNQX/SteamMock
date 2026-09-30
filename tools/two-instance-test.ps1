@@ -644,25 +644,42 @@ for ($guest = 2; $guest -le $Clients; $guest++) {
         $process = Start-Game $profile @() ("{0}.log" -f $letter)
         $guest_window = Wait-Window $process
         Start-Sleep -Seconds 8
-        # One row per member, then the ready toggle, then Start game, then Invite Friend, so the
-        # item is as many downs in as the room has members plus two - and the room holds the host
-        # and every guest before this one. The walk to the top first is the rig's own habit: the
-        # menu keeps the item the last batch left the cursor on.
-        foreach ($unused in 1..7) { Press $hwndA $VK_UP }
-        Drive $hwndA (@($VK_DOWN) * ($guest + 1) + $VK_RETURN) ("{0}: the host invites it" -f $name)
-        # The invited game only picks the join request up while it is the window in front: asking
-        # Steam for what has arrived is what its frame loop does, and a game that has lost the
-        # front stops asking. The drive above took the front for the host, so the guest gets it
-        # back here - without this the invitation lands when the rig next drives the guest, a
-        # minute later, which is longer than the wait below.
-        Start-Sleep -Seconds 2
-        if (-not (Bring-ToFront $guest_window)) {
-            Say '  warning: the invited game never came to the front, so it may not pick the invite up'
+        # One row per member, then the ready toggle, then Start game, then Invite Friend, then Leave
+        # lobby, so the item is as many downs in as the room has members plus two - and the room
+        # holds the host and every guest before this one. The walk to the top first is the rig's own
+        # habit: the menu keeps the item the last batch left the cursor on.
+        #
+        # The batch is verified from the transcript and tried again, because a partly dropped one
+        # is this rig's oldest trap: the game decides per frame whether to keep a key, so a window
+        # that loses the front keeps the keys before it and drops the ones after, and three downs
+        # in a row land two items short. The first invite run was exactly that - the drive landed
+        # on Set myself as Ready, and the guest, which polls Steam every frame, joined a millisecond
+        # after the invite that did land.
+        $invited = $false
+        for ($attempt = 1; $attempt -le 4 -and -not $invited; $attempt++) {
+            # Bring the host forward first, and then post one key at a time with a frame between
+            # them. Both halves are needed: a Press on its own focuses once and Windows may refuse
+            # it, and a batch of keys posted back to back loses the ones after the first when the
+            # game's frame loop cannot keep up - which is what landed the cursor on Set myself as
+            # Ready when the item wanted was Invite Friend.
+            if (-not (Bring-ToFront $hwndA)) {
+                Say '  warning: the host never came to the front, so its menu may not take the keys'
+            }
+            Say ("  {0}: the host invites it: {1} ups to the top, then {2} down(s) and a return" -f $name, 7, ($guest + 1))
+            foreach ($unused in 1..7) {
+                Press $hwndA $VK_UP
+                Start-Sleep -Milliseconds 120
+            }
+            foreach ($unused in 1..($guest + 1)) {
+                Press $hwndA $VK_DOWN
+                Start-Sleep -Milliseconds 120
+            }
+            Press $hwndA $VK_RETURN
+            Start-Sleep -Seconds 2
+            $invited = [regex]::Matches((Read-Transcript), 'ActivateGameOverlayInviteDialog').Count -ge 1
+            if (-not $invited) { Say ("  {0}: no invite after try {1}, walking back and trying again" -f $name, $attempt) }
         }
-        # And it needs a key, not just the front: a guest that is merely in front sits on the
-        # invitation, and the guest that is sent one joins within a second of it. An up on a list
-        # it is standing at the top of is the key that changes nothing it is showing.
-        Press $guest_window $VK_UP
+        if (-not $invited) { Say ("  {0}: the host never reached Invite Friend - the guest will not join" -f $name) }
     } else {
         Say ("{0}: launching as '{1}' with +connect_lobby, which walks in with no keypresses" -f $name, $profile)
         $process = Start-Game $profile @("+connect_lobby $lobby") ("{0}.log" -f $letter)
