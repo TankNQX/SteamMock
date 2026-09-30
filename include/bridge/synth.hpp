@@ -360,6 +360,19 @@ inline std::uint32_t text_into(char* data, std::uint32_t capacity, const std::st
     return needed;
 }
 
+// The same copy for a member of a payload, where the room is the member's own and there is nobody
+// to ask for a bigger one. What fits is written and the rest is cut, because a payload that arrives
+// with something in it beats one that arrives with nothing, which is what the all-or-nothing rule
+// above would leave behind if a string outgrew its field.
+inline void text_fit(char* data, std::size_t capacity, const std::string& text) noexcept {
+    if (data == nullptr || capacity == 0) {
+        return;
+    }
+    const std::size_t room = text.size() < capacity ? text.size() : capacity - 1u;
+    std::memcpy(data, text.data(), room);
+    data[room] = '\0';
+}
+
 struct TextOut {
     char* data = nullptr;
     std::uint32_t* written = nullptr;

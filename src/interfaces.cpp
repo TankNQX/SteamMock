@@ -164,7 +164,21 @@ std::string commented(const std::string& text) {
 bool push_member_write(const std::string& cpp, const std::string& member, const std::string& fields,
                        const std::string& target, std::vector<std::string>& out) {
     if (member.find('[') != std::string::npos) {
-        return false;
+        // An array of char-sized elements is text: the SDK writes a fixed string that way, and a
+        // connect string is the one payload member this file has to carry. `std::int8_t` is the
+        // signed spelling, so it is the `char[N]` of the two, and it is also what the layouts give
+        // a `char[]` member. Every other array stays zeroed, which is what the generated comment
+        // promises: the wire has no single field for a list.
+        if (cpp != "std::int8_t") {
+            return false;
+        }
+        const std::string key = member.substr(0, member.find('['));
+        out.push_back("    if (const Json* field = steammock::json_member(" + fields + ", " +
+                      literal(key) + ")) {");
+        out.push_back("        steammock::text_fit(reinterpret_cast<char*>(" + target + key +
+                      "), sizeof(" + target + key + "), steammock::as_string(*field));");
+        out.push_back("    }");
+        return true;
     }
     std::string read = "as_int64";
     if (cpp == "bool") {
