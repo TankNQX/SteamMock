@@ -53,7 +53,14 @@ param(
     # match whatever this says; the rest are lobby members and nothing else, so a run this way
     # is a test of the harness holding a crowd - sessions, rosters, notifications, the live
     # view - and not of a match. Without it, more than four is refused.
-    [switch] $Overfill
+    [switch] $Overfill,
+    # Every guest after the first arrives by invitation instead of by `+connect_lobby`: the guest
+    # launches with no arguments at all, the host is driven to the lobby menu's Invite Friend item,
+    # and the guest's own game joins because Steam told it the room. That is the whole flow the
+    # `+connect_lobby` route skips, where the game parses a command line and Steam says nothing.
+    # The command line stays the default, because every set of runs before this one was taken with
+    # it, and the two are meant to be compared.
+    [switch] $ByInvite
 )
 
 $ErrorActionPreference = 'Continue'
@@ -243,12 +250,22 @@ function Press([IntPtr] $hwnd, [int] $vk) {
     Key $hwnd $vk
 }
 
-function Drive([IntPtr] $hwnd, [int[]] $keys, [string] $what) {
+# Bring a window to the front, retrying: Windows refuses a background process's first attempt at
+# taking the front often enough that one call is not enough, and a game that does not have the front
+# stops asking Steam for what has arrived - so a payload queued for it waits until something focuses
+# it again. Drive did this inline for the keys it posts; the invited guest needs it for the payload
+# alone, which is why it is a function.
+function Bring-ToFront([IntPtr] $hwnd) {
     for ($attempt = 0; $attempt -lt 3; $attempt++) {
         Focus $hwnd
-        if ([Win]::GetForegroundWindow() -eq $hwnd) { break }
+        if ([Win]::GetForegroundWindow() -eq $hwnd) { return $true }
         Start-Sleep -Milliseconds 300
     }
+    return ([Win]::GetForegroundWindow() -eq $hwnd)
+}
+
+function Drive([IntPtr] $hwnd, [int[]] $keys, [string] $what) {
+    Bring-ToFront $hwnd | Out-Null
     $foreground = ([Win]::GetForegroundWindow() -eq $hwnd)
     if ($keys.Count -eq 2) { $shape = 'a down and a return' } else { $shape = "$($keys.Count - 1) downs and a return" }
     Say ("  {0}: posting {1}" -f $what, $shape)
@@ -619,8 +636,37 @@ for ($guest = 2; $guest -le $Clients; $guest++) {
     $letter = [char] (96 + $guest)
     $name = 'instance ' + [char] (64 + $guest)
     $profile = $profiles[$guest - 1]
-    Say ("{0}: launching as '{1}' with +connect_lobby, which walks in with no keypresses" -f $name, $profile)
-    $process = Start-Game $profile @("+connect_lobby $lobby") ("{0}.log" -f $letter)
+    if ($ByInvite) {
+        # No arguments at all, because this game is going to be invited. Which is also why the
+        # invite cannot be opened before it is running: a friend with no live session is told
+        # nothing, on purpose, so the guest has to be up and talking first.
+        Say ("{0}: launching as '{1}' with no arguments, to be invited into the lobby" -f $name, $profile)
+        $process = Start-Game $profile @() ("{0}.log" -f $letter)
+        $guest_window = Wait-Window $process
+        Start-Sleep -Seconds 8
+        # One row per member, then the ready toggle, then Start game, then Invite Friend, so the
+        # item is as many downs in as the room has members plus two - and the room holds the host
+        # and every guest before this one. The walk to the top first is the rig's own habit: the
+        # menu keeps the item the last batch left the cursor on.
+        foreach ($unused in 1..7) { Press $hwndA $VK_UP }
+        Drive $hwndA (@($VK_DOWN) * ($guest + 1) + $VK_RETURN) ("{0}: the host invites it" -f $name)
+        # The invited game only picks the join request up while it is the window in front: asking
+        # Steam for what has arrived is what its frame loop does, and a game that has lost the
+        # front stops asking. The drive above took the front for the host, so the guest gets it
+        # back here - without this the invitation lands when the rig next drives the guest, a
+        # minute later, which is longer than the wait below.
+        Start-Sleep -Seconds 2
+        if (-not (Bring-ToFront $guest_window)) {
+            Say '  warning: the invited game never came to the front, so it may not pick the invite up'
+        }
+        # And it needs a key, not just the front: a guest that is merely in front sits on the
+        # invitation, and the guest that is sent one joins within a second of it. An up on a list
+        # it is standing at the top of is the key that changes nothing it is showing.
+        Press $guest_window $VK_UP
+    } else {
+        Say ("{0}: launching as '{1}' with +connect_lobby, which walks in with no keypresses" -f $name, $profile)
+        $process = Start-Game $profile @("+connect_lobby $lobby") ("{0}.log" -f $letter)
+    }
     $joined = $false
     for ($i = 0; $i -lt 60 -and -not $joined; $i++) {
         Start-Sleep -Seconds 1
