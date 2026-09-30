@@ -121,6 +121,25 @@ table first, so one name the flat API does not cover stops the game before `DllM
 game's `steam_api.dll` imports against `steammock --list-api` when a game will not start, which is
 what the 19 names Spacewar imports were checked against.
 
+### The calls nobody answers yet
+
+The stub exports every call the flat API declares, and a call stops being declined only when a world
+or the session table answers it. Nothing is built in for these 17 interfaces, and the two-client
+Spacewar run the README's table comes from never asked for any of them:
+
+`ISteamMusic`, `ISteamMusicRemote`, `ISteamVideo`, `ISteamScreenshots`, `ISteamHTTP`, `ISteamInput`,
+`ISteamNetworkingSockets`, `ISteamNetworkingUtils`, `ISteamMatchmakingServers`, `ISteamGameSearch`,
+`ISteamParties`, `ISteamRemotePlay`, `ISteamAppList`, `ISteamAppTicket`, `ISteamGameCoordinator`,
+`ISteamGameServerStats` and `ISteamUnifiedMessages`.
+
+A declined interface is not always a missing feature. `ISteamParentalSettings` is declined on purpose:
+`BIsFeatureBlocked` answers false, every feature reads as unblocked, and that is why Spacewar's main
+menu keeps all 17 of its items instead of hiding six.
+
+The counts in that table come from one run's transcript, which
+`tools/transcript_timeline.py --rig <dir>` reads back. To reproduce the per-interface numbers, group
+the `call` field of every record by the interface in each name.
+
 ## Interface layouts
 
 A game built against a recent SDK does not import the per-interface accessors: they are inline in the

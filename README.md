@@ -1,5 +1,7 @@
 # SteamMock
 
+[![CI](https://github.com/TankNQX/SteamMock/actions/workflows/ci.yml/badge.svg)](https://github.com/TankNQX/SteamMock/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) ![Platform: Windows x64 and Win32](https://img.shields.io/badge/platform-Windows%20x64%20%2B%20Win32-0078d4) ![C++17](https://img.shields.io/badge/C%2B%2B-17-00599c) ![Steam client: not required](https://img.shields.io/badge/Steam%20client-not%20required-brightgreen) ![Steamworks SDK: optional](https://img.shields.io/badge/Steamworks%20SDK-optional-blue)
+
 Watch a real game's Steam calls arrive, live, without Steam.
 
 ![The live view](docs/images/live-view.png)
@@ -41,7 +43,7 @@ through the leaderboard menu, and the stats screen.
 | `ISteamUserStats` | modelled, session | the leaderboard world for the boards, the session for stats and achievements | 2,202 |
 | `ISteamMatchmaking` | modelled | the lobby world: the rooms, their members, their data, and their chat | 120 |
 | `ISteamClient` | stub | the stub itself, handing out one object per version string | 52 |
-| `ISteamParentalSettings` | declined | nobody, so every feature reads as unblocked and Spacewar's menu keeps all 17 items | 10 |
+| `ISteamParentalSettings` | declined | nobody | 10 |
 | `ISteamRemoteStorage` | declined | nobody | 4 |
 | `ISteamHTMLSurface` | declined | nobody | 4 |
 | `ISteamUGC` | declined | nobody | 2 |
@@ -49,20 +51,13 @@ through the leaderboard menu, and the stats screen.
 | `ISteamApps` | session | the session: the app id, its language, its build id | never asked |
 | `SteamAPI_*` top level | stub, scripted | the stub's own entry points, and the scenario's answers for `Init` and its neighbours | 17,196 |
 
-Nothing is built in for these, and the run never asked either: `ISteamMusic`, `ISteamMusicRemote`,
-`ISteamVideo`, `ISteamScreenshots`, `ISteamHTTP`, `ISteamInput`, `ISteamNetworkingSockets`,
-`ISteamNetworkingUtils`, `ISteamMatchmakingServers`, `ISteamGameSearch`, `ISteamParties`,
-`ISteamRemotePlay`, `ISteamAppList`, `ISteamAppTicket`, `ISteamGameCoordinator`,
-`ISteamGameServerStats` and `ISteamUnifiedMessages`.
-
 A declined call is not a failure. The game gets the value it would see with Steam absent, so it keeps
 going rather than being told something invented. A scenario can answer any call, including one listed
 as declined, which is how Spacewar's controller and menus come up at all. Nothing here answers
-ownership, entitlement or licensing.
-
-The layouts this build imports carry 32 interfaces, and a game that asks for a version string they do
-not have gets null, exactly what it would get from a Steam that does not know the string. Where those
-layouts come from is [development.md](docs/development.md#interface-layouts).
+ownership, entitlement or licensing. Seventeen more interfaces have nothing built in and the run never
+asked for them, which [development.md](docs/development.md#the-calls-nobody-answers-yet) names. The
+layouts this build imports carry 32 interfaces, and a game asking for a string they do not have gets
+null, exactly what a Steam that does not know the string would give it.
 
 ## Run it
 
