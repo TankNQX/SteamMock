@@ -11,86 +11,15 @@ makes, what answered each one, how long it took, and the state that game is bein
 
 *Three of them, and the view with them. One makes a lobby, the others join it, and all three are
 authenticated against each other. [The full recording, 30 MB, mp4](https://github.com/TankNQX/SteamMock/releases/download/demo-two-instances/two-instances.mp4)
-runs from the lobby menus through to the match, taken by the rig in `tools/`, including the part
-that does not work yet, which its notes say out loud.*
+runs from the lobby menus through to the match, taken by the rig in `tools/`.*
 
-## What you need
+Point a game at one DLL and every Steam call it makes lands in a window: the call, what answered it,
+how long it took. No Steam client, no account, no Valve service, and no game code to change. Valve's
+own test app runs against it through a lobby, a match, a leaderboard and its inventory screen.
 
-* **Windows.** Visual Studio 2022 or its Build Tools, and CMake.
-* **Spacewar.** Valve's own test app, which Steam installs as app 480. It is in your Steam library
-  as `Spacewar`, next to your other games.
-* **A copy of this repository.** Cloned with its submodules. If you cloned without them, run
-  `git submodule update --init --recursive` inside your checkout.
-* **Optionally, a Steamworks SDK.** Use yours, from Valve, if you want the stub to hand out
-  interface objects. A game built against a recent SDK does not import the per-interface calls. It
-  asks the stub for a version string and calls what it gets back. What the stub can answer that
-  with is the imported layouts, and they are Valve's data, so they are not in this repository and
-  the build works without them:
+## What it answers today
 
-```bat
-python -m venv .venv
-.venv\Scripts\pip install -r tools\requirements.txt
-.venv\Scripts\python tools\steamworks_sdk_import.py --sdk <sdk>\public\steam --out gen\steam_interfaces.json
-```
-
-  With none imported the stub answers every such request with null, the same thing a game sees from
-  a steam_api that does not know the version, and `end_to_end` says so and skips those checks. The
-  Spacewar walkthrough below is about the flat calls and the lobby, so it works either way.
-
-## Step by step
-
-**1. Build it.** From your checkout, 32-bit, because Spacewar's own program is 32-bit. This produces
-the stand-in DLL and the window.
-
-```bat
-cmake -S . -B build -A Win32 -DSTEAMMOCK_BUILD_GUI=ON -DSTEAMMOCK_STUB_NAME=steam_api
-cmake --build build --config Release
-```
-
-**2. Copy Spacewar somewhere of your own.** Copy the whole `Spacewar` folder out of your Steam
-library, for example to `C:\dev\spacewar`. You work on the copy, so nothing about your installed
-game changes.
-
-**3. Put the built DLL in that copy.** Copy `build\Release\steam_api.dll` into your Spacewar copy,
-next to `SteamworksExample.exe`. It takes the place of the real one.
-
-**4. Start the window.** From your checkout:
-
-```bat
-build\Release\steammock_gui.exe --scenario scenarios\spacewar.json --start
-```
-
-The window opens already serving, and says `listening on 127.0.0.1:50990`.
-
-**5. Start the game.** Run `SteamworksExample.exe` from your copy, not from Steam. Its own window
-opens, and it talks to the window from step 4 instead of to Valve.
-
-**6. Watch.** In the live view, a row appears for the game, with the profile `default` and the state
-`live`, and the calls start scrolling past: its identity check, its controller, its stats, its
-friends. Click around in the game's own window, Stats and Achievements, Friends, and those calls
-appear as you do. The line above the list counts them: every call the game has made, and how many
-were left to the game's own defaults.
-
-**7. Stop when you are done.** Close the live view window, then close the game.
-
-## What you are looking at
-
-* **Games.** Each running game, the profile it was matched to, and whether it is still connected. Two
-  copies of one game can run at once. Each gets its own session and its own row here.
-* **Calls.** Two views of the same calls, both narrowed by the filter box at the top. **by function**
-  counts them, most-called first. A game that polls one call every frame buries everything else in a
-  list, and this is the view that stays readable. **live** is the call-by-call list, where `via / ms`
-  says where each answer came from, whether a scenario, the game's session state, or nobody, and how
-  long it took.
-* **Game state.** Who the game thinks it is talking to: app id, Steam id, persona, language, and the
-  stats and achievements it has been told about. Read-only for now.
-
-Calls nobody answers are not a problem. They fall through to the values a game sees when Steam is
-not running, which is why the game keeps going instead of getting an invented success.
-
-## What is modelled, and what is not
-
-Every call a game makes reaches this backend. What differs is where the answer comes from:
+Every call reaches the backend. What differs is where the answer comes from:
 
 * **Modelled**: a world answers it from state that outlives one session, such as a room or a board.
 * **Session**: the per-game state machine answers it from the profile the game was matched to.
@@ -126,38 +55,75 @@ Nothing is built in for these, and the run never asked either: `ISteamMusic`, `I
 `ISteamRemotePlay`, `ISteamAppList`, `ISteamAppTicket`, `ISteamGameCoordinator`,
 `ISteamGameServerStats` and `ISteamUnifiedMessages`.
 
-Three things the table cannot show. A scenario can answer any call, including one listed as declined,
-and that is how Spacewar's controller and menus come up at all. Nothing answers ownership,
-entitlement or licensing, so a game that asks whether a player owns something is told no, and a
-scenario is where to change that. A call made through a flat import and one made through a vtable
-arrive here as one call, so one scenario answer covers both routes.
+A declined call is not a failure. The game gets the value it would see with Steam absent, so it keeps
+going rather than being told something invented. A scenario can answer any call, including one listed
+as declined, which is how Spacewar's controller and menus come up at all. Nothing here answers
+ownership, entitlement or licensing.
 
-The layouts this build imports carry 32 interfaces. A game that asks for a version string they do not
-have gets null, exactly what it would get from a Steam that does not know the string. See
-[architecture.md](docs/architecture.md) for how a world answers a call, and
-[development.md](docs/development.md#interface-layouts) for where the layouts come from.
+The layouts this build imports carry 32 interfaces, and a game that asks for a version string they do
+not have gets null, exactly what it would get from a Steam that does not know the string. Where those
+layouts come from is [development.md](docs/development.md#interface-layouts).
 
-## If nothing appears
+## Run it
 
-* The game must be the one **from your copy**, with `steam_api.dll` beside it. Started from Steam, it
-  never sees this project at all.
-* The DLL must be the **32-bit** build from step 1. A 64-bit one will not load into Spacewar.
-* The window must be **running first**. Started later, the game still finds it, and the row appears
-  when the next call picks it up.
-* To see the other side of the conversation, run the game with `STEAMMOCK_LOG` set to a file, that
-  is, `set STEAMMOCK_LOG=stub.log` before `SteamworksExample.exe`, and read what the stub did.
+You need Windows, Visual Studio 2022 or its Build Tools, CMake, and Valve's own test app, which Steam
+installs as app 480 in your library. Clone this repository with its submodules, and run
+`git submodule update --init --recursive` if you cloned without them.
+
+**1. Build the stub and the window.** 32-bit, because Spacewar's own program is 32-bit.
+
+```bat
+cmake -S . -B build -A Win32 -DSTEAMMOCK_BUILD_GUI=ON -DSTEAMMOCK_STUB_NAME=steam_api
+cmake --build build --config Release
+```
+
+**2. Copy the game out of your library**, for example to `C:\dev\spacewar`, and put
+`build\Release\steam_api.dll` into the copy, next to `SteamworksExample.exe`. You work on the copy,
+so your installed game never changes.
+
+**3. Start the window.** From your checkout:
+
+```bat
+build\Release\steammock_gui.exe --scenario scenarios\spacewar.json --start
+```
+
+It opens already serving and says `listening on 127.0.0.1:50990`.
+
+**4. Start the game** from your copy, not from Steam.
+
+**5. Watch.** A row appears for the game and the calls start scrolling past. Click around in the
+game's own window, Stats and Achievements or Friends, and those calls appear as you make them.
+
+If nothing appears, check three things. The game has to be the one from your copy, with
+`steam_api.dll` beside it. The DLL has to be the 32-bit build from step 1. And the window has to be
+running first, though a game started before it finds it on the next call. To see the other side of the
+conversation, set `STEAMMOCK_LOG` to a file before starting the game and read what the stub did.
+
+## The live view
+
+* **Games.** Each running game, the profile it was matched to, and whether it is still connected. Two
+  copies of one game run at once, each with its own session and its own row.
+* **Calls.** The filter box narrows both views. **by function** counts the calls, most-called first,
+  which stays readable when a game polls one call every frame. **live** is the call-by-call list,
+  where `via` says where each answer came from and `ms` says how long it took.
+* **Game state.** Who the game thinks it is talking to: app id, Steam id, persona, language, and the
+  stats and achievements it has been told about.
+
+## Where to read more
+
+* Build it, test it, and what CI checks: [development.md](docs/development.md).
+* How the two halves talk: [protocol.md](docs/protocol.md). How the whole thing is put together:
+  [architecture.md](docs/architecture.md).
+* Drive two copies of a real game, with the traps that cost runs: [two-instance-test.md](docs/two-instance-test.md).
 
 ## What this is not
 
-* **Not for games you do not own.** It reports what a scenario tells it to report, and answers no
-  ownership or entitlement question.
-* **Not shippable.** A substitute `steam_api.dll` is a development tool. Keep it in your dev and test
-  runs and out of anything you distribute.
-* **Not a Steam emulator.** It never talks to Valve, so anything that needs the real service has to be
+* **Not for games you do not own.** It answers no ownership or entitlement question.
+* **Not shippable.** A substitute `steam_api.dll` is a development tool. Keep it out of anything you
+  distribute.
+* **Not a Steam emulator.** It never talks to Valve, so anything that needs the real service is
   scripted call by call.
-* **Not Valve's code or data.** No Steamworks SDK, header, library or interface layout is in this
-  repository, and nothing generated from them is committed either. The layouts are imported from an
-  SDK you have, the files the generator writes are build outputs, and the two test apps are ours.
+* **Not Valve's code or data.** No SDK, header, library or interface layout is in this repository, and
+  nothing generated from them is committed.
 
-Contributors: `docs/development.md` has the source layout, the tests and what CI checks. Licensed
-under MIT, see `LICENSE`.
+Licensed under MIT, see `LICENSE`.
