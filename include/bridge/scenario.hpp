@@ -91,14 +91,22 @@ public:
     const std::vector<MatchRule>& match_rules() const noexcept { return _match; }
     const std::string& default_profile() const noexcept { return _default_profile; }
 
+    // What a scenario got wrong, empty when it loaded. It is reported by `load_file` as well,
+    // so a file that cannot be served says why at startup rather than only refusing games.
+    const std::string& load_error() const noexcept { return _error; }
+
 private:
-    void configure(const Json& scenario);
+    // `error`, when given, is filled in with what a scenario got wrong and the dispatcher is left
+    // as the empty one rather than half-configured - the same refusal `profile_for` makes at
+    // match time, made here instead because a friends list naming somebody is checkable at load.
+    void configure(const Json& scenario, std::string* error = nullptr);
 
     const Profile* find_profile(const std::string& name) const noexcept;
 
     std::vector<std::pair<std::string, Profile>> _profiles;
     std::vector<MatchRule> _match;
     std::string _default_profile = "default";
+    std::string _error;
 };
 
 }  // namespace steammock

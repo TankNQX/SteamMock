@@ -175,6 +175,43 @@ Answer h_persona_name(Session& session, const Json&) {
     return from_state(Json(session.profile().persona_name));
 }
 
+// The friends list is the scenario's: it names the profiles this identity is friends with, and a
+// game that draws a list of friends draws exactly that. The flags a real `GetFriendCount` takes
+// choose between accepted friends, blocklist entries and co-play records, none of which exists
+// here, so every declared friend is one a game is told about.
+Answer h_friend_count(Session& session, const Json&) {
+    return from_state(Json(static_cast<std::int64_t>(session.profile().friends.size())));
+}
+
+Answer h_friend_by_index(Session& session, const Json& args) {
+    std::int64_t index = 0;
+    if (const Json* value = json_member(args, "iFriend")) {
+        index = to_int64(*value, 0);
+    }
+    const std::vector<Friend>& friends = session.profile().friends;
+    if (index < 0 || static_cast<std::size_t>(index) >= friends.size()) {
+        // Past the end of the list: no id rather than a name it does not have, which is what
+        // ends a game's loop over the count.
+        return from_state(Json(static_cast<std::uint64_t>(0)));
+    }
+    return from_state(Json(friends[static_cast<std::size_t>(index)].steam_id));
+}
+
+Answer h_friend_persona_name(Session& session, const Json& args) {
+    std::uint64_t friend_id = 0;
+    if (const Json* value = json_member(args, "steamIDFriend")) {
+        friend_id = static_cast<std::uint64_t>(to_int64(*value, 0));
+    }
+    std::string name;
+    if (!session.profile().find_friend(friend_id, name)) {
+        // Somebody this profile is not friends with: the name a game is given for an id Steam
+        // has nothing to say about is empty, which is what the stub answers too when nobody
+        // has an opinion at all.
+        return from_state(Json(std::string()));
+    }
+    return from_state(Json(name));
+}
+
 Answer h_app_id(Session& session, const Json&) {
     return from_state(Json(session.profile().app_id));
 }
@@ -320,6 +357,11 @@ constexpr HandlerEntry kHandlers[] = {
     {"SteamAPI_GetSteamInstallPath", &h_install_path},
     {"SteamAPI_ISteamUser_GetSteamID", &h_steam_id},
     {"SteamAPI_ISteamFriends_GetPersonaName", &h_persona_name},
+    // The friends list this identity's scenario declares. A name the world can place comes from
+    // the world first, so what is answered here is the friend a run has not heard from.
+    {"SteamAPI_ISteamFriends_GetFriendCount", &h_friend_count},
+    {"SteamAPI_ISteamFriends_GetFriendByIndex", &h_friend_by_index},
+    {"SteamAPI_ISteamFriends_GetFriendPersonaName", &h_friend_persona_name},
     {"SteamAPI_ISteamUtils_GetAppID", &h_app_id},
     // The language a game is running in is ISteamApps' call in every SDK this has
     // been read from, and the layouts put that name on the wire: answering the
@@ -402,6 +444,34 @@ Profile Profile::from_json(const std::string& profile_name, const Json& data) {
         }
     }
 
+    if (const Json* value = json_member(data, "friends"); value != nullptr && value->is_array()) {
+        for (const Json& entry : *value) {
+            if (entry.is_string()) {
+                // A profile in the same scenario, by name. The id and the name are filled
+                // in once every profile has been read, because that is the only moment
+                // the file can be checked for naming somebody who is not in it.
+                Friend friend_entry;
+                friend_entry.profile = as_string(entry);
+                profile.friends.push_back(std::move(friend_entry));
+                continue;
+            }
+            if (!entry.is_object()) {
+                continue;
+            }
+            // An id and a name spelled out: a friend this scenario has no profile for, which
+            // is what a friend who is simply not in this run looks like.
+            Friend friend_entry;
+            if (const Json* id = json_member(entry, "steam_id")) {
+                friend_entry.steam_id =
+                    static_cast<std::uint64_t>(to_int64(*id, static_cast<std::int64_t>(0)));
+            }
+            if (const Json* name = json_member(entry, "persona_name")) {
+                friend_entry.persona_name = to_text(*name, std::string());
+            }
+            profile.friends.push_back(std::move(friend_entry));
+        }
+    }
+
     if (const Json* value = json_member(data, "scripted"); value != nullptr && value->is_object()) {
         for (const auto& [call_name, script] : value->items()) {
             profile.scripted.emplace_back(call_name, script);
@@ -409,6 +479,16 @@ Profile Profile::from_json(const std::string& profile_name, const Json& data) {
     }
 
     return profile;
+}
+
+bool Profile::find_friend(std::uint64_t friend_id, std::string& out) const noexcept {
+    for (const Friend& friend_entry : friends) {
+        if (friend_entry.steam_id == friend_id) {
+            out = friend_entry.persona_name;
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Profile::find_stat(const std::string& key, std::int64_t& out) const noexcept {

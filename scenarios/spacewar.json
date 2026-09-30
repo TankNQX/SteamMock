@@ -4,6 +4,10 @@
       "app_id": 480,
       "steam_id": 76561198000000001,
       "persona_name": "DebugPlayer",
+      "friends": [
+        "second_player",
+        { "steam_id": 76561198999999999, "persona_name": "Ada" }
+      ],
       "language": "english",
       "ui_language": "english",
       "install_path": "C:\\Program Files (x86)\\Steam",
@@ -41,6 +45,7 @@
     "second_player": {
       "steam_id": 76561198000000002,
       "persona_name": "DebugPlayer2",
+      "friends": ["default"],
       "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },

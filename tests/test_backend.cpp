@@ -249,6 +249,81 @@ void test_identity() {
           unknown.ret.is_null() && unknown.out.is_null());
 }
 
+// The friends list is the scenario's, and what a game gets is a list of ids and names: a friend
+// named as a profile resolves to that profile's identity, and one spelled out is somebody this
+// run simply does not have. An invite needs the first kind, because an id is what it is sent to.
+void test_friends() {
+    std::printf("[:] friends\n");
+
+    Json document;
+    check("the friends scenario parses",
+          steammock::parse("{\"profiles\":{"
+                           "\"default\":{\"steam_id\":11,\"persona_name\":\"One\","
+                           "\"friends\":[\"other\",{\"steam_id\":99,\"persona_name\":\"Away\"}]},"
+                           "\"other\":{\"steam_id\":22,\"persona_name\":\"Two\","
+                           "\"friends\":[\"default\"]}}}",
+                           document));
+    const Dispatcher dispatcher(document);
+
+    Json hello = Json::object();
+    hello["profile"] = Json("default");
+    const std::optional<Profile> profile = dispatcher.profile_for(hello);
+    check("the profile is served", profile.has_value());
+    if (!profile.has_value()) {
+        return;
+    }
+
+    check("a friend named by profile resolves to that profile",
+          profile->friends.size() == 2 && profile->friends[0].steam_id == 22 &&
+              profile->friends[0].persona_name == "Two" && profile->friends[0].profile == "other");
+    check("a friend spelled out stays as written", profile->friends[1].steam_id == 99 &&
+                                                       profile->friends[1].persona_name == "Away" &&
+                                                       profile->friends[1].profile.empty());
+
+    Session session("friends", hello, *profile);
+    const Answer count =
+        dispatcher.answer(session, "SteamAPI_ISteamFriends_GetFriendCount", Json::object());
+    check("the count is the list's", count.ret == Json(2) && count.via == "state");
+
+    Json index = Json::object();
+    index["iFriend"] = Json(1);
+    const Answer by_index =
+        dispatcher.answer(session, "SteamAPI_ISteamFriends_GetFriendByIndex", index);
+    check("an index answers with the friend's id", by_index.ret == Json(99));
+
+    Json past_end = Json::object();
+    past_end["iFriend"] = Json(7);
+    const Answer past =
+        dispatcher.answer(session, "SteamAPI_ISteamFriends_GetFriendByIndex", past_end);
+    check("past the end answers no id rather than an invented one", past.ret == Json(0));
+
+    Json by_id = Json::object();
+    by_id["steamIDFriend"] = Json(22);
+    const Answer named =
+        dispatcher.answer(session, "SteamAPI_ISteamFriends_GetFriendPersonaName", by_id);
+    check("a friend is named by id", named.ret == Json("Two"));
+
+    Json stranger = Json::object();
+    stranger["steamIDFriend"] = Json(1234);
+    const Answer unnamed =
+        dispatcher.answer(session, "SteamAPI_ISteamFriends_GetFriendPersonaName", stranger);
+    check("somebody who is not a friend has no name", unnamed.ret == Json(std::string()));
+
+    // A friends list naming a profile the scenario does not have is a file that cannot mean what
+    // it says. Nothing is served from it, the blank default identity included: this is the same
+    // refusal a rule or a `default_profile` naming a profile it does not have gets, which used to
+    // be a silence and took a day to find.
+    Json typo_document;
+    check("the typo scenario parses",
+          steammock::parse("{\"profiles\":{\"default\":{\"friends\":[\"missing\"]}}}",
+                           typo_document));
+    const Dispatcher typo(typo_document);
+    check("a friend who is not a profile is reported",
+          typo.load_error().find("missing") != std::string::npos);
+    check("and a scenario that cannot mean it serves nobody",
+          !typo.has_profile("default") && !typo.profile_for(hello).has_value());
+}
+
 void test_stats() {
     std::printf("[:] stats\n");
 
@@ -1525,6 +1600,7 @@ int run() {
     test_replies();
     test_relabelling();
     test_identity();
+    test_friends();
     test_stats();
     test_achievements();
     test_describe();

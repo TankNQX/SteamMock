@@ -31,6 +31,19 @@ struct Achievement {
     bool achieved = false;
 };
 
+// One person a profile is friends with: the id an invite is addressed to, and the name a
+// roster or an invite list draws them with.
+//
+// `profile` is set only when the scenario named a profile in this same file instead of
+// spelling an id out, which is how a run says that two of its own identities are friends.
+// The Dispatcher fills the id and the name in from that profile once every profile has been
+// read, so a friends list written as names cannot drift from the identities it names.
+struct Friend {
+    std::uint64_t steam_id = 0;
+    std::string persona_name;
+    std::string profile;
+};
+
 // What one game is told about the world, from a scenario file.
 //
 // The stat and achievement lists are ordered rather than hashed: a scenario's
@@ -50,6 +63,7 @@ public:
     std::vector<std::pair<std::string, std::int64_t>> stats;
     std::vector<Achievement> achievements;
     std::vector<std::pair<std::string, Json>> scripted;
+    std::vector<Friend> friends;
 
     static Profile from_json(const std::string& profile_name, const Json& data);
 
@@ -64,6 +78,11 @@ public:
     Achievement* find_achievement(const std::string& achievement_name) noexcept;
 
     const Json* scripted_for(const std::string& call) const noexcept;
+
+    // The name of one friend, for a roster that asks for a name by Steam id. A short
+    // scan, like the stats above, and false when this profile has no such friend. The
+    // parameter is not called `steam_id` because the profile has one of those.
+    bool find_friend(std::uint64_t friend_id, std::string& out) const noexcept;
 };
 
 // What one call resolved to, and which rule resolved it.

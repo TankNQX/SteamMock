@@ -81,14 +81,15 @@ bool Dispatcher::load_file(const std::string& path, Dispatcher& out, std::string
         error = path + " is not a JSON object";
         return false;
     }
-    out.configure(scenario);
+    out.configure(scenario, &error);
     return true;
 }
 
-void Dispatcher::configure(const Json& scenario) {
+void Dispatcher::configure(const Json& scenario, std::string* error) {
     _profiles.clear();
     _match.clear();
     _default_profile = "default";
+    _error.clear();
 
     if (!scenario.is_object()) {
         _profiles.emplace_back("default", Profile{});
@@ -106,6 +107,34 @@ void Dispatcher::configure(const Json& scenario) {
     }
     if (find_profile("default") == nullptr) {
         _profiles.emplace_back("default", Profile{});
+    }
+
+    // A friend written as a name is a profile in this same file, filled in here rather than when
+    // it was read, because this is the first moment every profile exists. A name that is not one
+    // is a scenario that cannot mean what it says, and it is refused rather than dropped, the
+    // same way a `default_profile` that is not there is refused rather than substituted.
+    for (auto& [profile_name, profile] : _profiles) {
+        for (Friend& friend_entry : profile.friends) {
+            if (friend_entry.profile.empty()) {
+                continue;  // an id and a name spelled out in the file
+            }
+            const Profile* other = find_profile(friend_entry.profile);
+            if (other == nullptr) {
+                _error = profile_name + " is friends with '" + friend_entry.profile +
+                         "', which is not a profile in this scenario";
+                if (error != nullptr) {
+                    *error = _error;
+                }
+                // Everything goes, the default profile included: a table with no profiles at all
+                // refuses every game, which is louder than the blank identity a leftover default
+                // would happily run as.
+                _profiles.clear();
+                _match.clear();
+                return;
+            }
+            friend_entry.steam_id = other->steam_id;
+            friend_entry.persona_name = other->persona_name;
+        }
     }
 
     if (const Json* default_profile = json_member(scenario, "default_profile");
