@@ -288,13 +288,22 @@ private:
 
 // A buffer the game wants filled in: the reply carries the hex and the stub writes it
 // into the game's own memory, up to the capacity the game passed with the pointer.
+//
+// How much room there is arrives one of two ways, and the SDK uses both: a plain capacity,
+// or - the two-call shape a game asks "how much do I need" with - the caller's own pointer,
+// which is the room on the way in and the number the value needs on the way out. `written`
+// is what tells the two apart, and it is declared before `size` because the constructor
+// reads through it.
 struct BytesOut {
     void* data = nullptr;
+    std::uint32_t* written = nullptr;
     std::uint32_t size = 0;
 
     BytesOut() = default;
     BytesOut(void* target, std::int64_t capacity)
         : data(target), size(capacity > 0 ? static_cast<std::uint32_t>(capacity) : 0u) {}
+    BytesOut(void* target, std::uint32_t* out_size)
+        : data(target), written(out_size), size(out_size != nullptr ? *out_size : 0u) {}
 };
 
 template <> struct Kind<Bytes> {
@@ -334,9 +343,150 @@ template <> struct Kind<BytesOut> {
     // so every buffer read this way stayed exactly as the game left it: a game that read a
     // packet read its own uninitialised bytes and said so.
     static void store(BytesOut target, const Json& value) noexcept {
-        bytes_into(target.data, target.size, as_string(value));
+        const std::string hex = as_string(value);
+        bytes_into(target.data, target.size, hex);
+        if (target.written != nullptr) {
+            // Two hex digits are one byte, so this is the number the value needs - the same
+            // answer the text buffer gives, and the one a caller that passed a null buffer
+            // is asking for.
+            *target.written = static_cast<std::uint32_t>(hex.size() / 2u);
+        }
     }
     static BytesOut fallback() noexcept { return BytesOut{}; }
+};
+
+// A text buffer the game wants filled in: the same shape as one the wire carries as hex,
+// with the value that goes back being the text itself.
+//
+// The count that comes back is the number of bytes the *value* needs, terminator included -
+// not the number that fit. They are the same whenever the caller had the room, which is what
+// makes the one number both "what you got" and "what you would need", and it is what a
+// caller asking with a null buffer reads: that is how a game sizes a buffer it has not got.
+inline std::uint32_t text_into(char* data, std::uint32_t capacity, const std::string& text) {
+    const std::uint32_t needed = static_cast<std::uint32_t>(text.size()) + 1u;
+    if (data == nullptr || needed > capacity) {
+        return needed;
+    }
+    std::memcpy(data, text.data(), text.size());
+    data[text.size()] = '\0';
+    return needed;
+}
+
+struct TextOut {
+    char* data = nullptr;
+    std::uint32_t* written = nullptr;
+    std::uint32_t capacity = 0;
+
+    TextOut() = default;
+    // The room passed by value: the caller has nowhere to be told the size, which is the
+    // shape whose call returns it instead.
+    TextOut(char* target, std::int64_t room)
+        : data(target), capacity(room > 0 ? static_cast<std::uint32_t>(room) : 0u) {}
+    TextOut(char* target, std::uint32_t* out_size)
+        : data(target), written(out_size), capacity(out_size != nullptr ? *out_size : 0u) {}
+};
+
+template <> struct Kind<TextOut> {
+    static constexpr bool out() noexcept { return true; }
+
+    static Arg arg(const TextOut& value) noexcept {
+        (void)value;
+        return wire_null();
+    }
+    static TextOut from(const Json& reply) noexcept {
+        (void)reply;
+        return TextOut{};
+    }
+    static void store(TextOut target, const Json& value) noexcept {
+        const std::uint32_t needed = text_into(target.data, target.capacity, as_string(value));
+        if (target.written != nullptr) {
+            *target.written = needed;
+        }
+    }
+    static TextOut fallback() noexcept { return TextOut{}; }
+};
+
+// A list of things the game wants filled in - a list of structures, which is the shape
+// `GetResultItems` asks for - with the same two ways of being told the room. A list's count is
+// in elements and not bytes, which is why it is not the byte buffer above: the two differ by
+// the size of one element every time.
+//
+// What is written is the elements that fit; what is reported is how many there are, so a
+// caller that asked with a null buffer and a count of zero is handed the number to allocate.
+template <class T> struct ArrayOut {
+    T* data = nullptr;
+    std::uint32_t* written = nullptr;
+    std::uint32_t capacity = 0;
+
+    ArrayOut() = default;
+    ArrayOut(T* target, std::int64_t room)
+        : data(target), capacity(room > 0 ? static_cast<std::uint32_t>(room) : 0u) {}
+    ArrayOut(T* target, std::uint32_t* out_size)
+        : data(target), written(out_size), capacity(out_size != nullptr ? *out_size : 0u) {}
+};
+
+template <class T> struct Kind<ArrayOut<T>> {
+    static constexpr bool out() noexcept { return true; }
+
+    static Arg arg(const ArrayOut<T>& value) noexcept {
+        (void)value;
+        return wire_null();
+    }
+    static ArrayOut<T> from(const Json& reply) noexcept {
+        (void)reply;
+        return ArrayOut<T>{};
+    }
+    // Each element is written by the kind of the thing it is, which is the same store a
+    // single structure handed back through a pointer goes through - so a list of them costs
+    // one loop here and nothing per structure in the generated file.
+    static void store(ArrayOut<T> target, const Json& value) noexcept {
+        const std::size_t total = value.is_array() ? value.size() : 0u;
+        if (target.written != nullptr) {
+            *target.written = static_cast<std::uint32_t>(total);
+        }
+        if (target.data == nullptr) {
+            return;
+        }
+        std::size_t index = 0;
+        for (const Json& element : value) {
+            if (index >= target.capacity) {
+                break;
+            }
+            Kind<T>::store(&target.data[index], element);
+            ++index;
+        }
+    }
+    static ArrayOut<T> fallback() noexcept { return ArrayOut<T>{}; }
+};
+
+// A parameter that is a buffer's own length: the room the buffer has, arriving from the
+// caller's pointer, and the number the buffer wrote going back through that same pointer -
+// which is the buffer's business, so this is one of the few parameters that is sent and
+// never stored. It travels as the value it points at, which is what the buffer read a moment
+// earlier, so a backend that wants to know the room still sees it.
+//
+// The constructor is what lets the generated call write `BufferLength{punCount}`: a
+// constructor gives the type an implicit deduction guide, and this tree is C++17, where an
+// aggregate's own members do not.
+template <class T> struct BufferLength {
+    T* value = nullptr;
+
+    explicit BufferLength(T* length) noexcept : value(length) {}
+};
+
+template <class T> struct Kind<BufferLength<T>> {
+    static constexpr bool out() noexcept { return false; }
+
+    static Arg arg(BufferLength<T> length) noexcept {
+        if (length.value == nullptr) {
+            return wire_null();
+        }
+        if constexpr (std::is_signed_v<T>) {
+            return wire_int(static_cast<std::int64_t>(*length.value));
+        } else {
+            return wire_uint(static_cast<std::uint64_t>(*length.value));
+        }
+    }
 };
 
 // A pointer to anything with a kind of its own is an out-parameter: what the

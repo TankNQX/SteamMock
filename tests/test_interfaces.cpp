@@ -129,6 +129,35 @@ void test_rows() {
               slot.params.size() == 1u && slot.params[0].kind == "struct" &&
               slot.params[0].decl == "Motion_t" && slot.params[0].cpp == "Motion_t*" &&
               slot.params[0].out);
+    // A text buffer is a byte buffer with text in it: a `char *` the caller owns and the
+    // parameter that says how long it is, which is the second half of the value rather than
+    // something the call sent. `out` is not written on one of these - the kind's name says the
+    // buffer is written, which is what keeps the declared type the SDK's own `char *`.
+    check("a text buffer names the parameter carrying its length",
+          reads_slots("[\"GetName\", \"bool\", [[\"pchValue\", \"out_text\", \"pcbValue\"], "
+                      "[\"pcbValue\", \"uint32\", \"out\"]]]",
+                      slot, error) &&
+              slot.params.size() == 2u && slot.params[0].kind == "out_text" &&
+              slot.params[0].cpp == "char*" && !slot.params[0].out &&
+              slot.params[0].length == "pcbValue");
+    // The same buffer with a length that is the caller's own pointer, which is the two-call
+    // shape: a game asks with a null buffer and a count of zero, and is told how much it needs.
+    check("a buffer whose length is the caller's pointer reads as one value",
+          reads_slots("[\"GetName\", \"bool\", [[\"pchValue\", \"out_text\", \"punValue\"], "
+                      "[\"punValue\", \"uint32\", \"out\"]]]",
+                      slot, error) &&
+              slot.params[1].cpp == "std::uint32_t*" && slot.params[1].out);
+    // A list: one named type and the parameter carrying how many of them. The count is not part
+    // of the value and is not `out` here either - it is the buffer's, and what the generator
+    // writes for it is a length rather than a parameter of the call.
+    check(
+        "a list reads as the structure it is a list of, with its count",
+        reads_slots("[\"GetItems\", \"bool\", [[\"pItems\", \"Motion_t\", \"out\", \"pcbItems\"], "
+                    "[\"pcbItems\", \"uint32\", \"out\"]]]",
+                    slot, error) &&
+            slot.params.size() == 2u && slot.params[0].kind == "struct" &&
+            slot.params[0].decl == "Motion_t" && slot.params[0].cpp == "Motion_t*" &&
+            slot.params[0].out && slot.params[0].length == "pcbItems");
 }
 
 void test_notes() {
@@ -191,6 +220,27 @@ void test_refusals() {
     check("a byte buffer whose length is not a parameter of the call",
           refuses("[\"Send\", \"void\", [[\"pv\", \"bytes\", \"cb\"], [\"cub\", \"int32\"]]]",
                   error));
+    check("a text buffer with no length parameter",
+          refuses("[\"GetName\", \"bool\", [[\"pchValue\", \"out_text\"]]]", error));
+    check("  and it says the length is what it is missing",
+          error.find("carrying its length") != std::string::npos);
+    // One of a named type is what `out` alone says. A length on one is a list of them, and a
+    // list is written through the caller's pointer or not at all.
+    check("a named type with a length that is not an out parameter",
+          refuses("[\"GetItems\", \"bool\", [[\"pItems\", \"Motion_t\", \"pcbItems\"], "
+                  "[\"pcbItems\", \"uint32\"]]]",
+                  error));
+    // Two halves of one value, so one length and not two.
+    check("a buffer that names two length parameters",
+          refuses("[\"Send\", \"void\", [[\"pv\", \"bytes\", \"cb\", \"cub\"], "
+                  "[\"cb\", \"int32\"], [\"cub\", \"int32\"]]]",
+                  error));
+    // What the call reads is already in the caller's memory, so a pointer there is a room
+    // nothing could report against - and `Bytes` has nowhere to put a number.
+    check("a buffer the call reads whose length is a pointer",
+          refuses("[\"Send\", \"void\", [[\"pv\", \"bytes\", \"pcb\"], "
+                  "[\"pcb\", \"uint32\", \"out\"]]]",
+                  error));
 }
 
 // What the generator *writes* for a structure, which is the other half of the reading above and
@@ -226,6 +276,63 @@ void test_what_is_written() {
     const std::string plain = steammock::render_api_interfaces(reported);
     check("a structure nothing fills in gets no store",
           plain.find("store_Motion_t") == std::string::npos);
+}
+
+// And what it writes for a buffer the caller owns, which is the half of a call the arguments
+// carry rather than the signature: the buffer and the thing that says how long it is travel
+// together, and the length is the buffer's own - sent, and written back through the caller's
+// pointer when the caller passed one.
+void test_what_is_written_for_a_buffer() {
+    std::printf("[:] what the generator writes for a buffer\n");
+
+    steammock::Interfaces text;
+    std::string error;
+    if (!reads(document("[\"GetName\", \"bool\", [[\"pchValue\", \"out_text\", \"punSize\"], "
+                        "[\"punSize\", \"uint32\", \"out\"]]]"),
+               text, error)) {
+        check("the text buffer document reads", false);
+        return;
+    }
+    const std::string written = steammock::render_api_interfaces(text);
+    check("a text buffer is wrapped with the parameter that says how long it is",
+          written.find("steammock::TextOut{pchValue, punSize}") != std::string::npos);
+    check("  and the length is sent as the value it points at, not stored",
+          written.find("steammock::BufferLength{punSize}") != std::string::npos);
+    check("  and the declared type is still the one the SDK declares",
+          written.find("bool GetName(char* pchValue, std::uint32_t* punSize)") !=
+              std::string::npos);
+
+    steammock::Interfaces list;
+    if (!reads(
+            document("[\"GetItems\", \"bool\", [[\"pItems\", \"Motion_t\", \"out\", \"punCount\"], "
+                     "[\"punCount\", \"uint32\", \"out\"]]]"),
+            list, error)) {
+        check("the list document reads", false);
+        return;
+    }
+    const std::string arrays = steammock::render_api_interfaces(list);
+    check("a list is wrapped with its count",
+          arrays.find("steammock::ArrayOut<Motion_t>{pItems, punCount}") != std::string::npos);
+    check("  and its structure gets the store a list writes each element with",
+          arrays.find("void store_Motion_t(Motion_t* target, const Json& fields)") !=
+                  std::string::npos &&
+              arrays.find("store_Motion_t(target, value);") != std::string::npos);
+    check("  and its count is the buffer's, sent rather than stored",
+          arrays.find("steammock::BufferLength{punCount}") != std::string::npos);
+
+    // A length passed by value has nowhere to write an answer, so there is nothing to own and
+    // nothing to wrap: it travels as the value it is.
+    steammock::Interfaces by_value;
+    if (!reads(document("[\"Fill\", \"void\", [[\"pchValue\", \"out_text\", \"cchValue\"], "
+                        "[\"cchValue\", \"int32\"]]]"),
+               by_value, error)) {
+        check("the by-value document reads", false);
+        return;
+    }
+    const std::string values = steammock::render_api_interfaces(by_value);
+    check("a length passed by value is the value and nothing else",
+          values.find("steammock::TextOut{pchValue, cchValue}") != std::string::npos &&
+              values.find("BufferLength") == std::string::npos);
 }
 
 void test_document() {
@@ -311,6 +418,7 @@ int main() {
         test_notes();
         test_refusals();
         test_what_is_written();
+        test_what_is_written_for_a_buffer();
         test_document();
 
         if (g_failures == 0) {

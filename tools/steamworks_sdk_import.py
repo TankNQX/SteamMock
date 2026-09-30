@@ -141,6 +141,32 @@ BYTE_BUFFERS: Dict[Tuple[str, str, str], Tuple[str, str]] = {
     ("ISteamUser", "GetEncryptedAppTicket", "pTicket"): ("out_bytes", "cbMaxTicket"),
 }
 
+# The same shape with text in it instead of bytes, keyed the same way. A `char *` and the
+# parameter that says how long it is are two halves of one value here as well, and which of
+# the two halves it is is again this tree's choice rather than the declaration's: the SDK
+# spells the string a game *reads* `const char *` and the buffer it wants *written* `char *`,
+# but plenty of these carry a length that is as much an answer as the text - Spacewar's
+# `GetItemDefinitionProperty( def, "name", buf, &bufSize )` passes the room it has and reads
+# back how much the name needed - which is why the reader keeps them here.
+TEXT_BUFFERS: Dict[Tuple[str, str, str], str] = {
+    ("ISteamInventory", "GetItemDefinitionProperty", "pchValueBuffer"): "punValueBufferSizeOut",
+    ("ISteamInventory", "GetResultItemProperty", "pchValueBuffer"): "punValueBufferSizeOut",
+}
+
+# And the third shape: a *list* the call fills in through an array the caller owns, which is
+# one row per array naming two things - the structure it is a list of, and the parameter that
+# carries how many. `SteamItemDetails_t` is the smallest case of it and Spacewar's inventory is
+# what asks: it passes its own array and its own count, and the two-call form of it - a null
+# array and a count of zero first, to be told how many there are - is the reason the count is a
+# pointer in the file rather than a value. Same reader as SINGLE_STRUCTS, because the structure
+# is resolved the same way: an entry whose structure the SDK does not declare is reported.
+LISTS: Dict[Tuple[str, str, str], Tuple[str, str]] = {
+    ("ISteamInventory", "GetResultItems", "pOutItemsArray"): (
+        "SteamItemDetails_t",
+        "punOutItemsArraySize",
+    ),
+}
+
 # The structures a call fills in through a pointer the caller owns, keyed the same way. A pointer
 # to a structure is otherwise a list: the count that sizes it is the caller's, and a shape the
 # wire has no answer for is what `row_type` says it is. Two of these are not lists but one
@@ -1210,6 +1236,19 @@ class Builder:
         if key in BYTE_BUFFERS:
             kind, length = BYTE_BUFFERS[key]
             return [name, kind, length]
+        if key in TEXT_BUFFERS:
+            # A text buffer travels with the parameter that says how long it is, the same way
+            # a byte buffer does - the value that goes back is the string itself rather than
+            # hex, which is why the kind is not the same one.
+            return [name, "out_text", TEXT_BUFFERS[key]]
+        if key in LISTS:
+            # A list the caller's own array is filled with: the structure it is a list of,
+            # and the parameter carrying how many. `out` is what says the array is written
+            # rather than read, which is what the row above a single structure says too.
+            structure, length = LISTS[key]
+            if not self._declares(name, structure, interface, method_name):
+                return [name, "opaque_ptr"]
+            return [name, structure, "out", length]
         if key in SINGLE_STRUCTS:
             # One structure, written back through the pointer: the row names the structure, so
             # the reader resolves it against the types the file declares and the generated stub
@@ -1217,19 +1256,32 @@ class Builder:
             # table entry that has gone stale - which is said out loud and then treated as the
             # opaque pointer it would otherwise have been.
             structure = SINGLE_STRUCTS[key]
-            aggregate = self.mapper.sdk.aggregates.get(structure)
-            if aggregate is None or aggregate.has_virtuals:
-                self.mapper.unmappable.append(
-                    "%s.%s: SINGLE_STRUCTS names '%s', which the SDK does not declare as a "
-                    "structure" % (where, name, structure)
-                )
-            else:
-                self.mapper.structures.setdefault(structure, aggregate)
-                return [name, structure, "out"]
+            if not self._declares(name, structure, interface, method_name):
+                return [name, "opaque_ptr"]
+            return [name, structure, "out"]
         kind, flags = self.mapper.row_type(ty, "%s.%s" % (where, name))
         row = [name, kind]
         row.extend(flags)
         return row
+
+    def _declares(self, parameter: str, structure: str, interface: Interface,
+                  method_name: str) -> bool:
+        """Whether the SDK declares this structure, which is what makes a table row usable.
+
+        A row that names a structure no header has is a row that has gone stale against the SDK
+        it was written from, and the file it would produce is one the generator refuses. Saying
+        so here and falling back to the opaque pointer the declaration would have given is what
+        keeps one bad entry from stopping an import that is otherwise fine.
+        """
+        aggregate = self.mapper.sdk.aggregates.get(structure)
+        if aggregate is None or aggregate.has_virtuals:
+            self.mapper.unmappable.append(
+                "%s.%s.%s names '%s', which the SDK does not declare as a structure"
+                % (interface.name, method_name, parameter, structure)
+            )
+            return False
+        self.mapper.structures.setdefault(structure, aggregate)
+        return True
 
     def _flat_name(self, interface: Interface, method, method_name: str) -> Optional[str]:
         """The flat name a call travels under, from steam_api_flat.h.
@@ -2070,6 +2122,11 @@ public:
     virtual bool GetTable( SteamTestTable_t *pTable ) = 0;
     virtual SteamTestInside_t GetInside() = 0;
     virtual void FillBuffer( char *pchBuffer, int cubBuffer ) = 0;
+    // The two shapes a call that hands back a buffer of its own has, in the synthetic SDK:
+    // text into a char buffer whose length the caller passes by pointer, and a list of
+    // structures whose count is the caller's own pointer. Both are the reader's answer to a
+    // row in TEXT_BUFFERS / LISTS, which the selftest adds for these two methods only.
+    virtual bool GetTables( SteamTestTable_t *pTables, uint32 *punCount ) = 0;
     STEAM_PRIVATE_API( virtual void RunFrame() = 0; )
 };
 #define STEAMTEST_INTERFACE_VERSION "SteamTest001"
@@ -2087,6 +2144,7 @@ S_API SteamIPAddress_t SteamAPI_ISteamTest_GetAddress( ISteamTest* self );
 S_API bool SteamAPI_ISteamTest_GetTable( ISteamTest* self, SteamTestTable_t * pTable );
 S_API SteamTestInside_t SteamAPI_ISteamTest_GetInside( ISteamTest* self );
 S_API void SteamAPI_ISteamTest_FillBuffer( ISteamTest* self, char * pchBuffer, int cubBuffer );
+S_API bool SteamAPI_ISteamTest_GetTables( ISteamTest* self, SteamTestTable_t * pTables, uint32 * punCount );
 S_API void SteamAPI_ISteamTest_DestructISteamTest( ISteamTest* self );
 #endif
 """,
@@ -2101,6 +2159,14 @@ enum { k_iSteamTestCallbacks = 300 };
 
 def selftest() -> int:
     import tempfile
+
+    # The three tables above are the layouts the *games* need, and the SDK the selftest writes
+    # declares none of the calls in them - so the reader's two new shapes, text into the
+    # caller's buffer and a list of structures through the caller's own array, are exercised by
+    # adding a row for the synthetic call, which is exactly what a person adding a row does.
+    # It is also why the selftest can check the reader at all on a machine with no SDK.
+    TEXT_BUFFERS[("ISteamTest", "FillBuffer", "pchBuffer")] = "cubBuffer"
+    LISTS[("ISteamTest", "GetTables", "pTables")] = ("SteamTestTable_t", "punCount")
 
     failures: List[str] = []
     with tempfile.TemporaryDirectory() as root:
@@ -2167,6 +2233,18 @@ def selftest() -> int:
                 "header": "steam_api_flat.h",
             },
             {
+                # A list is the flat surface's opaque pointer, as every other pointer to a
+                # structure is: what the flat half cannot say is that this one is written.
+                "name": "SteamAPI_ISteamTest_GetTables",
+                "returns": "bool",
+                "params": [
+                    {"name": "self", "type": "opaque_ptr"},
+                    {"name": "pTables", "type": "opaque_ptr"},
+                    {"name": "punCount", "type": "uint32", "dir": "out"},
+                ],
+                "header": "steam_api_flat.h",
+            },
+            {
                 "name": "SteamAPI_ISteamTest_GetTestID",
                 "returns": "uint64",
                 "params": [{"name": "self", "type": "opaque_ptr"}],
@@ -2192,7 +2270,8 @@ def selftest() -> int:
                 ["GetAddress", "SteamIPAddress_t", [], {"unmarshalable": True}],
                 ["GetTable", "bool", [["pTable", "opaque_ptr"]]],
                 ["GetInside", "SteamTestInside_t", [], {"unmarshalable": True}],
-                ["FillBuffer", "void", [["pchBuffer", "opaque_ptr", "unmarshalable"], ["cubBuffer", "int32"]]],
+                ["FillBuffer", "void", [["pchBuffer", "out_text", "cubBuffer"], ["cubBuffer", "int32"]]],
+                ["GetTables", "bool", [["pTables", "SteamTestTable_t", "out", "punCount"], ["punCount", "uint32", "out"]]],
                 ["RunFrame", "void", [], {"call": "ISteamTest::RunFrame", "private": True}],
             ]
             if slots != expected:

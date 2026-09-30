@@ -45,6 +45,10 @@ constexpr KindInfo kKinds[] = {
     {"opaque_ptr", "void*"},
     {"bytes", "const void*"},
     {"out_bytes", "void*"},
+    // A text buffer the caller owns, which the wire carries as the text itself rather than
+    // as hex - see bridge/synth.hpp. Like the byte buffer above, it is a shape with two
+    // halves, so a row that names it also names the parameter carrying its length.
+    {"out_text", "char*"},
 };
 
 const KindInfo* find_kind(const std::string& name) noexcept {
@@ -219,6 +223,52 @@ bool declared_type(const std::string& kind, const std::string& decl, std::string
     return true;
 }
 
+// Which of a call's length parameters are the caller's own pointer - the two-call shape, where
+// a game asks how much it needs by passing a null buffer and a count of zero and then
+// allocates what came back. Those are the ones the generated call wraps: a length passed by
+// value has nowhere to write an answer, so it travels as the value it is and nothing stores it
+// (which is what `Kind<int32>::out()` being false already says).
+std::set<std::string> pointer_lengths(const InterfaceSlot& slot) {
+    std::set<std::string> names;
+    for (const InterfaceParam& param : slot.params) {
+        if (param.length.empty()) {
+            continue;
+        }
+        for (const InterfaceParam& other : slot.params) {
+            if (other.name == param.length && !other.cpp.empty() && other.cpp.back() == '*') {
+                names.insert(param.length);
+            }
+        }
+    }
+    return names;
+}
+
+// What one parameter travels as. Most are the parameter itself; a buffer is the value and the
+// thing that says how long it is, together, and those are the wrappers in bridge/synth.hpp.
+std::string argument_of(const InterfaceParam& param, const std::set<std::string>& lengths) {
+    if (lengths.count(param.name) != 0u) {
+        return "steammock::BufferLength{" + param.name + "}";
+    }
+    if (param.kind == "bytes") {
+        // The buffer and how long it is travel together, which is what the layouts name the
+        // length parameter for. Braces rather than a call: one of these is an aggregate, and
+        // a function-style cast of an aggregate is only spelled that way from C++20 on.
+        return "steammock::Bytes{" + param.name + ", " + param.length + "}";
+    }
+    if (param.kind == "out_bytes") {
+        return "steammock::BytesOut{" + param.name + ", " + param.length + "}";
+    }
+    if (param.kind == "out_text") {
+        return "steammock::TextOut{" + param.name + ", " + param.length + "}";
+    }
+    // A named type that is out *and* names a length is that many of them: one structure is
+    // what `out` alone says, and a list of them is what the length adds.
+    if (param.out && named_kind(param.kind) && !param.length.empty()) {
+        return "steammock::ArrayOut<" + param.decl + ">{" + param.name + ", " + param.length + "}";
+    }
+    return param.name;
+}
+
 std::string joined(const std::vector<std::string>& lines) {
     std::string text;
     for (std::size_t index = 0; index < lines.size(); ++index) {
@@ -333,6 +383,12 @@ bool read_size(const Json& object, int& out, std::string& error, const std::stri
 //  the call name when it is not the flat name the method implies, or what the
 //  wire cannot carry.
 //
+//  One more string a parameter can carry is the name of the parameter that says how long
+//  it is, which is the other half of every buffer - the bytes, the text, and a list of a
+//  named type (a structure named with `out` *and* a length is that many of them rather than
+//  one). See the kinds in bridge/synth.hpp for what a length that is the caller's own
+//  pointer means.
+//
 //  `named` is the value classes and structures read above, which is what tells a
 //  type name from a kind.
 
@@ -382,12 +438,18 @@ bool read_param(const Json& row, const std::vector<std::pair<std::string, std::s
             out.out = true;
         } else if (text == "unmarshalable") {
             out.opaque = true;
-        } else if (out.kind == "bytes" || out.kind == "out_bytes") {
-            // A byte buffer is two things on the wire, the bytes and how many of them, and
-            // the wire has one value per parameter - so the file has to name the parameter
-            // that carries the length rather than the size being guessed at.
+        } else if (out.kind == "bytes" || out.kind == "out_bytes" || out.kind == "out_text" ||
+                   named_kind(out.kind)) {
+            // A buffer is two things on the wire, the value and how long it is, and the wire
+            // has one value per parameter - so the file has to name the parameter that
+            // carries the length rather than the size being guessed at.
+            //
+            // A *named* type is a buffer of one kind of its own: one structure, or - when a
+            // length is named - that many of them, which is what an SDK's "give me the list
+            // through my own array and count" call is. `out` is checked below, because a row
+            // may write the length before the flag.
             if (!out.length.empty()) {
-                error = param_where + ": a byte buffer names one length parameter";
+                error = param_where + ": a buffer names one length parameter";
                 return false;
             }
             out.length = text;
@@ -401,8 +463,16 @@ bool read_param(const Json& row, const std::vector<std::pair<std::string, std::s
                 "' is a buffer the wire cannot carry";
         return false;
     }
-    if ((out.kind == "bytes" || out.kind == "out_bytes") && out.length.empty()) {
-        // A byte buffer is two things on the wire, the bytes and how many of them, and the
+    if (!out.length.empty() && named_kind(out.kind) && !out.out) {
+        // One of a named type is what `out` alone says. A length on one is a list of them,
+        // and a list is written through the caller's pointer or not at all.
+        error = param_where + ": a named type with a length is a list of them, which is an "
+                              "'out' parameter";
+        return false;
+    }
+    if ((out.kind == "bytes" || out.kind == "out_bytes" || out.kind == "out_text") &&
+        out.length.empty()) {
+        // A buffer is two things on the wire, the value and how long it is, and the
         // length parameter is how the row says which of its siblings carries the second -
         // so a row without one cannot be written: the generator emitted
         // `steammock::Bytes{name, }` and the compiler said so, with a message about
@@ -501,7 +571,7 @@ bool read_slot(const Json& row, const std::string& interface_name,
         return false;
     }
 
-    // A byte buffer's length parameter has to be one of this slot's own: the generated
+    // A buffer's length parameter has to be one of this slot's own: the generated
     // signature reads it by name, so a length that names nothing is `Bytes{pv, cbLength}`
     // with no `cbLength` in scope. That can only be checked now, once every parameter of
     // the row has been read.
@@ -510,15 +580,25 @@ bool read_slot(const Json& row, const std::string& interface_name,
             continue;
         }
         bool found = false;
+        bool pointer = false;
         for (const InterfaceParam& other : out.params) {
             if (other.name == param.length) {
                 found = true;
+                pointer = !other.cpp.empty() && other.cpp.back() == '*';
                 break;
             }
         }
         if (!found) {
             error = slot_where + "." + param.name + ": '" + param.length +
                     "' is not a parameter of this call, so there is no length to pass";
+            return false;
+        }
+        // Only a buffer the *caller* owns can be told what it got: what the call reads is
+        // already in the caller's memory, so a length that is a pointer would be a room
+        // nothing could report against - and `Bytes` has no place to put the number.
+        if (param.kind == "bytes" && pointer) {
+            error = slot_where + "." + param.name + ": '" + param.length +
+                    "' is a pointer, and a buffer the call reads has no length to report";
             return false;
         }
     }
@@ -1092,6 +1172,10 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             // pointer in the first place.
             const std::string at =
                 "_hSteamUser.load(std::memory_order_relaxed), kCall_" + number(slot_call[v][index]);
+            // Which of this call's length parameters is the caller's own pointer, asked once:
+            // that one is sent as the value it points at rather than stored, because the buffer
+            // has already written the number that belongs there.
+            const std::set<std::string> lengths = pointer_lengths(slot);
             std::string parameters;
             std::string arguments;
             for (const InterfaceParam& param : slot.params) {
@@ -1100,17 +1184,7 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                     arguments += ", ";
                 }
                 parameters += param.cpp + " " + param.name;
-                if (param.kind == "bytes") {
-                    // The buffer and how long it is travel together, which is what the
-                    // layouts name the length parameter for. Braces rather than a call:
-                    // one of these is an aggregate, and a function-style cast of an
-                    // aggregate is only spelled that way from C++20 on.
-                    arguments += "steammock::Bytes{" + param.name + ", " + param.length + "}";
-                } else if (param.kind == "out_bytes") {
-                    arguments += "steammock::BytesOut{" + param.name + ", " + param.length + "}";
-                } else {
-                    arguments += param.name;
-                }
+                arguments += argument_of(param, lengths);
             }
 
             const std::string passed = at + (arguments.empty() ? "" : ", " + arguments);
