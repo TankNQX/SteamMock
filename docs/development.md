@@ -411,6 +411,12 @@ Everything below runs on a push, and all of it must be green.
 
 * **MSVC**, for x64 and Win32, in Debug and Release, plus two jobs with warnings as errors. This is
   the compiler this project ships with.
+  Those jobs decide one convention rather than taste. `/W4` warns C4100 about a parameter nothing
+  reads, so a parameter that exists only for the shape of a call has its name commented out, as in
+  `static void from(const Json& /*reply*/)`. A parameter that a branch of an `if constexpr` really
+  does read cannot lose its name, so it carries `[[maybe_unused]]` instead. `(void)name;` in the body
+  is the older spelling of both, and `(void)call(...)` on a return the call deliberately drops is a
+  different thing that stays.
 * **clang-cl**, on the same ABI, also x64 and Win32. Clang is there for the warnings MSVC has no
   equivalent of, such as a constant nobody uses or a name that shadows a member, which is how two real
   bugs were caught rather than shipped.
