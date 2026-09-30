@@ -9,9 +9,6 @@ Watch a real game's Steam calls arrive, live, without Steam.
 *Two copies of one game running at once. The view lists each as its own session, with the calls it
 makes, what answered each one, how long it took, and the state that game is being told.*
 
-[The full recording, 30 MB mp4](https://github.com/TankNQX/SteamMock/releases/download/demo-two-instances/two-instances.mp4)
-runs from the lobby menus through to the match, taken by the rig in `tools/`.
-
 Point a game at one DLL and every Steam call it makes lands in a window: the call, what answered it,
 how long it took. No Steam client, no account, no Valve service, and no game code to change. Valve's
 own test app runs against it through a lobby, a match, a leaderboard and its inventory screen.
