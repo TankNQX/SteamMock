@@ -123,6 +123,20 @@ Answer from_lobby_calling(Json ret, Json event) {
     return answer;
 }
 
+// How Steam tells a game that a friend wants it in a room: the friend, and a command line the
+// game's own parser already understands. It is spelled exactly the way the rig launches a second
+// instance with one, because it is the same parser on the other end.
+Json game_join_request_payload(std::uint64_t friend_id, std::uint64_t lobby) {
+    Json fields = Json::object();
+    fields["m_steamIDFriend"] = id_value(friend_id);
+    fields["m_rgchConnect"] = Json("+connect_lobby " + std::to_string(lobby));
+
+    Json event = Json::object();
+    event["event"] = Json("GameRichPresenceJoinRequested_t");
+    event["in"] = std::move(fields);
+    return event;
+}
+
 // What a room's member sends a friend who is not in it. Steam's overlay is how a game normally
 // invites, and this is the payload either way: what the friend is told is who asked and which
 // room, and `m_ulGameID` is the game the room belongs to, which here is the app id - a CGameID
@@ -302,6 +316,8 @@ constexpr const char* kSetLobbyGameServer = "SteamAPI_ISteamMatchmaking_SetLobby
 constexpr const char* kGetLobbyGameServer = "SteamAPI_ISteamMatchmaking_GetLobbyGameServer";
 constexpr const char* kGetFriendPersonaName = "SteamAPI_ISteamFriends_GetFriendPersonaName";
 constexpr const char* kInviteUserToLobby = "SteamAPI_ISteamMatchmaking_InviteUserToLobby";
+constexpr const char* kActivateGameOverlayInviteDialog =
+    "SteamAPI_ISteamFriends_ActivateGameOverlayInviteDialog";
 constexpr const char* kGameServerInit = "SteamInternal_GameServer_Init";
 constexpr const char* kGameServerGetSteamID = "SteamAPI_ISteamGameServer_GetSteamID";
 constexpr const char* kSendP2PPacket = "SteamAPI_ISteamNetworking_SendP2PPacket";
@@ -351,6 +367,7 @@ std::vector<std::string> LobbyWorld::handled_calls() {
         kGetLobbyGameServer,
         kGetFriendPersonaName,
         kInviteUserToLobby,
+        kActivateGameOverlayInviteDialog,
         // Listened to without being answered - see answer() - and it belongs in this list
         // all the same: this is the surface a test proves the world knows, and a call the
         // world reads the port out of is one it handles.
@@ -907,6 +924,37 @@ bool LobbyWorld::answer(const Session& session, const std::string& call, const J
         }
         notifications.emplace_back(invitee,
                                    lobby_invite_payload(me, lobby->id, session.profile().app_id));
+        out = from_lobby(Json(true));
+        return true;
+    }
+
+    if (call == kActivateGameOverlayInviteDialog) {
+        // This is the route a game actually takes, and the one Spacewar's Invite Friend item uses:
+        // it hands Steam a room and no target at all, because the overlay is what picks the friend.
+        // There is no overlay here, so this stands in for it and invites every friend of this game.
+        // A friend with no game running simply never hears about it, because the server queues a
+        // notification only for a session that is live.
+        //
+        // Accepting happens in Steam's UI too, and there is no UI here, so the acceptance is the
+        // next notification: the invite, then the join request that carries the command line the
+        // friend's own parser understands. That pair is the whole invite flow from the other side
+        // of the wire, and it is what lets an invite be tested with nobody at the other keyboard.
+        Lobby* lobby = find_lobby(id_member(args, "steamIDLobby"));
+        if (lobby == nullptr || lobby->find_member(me) == nullptr) {
+            out = from_lobby(Json(false));
+            return true;
+        }
+        for (const Friend& friend_entry : session.profile().friends) {
+            if (friend_entry.steam_id == 0 ||
+                lobby->find_member(friend_entry.steam_id) != nullptr) {
+                continue;  // nobody, or already standing in the room
+            }
+            notifications.emplace_back(
+                friend_entry.steam_id,
+                lobby_invite_payload(me, lobby->id, session.profile().app_id));
+            notifications.emplace_back(friend_entry.steam_id,
+                                       game_join_request_payload(me, lobby->id));
+        }
         out = from_lobby(Json(true));
         return true;
     }

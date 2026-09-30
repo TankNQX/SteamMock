@@ -404,6 +404,28 @@ void test_invites() {
     check("somebody who is not a friend cannot be invited",
           !steammock::as_bool(stranger.ret) && told.empty());
 
+    // The route a game actually takes, and the one Spacewar's Invite Friend item uses: the room and
+    // no target at all, because the overlay is what picks the friend. This stands in for the
+    // overlay, and then for the click that accepts, because there is no UI here to click.
+    Json dialog = Json::object();
+    dialog["steamIDLobby"] = Json(static_cast<std::int64_t>(room));
+    const Answer opened =
+        ask(host, "SteamAPI_ISteamFriends_ActivateGameOverlayInviteDialog", dialog);
+    check("the overlay invites the friend the game has", opened.answered && told.size() == 2u);
+    check("both go to that friend",
+          told.size() == 2u && told[0].first == kGuestId && told[1].first == kGuestId);
+    check("the invite comes first",
+          !told.empty() && steammock::as_string(*steammock::json_member(told[0].second, "event")) ==
+                               "LobbyInvite_t");
+    check("then the join request, which is the click that accepts",
+          told.size() > 1u && steammock::as_string(*steammock::json_member(
+                                  told[1].second, "event")) == "GameRichPresenceJoinRequested_t");
+    const Json* request = told.size() > 1u ? steammock::json_member(told[1].second, "in") : nullptr;
+    check("and it carries the command line the game's own parser reads",
+          request != nullptr &&
+              steammock::as_string(*steammock::json_member(*request, "m_rgchConnect")) ==
+                  std::string("+connect_lobby ") + std::to_string(room));
+
     Json join = Json::object();
     join["steamIDLobby"] = Json(static_cast<std::int64_t>(room));
     ask(guest, "SteamAPI_ISteamMatchmaking_JoinLobby", join);
@@ -411,6 +433,10 @@ void test_invites() {
         ask(host, "SteamAPI_ISteamMatchmaking_InviteUserToLobby", invitation(room, kGuestId));
     check("and a member is not invited to the room it is standing in",
           !steammock::as_bool(already_in.ret) && told.empty());
+
+    // An overlay opened on a friend already standing in the room tells nobody anything.
+    ask(host, "SteamAPI_ISteamFriends_ActivateGameOverlayInviteDialog", dialog);
+    check("nor is a friend already in the room invited again by the overlay", told.empty());
 }
 
 void test_stats() {
