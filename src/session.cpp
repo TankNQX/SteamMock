@@ -481,7 +481,7 @@ Profile Profile::from_json(const std::string& profile_name, const Json& data) {
     return profile;
 }
 
-bool Profile::find_friend(std::uint64_t friend_id, std::string& out) const noexcept {
+bool Profile::find_friend(std::uint64_t friend_id, std::string& out) const {
     for (const Friend& friend_entry : friends) {
         if (friend_entry.steam_id == friend_id) {
             out = friend_entry.persona_name;

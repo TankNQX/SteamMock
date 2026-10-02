@@ -82,7 +82,15 @@ public:
     // The name of one friend, for a roster that asks for a name by Steam id. A short
     // scan, like the stats above, and false when this profile has no such friend. The
     // parameter is not called `steam_id` because the profile has one of those.
-    bool find_friend(std::uint64_t friend_id, std::string& out) const noexcept;
+    //
+    // Not `noexcept`, and that is the whole of the difference between this and `find_stat`
+    // above: a stat is an integer, so writing one out cannot fail, while this copies a
+    // string and an allocation can. `noexcept` here would turn a name that could not be
+    // copied into a process that ends - a great deal more than the name was worth - so the
+    // failure travels to the caller instead, which is where every other failure inside a
+    // handler goes. A `noexcept` boundary that returns to a *game* is a different thing and
+    // stays one; see the exception-escape note in .clang-tidy.
+    bool find_friend(std::uint64_t friend_id, std::string& out) const;
 };
 
 // What one call resolved to, and which rule resolved it.
