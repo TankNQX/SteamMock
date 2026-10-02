@@ -131,6 +131,8 @@ public:
         std::snprintf(_transcript, sizeof(_transcript), "%s", transcript);
     }
 
+    void set_state(const char* state) { std::snprintf(_state, sizeof(_state), "%s", state); }
+
     void draw() {
         if (_start_on_launch) {
             // --start, so the window comes up serving without a click - which is
@@ -217,6 +219,10 @@ private:
         options.host = _host;
         options.port = port_of(_port);
         options.transcript = _transcript;
+        // Empty keeps nothing, the same as the console backend's own option: a window not
+        // told where to keep state keeps none, and behaves as this harness did before there
+        // was anywhere to keep it.
+        options.state = _state;
         options.log_level = LogLevel::debug;
         // The server logs from its own threads, so the sink has to be safe to
         // call from any of them.
@@ -649,6 +655,11 @@ private:
     // this learns the lobby id from a transcript, and has nowhere else to learn it.
     char _transcript[512] = {};
 
+    // And empty keeps no state, the same way. A run pointed at a file keeps what its games
+    // write and starts from what the last run left there; without one, nothing is kept and
+    // the window is exactly what it was before this existed.
+    char _state[512] = {};
+
     std::unique_ptr<Server> _server;
     std::string _status;
 
@@ -711,6 +722,11 @@ int run(int argc, char** argv) {
             // The same server is behind this window, so the same transcript is worth having:
             // it is what a script driving a run reads.
             view.set_transcript(argv[++index]);
+        } else if (argument == "--state" && index + 1 < argc) {
+            // And the same state file, for the same reason: the window and the console
+            // backend drive one Server, and a run that keeps state should keep it whichever
+            // front end started it.
+            view.set_state(argv[++index]);
         }
     }
 

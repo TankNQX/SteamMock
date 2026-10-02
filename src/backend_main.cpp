@@ -68,6 +68,8 @@ void print_usage(std::FILE* out) {
                  "  --port PORT          port to listen on; 0 picks a free one (default %u)\n"
                  "  --scenario FILE      what each game is told (default %s)\n"
                  "  --transcript FILE    append every call, in JSON lines, to this file\n"
+                 "  --state FILE         keep what games write in this SQLite file, and read\n"
+                 "                       what a previous run left there (default: keep nothing)\n"
                  "  --log-level LEVEL    error, warning, info or debug (default info)\n"
                  "  --list-api           print the calls the stub exports, then exit\n"
                  "  --show-profiles      print the scenario's games and match rules, then exit\n"
@@ -84,6 +86,7 @@ struct Options {
     std::uint16_t port = kDefaultPort;
     std::string scenario = kDefaultScenario;
     std::string transcript;
+    std::string state;
     LogLevel level = LogLevel::info;
     bool list_api = false;
     bool show_profiles = false;
@@ -212,6 +215,13 @@ ParseResult parse_args(int argc, char** argv, Options& options) {
             }
             continue;
         }
+        if (argument == "--state") {
+            if (!take_value(options.state)) {
+                options.error = "--state needs a value";
+                return ParseResult::exit_error;
+            }
+            continue;
+        }
         if (argument == "--log-level") {
             std::string text;
             if (!take_value(text) || !parse_level(text, options.level)) {
@@ -308,6 +318,7 @@ int serve(const Options& options) {
     server_options.host = options.host;
     server_options.port = options.port;
     server_options.transcript = options.transcript;
+    server_options.state = options.state;
     server_options.log_level = options.level;
 
     steammock::Server server(std::move(dispatcher), std::move(server_options));
@@ -332,6 +343,9 @@ int serve(const Options& options) {
                             options.scenario + ", profiles " + joined);
     if (!options.transcript.empty()) {
         say(LogLevel::info, "transcript: " + options.transcript);
+    }
+    if (!options.state.empty()) {
+        say(LogLevel::info, "state: " + options.state);
     }
 
     // Printed in a fixed shape so a test (or a script) can find the port when 0

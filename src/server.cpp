@@ -248,6 +248,11 @@ bool Server::start(std::string& error) {
     // Every way out from here that is not a listening server has to leave what it
     // opened behind it, because `stop()` is the only thing that closes these and a
     // failed start never reaches it.
+    //
+    // The store is not released here, and it is the one thing in this lambda that is
+    // not about tidiness: the worlds above point into it, and this path leaves a server
+    // that is about to be destroyed - a failed start is not restartable, and both front
+    // ends drop it. The unique_ptr closes the file with the object, after them.
     const auto give_up = [this](std::string message) {
         if (_transcript != nullptr) {
             std::fclose(_transcript);
@@ -255,6 +260,25 @@ bool Server::start(std::string& error) {
         }
         return message;
     };
+
+    // The state file, when this run was given one. Opened here rather than lazily, so a
+    // path that cannot be written is said at startup - the same as a transcript that
+    // cannot be written - and not discovered a run later as state that quietly was not
+    // being kept.
+    if (!_options.state.empty()) {
+        std::string why;
+        _store = Store::open(_options.state, why);
+        if (_store == nullptr) {
+            error = give_up(std::move(why));
+            return false;
+        }
+        // What the worlds answer from, before a single call can arrive. Both are told
+        // where the state is and read everything the store has; from here on they write
+        // through it as they go, so there is no moment at the end of a run when what was
+        // kept and what was answered could disagree.
+        _leaderboards.attach(_store.get());
+        _inventory.attach(_store.get());
+    }
 
     char service[8] = {};
     std::snprintf(service, sizeof(service), "%u", static_cast<unsigned>(_options.port));
@@ -587,7 +611,19 @@ void Server::serve_connection(std::uintptr_t client) {
                                      (refused.empty() ? std::string("?") : refused) + "'");
             return;
         }
-        auto created = std::make_unique<Session>(session_id, hello, *profile);
+        // The scenario is what a profile starts as and the store is what it has become.
+        // Seeding first is what makes the authored values the floor rather than the last
+        // word: a key no game has ever written is refreshed from the scenario, and a key
+        // one has is left as the game left it. Then the merge hands the session what the
+        // store knows, which is also how two games matched to one profile see each
+        // other's writes - see include/bridge/store.hpp for why that is deliberate.
+        Profile resolved = *profile;
+        if (_store != nullptr) {
+            _store->seed(resolved);
+            _store->merge_into(resolved);
+        }
+        auto created =
+            std::make_unique<Session>(session_id, hello, std::move(resolved), _store.get());
         session = created.get();
         _sessions.push_back(std::move(created));
     }
@@ -689,6 +725,10 @@ std::string Server::handle_call(Session& session, const Json& message) {
 
     Answer answer;
     CallRecord record;
+    // Empty unless this is the call that finds the store has broken. Filled under the
+    // lock and said after it, because the log sink is somebody else's code and the state
+    // lock is not held across one.
+    std::string store_failure;
     {
         // Resolving a call reads the scenario, may write this session's stats, and
         // may now touch the lobbies other games are in - so it happens under the
@@ -765,6 +805,15 @@ std::string Server::handle_call(Session& session, const Json& message) {
             _records.pop_front();
             ++_records_dropped;
         }
+
+        // A store that has stopped accepting writes is the one failure about a state file
+        // nobody could notice on their own: every call still answers, every transcript line
+        // still lands, and only the keeping of state has quietly stopped happening. Said
+        // once - on the first call to find it - and not on every call after that.
+        if (_store != nullptr && !_store_failure_reported && !_store->error().empty()) {
+            _store_failure_reported = true;
+            store_failure = _store->error();
+        }
     }
     // Outside the lock, because this is a blocking write to disk and the state it
     // was taken from is already recorded. A record carries its own sequence number,
@@ -779,6 +828,12 @@ std::string Server::handle_call(Session& session, const Json& message) {
         log(LogLevel::debug, line);
     } else {
         log(LogLevel::debug, "-- " + name + ": no opinion, the stub uses its default");
+    }
+
+    if (!store_failure.empty()) {
+        log(LogLevel::error, "the state file has stopped accepting writes, so this run is no "
+                             "longer keeping anything: " +
+                                 store_failure);
     }
 
     // What the backend wants done to the game rides with the reply: the stub

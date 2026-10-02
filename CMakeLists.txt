@@ -106,6 +106,7 @@ add_library(steammock_backend STATIC
     src/protocol.cpp
     src/session.cpp
     src/scenario.cpp
+    src/store.cpp
     src/lobby.cpp
     src/leaderboard.cpp
     src/inventory.cpp
@@ -113,6 +114,10 @@ add_library(steammock_backend STATIC
     src/generated/api_surface.cpp
 )
 target_link_libraries(steammock_backend PUBLIC steammock_core)
+# Private: the state file is the backend's own business. The stub, the client and
+# the wire know nothing about it, and nothing splits store.cpp's SQLite out into
+# an interface a game could link.
+target_link_libraries(steammock_backend PRIVATE sqlite3)
 
 # ---------------------------------------------------------------------------
 #  The stub DLL: DllMain, the client bootstrap and the generated trampolines.
@@ -298,6 +303,14 @@ if(STEAMMOCK_BUILD_TESTS)
     target_link_libraries(test_server PRIVATE steammock_backend)
     add_test(NAME server COMMAND test_server)
 
+    # The state file: the schema, the rule that decides whether a stored value or the
+    # scenario's stands, and what comes back the second time a run opens one. SQLite is
+    # linked here as well, because two of the checks are about what a person can do to the
+    # file by hand and about a file that is not one of these.
+    add_executable(test_store tests/test_store.cpp)
+    target_link_libraries(test_store PRIVATE steammock_backend sqlite3)
+    add_test(NAME store COMMAND test_store)
+
     # The generated files are outputs of the build, and this compares them against
     # the inputs they were generated from - so it fails if the surface was
     # re-imported and the tree not rebuilt. Same inputs as the build, by the same
@@ -343,7 +356,7 @@ set(STEAMMOCK_TARGETS
 )
 if(STEAMMOCK_BUILD_TESTS)
     list(APPEND STEAMMOCK_TARGETS test_protocol test_backend test_interfaces test_server
-         fake_game test_end_to_end)
+         test_store fake_game test_end_to_end)
 endif()
 if(STEAMMOCK_BUILD_GUI)
     list(APPEND STEAMMOCK_TARGETS steammock_gui)

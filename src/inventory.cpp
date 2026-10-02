@@ -14,6 +14,8 @@
 #include <utility>
 #include <vector>
 
+#include "bridge/store.hpp"
+
 namespace steammock {
 namespace {
 
@@ -191,6 +193,25 @@ void InventoryWorld::add_definition(std::int32_t id, const char* name, const cha
     _definitions.push_back(std::move(definition));
 }
 
+void InventoryWorld::attach(Store* store) {
+    _store = store;
+    if (store == nullptr) {
+        return;
+    }
+
+    // The catalogue is not read back, because it is not a game's to change: the definitions
+    // above are this app's own item schema as far as a harness can know it, and the same
+    // every run. What a store holds is what *players* hold.
+    store->load_inventories(_inventories);
+    for (const auto& entry : _inventories) {
+        for (const ItemDetails& item : entry.second) {
+            if (item.item_id >= _next_item) {
+                _next_item = item.item_id + 1;
+            }
+        }
+    }
+}
+
 std::vector<std::string> InventoryWorld::handled_calls() {
     return {
         kLoadItemDefinitions,       kSendItemDropHeartbeat, kGrantPromoItems, kGetAllItems,
@@ -236,6 +257,10 @@ std::vector<ItemDetails> InventoryWorld::grant_promotions(std::uint64_t steam_id
         item.quantity = 1;
         granted.push_back(item);
         inventory.push_back(item);
+        if (_store != nullptr) {
+            // The one place an item ever appears, and so the one place one is ever kept.
+            _store->save_item(steam_id, item);
+        }
     }
     return granted;
 }

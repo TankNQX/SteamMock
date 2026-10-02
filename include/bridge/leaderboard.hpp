@@ -10,6 +10,10 @@
 
 namespace steammock {
 
+// Defined in bridge/store.hpp, which includes this header: the store speaks about a
+// Leaderboard, so it cannot be included from here without a cycle.
+class Store;
+
 // ---------------------------------------------------------------------------
 //  The leaderboards this run has, and who is on them.
 // ---------------------------------------------------------------------------
@@ -80,6 +84,15 @@ public:
     // stub can actually send.
     static std::vector<std::string> handled_calls();
 
+    // Where the boards a previous run made are kept, or null for a run that keeps
+    // nothing - the default, and what every run without a state file passes.
+    //
+    // Called once, before any call is answered. It reads every board the store has and
+    // puts them back the way this run would have made them: fresh handles, and every row
+    // ranked again by `place`, because a rank is this world's answer about an order
+    // rather than something a file can be trusted to have got right.
+    void attach(Store* store);
+
     // What one leaderboard call resolved to. False means this world has nothing to say
     // about it - not a leaderboard call at all, or a board this run has never been asked
     // for - which leaves the scenario and the session their say, in that order.
@@ -103,6 +116,10 @@ private:
     std::vector<Leaderboard> _boards;
     std::uint64_t _next_board_id = kFirstBoardId;
     std::uint64_t _next_call = kFirstCallHandle;
+
+    // Where a board and a posted score are also kept, or null when this run keeps
+    // nothing. Not owned; the server that attached it outlives this world.
+    Store* _store = nullptr;
 
     // The rows a download handle stands for, as the snapshot it was when the call was
     // answered. A game reads them out of its callback, and what it kept a handle to after

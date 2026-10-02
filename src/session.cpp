@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 
+#include "bridge/store.hpp"
+
 namespace steammock {
 namespace {
 
@@ -541,8 +543,9 @@ const Json* Profile::scripted_for(const std::string& call) const noexcept {
 //  Session
 // ---------------------------------------------------------------------------
 
-Session::Session(std::string id, const Json& hello, Profile profile)
-    : _id(std::move(id)), _profile(std::move(profile)), _started(std::chrono::system_clock::now()) {
+Session::Session(std::string id, const Json& hello, Profile profile, Store* store)
+    : _id(std::move(id)), _profile(std::move(profile)), _store(store),
+      _started(std::chrono::system_clock::now()) {
     if (hello.is_object()) {
         if (const Json* pid = json_member(hello, "pid")) {
             _pid = to_int64(*pid, 0);
@@ -557,6 +560,11 @@ Session::Session(std::string id, const Json& hello, Profile profile)
 }
 
 void Session::note_stat_written(const std::string& key, std::int64_t value) {
+    if (_store != nullptr) {
+        // Every stat a game writes goes to the store, including one written twice: the
+        // second value is the one that stands, exactly as it does in the copy above.
+        _store->write_stat(_profile.name, key, value);
+    }
     for (auto& [stored_key, stored_value] : _stats_written) {
         if (stored_key == key) {
             stored_value = value;
@@ -567,6 +575,11 @@ void Session::note_stat_written(const std::string& key, std::int64_t value) {
 }
 
 void Session::note_achievement_set(const std::string& name) {
+    if (_store != nullptr) {
+        // Only ever unlocked. Steam has no call that takes one back, which is why the
+        // handler above has nothing to report but `true`.
+        _store->write_achievement(_profile.name, name, true);
+    }
     for (const std::string& existing : _achievements_set) {
         if (existing == name) {
             return;

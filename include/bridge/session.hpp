@@ -11,6 +11,11 @@
 
 namespace steammock {
 
+// Defined in bridge/store.hpp, which includes this header: the store speaks about a
+// Profile, so it cannot be included from here without a cycle. Nothing below needs more
+// than the name.
+class Store;
+
 // ---------------------------------------------------------------------------
 //  The per-game state machine.
 // ---------------------------------------------------------------------------
@@ -113,7 +118,16 @@ struct Answer {
 
 class Session {
 public:
-    Session(std::string id, const Json& hello, Profile profile);
+    // `store`, when there is one, is where what this session writes is also kept. The
+    // profile a session holds is what the scenario and the store agreed on when it
+    // connected, so a stat set or an achievement unlocked here has to be written back or
+    // the next run would never hear about it.
+    //
+    // Null - the default, and what every run without a state file passes - is the harness
+    // exactly as it was before there was a store: a game's writes show up in the
+    // transcript and go away with the run. Not owned; the server that made this session
+    // outlives it.
+    Session(std::string id, const Json& hello, Profile profile, Store* store = nullptr);
 
     const std::string& id() const noexcept { return _id; }
     std::int64_t pid() const noexcept { return _pid; }
@@ -131,7 +145,10 @@ public:
     const std::vector<std::string>& achievements_set() const noexcept { return _achievements_set; }
 
     // Called by the handlers as they change state, so the session keeps its own
-    // account of what a game wrote rather than making a transcript diff it out.
+    // account of what a game wrote rather than making a transcript diff it out - and,
+    // when the run has a state file, so that the same change is written to it. One
+    // call site for one change is what keeps the account a transcript shows and the
+    // account left behind for the next run from ever drifting apart.
     void note_stat_written(const std::string& key, std::int64_t value);
     void note_achievement_set(const std::string& name);
 
@@ -158,6 +175,8 @@ private:
     std::string _exe;
     std::string _arch;
     Profile _profile;
+    // Where that profile's writes are kept, or null when this run has no state file.
+    Store* _store = nullptr;
     std::chrono::system_clock::time_point _started;
     std::size_t _call_count = 0;
     bool _connected = true;

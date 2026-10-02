@@ -710,6 +710,159 @@ void test_the_history_is_a_window() {
     server.stop();
 }
 
+// A scenario with two stats and an achievement that is not earned yet: one stat the game
+// below writes, one it never touches, and an achievement it unlocks.
+const char* kStateScenario =
+    "{\"profiles\":{\"default\":{\"app_id\":480,\"stats\":{\"Deaths\":3,\"PlaytimeMinutes\":42},"
+    "\"achievements\":[{\"name\":\"ACH_BOOTED\",\"achieved\":false}]}}}";
+
+// One call with one argument, which is the shape of every call below.
+Json call_with(const char* name, std::int64_t seq, const char* key, const Json& value) {
+    Json message = call_message(name, seq);
+    Json args = Json::object();
+    args[key] = value;
+    message["args"] = std::move(args);
+    return message;
+}
+
+// The value a call answered with, out of its `out` object. Null when the reply carried no
+// out-parameter at all, which is how "the call was declined and the caller's variable was
+// left alone" reads from here.
+const Json* out_member(const Json& reply, const char* field) {
+    const Json* out_object = steammock::json_member(reply, "out");
+    if (out_object == nullptr || !out_object->is_object()) {
+        return nullptr;
+    }
+    return steammock::json_member(*out_object, field);
+}
+
+void test_state_survives_a_run() {
+    std::printf("[:] what one run writes, the next run is handed\n");
+
+    Json scenario;
+    if (!steammock::parse(kStateScenario, scenario)) {
+        check("the test scenario parses", false);
+        return;
+    }
+
+    const std::filesystem::path state =
+        std::filesystem::temp_directory_path() / "steammock-test-two-runs.sqlite";
+    std::error_code ignored;
+    // A file left by a run that failed earlier would be this test starting from the wrong
+    // state, which is the one thing a test about persistence cannot afford.
+    std::filesystem::remove(state, ignored);
+
+    // --- one run: the game plays and dies nine times ---
+    {
+        steammock::ServerOptions options;
+        options.port = 0;
+        options.log_level = steammock::LogLevel::error;
+        options.state = state.string();
+        steammock::Server server(steammock::Dispatcher(scenario), options);
+
+        std::string error;
+        if (!server.start(error)) {
+            check("the server binds a free port", false);
+            std::printf("        %s\n", error.c_str());
+            return;
+        }
+
+        steammock::TcpTransport client;
+        Json reply;
+        if (!client.connect("127.0.0.1", server.port()) ||
+            !exchange(client, hello_message(), reply)) {
+            check("a client is attached", false);
+            server.stop();
+            return;
+        }
+
+        check("the scenario's own value is what the game is handed first",
+              exchange(client,
+                       call_with("SteamAPI_ISteamUserStats_GetStat", 1, "pchName", Json("Deaths")),
+                       reply) &&
+                  out_member(reply, "pData") != nullptr &&
+                  steammock::as_int64(*out_member(reply, "pData")) == 3);
+
+        Json set_stat = call_message("SteamAPI_ISteamUserStats_SetStat", 2);
+        Json args = Json::object();
+        args["pchName"] = Json("Deaths");
+        args["nData"] = Json(9);
+        set_stat["args"] = std::move(args);
+        check("a game can write a stat",
+              exchange(client, set_stat, reply) && answer_of(reply) == "handled");
+
+        check("and unlock an achievement",
+              exchange(client,
+                       call_with("SteamAPI_ISteamUserStats_SetAchievement", 3, "pchName",
+                                 Json("ACH_BOOTED")),
+                       reply) &&
+                  answer_of(reply) == "handled");
+
+        client.close();
+        server.stop();
+    }
+
+    // --- the next run: the same scenario, the same file, and nothing else carried over ---
+    {
+        steammock::ServerOptions options;
+        options.port = 0;
+        options.log_level = steammock::LogLevel::error;
+        options.state = state.string();
+        steammock::Server server(steammock::Dispatcher(scenario), options);
+
+        std::string error;
+        if (!server.start(error)) {
+            check("the second run binds a free port", false);
+            std::printf("        %s\n", error.c_str());
+            return;
+        }
+
+        steammock::TcpTransport client;
+        Json reply;
+        if (!client.connect("127.0.0.1", server.port()) ||
+            !exchange(client, hello_message(), reply)) {
+            check("a client is attached to the second run", false);
+            server.stop();
+            return;
+        }
+
+        check("the stat the first run's game wrote is still there",
+              exchange(client,
+                       call_with("SteamAPI_ISteamUserStats_GetStat", 1, "pchName", Json("Deaths")),
+                       reply) &&
+                  out_member(reply, "pData") != nullptr &&
+                  steammock::as_int64(*out_member(reply, "pData")) == 9);
+        check("the stat no game ever wrote is still the scenario's",
+              exchange(client,
+                       call_with("SteamAPI_ISteamUserStats_GetStat", 2, "pchName",
+                                 Json("PlaytimeMinutes")),
+                       reply) &&
+                  out_member(reply, "pData") != nullptr &&
+                  steammock::as_int64(*out_member(reply, "pData")) == 42);
+        check("the achievement the first run unlocked is still unlocked",
+              exchange(client,
+                       call_with("SteamAPI_ISteamUserStats_GetAchievement", 3, "pchName",
+                                 Json("ACH_BOOTED")),
+                       reply) &&
+                  out_member(reply, "pbAchieved") != nullptr &&
+                  steammock::as_bool(*out_member(reply, "pbAchieved")));
+
+        // ...and the session snapshot - what a live view draws - says the same, because a
+        // store that the answers came from and a store the view reads were two things that
+        // could disagree.
+        if (wait_until([&server] { return server.sessions().size() == 1u; }, 5.0)) {
+            const std::vector<steammock::SessionSnapshot> sessions = server.sessions();
+            check("and the snapshot a view draws says so too",
+                  sessions[0].achievements.size() == 1u && sessions[0].achievements[0].achieved);
+        }
+
+        client.close();
+        server.stop();
+    }
+
+    std::filesystem::remove(state, ignored);
+}
+
 }  // namespace
 
 int run() {
@@ -721,6 +874,7 @@ int run() {
     test_a_stalled_backend_costs_each_queued_caller();
     test_a_megabyte_goes_either_way();
     test_the_history_is_a_window();
+    test_state_survives_a_run();
 
     if (g_failures == 0) {
         std::printf("\n[+] all checks passed\n");

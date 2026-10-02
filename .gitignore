@@ -53,3 +53,11 @@ __pycache__/
 
 # Runtime output from the harness
 *.jsonl
+
+# A state file a run was pointed at with --state. Output rather than input - it is what a
+# run wrote - and a fixture somebody does want to keep wants `git add -f`, the same as any
+# other file an ignore rule covers.
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm

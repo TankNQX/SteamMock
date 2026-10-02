@@ -11,6 +11,10 @@
 
 namespace steammock {
 
+// Defined in bridge/store.hpp, which includes this header: the store speaks about an
+// ItemDetails, so it cannot be included from here without a cycle.
+class Store;
+
 // ---------------------------------------------------------------------------
 //  The catalogue, and what each player holds.
 // ---------------------------------------------------------------------------
@@ -69,6 +73,16 @@ public:
 
     InventoryWorld();
 
+    // Where what the players hold is kept, or null for a run that keeps nothing - the
+    // default, and what every run without a state file passes. Called once, before any
+    // call is answered.
+    //
+    // Reading the inventories back is also what tells the id counter where to resume.
+    // An item id is handed to a game, so the next one this run mints has to clear every
+    // id a previous run already used - otherwise a promotion granted here is an item the
+    // same player was given last time, and a game holding two items with one id draws one.
+    void attach(Store* store);
+
     // What one inventory call resolved to. False means this world has nothing to say about it -
     // not an inventory call at all, or one naming a result handle no player was given - which
     // leaves the scenario and the session their say, in that order.
@@ -100,6 +114,10 @@ private:
     std::vector<std::pair<std::int32_t, Result>> _results;
     std::int32_t _next_result = kFirstResultHandle;
     std::uint64_t _next_item = kFirstItemId;
+
+    // Where an item is also kept, or null when this run keeps nothing. Not owned; the
+    // server that attached it outlives this world.
+    Store* _store = nullptr;
 };
 
 }  // namespace steammock

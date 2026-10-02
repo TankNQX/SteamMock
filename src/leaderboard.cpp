@@ -15,6 +15,8 @@
 #include <utility>
 #include <vector>
 
+#include "bridge/store.hpp"
+
 namespace steammock {
 namespace {
 
@@ -241,6 +243,32 @@ void LeaderboardWorld::place(Leaderboard& board, std::uint64_t steam_id, std::in
 
 // --- the calls -------------------------------------------------------------
 
+void LeaderboardWorld::attach(Store* store) {
+    _store = store;
+    if (store == nullptr) {
+        return;
+    }
+
+    // A board comes back with a *fresh* handle and its rows: a handle is a number handed
+    // to a game during one run, so the next run hands out its own and nothing is lost by
+    // not keeping it. Every row goes in through `place` rather than being pushed onto the
+    // board, which is what leaves the ranking a computed thing here rather than something
+    // a file is trusted to have got right.
+    std::vector<StoredBoard> stored;
+    store->load_boards(stored);
+    for (StoredBoard& board : stored) {
+        Leaderboard created;
+        created.id = _next_board_id++;
+        created.name = std::move(board.name);
+        created.sort_method = board.sort_method;
+        created.display_type = board.display_type;
+        _boards.push_back(std::move(created));
+        for (const auto& [steam_id, score] : board.scores) {
+            place(_boards.back(), steam_id, score);
+        }
+    }
+}
+
 std::vector<std::string> LeaderboardWorld::handled_calls() {
     return {
         kFindOrCreateLeaderboard,    kFindLeaderboard,
@@ -281,6 +309,12 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
                 static_cast<std::int32_t>(int_member(args, "eLeaderboardDisplayType", 0));
             _boards.push_back(std::move(created));
             board = &_boards.back();
+            if (_store != nullptr) {
+                // A board nobody has asked for before is a board a game just made, and it
+                // is the store's from here on - which is what makes the next run find it
+                // rather than create it.
+                _store->save_board(*board);
+            }
         }
         out =
             from_leaderboard_calling(id_value(_next_call++), find_result_payload(board->id, true));
@@ -419,6 +453,12 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
         const bool write = method == kUploadScoreForceUpdate || better;
         if (write) {
             place(*board, me, score);
+            if (_store != nullptr) {
+                // The row as the board now has it rather than the score that was handed in,
+                // which for a board that sorts are not always the same number. `place` has
+                // just put this player on the board, so there is a row to read.
+                _store->save_row(board->name, *board->find(me));
+            }
         }
         const std::int32_t stored = board->rank_of(me) > 0 ? board->find(me)->score : score;
         out = from_leaderboard_calling(

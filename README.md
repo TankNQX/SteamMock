@@ -26,7 +26,7 @@ own test app runs against it through a lobby, a match, a leaderboard and its inv
 | 🟢 | Login and identity | who the player is, names after they leave, a peer let in on its ticket |
 | 🟢 | App id, language, build id | answered from the profile the game was matched to |
 | 🟢 | Leaderboards | a real board, filled by the players in this run |
-| 🟢 | Stats and achievements | read and written, per profile |
+| 🟢 | Stats and achievements | read and written, per profile, and kept between runs when a state file is asked for |
 | 🟢 | Inventory | a catalogue, and what the player holds |
 | 🟡 | Controller, overlay, hosted logon | a scenario answers a few calls, the rest default |
 | 🔴 | Music, video, screenshots, HTTP, UGC, Remote Storage, the HTML page, the server browser, parties, and the rest | nothing yet |
@@ -56,6 +56,12 @@ Copy Spacewar out of your library and put `build\Release\steam_api.dll` in the c
 `SteamworksExample.exe`. Start the window with `build\Release\steammock_gui.exe --scenario
 scenarios\spacewar.json --start`, and run the game from the copy. Every call it makes lands in that
 window instead of at Valve.
+
+Add `--state state\spacewar.sqlite` to either front end and a run keeps what its games write - an
+unlocked achievement, a written stat, a posted score, an item granted - and starts from what the last
+run left there. The file is a SQLite database, so any SQLite client can read it.
+[development.md](docs/development.md#the-state-file) has the tables, the rule that decides whether a
+stored value or the scenario's stands, and what happens when the file will not open.
 
 The stub exports the API an SDK describes, so an import is what makes it useful at all. Valve
 publishes every generation in [their Proton repo](https://github.com/ValveSoftware/Proton), and
@@ -98,6 +104,12 @@ Licensed under MIT, see `LICENSE`.
   `external/`, and neither is needed for the stub or the backend.
 * **The wire.** [nlohmann/json](https://github.com/nlohmann/json) 3.12.0, MIT, is the format the
   protocol, the scenarios and the transcripts are written in. Also under `external/`.
+* **The state file.** [SQLite](https://sqlite.org) 3.53.4, public domain: the two published
+  amalgamation files, vendored under `external/sqlite` because `sqlite3.c` is a build product of
+  SQLite's source tree rather than a file in it. `--state` is where a run keeps what its games write
+  between runs, and the file is a SQLite database any client can read. Neither the stub nor the
+  backend needs it unless that option is given. The version, its source id and the hash of the zip
+  are pinned in `external/sqlite/README.md`.
 * **The importer.** [cxxheaderparser](https://github.com/robotpy/cxxheaderparser) 2.0.0 and
   [pcpp](https://github.com/ned14/pcpp) 1.30, both BSD, read the SDK headers. They are the only
   Python anything here needs, and they are in `tools/requirements.txt`.

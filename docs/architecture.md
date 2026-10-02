@@ -13,6 +13,7 @@
 | Session | `src/session.cpp` | The per-game state machine: identity, language, app id, stats, achievements. |
 | Scenario | `src/scenario.cpp` | Which profile a connecting game gets, and which calls a scenario overrides. |
 | The world | `src/lobby.cpp`, `src/leaderboard.cpp`, `src/inventory.cpp` | The state no single session can answer: the lobbies and their members, the leaderboards the run's players have posted scores to, and the item catalogue beside what each player holds. Each outlives the sessions that made it. |
+| The state file | `include/bridge/store.hpp`, `src/store.cpp` | The one thing here that outlives the *process*: what games wrote, kept in a SQLite database a run was pointed at with `--state`. Absent unless someone asks for it, in which case it is what a profile is merged from when a game connects and what a write goes to as it is made. |
 | Generator | `src/idl.cpp`, `src/codegen_main.cpp` | `steammock_codegen` turns `gen/steam_api_surface.json` into the trampolines, the `.def` and the table of exported calls, and holds the mock's own decisions, by call name. |
 | Interface layouts | `src/interfaces.cpp`, `tools/steamworks_sdk_import.py` | Turns an SDK's headers into `gen/steam_interfaces.json` and then into `src/generated/api_interfaces.cpp`: the payloads a callback delivers, and the calls a game can make through an interface object. This is also where the file decides that a call's `void *` is one structure. See [structures and buffers](#structures-and-buffers-the-game-owns). |
 
@@ -266,6 +267,50 @@ Neither mechanism covers the flat half of the same call, because the flat genera
 neither a structure nor a length. A game that reaches such a call through its flat spelling still gets
 the opaque pointer it always did. Nor does either cover a structure passed or returned by value, which
 no call in the layouts uses.
+
+## The state file
+
+A run keeps everything it knows in memory and nothing else, so the next run starts from the same place
+this one did. That is what makes a run repeatable - and what makes an achievement unlocked on Tuesday
+locked again on Wednesday. `--state` is the one thing here that outlives the process, and it is off
+unless a person asks for it.
+
+Three decisions shape it.
+
+**What goes in is what a game wrote.** A scenario stays the file a person reads and hands to somebody
+else; the store holds what games did to it. The welcome a game is given is a *merge* of the two, and
+the direction is one way round: a value a game wrote stands, a value only a scenario has written is
+refreshed from it, and nothing is deleted for being absent from either. `source` - one column, saying
+`'scenario'` or `'game'` - is the whole of that rule, which is why seeding is the only place it is read.
+
+That is also the one place a state file changes a *single* run's behaviour: two games matched to one
+profile merge from the same record, so they can see each other's writes. Without a store they are handed
+copies and cannot. Deliberate, and said out loud in `bridge/store.hpp`: one Steam id with two sets of
+stats is not what keeping state is meant to mean.
+
+**The store speaks this domain, not SQL.** `bridge/store.hpp` names no SQLite type and no query; its
+methods are "a stat a game wrote", "the boards the store holds", "an inventory, by player". So
+everything that knows what the file *is* sits in `src/store.cpp`, and the seven tables are a decision one
+translation unit holds rather than one every caller reads past. Nothing there is app-scoped, and that is
+a mirror rather than an oversight: a board is keyed by its name and an inventory by the player holding
+it, exactly as the worlds key themselves in memory, so two apps with a board of the same name share one
+row for the same reason they share one board within a run.
+
+**The free end is that it is a database.** A person can read it, and add to it, with any SQLite client.
+Nothing in this repository is needed for that, and it is not decoration: a friend added with a prompt is
+read back like a friend a run learned about, because nothing here deletes a row it was not told about.
+
+The one thing the store must not do is fail quietly, and it never throws. A file that will not open, or
+one written with a different schema, stops the run at startup with the reason. A *write* that fails
+later cannot stop the run - the game still has to be answered - so it is recorded and the backend says
+it once, on the first call that finds it. A run that behaves normally while keeping nothing is the
+failure nobody would notice on their own.
+
+A write happens while the server's `_mutex` is held, because resolving a call is what does the writing.
+One row in a transaction of its own would otherwise put a disk flush in front of every other game in
+the run, and this is the one place where the cost of a state file is paid by games that are not using
+it. The file is therefore kept in SQLite's write-ahead log, and
+[development.md](development.md#the-state-file) has the measurement behind that.
 
 ## Where the next features attach
 

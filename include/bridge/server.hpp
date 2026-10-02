@@ -22,6 +22,7 @@
 #include "bridge/log.hpp"
 #include "bridge/scenario.hpp"
 #include "bridge/session.hpp"
+#include "bridge/store.hpp"
 
 namespace steammock {
 
@@ -90,6 +91,10 @@ struct ServerOptions {
     std::string host = kDefaultHost;
     std::uint16_t port = kDefaultPort;  // 0 lets the operating system pick one
     std::string transcript;             // empty keeps no transcript
+    // Where the state a game writes is kept between runs. Empty - which is what a run
+    // with no `--state` passes, and the default - keeps nothing, and is the harness
+    // exactly as it was before there was a store.
+    std::string state;
     LogLevel log_level = LogLevel::info;
     LogFn log;  // empty uses timestamped lines on stderr
 };
@@ -156,6 +161,18 @@ private:
 
     Dispatcher _dispatcher;
     ServerOptions _options;
+
+    // The state this run keeps between runs, or null when it keeps none. Declared before
+    // everything that points at it - the worlds and the sessions - because members are
+    // destroyed in reverse, and a world reaching a store that has already closed would be
+    // reading a file handle SQLite has finished with.
+    std::unique_ptr<Store> _store;
+
+    // Whether the store's first failure has been reported. A store that has stopped
+    // accepting writes is the one failure here nobody would notice on their own: the run
+    // behaves normally and simply stops keeping anything. It is said once, on the first
+    // call that finds it, and not once per call after that.
+    bool _store_failure_reported = false;
 
     // The rooms games made. The only state here that is not per session, because it
     // is what makes two instances agree about the same lobby instead of each being
