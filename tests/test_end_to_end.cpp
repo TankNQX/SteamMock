@@ -652,6 +652,95 @@ int run(int argc, char** argv) {
                backend.output().find("game disconnected") != std::string::npos);
 
     backend.terminate();
+
+    // --- the state file, over two runs of one game --------------------------
+    // Every promise a state file makes is a promise about a *second* run, and this is the
+    // only place that promise can be asked at the process boundary: the real backend, the
+    // real DLL inside the real game, and a file that outlives both. `fake_game` reads
+    // `Deaths` before it writes it, and the scenario it is matched to says 0, so a second
+    // run that reads 4 answers the whole question with a value that run was handed before
+    // its game had written anything. The achievement is the same question asked twice.
+    if (!have_surface) {
+        std::printf("[!] no API surface was imported (gen/steam_api_surface.json is not in this\n"
+                    "    checkout), so the two state-file runs are skipped: the fake game\n"
+                    "    resolves every export it uses, and a stub that exports nothing gives a\n"
+                    "    state file nothing to keep.\n");
+    } else {
+        std::printf("\n[:] a state file, over two runs\n");
+        const std::string state =
+            std::string(temp_directory) + "steammock-e2e-" +
+            std::to_string(static_cast<unsigned long>(GetCurrentProcessId())) + ".sqlite";
+        DeleteFileA(state.c_str());
+        DeleteFileA((state + "-wal").c_str());
+        DeleteFileA((state + "-shm").c_str());
+
+        // One run: a backend over this state file, then the game against it. The backend is
+        // killed rather than stopped, which is the harder of the two things a state file has
+        // to survive - a run closed from a task manager or a window manager leaves the
+        // write-ahead log behind, and the next open has to recover from it. That is why the
+        // side files are deleted below rather than only the database.
+        const auto run_over_the_state_file = [&]() -> std::map<std::string, std::string> {
+            ChildProcess server;
+            if (!server.start(quote(server_path) + " --port 0 --scenario " + quote(scenario_path) +
+                                  " --state " + quote(state),
+                              error)) {
+                std::printf("cannot start a backend over the state file: %s\n", error.c_str());
+                return {};
+            }
+            if (!server.wait_for("listening on", timeout)) {
+                std::printf("a backend over the state file never started:\n%s\n",
+                            server.output().c_str());
+                return {};
+            }
+            std::string state_host;
+            std::string state_port;
+            const auto deadline =
+                std::chrono::steady_clock::now() +
+                std::chrono::milliseconds(static_cast<long long>(timeout * 1000.0));
+            while (!extract_address(server.output(), state_host, state_port) &&
+                   std::chrono::steady_clock::now() < deadline) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            }
+            if (state_host.empty() || state_port.empty()) {
+                server.terminate();
+                std::printf("a backend over the state file never said where it was listening\n");
+                return {};
+            }
+            _putenv_s("STEAMMOCK_HOST", state_host.c_str());
+            _putenv_s("STEAMMOCK_PORT", state_port.c_str());
+
+            ChildProcess game_again;
+            if (!game_again.start(quote(game_path), error)) {
+                server.terminate();
+                std::printf("cannot start the fake game against the state file: %s\n",
+                            error.c_str());
+                return {};
+            }
+            game_again.wait_for_exit(timeout);
+            std::map<std::string, std::string> seen = parse_key_values(game_again.output());
+            server.terminate();
+            return seen;
+        };
+
+        const std::map<std::string, std::string> fresh = run_over_the_state_file();
+        check("a first run over a fresh state file is handed what the scenario says",
+              value_of(fresh, "stat.Deaths.value") == "0" &&
+                  value_of(fresh, "achievement.ACH_BOOTED.value") == "false",
+              value_of(fresh, "stat.Deaths.value") + " / " +
+                  value_of(fresh, "achievement.ACH_BOOTED.value"));
+
+        const std::map<std::string, std::string> kept = run_over_the_state_file();
+        check("a second run over the same file is handed the stat the first one's game wrote",
+              value_of(kept, "stat.Deaths.value") == "4", value_of(kept, "stat.Deaths.value"));
+        check("and the achievement the first one unlocked",
+              value_of(kept, "achievement.ACH_BOOTED.value") == "true",
+              value_of(kept, "achievement.ACH_BOOTED.value"));
+
+        DeleteFileA(state.c_str());
+        DeleteFileA((state + "-wal").c_str());
+        DeleteFileA((state + "-shm").c_str());
+    }
+
     DeleteFileA(transcript.c_str());
 
     std::printf("\n");

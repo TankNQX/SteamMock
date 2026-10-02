@@ -456,10 +456,11 @@ void test_the_file_is_kept_the_cheap_way() {
           mode == "wal");
 
     store.reset();
-    // The write-ahead log is a second file beside the database while a run has it open. A
-    // run that has let go of it is one file again, which is what keeps a state file
-    // something a person can copy or keep.
-    check("and letting go of it leaves one file behind",
+    // The write-ahead log is a second file beside the database while a run has it open, and a
+    // clean close checkpoints it away. This is therefore the case a person is left with: one
+    // file to copy or keep. A run that was *killed* leaves the log behind instead and the next
+    // open recovers from it, which is the route the state-file runs in test_end_to_end take.
+    check("and a clean close leaves one file behind",
           std::filesystem::exists(file.path()) && !std::filesystem::exists(file.path() + "-wal"));
 }
 

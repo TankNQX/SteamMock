@@ -126,8 +126,14 @@ reason and a measurement behind it: every write here is one row in a transaction
 the server's state lock is held, so what a commit costs is what every other game in the run waits for.
 5,000 of them, one commit each, take 1,290 us apiece with SQLite's defaults and 20 us in that mode -
 and it is also the pair that cannot corrupt the file, where `NORMAL` outside a write-ahead log can.
-A state file on a network share cannot have one, and there the durable default stays. Either way the
-file is one file again once the run has let go of it, which is what keeps it something you can copy.
+A state file on a network share cannot have one, and there the durable default stays.
+
+That log is a second file beside the database while a run has it open, and it stays there if the run is
+*killed* rather than stopped: a run ended from a task manager, or by a crash, leaves
+`<file>-wal` and `<file>-shm` behind, and the next open recovers from them. So the file is one file
+when nothing has it open and the last close was clean. Copying the `.sqlite` alone while a run is live,
+or after one was killed, is how a reader loses whatever is in the log - and it is why both side files
+are in `.gitignore` beside the database itself.
 
 ## When nothing appears
 
@@ -155,7 +161,7 @@ ctest --test-dir build -C Release --output-on-failure
 | `server` | The server in process: a real port, a real connection through the stub's own transport, the transport's own deadline, where a connect to a host that answers nothing gives up on the timeout rather than on the TCP stack's SYN timer, the snapshots and summary the live view draws, the edge of the call history the live view reads through, and two runs over one state file. |
 | `store` | The state file: the schema, what a scenario seeds against what a game has written, and that a row nobody declares - including one written into the file by hand - is left alone. It links SQLite itself for the two checks only that can make, and it closes each file and opens it again, because every promise a state file makes is a promise about a second run. |
 | `generated_files_are_current` | The generated files match `gen/steam_api_surface.json`. |
-| `end_to_end` | The real thing: the backend started as a subprocess, a game loading the real DLL, both sides checked, and the command line itself, including what it refuses. |
+| `end_to_end` | The real thing: the backend started as a subprocess, a game loading the real DLL, both sides checked, and the command line itself, including what it refuses. It also starts a second backend over a state file, kills it, and runs the same game again: the only place the promise a state file makes is asked through the real DLL and across a real process boundary. |
 
 `fake_game` is also a smoke test you can run by hand, without a game of your own. It loads the stub
 the way a game's import table would and prints what it got:
