@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
-project(SteamMock VERSION 0.1.0 LANGUAGES CXX)
+# C as well as C++, and for one file: SQLite's amalgamation is C, and a language CMake
+# has not been asked for gets no flags of its own - which is how `sqlite3.c` came out
+# compiled against the static CRT while everything else used the DLL one, as a LNK4098
+# at every link. Declaring the language is what puts it in the same build as the rest.
+project(SteamMock VERSION 0.1.0 LANGUAGES C CXX)
 
 # ---------------------------------------------------------------------------
 #  A local debugging harness for the Steamworks flat API.
@@ -46,6 +50,35 @@ option(STEAMMOCK_WERROR "Treat warnings as errors" OFF)
 add_library(nlohmann_json INTERFACE)
 target_include_directories(nlohmann_json INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/external/nlohmann_json/single_include)
+
+# ---------------------------------------------------------------------------
+#  SQLite - the state file the backend can keep between runs, and the whole of
+#  it: two published files, vendored because sqlite3.c is a build product of
+#  SQLite's source tree rather than a file in it. external/sqlite/README.md has
+#  the version, its source id, and the hash of the zip the two came out of.
+#
+#  Built with the compiler's own warnings rather than /W4, and kept out of
+#  STEAMMOCK_TARGETS below - so it is neither held to this project's warning
+#  level nor made an error by STEAMMOCK_WERROR. It is not this project's code,
+#  and a warning in it is not a finding anyone here acts on. Dear ImGui, the one
+#  other thing here written elsewhere, is treated the same way.
+#
+#  SYSTEM, so sqlite3.h is exempt from that level in the files that include it.
+# ---------------------------------------------------------------------------
+add_library(sqlite3 STATIC external/sqlite/sqlite3.c)
+target_include_directories(sqlite3 SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/external/sqlite)
+# SQLite's own fopen and getenv would otherwise be reported by the CRT, which is the
+# only reason the first of these is here at all. The second is a decision rather
+# than a warning: a state file has no reason to load code out of itself.
+target_compile_definitions(sqlite3 PRIVATE _CRT_SECURE_NO_WARNINGS SQLITE_OMIT_LOAD_EXTENSION)
+# clang-cl's defaults are not MSVC's /W3, and three of SQLite's own lines trip them: two
+# variables and a function that exist only in configurations this build does not take. They
+# are not this project's code either way, and a log carrying three known lines is a log where
+# a fourth would go unnoticed - so they are named and turned off here rather than re-read on
+# every run. The guard is the C compiler, because the amalgamation is a C file.
+if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(sqlite3 PRIVATE -Wno-unused-variable -Wno-unused-function)
+endif()
 
 # ---------------------------------------------------------------------------
 #  Core: the wire format, the JSON subset, the transport and the client. Static,
