@@ -11,9 +11,11 @@
 
 #include "bridge/session.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
-namespace {
+namespace
+{
 
 // ---------------------------------------------------------------------------
 //  The schema.
@@ -100,16 +102,21 @@ constexpr const char* const kSchemaVersion = "1";
 //  the functions below would otherwise be a leak SQLite does not mention. There is
 //  no statement cache: preparing one of these is a few microseconds, and this store
 //  is written to once per call a game makes, at most.
-class Statement {
-public:
-    Statement(sqlite3* db, const char* sql) {
-        if (sqlite3_prepare_v2(db, sql, -1, &_statement, nullptr) != SQLITE_OK) {
+class Statement
+{
+  public:
+    Statement(sqlite3* db, const char* sql)
+    {
+        if (sqlite3_prepare_v2(db, sql, -1, &_statement, nullptr) != SQLITE_OK)
+        {
             _statement = nullptr;
         }
     }
 
-    ~Statement() {
-        if (_statement != nullptr) {
+    ~Statement()
+    {
+        if (_statement != nullptr)
+        {
             sqlite3_finalize(_statement);
         }
     }
@@ -122,21 +129,24 @@ public:
     sqlite3_stmt* get() const noexcept { return _statement; }
     bool ok() const noexcept { return _statement != nullptr; }
 
-private:
+  private:
     sqlite3_stmt* _statement = nullptr;
 };
 
-void bind_text(sqlite3_stmt* statement, int index, const std::string& value) {
+void bind_text(sqlite3_stmt* statement, int index, const std::string& value)
+{
     // SQLITE_TRANSIENT: SQLite copies it, so the caller's string may die with the call.
     sqlite3_bind_text(statement, index, value.c_str(), static_cast<int>(value.size()),
                       SQLITE_TRANSIENT);
 }
 
-void bind_i64(sqlite3_stmt* statement, int index, std::int64_t value) {
+void bind_i64(sqlite3_stmt* statement, int index, std::int64_t value)
+{
     sqlite3_bind_int64(statement, index, value);
 }
 
-std::string column_text(sqlite3_stmt* statement, int index) {
+std::string column_text(sqlite3_stmt* statement, int index)
+{
     const unsigned char* text = sqlite3_column_text(statement, index);
     return text == nullptr ? std::string() : std::string(reinterpret_cast<const char*>(text));
 }
@@ -148,9 +158,11 @@ std::string column_text(sqlite3_stmt* statement, int index) {
 //  no SQL, so what a state file *is* is a decision this translation unit holds
 //  rather than one every caller reads past - and replacing the file with something
 //  else is replacing this file.
-class SqliteStore final : public Store {
-public:
-    explicit SqliteStore(sqlite3* db) : _db(db) {
+class SqliteStore final : public Store
+{
+  public:
+    explicit SqliteStore(sqlite3* db) : _db(db)
+    {
         // So two processes pointed at one state file queue behind each other rather
         // than the second one failing every write it makes. Five seconds is far
         // longer than any write here takes and short enough that a wedged process
@@ -179,7 +191,7 @@ public:
     load_inventories(std::map<std::uint64_t, std::vector<ItemDetails>>& inventories) const override;
     void save_item(std::uint64_t steam_id, const ItemDetails& item) override;
 
-private:
+  private:
     // Records the first thing that went wrong and never touches it again. Later
     // failures are the same failure arriving again - a state file that has stopped
     // accepting writes keeps not accepting them - and the first one is the one that
@@ -196,14 +208,18 @@ private:
     // A template rather than a std::function, because this is called once per call a
     // game makes and a std::function would be an allocation for a lambda that is a
     // handful of binds.
-    template <typename Bind> bool run(const char* sql, Bind&& bind) {
+    template <typename Bind>
+    bool run(const char* sql, Bind&& bind)
+    {
         Statement statement(_db, sql);
-        if (!statement.ok()) {
+        if (!statement.ok())
+        {
             note_sqlite();
             return false;
         }
         bind(statement.get());
-        if (sqlite3_step(statement.get()) == SQLITE_DONE) {
+        if (sqlite3_step(statement.get()) == SQLITE_DONE)
+        {
             return true;
         }
         note_sqlite();
@@ -218,37 +234,46 @@ private:
     mutable std::string _error;
 };
 
-void SqliteStore::note(std::string what) const {
-    if (_error.empty()) {
+void SqliteStore::note(std::string what) const
+{
+    if (_error.empty())
+    {
         _error = std::move(what);
     }
 }
 
-void SqliteStore::note_sqlite() const {
-    if (sqlite3_errcode(_db) != SQLITE_OK) {
+void SqliteStore::note_sqlite() const
+{
+    if (sqlite3_errcode(_db) != SQLITE_OK)
+    {
         note(sqlite3_errmsg(_db));
     }
 }
 
-void SqliteStore::create_schema() {
-    for (const char* const statement : kSchema) {
+void SqliteStore::create_schema()
+{
+    for (const char* const statement : kSchema)
+    {
         char* message = nullptr;
         const int status = sqlite3_exec(_db, statement, nullptr, nullptr, &message);
-        if (status == SQLITE_OK) {
+        if (status == SQLITE_OK)
+        {
             continue;
         }
         std::string text =
             message != nullptr ? std::string(message) : std::string(sqlite3_errmsg(_db));
-        if (message != nullptr) {
+        if (message != nullptr)
+        {
             sqlite3_free(message);
         }
         note(std::move(text));
-        return;  // every later statement is about a table this one did not make
+        return; // every later statement is about a table this one did not make
     }
     check_schema_version();
 }
 
-void SqliteStore::choose_journal() {
+void SqliteStore::choose_journal()
+{
     // Fast commits where SQLite says it can be fast, and the durable default where it
     // cannot.
     //
@@ -267,10 +292,12 @@ void SqliteStore::choose_journal() {
     // speed. The mode the file is actually in is what decides, which is why this reads it
     // back rather than assuming the pragma was obeyed.
     Statement statement(_db, "PRAGMA journal_mode=WAL");
-    if (!statement.ok() || sqlite3_step(statement.get()) != SQLITE_ROW) {
+    if (!statement.ok() || sqlite3_step(statement.get()) != SQLITE_ROW)
+    {
         return;
     }
-    if (column_text(statement.get(), 0) != "wal") {
+    if (column_text(statement.get(), 0) != "wal")
+    {
         return;
     }
     // Ignored on purpose: this is a cost rather than a correctness setting, and a file
@@ -278,13 +305,16 @@ void SqliteStore::choose_journal() {
     sqlite3_exec(_db, "PRAGMA synchronous=NORMAL", nullptr, nullptr, nullptr);
 }
 
-bool SqliteStore::check_schema_version() {
+bool SqliteStore::check_schema_version()
+{
     Statement statement(_db, "SELECT value FROM meta WHERE name = 'schema'");
-    if (!statement.ok()) {
+    if (!statement.ok())
+    {
         note_sqlite();
         return false;
     }
-    if (sqlite3_step(statement.get()) != SQLITE_ROW) {
+    if (sqlite3_step(statement.get()) != SQLITE_ROW)
+    {
         // create_schema inserts this row, so there being none means the file is not
         // the one this build just made - which is worth saying rather than reading as
         // "no opinion" and carrying on to write into something unknown.
@@ -292,7 +322,8 @@ bool SqliteStore::check_schema_version() {
         return false;
     }
     const std::string version = column_text(statement.get(), 0);
-    if (version == kSchemaVersion) {
+    if (version == kSchemaVersion)
+    {
         return true;
     }
     note("the state file was written with schema version " + version + ", and this build reads " +
@@ -302,7 +333,8 @@ bool SqliteStore::check_schema_version() {
 
 // --- what one identity has -------------------------------------------------
 
-void SqliteStore::seed(const Profile& profile) {
+void SqliteStore::seed(const Profile& profile)
+{
     // A key the store has never been told about, and one only a scenario has ever
     // written. The `WHERE` on the update is the whole of that rule: a row a game
     // wrote does not match it, so the game's value stays.
@@ -313,12 +345,13 @@ void SqliteStore::seed(const Profile& profile) {
     // Iterated as a pair rather than through a structured binding, because the lambda below
     // wants them: capturing a structured binding is a C++20 extension, and this tree is
     // C++17 - which clang says out loud and MSVC does not.
-    for (const std::pair<std::string, std::int64_t>& stat : profile.stats) {
-        run(kStat, [&](sqlite3_stmt* statement) {
+    for (const std::pair<std::string, std::int64_t>& stat : profile.stats)
+    {
+        run(kStat, [&](sqlite3_stmt* statement)
+            {
             bind_text(statement, 1, profile.name);
             bind_text(statement, 2, stat.first);
-            bind_i64(statement, 3, stat.second);
-        });
+            bind_i64(statement, 3, stat.second); });
     }
 
     constexpr const char* kAchievement =
@@ -326,12 +359,13 @@ void SqliteStore::seed(const Profile& profile) {
         " VALUES (?1, ?2, ?3, 'scenario')"
         " ON CONFLICT(profile, name) DO UPDATE SET achieved = excluded.achieved,"
         " source = 'scenario' WHERE profile_achievement.source = 'scenario'";
-    for (const Achievement& achievement : profile.achievements) {
-        run(kAchievement, [&](sqlite3_stmt* statement) {
+    for (const Achievement& achievement : profile.achievements)
+    {
+        run(kAchievement, [&](sqlite3_stmt* statement)
+            {
             bind_text(statement, 1, profile.name);
             bind_text(statement, 2, achievement.name);
-            bind_i64(statement, 3, achievement.achieved ? 1 : 0);
-        });
+            bind_i64(statement, 3, achievement.achieved ? 1 : 0); });
     }
 
     // A friends list, on the same rule. A friend whose id is zero is one the scenario
@@ -343,24 +377,29 @@ void SqliteStore::seed(const Profile& profile) {
         " VALUES (?1, ?2, ?3, 'scenario')"
         " ON CONFLICT(profile, steam_id) DO UPDATE SET persona = excluded.persona,"
         " source = 'scenario' WHERE profile_friend.source = 'scenario'";
-    for (const Friend& friend_entry : profile.friends) {
-        if (friend_entry.steam_id == 0) {
+    for (const Friend& friend_entry : profile.friends)
+    {
+        if (friend_entry.steam_id == 0)
+        {
             continue;
         }
-        run(kFriend, [&](sqlite3_stmt* statement) {
+        run(kFriend, [&](sqlite3_stmt* statement)
+            {
             bind_text(statement, 1, profile.name);
             bind_i64(statement, 2, static_cast<std::int64_t>(friend_entry.steam_id));
-            bind_text(statement, 3, friend_entry.persona_name);
-        });
+            bind_text(statement, 3, friend_entry.persona_name); });
     }
 }
 
-void SqliteStore::merge_into(Profile& profile) const {
+void SqliteStore::merge_into(Profile& profile) const
+{
     {
         Statement statement(_db, "SELECT name, value FROM profile_stat WHERE profile = ?1");
-        if (statement.ok()) {
+        if (statement.ok())
+        {
             bind_text(statement.get(), 1, profile.name);
-            while (sqlite3_step(statement.get()) == SQLITE_ROW) {
+            while (sqlite3_step(statement.get()) == SQLITE_ROW)
+            {
                 // Read apart rather than in one call, so which column is which does not
                 // depend on the order two arguments happen to be evaluated in.
                 const std::string name = column_text(statement.get(), 0);
@@ -375,18 +414,23 @@ void SqliteStore::merge_into(Profile& profile) const {
     {
         Statement statement(_db,
                             "SELECT name, achieved FROM profile_achievement WHERE profile = ?1");
-        if (statement.ok()) {
+        if (statement.ok())
+        {
             bind_text(statement.get(), 1, profile.name);
-            while (sqlite3_step(statement.get()) == SQLITE_ROW) {
+            while (sqlite3_step(statement.get()) == SQLITE_ROW)
+            {
                 const std::string name = column_text(statement.get(), 0);
                 const bool achieved = sqlite3_column_int64(statement.get(), 1) != 0;
                 // An achievement the scenario declared keeps its own place in the list -
                 // that order is what a game asking for the nth name is answered from - so
                 // a stored one is written into the entry that is already there, and one the
                 // scenario does not have is added at the end.
-                if (Achievement* existing = profile.find_achievement(name); existing != nullptr) {
+                if (Achievement* existing = profile.find_achievement(name); existing != nullptr)
+                {
                     existing->achieved = achieved;
-                } else {
+                }
+                else
+                {
                     Achievement added;
                     added.name = name;
                     added.achieved = achieved;
@@ -398,13 +442,16 @@ void SqliteStore::merge_into(Profile& profile) const {
 
     {
         Statement statement(_db, "SELECT steam_id, persona FROM profile_friend WHERE profile = ?1");
-        if (statement.ok()) {
+        if (statement.ok())
+        {
             bind_text(statement.get(), 1, profile.name);
-            while (sqlite3_step(statement.get()) == SQLITE_ROW) {
+            while (sqlite3_step(statement.get()) == SQLITE_ROW)
+            {
                 const std::uint64_t steam_id =
                     static_cast<std::uint64_t>(sqlite3_column_int64(statement.get(), 0));
                 std::string named;
-                if (profile.find_friend(steam_id, named)) {
+                if (profile.find_friend(steam_id, named))
+                {
                     // The scenario names this one, and the scenario is what a person
                     // edits - so its name is the one kept, whatever a previous run wrote.
                     continue;
@@ -419,44 +466,49 @@ void SqliteStore::merge_into(Profile& profile) const {
 }
 
 void SqliteStore::write_stat(const std::string& profile, const std::string& name,
-                             std::int64_t value) {
+                             std::int64_t value)
+{
     // A game wrote this, so it is the store's whatever a scenario says next time.
     constexpr const char* kSql =
         "INSERT INTO profile_stat (profile, name, value, source) VALUES (?1, ?2, ?3, 'game')"
         " ON CONFLICT(profile, name) DO UPDATE SET value = excluded.value, source = 'game'";
-    run(kSql, [&](sqlite3_stmt* statement) {
+    run(kSql, [&](sqlite3_stmt* statement)
+        {
         bind_text(statement, 1, profile);
         bind_text(statement, 2, name);
-        bind_i64(statement, 3, value);
-    });
+        bind_i64(statement, 3, value); });
 }
 
 void SqliteStore::write_achievement(const std::string& profile, const std::string& name,
-                                    bool achieved) {
+                                    bool achieved)
+{
     constexpr const char* kSql =
         "INSERT INTO profile_achievement (profile, name, achieved, source)"
         " VALUES (?1, ?2, ?3, 'game')"
         " ON CONFLICT(profile, name) DO UPDATE SET achieved = excluded.achieved, source = 'game'";
-    run(kSql, [&](sqlite3_stmt* statement) {
+    run(kSql, [&](sqlite3_stmt* statement)
+        {
         bind_text(statement, 1, profile);
         bind_text(statement, 2, name);
-        bind_i64(statement, 3, achieved ? 1 : 0);
-    });
+        bind_i64(statement, 3, achieved ? 1 : 0); });
 }
 
 // --- what the run's players have done --------------------------------------
 
-void SqliteStore::load_boards(std::vector<StoredBoard>& boards) const {
+void SqliteStore::load_boards(std::vector<StoredBoard>& boards) const
+{
     // By name, so the order the boards come back in does not depend on the order rows
     // happen to sit in the file. Nothing about a board's *handles* is stored: a handle
     // is a number this run hands a game, and the next run hands out its own.
     Statement statement(_db, "SELECT name, sort_method, display_type FROM leaderboard"
                              " ORDER BY name");
-    if (!statement.ok()) {
+    if (!statement.ok())
+    {
         note_sqlite();
         return;
     }
-    while (sqlite3_step(statement.get()) == SQLITE_ROW) {
+    while (sqlite3_step(statement.get()) == SQLITE_ROW)
+    {
         StoredBoard board;
         board.name = column_text(statement.get(), 0);
         board.sort_method = static_cast<std::int32_t>(sqlite3_column_int64(statement.get(), 1));
@@ -464,12 +516,14 @@ void SqliteStore::load_boards(std::vector<StoredBoard>& boards) const {
 
         Statement rows(_db, "SELECT steam_id, score FROM leaderboard_row WHERE board = ?1"
                             " ORDER BY steam_id");
-        if (!rows.ok()) {
+        if (!rows.ok())
+        {
             note_sqlite();
             return;
         }
         bind_text(rows.get(), 1, board.name);
-        while (sqlite3_step(rows.get()) == SQLITE_ROW) {
+        while (sqlite3_step(rows.get()) == SQLITE_ROW)
+        {
             board.scores.emplace_back(
                 static_cast<std::uint64_t>(sqlite3_column_int64(rows.get(), 0)),
                 static_cast<std::int32_t>(sqlite3_column_int64(rows.get(), 1)));
@@ -478,38 +532,43 @@ void SqliteStore::load_boards(std::vector<StoredBoard>& boards) const {
     }
 }
 
-void SqliteStore::save_board(const Leaderboard& board) {
+void SqliteStore::save_board(const Leaderboard& board)
+{
     constexpr const char* kSql =
         "INSERT INTO leaderboard (name, sort_method, display_type) VALUES (?1, ?2, ?3)"
         " ON CONFLICT(name) DO UPDATE SET sort_method = excluded.sort_method,"
         " display_type = excluded.display_type";
-    run(kSql, [&](sqlite3_stmt* statement) {
+    run(kSql, [&](sqlite3_stmt* statement)
+        {
         bind_text(statement, 1, board.name);
         bind_i64(statement, 2, board.sort_method);
-        bind_i64(statement, 3, board.display_type);
-    });
+        bind_i64(statement, 3, board.display_type); });
 }
 
-void SqliteStore::save_row(const std::string& board, const LeaderboardRow& row) {
+void SqliteStore::save_row(const std::string& board, const LeaderboardRow& row)
+{
     constexpr const char* kSql =
         "INSERT INTO leaderboard_row (board, steam_id, score) VALUES (?1, ?2, ?3)"
         " ON CONFLICT(board, steam_id) DO UPDATE SET score = excluded.score";
-    run(kSql, [&](sqlite3_stmt* statement) {
+    run(kSql, [&](sqlite3_stmt* statement)
+        {
         bind_text(statement, 1, board);
         bind_i64(statement, 2, static_cast<std::int64_t>(row.steam_id));
-        bind_i64(statement, 3, row.score);
-    });
+        bind_i64(statement, 3, row.score); });
 }
 
 void SqliteStore::load_inventories(
-    std::map<std::uint64_t, std::vector<ItemDetails>>& inventories) const {
+    std::map<std::uint64_t, std::vector<ItemDetails>>& inventories) const
+{
     Statement statement(_db, "SELECT steam_id, item_id, definition, quantity, flags"
                              " FROM inventory_item ORDER BY steam_id, item_id");
-    if (!statement.ok()) {
+    if (!statement.ok())
+    {
         note_sqlite();
         return;
     }
-    while (sqlite3_step(statement.get()) == SQLITE_ROW) {
+    while (sqlite3_step(statement.get()) == SQLITE_ROW)
+    {
         ItemDetails item;
         item.item_id = static_cast<std::uint64_t>(sqlite3_column_int64(statement.get(), 1));
         item.definition = static_cast<std::int32_t>(sqlite3_column_int64(statement.get(), 2));
@@ -520,24 +579,26 @@ void SqliteStore::load_inventories(
     }
 }
 
-void SqliteStore::save_item(std::uint64_t steam_id, const ItemDetails& item) {
+void SqliteStore::save_item(std::uint64_t steam_id, const ItemDetails& item)
+{
     constexpr const char* kSql =
         "INSERT INTO inventory_item (steam_id, item_id, definition, quantity, flags)"
         " VALUES (?1, ?2, ?3, ?4, ?5)"
         " ON CONFLICT(steam_id, item_id) DO UPDATE SET definition = excluded.definition,"
         " quantity = excluded.quantity, flags = excluded.flags";
-    run(kSql, [&](sqlite3_stmt* statement) {
+    run(kSql, [&](sqlite3_stmt* statement)
+        {
         bind_i64(statement, 1, static_cast<std::int64_t>(steam_id));
         bind_i64(statement, 2, static_cast<std::int64_t>(item.item_id));
         bind_i64(statement, 3, item.definition);
         bind_i64(statement, 4, item.quantity);
-        bind_i64(statement, 5, item.flags);
-    });
+        bind_i64(statement, 5, item.flags); });
 }
 
-}  // namespace
+} // namespace
 
-std::unique_ptr<Store> Store::open(const std::string& path, std::string& error) {
+std::unique_ptr<Store> Store::open(const std::string& path, std::string& error)
+{
     // Not `sqlite3_open_v2` with a mode a caller chose: this store is either reading
     // and writing or it is not open, and the one decision left - whether to make the
     // file - is the only one a state file has. The flags say both because a run given
@@ -545,17 +606,20 @@ std::unique_ptr<Store> Store::open(const std::string& path, std::string& error) 
     sqlite3* db = nullptr;
     const int status =
         sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
-    if (status != SQLITE_OK) {
+    if (status != SQLITE_OK)
+    {
         error = "cannot open the state file '" + path +
                 "': " + (db != nullptr ? sqlite3_errmsg(db) : "out of memory");
-        if (db != nullptr) {
+        if (db != nullptr)
+        {
             sqlite3_close_v2(db);
         }
         return nullptr;
     }
 
     auto store = std::make_unique<SqliteStore>(db);
-    if (!store->error().empty()) {
+    if (!store->error().empty())
+    {
         // A file that is not this harness's, or one from a build that kept something
         // else. Either way nothing may be written to it, and a run that carried on
         // would be quietly not keeping anything - which is the failure this whole
@@ -566,4 +630,4 @@ std::unique_ptr<Store> Store::open(const std::string& path, std::string& error) 
     return store;
 }
 
-}  // namespace steammock
+} // namespace steammock

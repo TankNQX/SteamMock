@@ -34,18 +34,20 @@
 // cleanly, so the transcript is flushed and the summary is printed. The handler
 // is at file scope with C linkage because that is what signal() expects - it
 // cannot live in the unnamed namespace below.
-namespace {
+namespace
+{
 // Not a std::atomic<bool>, which is what this was: a signal handler may only touch things
 // the standard says are safe in one, and lock-free-ness - the property that makes an atomic
 // one of them - is not guaranteed for std::atomic<bool> by anything but the implementation.
 // `volatile std::sig_atomic_t` is the type the standard names for exactly this: the handler
 // writes, the main thread reads, and neither needs more than that.
 volatile std::sig_atomic_t g_interrupted = 0;
-}  // namespace
+} // namespace
 
 extern "C" void steammock_on_interrupt(int) { g_interrupted = 1; }
 
-namespace {
+namespace
+{
 
 using steammock::kDefaultHost;
 using steammock::kDefaultPort;
@@ -59,7 +61,8 @@ constexpr const char* kDefaultScenario = "scenarios/example.json";
 constexpr const char* kVersion = STEAMMOCK_VERSION;
 constexpr const char* kProgram = "steammock";
 
-void print_usage(std::FILE* out) {
+void print_usage(std::FILE* out)
+{
     std::fprintf(out,
                  "%s - answer Steam API calls from a local game, so you can debug the\n"
                  "integration without running Steam.\n\n"
@@ -79,9 +82,15 @@ void print_usage(std::FILE* out) {
                  kDefaultScenario);
 }
 
-enum class ParseResult { run, exit_ok, exit_error };
+enum class ParseResult
+{
+    run,
+    exit_ok,
+    exit_error
+};
 
-struct Options {
+struct Options
+{
     std::string host = kDefaultHost;
     std::uint16_t port = kDefaultPort;
     std::string scenario = kDefaultScenario;
@@ -93,44 +102,62 @@ struct Options {
     std::string error;
 };
 
-bool parse_port(const std::string& text, std::uint16_t& out) {
+bool parse_port(const std::string& text, std::uint16_t& out)
+{
     unsigned value = 0;
-    if (!steammock::parse_number(text, kMaxPort, value)) {
+    if (!steammock::parse_number(text, kMaxPort, value))
+    {
         return false;
     }
     out = static_cast<std::uint16_t>(value);
     return true;
 }
 
-bool parse_level(const std::string& text, LogLevel& out) {
-    if (text == "error") {
+bool parse_level(const std::string& text, LogLevel& out)
+{
+    if (text == "error")
+    {
         out = LogLevel::error;
-    } else if (text == "warning" || text == "warn") {
+    }
+    else if (text == "warning" || text == "warn")
+    {
         out = LogLevel::warn;
-    } else if (text == "info") {
+    }
+    else if (text == "info")
+    {
         out = LogLevel::info;
-    } else if (text == "debug") {
+    }
+    else if (text == "debug")
+    {
         out = LogLevel::debug;
-    } else {
+    }
+    else
+    {
         return false;
     }
     return true;
 }
 
-ParseResult parse_args(int argc, char** argv, Options& options) {
-    for (int index = 1; index < argc; ++index) {
+ParseResult parse_args(int argc, char** argv, Options& options)
+{
+    for (int index = 1; index < argc; ++index)
+    {
         std::string argument = argv[index];
         std::string value;
         bool has_value = false;
-        if (const std::size_t equals = argument.find('='); equals != std::string::npos) {
+        if (const std::size_t equals = argument.find('='); equals != std::string::npos)
+        {
             value = argument.substr(equals + 1u);
             argument = argument.substr(0, equals);
             has_value = true;
         }
 
-        const auto take_value = [&](std::string& target) {
-            if (!has_value) {
-                if (index + 1 >= argc) {
+        const auto take_value = [&](std::string& target)
+        {
+            if (!has_value)
+            {
+                if (index + 1 >= argc)
+                {
                     return false;
                 }
                 const std::string next = argv[index + 1];
@@ -140,7 +167,8 @@ ParseResult parse_args(int argc, char** argv, Options& options) {
                 // second mistake, with the first one silently in the configuration. The
                 // `--host=--port` spelling still says what it means, for a value that really
                 // does begin with a dash.
-                if (!next.empty() && next[0] == '-') {
+                if (!next.empty() && next[0] == '-')
+                {
                     return false;
                 }
                 target = next;
@@ -151,80 +179,100 @@ ParseResult parse_args(int argc, char** argv, Options& options) {
             return true;
         };
 
-        if (argument == "-h" || argument == "--help") {
+        if (argument == "-h" || argument == "--help")
+        {
             // No attached value on any of the four flags: `--list-api=yes` used to be
             // accepted with the value thrown away, so a typo read as a request that was
             // granted and the answer looked like it agreed with it.
-            if (has_value) {
+            if (has_value)
+            {
                 options.error = argument + " takes no value";
                 return ParseResult::exit_error;
             }
             print_usage(stdout);
             return ParseResult::exit_ok;
         }
-        if (argument == "--version") {
-            if (has_value) {
+        if (argument == "--version")
+        {
+            if (has_value)
+            {
                 options.error = "--version takes no value";
                 return ParseResult::exit_error;
             }
             std::printf("%s %s\n", kProgram, kVersion);
             return ParseResult::exit_ok;
         }
-        if (argument == "--list-api") {
-            if (has_value) {
+        if (argument == "--list-api")
+        {
+            if (has_value)
+            {
                 options.error = "--list-api takes no value";
                 return ParseResult::exit_error;
             }
             options.list_api = true;
             continue;
         }
-        if (argument == "--show-profiles") {
-            if (has_value) {
+        if (argument == "--show-profiles")
+        {
+            if (has_value)
+            {
                 options.error = "--show-profiles takes no value";
                 return ParseResult::exit_error;
             }
             options.show_profiles = true;
             continue;
         }
-        if (argument == "--host") {
-            if (!take_value(options.host)) {
+        if (argument == "--host")
+        {
+            if (!take_value(options.host))
+            {
                 options.error = "--host needs a value";
                 return ParseResult::exit_error;
             }
             continue;
         }
-        if (argument == "--port") {
+        if (argument == "--port")
+        {
             std::string text;
-            if (!take_value(text) || !parse_port(text, options.port)) {
+            if (!take_value(text) || !parse_port(text, options.port))
+            {
                 options.error = "--port needs a number between 0 and 65535";
                 return ParseResult::exit_error;
             }
             continue;
         }
-        if (argument == "--scenario") {
-            if (!take_value(options.scenario)) {
+        if (argument == "--scenario")
+        {
+            if (!take_value(options.scenario))
+            {
                 options.error = "--scenario needs a value";
                 return ParseResult::exit_error;
             }
             continue;
         }
-        if (argument == "--transcript") {
-            if (!take_value(options.transcript)) {
+        if (argument == "--transcript")
+        {
+            if (!take_value(options.transcript))
+            {
                 options.error = "--transcript needs a value";
                 return ParseResult::exit_error;
             }
             continue;
         }
-        if (argument == "--state") {
-            if (!take_value(options.state)) {
+        if (argument == "--state")
+        {
+            if (!take_value(options.state))
+            {
                 options.error = "--state needs a value";
                 return ParseResult::exit_error;
             }
             continue;
         }
-        if (argument == "--log-level") {
+        if (argument == "--log-level")
+        {
             std::string text;
-            if (!take_value(text) || !parse_level(text, options.level)) {
+            if (!take_value(text) || !parse_level(text, options.level))
+            {
                 options.error = "--log-level takes error, warning, info or debug";
                 return ParseResult::exit_error;
             }
@@ -237,7 +285,8 @@ ParseResult parse_args(int argc, char** argv, Options& options) {
     // Both are informational modes and either one prints its answer and exits, so asking for
     // both is a question with no answer. It used to be resolved in silence in favour of
     // --list-api, which drops what --show-profiles was asked for on the floor.
-    if (options.list_api && options.show_profiles) {
+    if (options.list_api && options.show_profiles)
+    {
         options.error = "--list-api and --show-profiles cannot both be asked for";
         return ParseResult::exit_error;
     }
@@ -248,19 +297,24 @@ ParseResult parse_args(int argc, char** argv, Options& options) {
 //  The two questions a person asks a stub that has no documentation
 // ---------------------------------------------------------------------------
 
-int print_api() {
+int print_api()
+{
     std::size_t count = 0;
     const steammock::SurfaceCall* calls = steammock::api_surface_calls(count);
     std::printf("# surface '%s', %zu calls\n", steammock::api_surface_name(), count);
-    for (std::size_t index = 0; index < count; ++index) {
+    for (std::size_t index = 0; index < count; ++index)
+    {
         const steammock::SurfaceCall& call = calls[index];
         std::string params;
-        for (std::size_t index_param = 0; index_param < call.param_count; ++index_param) {
-            if (index_param != 0u) {
+        for (std::size_t index_param = 0; index_param < call.param_count; ++index_param)
+        {
+            if (index_param != 0u)
+            {
                 params += ", ";
             }
             params += call.params[index_param].type;
-            if (call.params[index_param].out) {
+            if (call.params[index_param].out)
+            {
                 params += "*";
             }
             params += " ";
@@ -271,19 +325,23 @@ int print_api() {
     return 0;
 }
 
-int show_profiles(const std::string& path) {
+int show_profiles(const std::string& path)
+{
     steammock::Dispatcher dispatcher;
     std::string error;
-    if (!steammock::Dispatcher::load_file(path, dispatcher, error)) {
+    if (!steammock::Dispatcher::load_file(path, dispatcher, error))
+    {
         std::fprintf(stderr, "%s\n", error.c_str());
         return 2;
     }
     std::printf("scenario %s\n", path.c_str());
-    for (const std::string& name : dispatcher.profile_names()) {
+    for (const std::string& name : dispatcher.profile_names())
+    {
         std::printf("  profile '%s'\n", name.c_str());
     }
     std::printf("match rules, first one wins:\n");
-    for (const steammock::MatchRule& rule : dispatcher.match_rules()) {
+    for (const steammock::MatchRule& rule : dispatcher.match_rules())
+    {
         std::printf("  %s\n", rule.describe().c_str());
     }
     return 0;
@@ -293,7 +351,8 @@ int show_profiles(const std::string& path) {
 //  Serving
 // ---------------------------------------------------------------------------
 
-int serve(const Options& options) {
+int serve(const Options& options)
+{
     // Installed here, at the top, rather than after the server is listening. A SIGINT that
     // arrives during the scenario load or inside server.start() used to meet the default
     // disposition and end the process there and then - which is exactly the abrupt exit this
@@ -308,7 +367,8 @@ int serve(const Options& options) {
 
     steammock::Dispatcher dispatcher;
     std::string error;
-    if (!steammock::Dispatcher::load_file(options.scenario, dispatcher, error)) {
+    if (!steammock::Dispatcher::load_file(options.scenario, dispatcher, error))
+    {
         std::fprintf(stderr, "%s (try --scenario %s)\n", error.c_str(), kDefaultScenario);
         return 2;
     }
@@ -322,29 +382,36 @@ int serve(const Options& options) {
     server_options.log_level = options.level;
 
     steammock::Server server(std::move(dispatcher), std::move(server_options));
-    if (!server.start(error)) {
+    if (!server.start(error))
+    {
         std::fprintf(stderr, "%s\n", error.c_str());
         return 2;
     }
 
-    const auto say = [&options](LogLevel level, const std::string& message) {
-        if (level <= options.level) {
+    const auto say = [&options](LogLevel level, const std::string& message)
+    {
+        if (level <= options.level)
+        {
             steammock::stderr_log_sink(level, message);
         }
     };
     std::string joined;
-    for (const std::string& name : profiles) {
-        if (!joined.empty()) {
+    for (const std::string& name : profiles)
+    {
+        if (!joined.empty())
+        {
             joined += ", ";
         }
         joined += name;
     }
     say(LogLevel::info, "protocol v" + std::to_string(steammock::kProtocolVersion) + ", scenario " +
                             options.scenario + ", profiles " + joined);
-    if (!options.transcript.empty()) {
+    if (!options.transcript.empty())
+    {
         say(LogLevel::info, "transcript: " + options.transcript);
     }
-    if (!options.state.empty()) {
+    if (!options.state.empty())
+    {
         say(LogLevel::info, "state: " + options.state);
     }
 
@@ -353,7 +420,8 @@ int serve(const Options& options) {
     std::printf("listening on %s:%u\n", options.host.c_str(), static_cast<unsigned>(server.port()));
     std::fflush(stdout);
 
-    while (g_interrupted == 0) {
+    while (g_interrupted == 0)
+    {
         // The accept loop runs on its own thread; this one only has to notice a
         // Ctrl+C and stop the server cleanly, which flushes the transcript.
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -364,23 +432,29 @@ int serve(const Options& options) {
     return 0;
 }
 
-}  // namespace
+} // namespace
 
-int run(int argc, char** argv) {
+int run(int argc, char** argv)
+{
     Options options;
-    switch (parse_args(argc, argv, options)) {
-        case ParseResult::exit_ok: return 0;
-        case ParseResult::exit_error:
-            std::fprintf(stderr, "%s: %s\n\n", kProgram, options.error.c_str());
-            print_usage(stderr);
-            return 2;
-        case ParseResult::run: break;
+    switch (parse_args(argc, argv, options))
+    {
+    case ParseResult::exit_ok:
+        return 0;
+    case ParseResult::exit_error:
+        std::fprintf(stderr, "%s: %s\n\n", kProgram, options.error.c_str());
+        print_usage(stderr);
+        return 2;
+    case ParseResult::run:
+        break;
     }
 
-    if (options.list_api) {
+    if (options.list_api)
+    {
         return print_api();
     }
-    if (options.show_profiles) {
+    if (options.show_profiles)
+    {
         return show_profiles(options.scenario);
     }
     return serve(options);
@@ -389,13 +463,19 @@ int run(int argc, char** argv) {
 // An exception escaping main terminates the process with no message at all, and
 // the only realistic source here is a failed allocation. Report it the way any
 // other failure is reported instead.
-int main(int argc, char** argv) {
-    try {
+int main(int argc, char** argv)
+{
+    try
+    {
         return run(argc, argv);
-    } catch (const std::bad_alloc&) {
+    }
+    catch (const std::bad_alloc&)
+    {
         std::fprintf(stderr, "%s: out of memory\n", kProgram);
         return 2;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::fprintf(stderr, "%s: unexpected failure\n", kProgram);
         return 2;
     }

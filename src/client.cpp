@@ -8,12 +8,14 @@
 #include "bridge/protocol.hpp"
 
 #ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
 
-namespace steammock {
-namespace {
+namespace steammock
+{
+namespace
+{
 
 // The port and the timeout a game gets when nothing says otherwise, and the
 // largest either may be: a sanity bound rather than a protocol one, so a typo in
@@ -24,17 +26,20 @@ constexpr unsigned kMaxPort = 65535u;
 constexpr unsigned kDefaultTimeoutMs = 2000u;
 constexpr unsigned kMaxTimeoutMs = 600000u;
 
-std::string environment(const char* name) {
+std::string environment(const char* name)
+{
     const char* value = std::getenv(name);
     return value != nullptr ? std::string(value) : std::string();
 }
 
-unsigned environment_number(const char* name, unsigned ceiling, unsigned fallback) {
+unsigned environment_number(const char* name, unsigned ceiling, unsigned fallback)
+{
     unsigned value = 0;
     return parse_number(environment(name), ceiling, value) ? value : fallback;
 }
 
-std::string executable_path() {
+std::string executable_path()
+{
     char buffer[MAX_PATH] = {};
     // The length it returns, not a zero test: GetModuleFileNameA answers with the
     // buffer size when the path did not fit, and the path it wrote is then a
@@ -42,20 +47,23 @@ std::string executable_path() {
     // a failure rather than used for the log prefix and the exe name a scenario
     // matches on.
     const DWORD length = GetModuleFileNameA(nullptr, buffer, sizeof(buffer));
-    if (length == 0 || length >= sizeof(buffer)) {
+    if (length == 0 || length >= sizeof(buffer))
+    {
         return std::string();
     }
     return std::string(buffer, length);
 }
 
-std::string file_name_of(const std::string& path) {
+std::string file_name_of(const std::string& path)
+{
     const std::size_t slash = path.find_last_of("\\/");
     return slash == std::string::npos ? path : path.substr(slash + 1u);
 }
 
-}  // namespace
+} // namespace
 
-Client& Client::instance() noexcept {
+Client& Client::instance() noexcept
+{
     // Never destroyed on purpose: the process is ending anyway, and a leak is
     // cheaper than a shutdown-order race inside a DLL - a static local would be
     // destroyed under the loader lock.
@@ -79,8 +87,10 @@ Client::~Client() { _transport->close(); }
 // catching in call(), which answers the game with a default. A noexcept here
 // would turn that same failure into std::terminate - the opposite of what this
 // harness promises a game.
-void Client::configure() {
-    if (_configured) {
+void Client::configure()
+{
+    if (_configured)
+    {
         return;
     }
     // `_configured` is set at the end of each path below, not here: everything in
@@ -95,7 +105,8 @@ void Client::configure() {
     _exe_name = file_name_of(path);
     log_configure(path.c_str());
 
-    if (environment("STEAMMOCK_OFF") == "1") {
+    if (environment("STEAMMOCK_OFF") == "1")
+    {
         _enabled = false;
         _configured = true;
         log_write(LogLevel::info, "STEAMMOCK_OFF=1 - every call answers with its default");
@@ -103,13 +114,15 @@ void Client::configure() {
     }
 
     _host = environment("STEAMMOCK_HOST");
-    if (_host.empty()) {
+    if (_host.empty())
+    {
         _host = kDefaultHost;
     }
     _port =
         static_cast<std::uint16_t>(environment_number("STEAMMOCK_PORT", kMaxPort, kDefaultPort));
     _timeout_ms = environment_number("STEAMMOCK_TIMEOUT_MS", kMaxTimeoutMs, kDefaultTimeoutMs);
-    if (_timeout_ms == 0u) {
+    if (_timeout_ms == 0u)
+    {
         // A zero is not "wait forever" to this transport - it is a deadline that has
         // already passed, so nothing would ever connect. The variable's contract is a
         // number of milliseconds a game is never blocked for longer than, and its
@@ -128,12 +141,16 @@ void Client::configure() {
 }
 
 // Not noexcept, for the same reason as configure().
-bool Client::ensure_connected() {
-    if (_transport->is_connected()) {
+bool Client::ensure_connected()
+{
+    if (_transport->is_connected())
+    {
         return true;
     }
-    if (!_transport->connect(_host, _port)) {
-        if (!_logged_offline) {
+    if (!_transport->connect(_host, _port))
+    {
+        if (!_logged_offline)
+        {
             log_write(LogLevel::info, "no backend listening on " + _host + ":" +
                                           std::to_string(_port) +
                                           " - every call will answer with its default");
@@ -155,12 +172,14 @@ bool Client::ensure_connected() {
     char wanted[64] = {};
     const DWORD wanted_length =
         GetEnvironmentVariableA("STEAMMOCK_PROFILE", wanted, sizeof(wanted));
-    if (wanted_length > 0 && wanted_length < sizeof(wanted)) {
+    if (wanted_length > 0 && wanted_length < sizeof(wanted))
+    {
         hello["profile"] = Json(wanted);
     }
 
     std::string response;
-    if (!_transport->exchange(hello.dump(), response)) {
+    if (!_transport->exchange(hello.dump(), response))
+    {
         log_write(LogLevel::warn, "hello failed - ignoring it");
         _transport->close();
         return false;
@@ -168,7 +187,8 @@ bool Client::ensure_connected() {
     Json welcome;
     const bool parsed = parse(response, welcome);
     const Json* session = parsed ? json_member(welcome, "session") : nullptr;
-    if (session == nullptr) {
+    if (session == nullptr)
+    {
         log_write(LogLevel::warn, "the backend did not answer the handshake - ignoring it");
         _transport->close();
         return false;
@@ -179,8 +199,10 @@ bool Client::ensure_connected() {
     return true;
 }
 
-bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept {
-    try {
+bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
+{
+    try
+    {
 
         // Game calls arrive on whatever thread the game uses, so one round trip
         // is held under the lock. Steam callbacks are cheap and the transport is
@@ -210,11 +232,13 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
 
         configure();
 
-        if (!_enabled) {
+        if (!_enabled)
+        {
             return false;
         }
 
-        if (!ensure_connected()) {
+        if (!ensure_connected())
+        {
             return false;
         }
 
@@ -227,19 +251,22 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         request["session"] = Json(_session_id);
 
         std::string response;
-        if (!_transport->exchange(request.dump(), response)) {
+        if (!_transport->exchange(request.dump(), response))
+        {
             log_write(LogLevel::warn, "the backend went away mid-call; using defaults again");
             _transport->close();
             return false;
         }
 
         Json message;
-        if (!parse(response, message)) {
+        if (!parse(response, message))
+        {
             log_write(LogLevel::warn, "ignoring an unparsable reply from the backend");
             return false;
         }
         const Json* sequence = json_member(message, "seq");
-        if (sequence == nullptr || as_int64(*sequence) != static_cast<std::int64_t>(_sequence)) {
+        if (sequence == nullptr || as_int64(*sequence) != static_cast<std::int64_t>(_sequence))
+        {
             log_write(LogLevel::warn, "ignoring a reply that does not match the request");
             return false;
         }
@@ -253,30 +280,36 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
         // rode back on one of those used to be dropped along with the reply.
         std::size_t waiting = 0;
         if (const Json* events = json_member(message, "events");
-            events != nullptr && events->is_array()) {
+            events != nullptr && events->is_array())
+        {
             // The queue's own lock, inside the round trip's - never the other way round,
             // so a game's pump does not wait for a call to come back before it can be
             // told anything. See the note on the two locks in bridge/client.hpp.
             const std::scoped_lock queued(_events_mutex);
-            for (const Json& event : *events) {
+            for (const Json& event : *events)
+            {
                 _events.push_back(event);
             }
             waiting = _events.size();
         }
-        if (waiting != 0u) {
+        if (waiting != 0u)
+        {
             log_write(LogLevel::debug, "the backend sent " + std::to_string(waiting) +
                                            " payload(s) for the game to be given next");
         }
 
         const Json* answer = json_member(message, "answer");
-        if (answer == nullptr || as_string(*answer) != "handled") {
+        if (answer == nullptr || as_string(*answer) != "handled")
+        {
             ++_unhandled_count;
             return false;
         }
 
         reply = std::move(message);
         return true;
-    } catch (...) {
+    }
+    catch (...)
+    {
         // Allocation failure, or anything else: a game must never see an
         // exception thrown across the exported API.
         log_write(LogLevel::error, "the bridge hit an unexpected exception");
@@ -284,69 +317,88 @@ bool Client::call(std::string_view name, const Json& args, Json& reply) noexcept
     }
 }
 
-bool Client::take_event(Json& out) noexcept {
-    try {
+bool Client::take_event(Json& out) noexcept
+{
+    try
+    {
         // The queue's own lock, and it is not held while the caller dispatches: taking
         // one copies it out and returns, so a game that calls back into the bridge from
         // inside a callback cannot deadlock on itself.
         std::scoped_lock lock(_events_mutex);
-        if (_events.empty()) {
+        if (_events.empty())
+        {
             return false;
         }
         out = std::move(_events.front());
         _events.pop_front();
         return true;
-    } catch (...) {
+    }
+    catch (...)
+    {
         return false;
     }
 }
 
-Client::Counts Client::counts() const noexcept {
+Client::Counts Client::counts() const noexcept
+{
     // Locked, like session_id(): the counts are written inside call()'s critical
     // section, so this is a state the client was actually in rather than one assembled
     // from two reads that straddle a call. A lock that cannot be taken answers zero,
     // for the same reason as everywhere else here - the caller is an exported
     // diagnostic and a game must not see an exception.
-    try {
+    try
+    {
         const std::scoped_lock lock(_mutex);
         return Counts{_call_count.load(), _unhandled_count.load()};
-    } catch (...) {
+    }
+    catch (...)
+    {
         return Counts{};
     }
 }
 
-std::string Client::session_id() const noexcept {
+std::string Client::session_id() const noexcept
+{
     // The lock can fail where an allocation cannot be allowed to: this returns a value
     // to a game, so a mutex that cannot be taken answers "no session" rather than
     // ending the process this DLL is loaded into - the same decision the allocation
     // in instance() records.
-    try {
+    try
+    {
         std::scoped_lock lock(_mutex);
         return _session_id;
-    } catch (...) {
+    }
+    catch (...)
+    {
         return std::string();
     }
 }
 
-bool Client::backend_connected() noexcept {
-    try {
+bool Client::backend_connected() noexcept
+{
+    try
+    {
         // Under the lock, like call(): configure() decides whether this client is on at
         // all, and it is not something a second thread may read half-written.
         std::scoped_lock lock(_mutex);
 
         configure();
 
-        if (!_enabled) {
+        if (!_enabled)
+        {
             return false;
         }
         return ensure_connected();
-    } catch (...) {
+    }
+    catch (...)
+    {
         return false;
     }
 }
 
-bool invoke(std::string_view name, const Json& args, Json& reply) noexcept {
+bool invoke(std::string_view name, const Json& args, Json& reply) noexcept
+{
     return Client::instance().call(name, args, reply);
 }
 
-}  // namespace steammock
+} // namespace steammock

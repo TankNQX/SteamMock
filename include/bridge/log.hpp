@@ -3,7 +3,8 @@
 #include <string>
 #include <string_view>
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  The stub's own log, for when the backend is unreachable or slow.
@@ -12,13 +13,19 @@ namespace steammock {
 //  a file, to that file as well. The level comes from STEAMMOCK_LOG_LEVEL
 //  (error, warn, info, debug; default info).
 
-enum class LogLevel : int { error = 0, warn = 1, info = 2, debug = 3 };
+enum class LogLevel : int
+{
+    error = 0,
+    warn = 1,
+    info = 2,
+    debug = 3
+};
 
 // The name a level is written with. One spelling, because the stub's log and the
 // backend's have to read the same way when they are put beside each other.
 const char* log_level_name(LogLevel level) noexcept;
 
 void log_write(LogLevel level, std::string_view message) noexcept;
-void log_configure(const char* module_path) noexcept;  // reads the environment once
+void log_configure(const char* module_path) noexcept; // reads the environment once
 
-}  // namespace steammock
+} // namespace steammock

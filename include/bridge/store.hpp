@@ -11,7 +11,8 @@
 #include "bridge/leaderboard.hpp"
 #include "bridge/session.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  The state that outlives a run.
@@ -56,7 +57,8 @@ namespace steammock {
 // board's own answer about an order rather than a fact about a score, so the board
 // computes it as the rows go back in. That is what keeps a stored board and a board
 // that grew during a run from being able to disagree about the order of one.
-struct StoredBoard {
+struct StoredBoard
+{
     std::string name;
     // The game's own choices when it first asked for the board: which end of the
     // numbers wins, and what the numbers mean.
@@ -65,8 +67,9 @@ struct StoredBoard {
     std::vector<std::pair<std::uint64_t, std::int32_t>> scores;
 };
 
-class Store {
-public:
+class Store
+{
+  public:
     // Opens the state file at `path`, making one and its schema if it is not there.
     // Null means it could not be opened - a path that cannot be written, or a file
     // that is not this harness's - and `error` says what happened.
@@ -130,4 +133,4 @@ public:
     virtual void save_item(std::uint64_t steam_id, const ItemDetails& item) = 0;
 };
 
-}  // namespace steammock
+} // namespace steammock

@@ -17,8 +17,10 @@
 
 #include "bridge/store.hpp"
 
-namespace steammock {
-namespace {
+namespace steammock
+{
+namespace
+{
 
 // The calls this world answers, by the names the SDK's own surface sends. Every one of
 // them is an ISteamUserStats call: a leaderboard is stats, and the calls that carry a
@@ -63,25 +65,31 @@ constexpr const char* kLeaderboardVia = "leaderboard";
 
 // --- reading what a call was given -----------------------------------------
 
-std::uint64_t id_member(const Json& object, const char* key) {
+std::uint64_t id_member(const Json& object, const char* key)
+{
     const Json* value = json_member(object, key);
-    if (value == nullptr || !value->is_number()) {
+    if (value == nullptr || !value->is_number())
+    {
         return 0;
     }
     return as_uint64(*value);
 }
 
-std::int64_t int_member(const Json& object, const char* key, std::int64_t fallback) {
+std::int64_t int_member(const Json& object, const char* key, std::int64_t fallback)
+{
     const Json* value = json_member(object, key);
-    if (value == nullptr || !value->is_number()) {
+    if (value == nullptr || !value->is_number())
+    {
         return fallback;
     }
     return as_int64(*value);
 }
 
-std::string text_member(const Json& object, const char* key) {
+std::string text_member(const Json& object, const char* key)
+{
     const Json* value = json_member(object, key);
-    if (value == nullptr || !value->is_string()) {
+    if (value == nullptr || !value->is_string())
+    {
         return std::string();
     }
     return std::string(as_string(*value));
@@ -91,14 +99,16 @@ Json id_value(std::uint64_t id) { return Json(static_cast<std::int64_t>(id)); }
 
 // --- answers ---------------------------------------------------------------
 
-Answer answered(Json ret) {
+Answer answered(Json ret)
+{
     Answer answer;
     answer.answered = true;
     answer.ret = std::move(ret);
     return answer;
 }
 
-Answer from_leaderboard(Json ret) {
+Answer from_leaderboard(Json ret)
+{
     Answer answer = answered(std::move(ret));
     answer.via = kLeaderboardVia;
     return answer;
@@ -108,7 +118,8 @@ Answer from_leaderboard(Json ret) {
 // handle the answer returned - the same rule a scripted "then" entry follows - and that
 // handle is what ties "the board you asked for" or "the rows you asked for" to the call
 // that asked.
-Answer from_leaderboard_calling(Json ret, Json event) {
+Answer from_leaderboard_calling(Json ret, Json event)
+{
     event["call"] = ret;
     Answer answer = answered(std::move(ret));
     answer.via = kLeaderboardVia;
@@ -117,21 +128,24 @@ Answer from_leaderboard_calling(Json ret, Json event) {
     return answer;
 }
 
-Json payload_of(const char* name, Json fields) {
+Json payload_of(const char* name, Json fields)
+{
     Json event = Json::object();
     event["event"] = Json(name);
     event["in"] = std::move(fields);
     return event;
 }
 
-Json find_result_payload(std::uint64_t board, bool found) {
+Json find_result_payload(std::uint64_t board, bool found)
+{
     Json fields = Json::object();
     fields["m_hSteamLeaderboard"] = id_value(board);
     fields["m_bLeaderboardFound"] = Json(found ? 1 : 0);
     return payload_of("LeaderboardFindResult_t", std::move(fields));
 }
 
-Json scores_downloaded_payload(std::uint64_t board, std::uint64_t entries, std::int32_t count) {
+Json scores_downloaded_payload(std::uint64_t board, std::uint64_t entries, std::int32_t count)
+{
     Json fields = Json::object();
     fields["m_hSteamLeaderboard"] = id_value(board);
     fields["m_hSteamLeaderboardEntries"] = id_value(entries);
@@ -140,7 +154,8 @@ Json scores_downloaded_payload(std::uint64_t board, std::uint64_t entries, std::
 }
 
 Json score_uploaded_payload(std::uint64_t board, std::int32_t score, bool changed,
-                            std::int32_t rank_new, std::int32_t rank_previous) {
+                            std::int32_t rank_new, std::int32_t rank_previous)
+{
     Json fields = Json::object();
     fields["m_bSuccess"] = Json(1);
     fields["m_hSteamLeaderboard"] = id_value(board);
@@ -154,7 +169,8 @@ Json score_uploaded_payload(std::uint64_t board, std::int32_t score, bool change
 // Where a row went, as the answer to a download of one row: the fields of
 // LeaderboardEntry_t the SDK declares, which is what the stub writes into the game's own
 // structure - the one thing a call here fills in through a pointer the game owns.
-Json row_fields(const LeaderboardRow& row) {
+Json row_fields(const LeaderboardRow& row)
+{
     Json fields = Json::object();
     fields["m_steamIDUser"] = id_value(row.steam_id);
     fields["m_nGlobalRank"] = Json(static_cast<std::int64_t>(row.global_rank));
@@ -167,38 +183,48 @@ Json row_fields(const LeaderboardRow& row) {
     return fields;
 }
 
-}  // namespace
+} // namespace
 
 // --- the boards ------------------------------------------------------------
 
-const LeaderboardRow* Leaderboard::find(std::uint64_t steam_id) const noexcept {
-    for (const auto& row : rows) {
-        if (row.steam_id == steam_id) {
+const LeaderboardRow* Leaderboard::find(std::uint64_t steam_id) const noexcept
+{
+    for (const auto& row : rows)
+    {
+        if (row.steam_id == steam_id)
+        {
             return &row;
         }
     }
     return nullptr;
 }
 
-std::int32_t Leaderboard::rank_of(std::uint64_t steam_id) const noexcept {
+std::int32_t Leaderboard::rank_of(std::uint64_t steam_id) const noexcept
+{
     const LeaderboardRow* row = find(steam_id);
     // Nobody on the board has no rank, and that is zero on the wire - which is what a
     // game checks for when it asks whether a player has ever posted a score.
     return row != nullptr ? row->global_rank : 0;
 }
 
-Leaderboard* LeaderboardWorld::find_board(std::uint64_t id) noexcept {
-    for (auto& board : _boards) {
-        if (board.id == id) {
+Leaderboard* LeaderboardWorld::find_board(std::uint64_t id) noexcept
+{
+    for (auto& board : _boards)
+    {
+        if (board.id == id)
+        {
             return &board;
         }
     }
     return nullptr;
 }
 
-Leaderboard* LeaderboardWorld::find_board(const std::string& name) noexcept {
-    for (auto& board : _boards) {
-        if (board.name == name) {
+Leaderboard* LeaderboardWorld::find_board(const std::string& name) noexcept
+{
+    for (auto& board : _boards)
+    {
+        if (board.name == name)
+        {
             return &board;
         }
     }
@@ -206,22 +232,27 @@ Leaderboard* LeaderboardWorld::find_board(const std::string& name) noexcept {
 }
 
 bool LeaderboardWorld::is_better(std::int32_t sort_method, std::int32_t score,
-                                 std::int32_t than) const noexcept {
+                                 std::int32_t than) const noexcept
+{
     // Which end of the numbers wins is the board's, not this world's: a time is best when
     // it is smallest, and everything else is best when it is largest.
     return sort_method == kSortMethodAscending ? score < than : score > than;
 }
 
-void LeaderboardWorld::place(Leaderboard& board, std::uint64_t steam_id, std::int32_t score) {
+void LeaderboardWorld::place(Leaderboard& board, std::uint64_t steam_id, std::int32_t score)
+{
     bool known = false;
-    for (auto& row : board.rows) {
-        if (row.steam_id == steam_id) {
+    for (auto& row : board.rows)
+    {
+        if (row.steam_id == steam_id)
+        {
             row.score = score;
             known = true;
             break;
         }
     }
-    if (!known) {
+    if (!known)
+    {
         LeaderboardRow row;
         row.steam_id = steam_id;
         row.score = score;
@@ -233,19 +264,23 @@ void LeaderboardWorld::place(Leaderboard& board, std::uint64_t steam_id, std::in
     // one who was there first".
     const bool ascending = board.sort_method == kSortMethodAscending;
     std::stable_sort(board.rows.begin(), board.rows.end(),
-                     [ascending](const LeaderboardRow& left, const LeaderboardRow& right) {
+                     [ascending](const LeaderboardRow& left, const LeaderboardRow& right)
+                     {
                          return ascending ? left.score < right.score : left.score > right.score;
                      });
-    for (std::size_t index = 0; index < board.rows.size(); ++index) {
+    for (std::size_t index = 0; index < board.rows.size(); ++index)
+    {
         board.rows[index].global_rank = static_cast<std::int32_t>(index) + 1;
     }
 }
 
 // --- the calls -------------------------------------------------------------
 
-void LeaderboardWorld::attach(Store* store) {
+void LeaderboardWorld::attach(Store* store)
+{
     _store = store;
-    if (store == nullptr) {
+    if (store == nullptr)
+    {
         return;
     }
 
@@ -256,43 +291,55 @@ void LeaderboardWorld::attach(Store* store) {
     // a file is trusted to have got right.
     std::vector<StoredBoard> stored;
     store->load_boards(stored);
-    for (StoredBoard& board : stored) {
+    for (StoredBoard& board : stored)
+    {
         Leaderboard created;
         created.id = _next_board_id++;
         created.name = std::move(board.name);
         created.sort_method = board.sort_method;
         created.display_type = board.display_type;
         _boards.push_back(std::move(created));
-        for (const auto& [steam_id, score] : board.scores) {
+        for (const auto& [steam_id, score] : board.scores)
+        {
             place(_boards.back(), steam_id, score);
         }
     }
 }
 
-std::vector<std::string> LeaderboardWorld::handled_calls() {
+std::vector<std::string> LeaderboardWorld::handled_calls()
+{
     return {
-        kFindOrCreateLeaderboard,    kFindLeaderboard,
-        kGetLeaderboardName,         kGetLeaderboardEntryCount,
-        kGetLeaderboardSortMethod,   kGetLeaderboardDisplayType,
-        kDownloadLeaderboardEntries, kGetDownloadedLeaderboardEntry,
+        kFindOrCreateLeaderboard,
+        kFindLeaderboard,
+        kGetLeaderboardName,
+        kGetLeaderboardEntryCount,
+        kGetLeaderboardSortMethod,
+        kGetLeaderboardDisplayType,
+        kDownloadLeaderboardEntries,
+        kGetDownloadedLeaderboardEntry,
         kUploadLeaderboardScore,
     };
 }
 
 bool LeaderboardWorld::answer(const Session& session, const std::string& call, const Json& args,
-                              Answer& out) {
+                              Answer& out)
+{
     const std::uint64_t me = session.profile().steam_id;
 
-    if (call == kFindOrCreateLeaderboard || call == kFindLeaderboard) {
+    if (call == kFindOrCreateLeaderboard || call == kFindLeaderboard)
+    {
         const std::string name = text_member(args, "pchLeaderboardName");
-        if (name.empty()) {
+        if (name.empty())
+        {
             // A board with no name is not a board, and a game that asks for one has a bug
             // this world should not paper over with an invented board.
             return false;
         }
         Leaderboard* board = find_board(name);
-        if (board == nullptr) {
-            if (call == kFindLeaderboard) {
+        if (board == nullptr)
+        {
+            if (call == kFindLeaderboard)
+            {
                 // Find, not find-or-create: a name nobody has asked for yet is a board that
                 // does not exist, which is exactly what m_bLeaderboardFound says. A game
                 // that wants one made asks the other call.
@@ -309,7 +356,8 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
                 static_cast<std::int32_t>(int_member(args, "eLeaderboardDisplayType", 0));
             _boards.push_back(std::move(created));
             board = &_boards.back();
-            if (_store != nullptr) {
+            if (_store != nullptr)
+            {
                 // A board nobody has asked for before is a board a game just made, and it
                 // is the store's from here on - which is what makes the next run find it
                 // rather than create it.
@@ -321,9 +369,11 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
         return true;
     }
 
-    if (call == kGetLeaderboardName) {
+    if (call == kGetLeaderboardName)
+    {
         Leaderboard* board = find_board(id_member(args, "hSteamLeaderboard"));
-        if (board == nullptr) {
+        if (board == nullptr)
+        {
             // A handle this run never gave out. A name is not invented for it: the call is
             // reported as unanswered and the game draws what it draws for no name at all.
             return false;
@@ -333,24 +383,33 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
     }
 
     if (call == kGetLeaderboardEntryCount || call == kGetLeaderboardSortMethod ||
-        call == kGetLeaderboardDisplayType) {
+        call == kGetLeaderboardDisplayType)
+    {
         Leaderboard* board = find_board(id_member(args, "hSteamLeaderboard"));
-        if (board == nullptr) {
+        if (board == nullptr)
+        {
             return false;
         }
-        if (call == kGetLeaderboardEntryCount) {
+        if (call == kGetLeaderboardEntryCount)
+        {
             out = from_leaderboard(Json(static_cast<std::int64_t>(board->rows.size())));
-        } else if (call == kGetLeaderboardSortMethod) {
+        }
+        else if (call == kGetLeaderboardSortMethod)
+        {
             out = from_leaderboard(Json(static_cast<std::int64_t>(board->sort_method)));
-        } else {
+        }
+        else
+        {
             out = from_leaderboard(Json(static_cast<std::int64_t>(board->display_type)));
         }
         return true;
     }
 
-    if (call == kDownloadLeaderboardEntries) {
+    if (call == kDownloadLeaderboardEntries)
+    {
         Leaderboard* board = find_board(id_member(args, "hSteamLeaderboard"));
-        if (board == nullptr) {
+        if (board == nullptr)
+        {
             return false;
         }
         const std::int32_t request =
@@ -365,23 +424,33 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
         // from is a player the others are friends with: that is what answering a roster row
         // for any of them means.
         std::vector<LeaderboardRow> selected;
-        if (request == kDataRequestGlobal || request == kDataRequestFriends) {
-            for (const auto& row : board->rows) {
-                if (row.global_rank >= start && row.global_rank <= end) {
+        if (request == kDataRequestGlobal || request == kDataRequestFriends)
+        {
+            for (const auto& row : board->rows)
+            {
+                if (row.global_rank >= start && row.global_rank <= end)
+                {
                     selected.push_back(row);
                 }
             }
-        } else if (request == kDataRequestGlobalAroundUser) {
+        }
+        else if (request == kDataRequestGlobalAroundUser)
+        {
             const std::int32_t mine = board->rank_of(me);
-            if (mine > 0) {
-                for (const auto& row : board->rows) {
+            if (mine > 0)
+            {
+                for (const auto& row : board->rows)
+                {
                     const std::int32_t offset = row.global_rank - mine;
-                    if (offset >= start && offset <= end) {
+                    if (offset >= start && offset <= end)
+                    {
                         selected.push_back(row);
                     }
                 }
             }
-        } else {
+        }
+        else
+        {
             // A request for a list of users is the one kind this world cannot honour: the
             // ids travel in a list the layouts describe as opaque, so which users were
             // meant never arrives.
@@ -390,7 +459,8 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
 
         const std::uint64_t handle = _next_entries++;
         _downloads.emplace_back(handle, std::move(selected));
-        if (_downloads.size() > kMaxDownloads) {
+        if (_downloads.size() > kMaxDownloads)
+        {
             _downloads.erase(_downloads.begin());
         }
         const auto count = static_cast<std::int32_t>(_downloads.back().second.size());
@@ -399,24 +469,29 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
         return true;
     }
 
-    if (call == kGetDownloadedLeaderboardEntry) {
+    if (call == kGetDownloadedLeaderboardEntry)
+    {
         const std::uint64_t handle = id_member(args, "hSteamLeaderboardEntries");
         const auto index = int_member(args, "index", -1);
         const std::vector<LeaderboardRow>* rows = nullptr;
-        for (const auto& [downloaded_handle, downloaded_rows] : _downloads) {
-            if (downloaded_handle == handle) {
+        for (const auto& [downloaded_handle, downloaded_rows] : _downloads)
+        {
+            if (downloaded_handle == handle)
+            {
                 rows = &downloaded_rows;
                 break;
             }
         }
-        if (rows == nullptr || index < 0 || index >= static_cast<std::int64_t>(rows->size())) {
+        if (rows == nullptr || index < 0 || index >= static_cast<std::int64_t>(rows->size()))
+        {
             // Past the end of what was handed over: no row, which is what the call's own
             // false means - not a row of zeroes, which a game would draw.
             return false;
         }
         Json values = Json::object();
         values["pLeaderboardEntry"] = row_fields((*rows)[static_cast<std::size_t>(index)]);
-        if (int_member(args, "cDetailsMax", 0) > 0) {
+        if (int_member(args, "cDetailsMax", 0) > 0)
+        {
             // A details array is the game's own numbers beside a score and this world keeps
             // none of them. The first slot is written as zero so that a game which asked for
             // them gets the count it asked for rather than whatever was in its own buffer.
@@ -428,9 +503,11 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
         return true;
     }
 
-    if (call == kUploadLeaderboardScore) {
+    if (call == kUploadLeaderboardScore)
+    {
         Leaderboard* board = find_board(id_member(args, "hSteamLeaderboard"));
-        if (board == nullptr) {
+        if (board == nullptr)
+        {
             return false;
         }
         const std::int32_t method =
@@ -438,7 +515,8 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
         const std::int32_t score = static_cast<std::int32_t>(int_member(args, "nScore", 0));
         const std::int32_t before = board->rank_of(me);
 
-        if (method == kUploadScoreNone) {
+        if (method == kUploadScoreNone)
+        {
             // Told not to write: the answer still says what the board looks like for this
             // player, and nothing on it changes.
             out = from_leaderboard_calling(
@@ -451,9 +529,11 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
         const bool better =
             existing == nullptr || is_better(board->sort_method, score, existing->score);
         const bool write = method == kUploadScoreForceUpdate || better;
-        if (write) {
+        if (write)
+        {
             place(*board, me, score);
-            if (_store != nullptr) {
+            if (_store != nullptr)
+            {
                 // The row as the board now has it rather than the score that was handed in,
                 // which for a board that sorts are not always the same number. `place` has
                 // just put this player on the board, so there is a row to read.
@@ -471,4 +551,4 @@ bool LeaderboardWorld::answer(const Session& session, const std::string& call, c
     return false;
 }
 
-}  // namespace steammock
+} // namespace steammock

@@ -46,7 +46,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-namespace {
+namespace
+{
 
 using steammock::CallRecord;
 using steammock::LogLevel;
@@ -66,22 +67,26 @@ constexpr std::size_t kMaxCallRows = 20000;
 // The port field, read the way the console front end reads its own option. Empty
 // or unreadable means "let the operating system pick one", which is what the hint
 // beside the field says.
-std::uint16_t port_of(const char* text) {
+std::uint16_t port_of(const char* text)
+{
     unsigned value = 0;
     return steammock::parse_number(text, 65535u, value) ? static_cast<std::uint16_t>(value)
                                                         : static_cast<std::uint16_t>(0);
 }
 
 // `out` is only worth showing when the call had any.
-std::string out_suffix(const CallRecord& record) {
-    if (!record.out.is_object() || record.out.empty()) {
+std::string out_suffix(const CallRecord& record)
+{
+    if (!record.out.is_object() || record.out.empty())
+    {
         return std::string();
     }
     return "\nout " + record.out.dump();
 }
 
 // A panel's title, drawn inside the child region that holds it.
-void panel_header(const char* title) {
+void panel_header(const char* title)
+{
     ImGui::TextDisabled("%s", title);
     ImGui::Separator();
 }
@@ -90,7 +95,8 @@ void panel_header(const char* title) {
 // calls arrive rather than counted from the history, because the history grows
 // without bound while a game runs - and the panel that shows this is the one
 // that has to stay usable when a game has made tens of thousands of calls.
-struct CallTally {
+struct CallTally
+{
     std::size_t calls = 0;
     std::size_t answered = 0;
     double total_ms = 0.0;
@@ -102,12 +108,14 @@ using CallTallies = std::map<std::string, CallTally>;
 //  The window's state: the server, what it has told us so far, and what the
 //  person at the keyboard has typed.
 // ---------------------------------------------------------------------------
-class LiveView {
-public:
+class LiveView
+{
+  public:
     // The two fields a person would type are seeded from the one place the default
     // address lives, so the window and the console cannot disagree about where a
     // game is expected to connect.
-    LiveView() {
+    LiveView()
+    {
         std::snprintf(_host, sizeof(_host), "%s", steammock::kDefaultHost);
         std::snprintf(_port, sizeof(_port), "%u", static_cast<unsigned>(steammock::kDefaultPort));
     }
@@ -117,7 +125,8 @@ public:
     LiveView(const LiveView&) = delete;
     LiveView& operator=(const LiveView&) = delete;
 
-    void set_scenario(const char* scenario) {
+    void set_scenario(const char* scenario)
+    {
         std::snprintf(_scenario, sizeof(_scenario), "%s", scenario);
     }
 
@@ -127,14 +136,17 @@ public:
 
     void set_start(bool start) { _start_on_launch = start; }
 
-    void set_transcript(const char* transcript) {
+    void set_transcript(const char* transcript)
+    {
         std::snprintf(_transcript, sizeof(_transcript), "%s", transcript);
     }
 
     void set_state(const char* state) { std::snprintf(_state, sizeof(_state), "%s", state); }
 
-    void draw() {
-        if (_start_on_launch) {
+    void draw()
+    {
+        if (_start_on_launch)
+        {
             // --start, so the window comes up serving without a click - which is
             // also what makes it usable from a script.
             _start_on_launch = false;
@@ -145,7 +157,7 @@ public:
         draw_layout();
     }
 
-private:
+  private:
     // -- layout ------------------------------------------------------------
 
     // One host window, with every panel placed into it from a size that is known
@@ -153,7 +165,8 @@ private:
     // so do the two column widths, so no panel can be clipped by the window
     // being smaller than the arithmetic assumed - which is what children sized
     // with "take the rest" cannot promise, because they measure as they go.
-    void draw_layout() {
+    void draw_layout()
+    {
         const ImVec2 display = ImGui::GetIO().DisplaySize;
         constexpr float margin = 8.0f;
         constexpr float gap = 8.0f;
@@ -183,22 +196,28 @@ private:
         // Placed, not stacked: children flow, so each panel is given the corner
         // it belongs in rather than left to follow the one before it.
         const ImVec2 origin = ImGui::GetCursorScreenPos();
-        place("controls", origin, ImVec2(left_w, controls_h), [this] { draw_controls(); });
+        place("controls", origin, ImVec2(left_w, controls_h), [this]
+              { draw_controls(); });
         place("games", ImVec2(origin.x, origin.y + controls_h + gap), ImVec2(left_w, games_h),
-              [this] { draw_games(); });
+              [this]
+              { draw_games(); });
         place("log", ImVec2(origin.x, origin.y + controls_h + games_h + gap * 2.0f),
-              ImVec2(left_w, log_h), [this] { draw_log(); });
+              ImVec2(left_w, log_h), [this]
+              { draw_log(); });
         place("calls", ImVec2(origin.x + left_w + gap, origin.y), ImVec2(right_w, calls_h),
-              [this] { draw_calls(); });
+              [this]
+              { draw_calls(); });
         place("state", ImVec2(origin.x + left_w + gap, origin.y + calls_h + gap),
-              ImVec2(right_w, state_h), [this] { draw_game_state(); });
+              ImVec2(right_w, state_h), [this]
+              { draw_game_state(); });
 
         ImGui::PopStyleVar();
         ImGui::End();
     }
 
     template <typename Draw>
-    static void place(const char* name, const ImVec2& position, const ImVec2& size, Draw body) {
+    static void place(const char* name, const ImVec2& position, const ImVec2& size, Draw body)
+    {
         ImGui::SetCursorScreenPos(position);
         ImGui::BeginChild(name, size, ImGuiChildFlags_Borders);
         body();
@@ -207,10 +226,12 @@ private:
 
     // -- the server --------------------------------------------------------
 
-    bool start() {
+    bool start()
+    {
         steammock::Dispatcher dispatcher;
         std::string error;
-        if (!steammock::Dispatcher::load_file(_scenario, dispatcher, error)) {
+        if (!steammock::Dispatcher::load_file(_scenario, dispatcher, error))
+        {
             _status = error;
             return false;
         }
@@ -226,17 +247,20 @@ private:
         options.log_level = LogLevel::debug;
         // The server logs from its own threads, so the sink has to be safe to
         // call from any of them.
-        options.log = [this](LogLevel, const std::string& message) {
+        options.log = [this](LogLevel, const std::string& message)
+        {
             std::scoped_lock lock(_log_mutex);
             _log.push_back(message);
-            if (_log.size() > kMaxLogLines) {
+            if (_log.size() > kMaxLogLines)
+            {
                 _log.erase(_log.begin(),
                            _log.begin() + static_cast<std::ptrdiff_t>(kMaxLogLines / 4));
             }
         };
 
         _server = std::make_unique<Server>(std::move(dispatcher), std::move(options));
-        if (!_server->start(error)) {
+        if (!_server->start(error))
+        {
             _server.reset();
             _status = error;
             return false;
@@ -256,8 +280,10 @@ private:
         return true;
     }
 
-    void stop() {
-        if (_server) {
+    void stop()
+    {
+        if (_server)
+        {
             _server->stop();
             _status = "stopped: " + _server->summary();
             _server.reset();
@@ -267,15 +293,18 @@ private:
     // Copies what the server has seen since the last frame. The cursor is what
     // keeps this proportional to the new calls rather than to all of them, sixty
     // times a second.
-    void pull() {
-        if (!_server) {
+    void pull()
+    {
+        if (!_server)
+        {
             return;
         }
         _games = _server->sessions();
         // Show a game's state without making the reader click for it: with one
         // game attached - the usual case - the interesting panel would otherwise
         // sit empty.
-        if (_selected.empty() && !_games.empty()) {
+        if (_selected.empty() && !_games.empty())
+        {
             _selected = _games.front().id;
         }
         // The server keeps a window of recent calls and forgets the oldest, so a cursor
@@ -290,24 +319,29 @@ private:
         // the live list for the rest of the run - a row silently dropped, which is the
         // one thing a view of a call sequence must not do.
         _seen += fresh.size();
-        for (CallRecord& record : fresh) {
+        for (CallRecord& record : fresh)
+        {
             CallTally& tally = _tallies[record.call];
             ++tally.calls;
-            if (record.answered) {
+            if (record.answered)
+            {
                 ++tally.answered;
             }
             tally.total_ms += record.ms;
             // ...and the row the filter lets through joins the index here, so the list
             // below does not have to be walked again on every frame that has new calls.
-            if (_filter.PassFilter(record.call.c_str())) {
+            if (_filter.PassFilter(record.call.c_str()))
+            {
                 _shown.push_back(_calls.size());
             }
             _calls.push_back(std::move(record));
         }
-        if (!fresh.empty()) {
+        if (!fresh.empty())
+        {
             _tallies_dirty = true;
         }
-        if (_calls.size() > kMaxCallRows) {
+        if (_calls.size() > kMaxCallRows)
+        {
             const std::size_t excess = _calls.size() - kMaxCallRows;
             _calls.erase(_calls.begin(), _calls.begin() + static_cast<std::ptrdiff_t>(excess));
             // Every index in the list has moved, so it is built again on the next frame
@@ -318,7 +352,8 @@ private:
 
     // -- panels ------------------------------------------------------------
 
-    void draw_controls() {
+    void draw_controls()
+    {
         ImGui::SetNextItemWidth(140);
         ImGui::InputText("host", _host, sizeof(_host));
         ImGui::SetNextItemWidth(64);
@@ -327,44 +362,55 @@ private:
         ImGui::InputText("scenario", _scenario, sizeof(_scenario));
         ImGui::TextDisabled("a port of 0 picks a free one");
 
-        if (_server) {
-            if (ImGui::Button("Stop")) {
+        if (_server)
+        {
+            if (ImGui::Button("Stop"))
+            {
                 stop();
             }
-        } else if (ImGui::Button("Start")) {
+        }
+        else if (ImGui::Button("Start"))
+        {
             start();
         }
-        if (_server) {
+        if (_server)
+        {
             ImGui::SameLine();
             ImGui::Text("%zu call(s), %zu left to the stub's defaults", _server->call_count(),
                         _server->unanswered_count());
         }
-        if (!_status.empty()) {
+        if (!_status.empty())
+        {
             ImGui::TextWrapped("%s", _status.c_str());
         }
     }
 
-    void draw_games() {
+    void draw_games()
+    {
         panel_header("Games");
-        if (_games.empty()) {
+        if (_games.empty())
+        {
             ImGui::TextDisabled("no game attached yet");
             ImGui::TextWrapped("Start the server, then run a game with the stub beside it.");
             return;
         }
         const ImGuiTableFlags flags =
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp;
-        if (ImGui::BeginTable("games", 4, flags)) {
+        if (ImGui::BeginTable("games", 4, flags))
+        {
             ImGui::TableSetupColumn("executable");
             ImGui::TableSetupColumn("pid");
             ImGui::TableSetupColumn("profile");
             ImGui::TableSetupColumn("state");
             ImGui::TableHeadersRow();
 
-            for (const SessionSnapshot& game : _games) {
+            for (const SessionSnapshot& game : _games)
+            {
                 // A game that has gone is still worth seeing: its calls are in
                 // the history, and this is the state it was left with.
                 const bool live = game.connected;
-                if (!live) {
+                if (!live)
+                {
                     ImGui::PushStyleColor(ImGuiCol_Text,
                                           ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
                 }
@@ -376,10 +422,12 @@ private:
                 // new-enough ImGui says so out loud with an ID-conflict popup.
                 ImGui::PushID(game.id.c_str());
                 if (ImGui::Selectable(game.exe.c_str(), _selected == game.id,
-                                      ImGuiSelectableFlags_SpanAllColumns)) {
+                                      ImGuiSelectableFlags_SpanAllColumns))
+                {
                     _selected = game.id;
                 }
-                if (ImGui::IsItemHovered()) {
+                if (ImGui::IsItemHovered())
+                {
                     ImGui::SetTooltip("session %s, %zu call(s)", game.id.c_str(), game.call_count);
                 }
                 ImGui::PopID();
@@ -389,7 +437,8 @@ private:
                 ImGui::TextUnformatted(game.profile.c_str());
                 ImGui::TableNextColumn();
                 ImGui::Text("%s, %zu call(s)", live ? "live" : "gone", game.call_count);
-                if (!live) {
+                if (!live)
+                {
                     ImGui::PopStyleColor();
                 }
             }
@@ -400,14 +449,18 @@ private:
     // Two views of the same calls, because one game in its own loop is enough to
     // make one of them useless: a call somebody polls every frame buries every
     // other call in the list, so the count comes first and the sequence second.
-    void draw_calls() {
+    void draw_calls()
+    {
         panel_header("Calls");
-        if (ImGui::BeginTabBar("call_views")) {
-            if (ImGui::BeginTabItem("by function")) {
+        if (ImGui::BeginTabBar("call_views"))
+        {
+            if (ImGui::BeginTabItem("by function"))
+            {
                 draw_calls_by_function();
                 ImGui::EndTabItem();
             }
-            if (ImGui::BeginTabItem("live")) {
+            if (ImGui::BeginTabItem("live"))
+            {
                 draw_calls_live();
                 ImGui::EndTabItem();
             }
@@ -418,9 +471,11 @@ private:
     // Every call the game has made, one row per name. A list of a hundred calls
     // is a profile, and the end worth reading is the top, so the order is by how
     // often each was asked for.
-    void draw_calls_by_function() {
+    void draw_calls_by_function()
+    {
         ImGui::SetNextItemWidth(180);
-        if (_filter.Draw("filter")) {
+        if (_filter.Draw("filter"))
+        {
             // The live tab builds its row index with this same filter, and the edit happens
             // while *this* tab is the one on screen - so nothing there sees a change this
             // frame. Without marking the index dirty, switching to "live" found no change and
@@ -435,11 +490,13 @@ private:
         // Sorted when the counts change rather than every frame, so a game that
         // has flooded the history does not make the window sort it sixty times a
         // second to draw the same order.
-        if (_tallies_dirty) {
+        if (_tallies_dirty)
+        {
             _tallies_dirty = false;
             _function_order.clear();
             _function_order.reserve(_tallies.size());
-            for (const CallTallies::value_type& entry : _tallies) {
+            for (const CallTallies::value_type& entry : _tallies)
+            {
                 _function_order.push_back(&entry);
             }
             // A map hands these back in name order, which is not the order this
@@ -447,8 +504,10 @@ private:
             // between frames while their counts are equal.
             std::sort(
                 _function_order.begin(), _function_order.end(),
-                [](const CallTallies::value_type* left, const CallTallies::value_type* right) {
-                    if (left->second.calls != right->second.calls) {
+                [](const CallTallies::value_type* left, const CallTallies::value_type* right)
+                {
+                    if (left->second.calls != right->second.calls)
+                    {
                         return left->second.calls > right->second.calls;
                     }
                     return left->first < right->first;
@@ -457,7 +516,8 @@ private:
 
         const ImGuiTableFlags flags =
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
-        if (ImGui::BeginTable("by_function", 2, flags, ImVec2(0, -1))) {
+        if (ImGui::BeginTable("by_function", 2, flags, ImVec2(0, -1)))
+        {
             ImGui::TableSetupScrollFreeze(0, 1);
             ImGui::TableSetupColumn("function", ImGuiTableColumnFlags_WidthStretch, 3.0f);
             ImGui::TableSetupColumn("calls", ImGuiTableColumnFlags_WidthFixed, 72.0f);
@@ -466,14 +526,17 @@ private:
             // No clipper here, unlike the live list: the rows are the distinct
             // calls the game has made - a few dozen for a game that polls - where
             // that list is every call there has ever been.
-            for (const CallTallies::value_type* entry : _function_order) {
-                if (!_filter.PassFilter(entry->first.c_str())) {
+            for (const CallTallies::value_type* entry : _function_order)
+            {
+                if (!_filter.PassFilter(entry->first.c_str()))
+                {
                     continue;
                 }
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::TextUnformatted(entry->first.c_str());
-                if (ImGui::IsItemHovered()) {
+                if (ImGui::IsItemHovered())
+                {
                     const CallTally& tally = entry->second;
                     ImGui::SetTooltip("%zu answered, %zu left to the stub\nmean %.3f ms",
                                       tally.answered, tally.calls - tally.answered,
@@ -490,7 +553,8 @@ private:
 
     // The calls in the order they were made, which is where a scenario or a
     // session's state gets read back.
-    void draw_calls_live() {
+    void draw_calls_live()
+    {
         ImGui::SetNextItemWidth(180);
         const bool filter_changed = _filter.Draw("filter");
         ImGui::SameLine();
@@ -503,11 +567,14 @@ private:
         // again only when the filter changes or when the list has been trimmed, and
         // added to in `pull()` otherwise: a frame with new calls used to walk the
         // whole history to find out that it had.
-        if (filter_changed || _shown_dirty) {
+        if (filter_changed || _shown_dirty)
+        {
             _shown_dirty = false;
             _shown.clear();
-            for (std::size_t index = 0; index < _calls.size(); ++index) {
-                if (_filter.PassFilter(_calls[index].call.c_str())) {
+            for (std::size_t index = 0; index < _calls.size(); ++index)
+            {
+                if (_filter.PassFilter(_calls[index].call.c_str()))
+                {
                     _shown.push_back(index);
                 }
             }
@@ -515,7 +582,8 @@ private:
 
         const ImGuiTableFlags flags =
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
-        if (ImGui::BeginTable("calls", 4, flags, ImVec2(0, -1))) {
+        if (ImGui::BeginTable("calls", 4, flags, ImVec2(0, -1)))
+        {
             ImGui::TableSetupScrollFreeze(0, 1);
             ImGui::TableSetupColumn("seq", ImGuiTableColumnFlags_WidthFixed, 44);
             ImGui::TableSetupColumn("call", ImGuiTableColumnFlags_WidthStretch, 3.0f);
@@ -537,39 +605,48 @@ private:
             // thousands of calls still scrolls smoothly.
             ImGuiListClipper clipper;
             clipper.Begin(static_cast<int>(_shown.size()));
-            while (clipper.Step()) {
-                for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row) {
+            while (clipper.Step())
+            {
+                for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
+                {
                     const CallRecord& record = _calls[_shown[static_cast<std::size_t>(row)]];
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
                     ImGui::Text("%lld", static_cast<long long>(record.seq));
                     ImGui::TableNextColumn();
                     ImGui::TextUnformatted(record.call.c_str());
-                    if (ImGui::IsItemHovered()) {
+                    if (ImGui::IsItemHovered())
+                    {
                         ImGui::SetTooltip("args %s\nret  %s%s", record.args.dump().c_str(),
                                           record.ret.dump().c_str(), out_suffix(record).c_str());
                     }
                     ImGui::TableNextColumn();
                     ImGui::Text("%s %.3f", record.via.c_str(), record.ms);
                     ImGui::TableNextColumn();
-                    if (record.answered) {
+                    if (record.answered)
+                    {
                         ImGui::TextUnformatted(record.ret.dump().c_str());
-                    } else {
+                    }
+                    else
+                    {
                         ImGui::TextDisabled("left to the stub");
                     }
                 }
             }
-            if (_follow && at_bottom && !_shown.empty()) {
+            if (_follow && at_bottom && !_shown.empty())
+            {
                 ImGui::SetScrollHereY(1.0f);
             }
             ImGui::EndTable();
         }
     }
 
-    void draw_game_state() {
+    void draw_game_state()
+    {
         panel_header("Game state");
         const SessionSnapshot* game = selected();
-        if (game == nullptr) {
+        if (game == nullptr)
+        {
             ImGui::TextDisabled("select a game above");
             ImGui::TextWrapped(
                 "This is where a game's identity, stats and achievements will be editable while it "
@@ -584,11 +661,13 @@ private:
         ImGui::Text("profile '%s'", game->profile.c_str());
 
         const ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
-        if (ImGui::BeginTable("stats", 2, flags)) {
+        if (ImGui::BeginTable("stats", 2, flags))
+        {
             ImGui::TableSetupColumn("stat");
             ImGui::TableSetupColumn("value");
             ImGui::TableHeadersRow();
-            for (const auto& [stat_name, stat_value] : game->stats) {
+            for (const auto& [stat_name, stat_value] : game->stats)
+            {
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::TextUnformatted(stat_name.c_str());
@@ -597,11 +676,13 @@ private:
             }
             ImGui::EndTable();
         }
-        if (ImGui::BeginTable("achievements", 2, flags)) {
+        if (ImGui::BeginTable("achievements", 2, flags))
+        {
             ImGui::TableSetupColumn("achievement");
             ImGui::TableSetupColumn("unlocked");
             ImGui::TableHeadersRow();
-            for (const steammock::Achievement& achievement : game->achievements) {
+            for (const steammock::Achievement& achievement : game->achievements)
+            {
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::TextUnformatted(achievement.name.c_str());
@@ -612,7 +693,8 @@ private:
         }
     }
 
-    void draw_log() {
+    void draw_log()
+    {
         panel_header("Log");
         const bool at_bottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 1.0f;
 
@@ -623,19 +705,24 @@ private:
             std::scoped_lock lock(_log_mutex);
             lines = _log;
         }
-        for (const std::string& line : lines) {
+        for (const std::string& line : lines)
+        {
             ImGui::TextUnformatted(line.c_str());
         }
-        if (at_bottom) {
+        if (at_bottom)
+        {
             ImGui::SetScrollHereY(1.0f);
         }
     }
 
     // -- helpers -----------------------------------------------------------
 
-    const SessionSnapshot* selected() const {
-        for (const SessionSnapshot& game : _games) {
-            if (game.id == _selected) {
+    const SessionSnapshot* selected() const
+    {
+        for (const SessionSnapshot& game : _games)
+        {
+            if (game.id == _selected)
+            {
                 return &game;
             }
         }
@@ -686,11 +773,13 @@ private:
 
 // A window that fits the display it is opened on: asking for 1280x780 on a
 // smaller desktop gets a window with its own panels cut off.
-void window_size_for_display(int& width, int& height) {
+void window_size_for_display(int& width, int& height)
+{
     width = 1280;
     height = 780;
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-    if (monitor == nullptr) {
+    if (monitor == nullptr)
+    {
         return;
     }
     int area_x = 0;
@@ -698,31 +787,45 @@ void window_size_for_display(int& width, int& height) {
     int area_w = 0;
     int area_h = 0;
     glfwGetMonitorWorkarea(monitor, &area_x, &area_y, &area_w, &area_h);
-    if (area_w > 0 && area_h > 0) {
+    if (area_w > 0 && area_h > 0)
+    {
         width = std::min(width, std::max(area_w - 80, 640));
         height = std::min(height, std::max(area_h - 120, 480));
     }
 }
 
-}  // namespace
+} // namespace
 
-int run(int argc, char** argv) {
+int run(int argc, char** argv)
+{
     LiveView view;
-    for (int index = 1; index < argc; ++index) {
+    for (int index = 1; index < argc; ++index)
+    {
         const std::string argument = argv[index];
-        if (argument == "--scenario" && index + 1 < argc) {
+        if (argument == "--scenario" && index + 1 < argc)
+        {
             view.set_scenario(argv[++index]);
-        } else if (argument == "--host" && index + 1 < argc) {
+        }
+        else if (argument == "--host" && index + 1 < argc)
+        {
             view.set_host(argv[++index]);
-        } else if (argument == "--port" && index + 1 < argc) {
+        }
+        else if (argument == "--port" && index + 1 < argc)
+        {
             view.set_port(argv[++index]);
-        } else if (argument == "--start") {
+        }
+        else if (argument == "--start")
+        {
             view.set_start(true);
-        } else if (argument == "--transcript" && index + 1 < argc) {
+        }
+        else if (argument == "--transcript" && index + 1 < argc)
+        {
             // The same server is behind this window, so the same transcript is worth having:
             // it is what a script driving a run reads.
             view.set_transcript(argv[++index]);
-        } else if (argument == "--state" && index + 1 < argc) {
+        }
+        else if (argument == "--state" && index + 1 < argc)
+        {
             // And the same state file, for the same reason: the window and the console
             // backend drive one Server, and a run that keeps state should keep it whichever
             // front end started it.
@@ -730,7 +833,8 @@ int run(int argc, char** argv) {
         }
     }
 
-    if (glfwInit() != GLFW_TRUE) {
+    if (glfwInit() != GLFW_TRUE)
+    {
         std::fprintf(stderr,
                      "steammock_gui: cannot open a window (is a GPU and driver present?)\n");
         return 2;
@@ -743,13 +847,14 @@ int run(int argc, char** argv) {
     int window_h = 0;
     window_size_for_display(window_w, window_h);
     GLFWwindow* window = glfwCreateWindow(window_w, window_h, "SteamMock", nullptr, nullptr);
-    if (window == nullptr) {
+    if (window == nullptr)
+    {
         std::fprintf(stderr, "steammock_gui: cannot create the window\n");
         glfwTerminate();
         return 2;
     }
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);  // draw at the display's rate, not the GPU's
+    glfwSwapInterval(1); // draw at the display's rate, not the GPU's
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -767,9 +872,11 @@ int run(int argc, char** argv) {
     // context and the ImGui context still open and `glfwTerminate()` never run. The window is
     // released on every way out of this function now, not only the one where the loop ended
     // by itself.
-    struct LiveViewCleanup {
+    struct LiveViewCleanup
+    {
         GLFWwindow* window;
-        ~LiveViewCleanup() {
+        ~LiveViewCleanup()
+        {
             ImGui_ImplOpenGL3_Shutdown();
             ImGui_ImplGlfw_Shutdown();
             ImGui::DestroyContext();
@@ -778,7 +885,8 @@ int run(int argc, char** argv) {
         }
     } cleanup{window};
 
-    while (glfwWindowShouldClose(window) == 0) {
+    while (glfwWindowShouldClose(window) == 0)
+    {
         glfwPollEvents();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -802,13 +910,19 @@ int run(int argc, char** argv) {
 
 // The window is the one thing here that allocates on a path nothing catches, and an
 // exception escaping `main` says nothing at all. Say what happened instead.
-int main(int argc, char** argv) {
-    try {
+int main(int argc, char** argv)
+{
+    try
+    {
         return run(argc, argv);
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception& error)
+    {
         std::fprintf(stderr, "steammock_gui: unexpected failure (%s)\n", error.what());
         return 2;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::fprintf(stderr, "steammock_gui: unexpected failure\n");
         return 2;
     }

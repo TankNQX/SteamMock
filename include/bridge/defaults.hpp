@@ -3,7 +3,8 @@
 #include <cstdint>
 #include <string_view>
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  The values the two ends have to agree on before either can talk.
@@ -22,17 +23,22 @@ inline constexpr std::uint16_t kDefaultPort = 50990;
 // only when the text is one. Nothing longer than the ceiling is ever accumulated,
 // so the multiplication cannot wrap. This was copied into three places, which is
 // how the timeout inherited the port's own ceiling.
-inline bool parse_number(std::string_view text, unsigned ceiling, unsigned& out) noexcept {
-    if (text.empty() || ceiling == 0u) {
+inline bool parse_number(std::string_view text, unsigned ceiling, unsigned& out) noexcept
+{
+    if (text.empty() || ceiling == 0u)
+    {
         return false;
     }
     unsigned value = 0;
-    for (const char ch : text) {
-        if (ch < '0' || ch > '9') {
+    for (const char ch : text)
+    {
+        if (ch < '0' || ch > '9')
+        {
             return false;
         }
         value = value * 10u + static_cast<unsigned>(ch - '0');
-        if (value > ceiling) {
+        if (value > ceiling)
+        {
             return false;
         }
     }
@@ -40,4 +46,4 @@ inline bool parse_number(std::string_view text, unsigned ceiling, unsigned& out)
     return true;
 }
 
-}  // namespace steammock
+} // namespace steammock

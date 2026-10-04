@@ -16,22 +16,27 @@
 #include "bridge/frame.hpp"
 #include "bridge/json_read.hpp"
 
-namespace {
+namespace
+{
 
 int g_failures = 0;
 
-void check(const char* what, bool ok) {
+void check(const char* what, bool ok)
+{
     std::printf("  [%s] %s\n", ok ? "ok  " : "FAIL", what);
-    if (!ok) {
+    if (!ok)
+    {
         ++g_failures;
     }
 }
 
-bool reparses(const steammock::Json& value, steammock::Json& out) {
+bool reparses(const steammock::Json& value, steammock::Json& out)
+{
     return steammock::parse(value.dump(), out);
 }
 
-void test_numbers() {
+void test_numbers()
+{
     std::printf("[:] numbers\n");
 
     // A Steam id is 17 digits: it has to survive exactly, which is why the
@@ -63,7 +68,8 @@ void test_numbers() {
     check("a boolean survives", reparses(boolean, back) && steammock::as_bool(back));
 }
 
-void test_booleans() {
+void test_booleans()
+{
     std::printf("[:] booleans\n");
 
     steammock::Json value;
@@ -76,7 +82,8 @@ void test_booleans() {
     check("a boolean is not a number node", steammock::parse("true", value) && !value.is_number());
 }
 
-void test_strings() {
+void test_strings()
+{
     std::printf("[:] strings\n");
 
     const std::string nasty = "quote:\" backslash:\\ newline:\n tab:\t control:\x01";
@@ -116,7 +123,8 @@ void test_strings() {
                                                        !null_string.is_string());
 }
 
-void test_containers() {
+void test_containers()
+{
     std::printf("[:] objects and arrays\n");
 
     steammock::Json object = steammock::Json::object();
@@ -154,7 +162,8 @@ void test_containers() {
     check("the dump is compact", array.dump() == "[1,\"two\",false]");
 }
 
-void test_strictness() {
+void test_strictness()
+{
     std::printf("[:] rejection of malformed input\n");
 
     steammock::Json value;
@@ -170,13 +179,16 @@ void test_strictness() {
     check("a valid message is still accepted", steammock::parse("{\"a\":[1,2]}", value));
 }
 
-void test_framing() {
+void test_framing()
+{
     std::printf("[:] framing\n");
 
     char header[4] = {};
-    for (const std::uint32_t length : {0u, 1u, 255u, 256u, 65535u, 0xFFFFFFFFu}) {
+    for (const std::uint32_t length : {0u, 1u, 255u, 256u, 65535u, 0xFFFFFFFFu})
+    {
         steammock::write_frame_length(header, length);
-        if (steammock::read_frame_length(header) != length) {
+        if (steammock::read_frame_length(header) != length)
+        {
             check("a length survives the header", false);
             return;
         }
@@ -190,9 +202,10 @@ void test_framing() {
           steammock::kMaxFrameBytes == 4u * 1024u * 1024u);
 }
 
-}  // namespace
+} // namespace
 
-int run() {
+int run()
+{
     std::printf("[+] SteamMock protocol tests\n\n");
     test_numbers();
     test_booleans();
@@ -201,9 +214,12 @@ int run() {
     test_strictness();
     test_framing();
 
-    if (g_failures == 0) {
+    if (g_failures == 0)
+    {
         std::printf("\n[+] all checks passed\n");
-    } else {
+    }
+    else
+    {
         std::printf("\n[-] %d check(s) FAILED\n", g_failures);
     }
     return g_failures == 0 ? 0 : 1;
@@ -212,13 +228,19 @@ int run() {
 // An exception escaping `main` terminates the process with no message at all, and the
 // only realistic source in a test is a failed allocation. Report it the way a failing
 // check is reported instead, so ctest's output says what happened.
-int main() {
-    try {
+int main()
+{
+    try
+    {
         return run();
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception& error)
+    {
         std::printf("\n[-] the test itself threw: %s\n", error.what());
         return 1;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::printf("\n[-] the test itself threw something that is not a std::exception\n");
         return 1;
     }

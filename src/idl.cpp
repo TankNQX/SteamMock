@@ -9,8 +9,10 @@
 #include <utility>
 #include <vector>
 
-namespace steammock {
-namespace {
+namespace steammock
+{
+namespace
+{
 
 // ---------------------------------------------------------------------------
 //  The type table.
@@ -19,7 +21,8 @@ namespace {
 //  generator writes one function per IDL entry and these are the only places a
 //  type name is turned into C++.
 
-struct TypeInfo {
+struct TypeInfo
+{
     const char* idl;
     const char* cpp;
     const char* arg_helper;
@@ -82,9 +85,12 @@ constexpr TypeInfo kTypes[] = {
     {"opaque_ptr", "void*", "arg_pointer", "nullptr", "steammock::reply_pointer(reply)", nullptr},
 };
 
-const TypeInfo* find_type(const std::string& name) noexcept {
-    for (const TypeInfo& type : kTypes) {
-        if (name == type.idl) {
+const TypeInfo* find_type(const std::string& name) noexcept
+{
+    for (const TypeInfo& type : kTypes)
+    {
+        if (name == type.idl)
+        {
             return &type;
         }
     }
@@ -98,15 +104,19 @@ const TypeInfo* find_type(const std::string& name) noexcept {
 // escaping elsewhere unnecessary rather than merely absent - a name with a quote, a
 // backslash or a space used to be written out raw, and the compiler's complaint about the
 // generated file was the only sign that the surface was the problem.
-bool is_identifier(const std::string& name) noexcept {
-    if (name.empty()) {
+bool is_identifier(const std::string& name) noexcept
+{
+    if (name.empty())
+    {
         return false;
     }
-    for (std::size_t index = 0; index < name.size(); ++index) {
+    for (std::size_t index = 0; index < name.size(); ++index)
+    {
         const char ch = name[index];
         const bool word = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
                           (ch >= '0' && ch <= '9') || ch == '_';
-        if (!word || (index == 0u && ch >= '0' && ch <= '9')) {
+        if (!word || (index == 0u && ch >= '0' && ch <= '9'))
+        {
             return false;
         }
     }
@@ -123,10 +133,13 @@ constexpr const char* kGeneratedNote = "//  GENERATED FILE - do not edit by hand
 constexpr const char* kRegenerate = "//  Regenerate: steammock_codegen";
 constexpr const char* kRegenerateDef = "; Regenerate: steammock_codegen";
 
-std::string joined(const std::vector<std::string>& lines) {
+std::string joined(const std::vector<std::string>& lines)
+{
     std::string text;
-    for (std::size_t index = 0; index < lines.size(); ++index) {
-        if (index != 0u) {
+    for (std::size_t index = 0; index < lines.size(); ++index)
+    {
+        if (index != 0u)
+        {
             text += "\n";
         }
         text += lines[index];
@@ -137,18 +150,25 @@ std::string joined(const std::vector<std::string>& lines) {
 // A C++ string literal for `text`. Escapes backslash and quote, and writes any
 // other byte outside printable ASCII as a three-digit octal escape - not \xNN,
 // which in C++ swallows as many hex digits as follow it.
-std::string cpp_string_literal(const std::string& text) {
+std::string cpp_string_literal(const std::string& text)
+{
     std::string out = "\"";
-    for (const char ch : text) {
+    for (const char ch : text)
+    {
         const unsigned char byte = static_cast<unsigned char>(ch);
-        if (ch == '\\' || ch == '"') {
+        if (ch == '\\' || ch == '"')
+        {
             out += '\\';
             out += ch;
-        } else if (byte < 0x20u || byte >= 0x7Fu) {
+        }
+        else if (byte < 0x20u || byte >= 0x7Fu)
+        {
             char escape[8] = {};
             std::snprintf(escape, sizeof(escape), "\\%03o", static_cast<unsigned>(byte));
             out += escape;
-        } else {
+        }
+        else
+        {
             out += ch;
         }
     }
@@ -156,21 +176,26 @@ std::string cpp_string_literal(const std::string& text) {
     return out;
 }
 
-std::string signature(const IdlCall& call) {
+std::string signature(const IdlCall& call)
+{
     std::string params;
-    for (const IdlParam& param : call.params) {
-        if (!params.empty()) {
+    for (const IdlParam& param : call.params)
+    {
+        if (!params.empty())
+        {
             params += ", ";
         }
         params += find_type(param.type)->cpp;
-        if (param.out) {
+        if (param.out)
+        {
             params += "*";
         }
         params += " ";
         params += param.name;
     }
     // A parameterless function is spelled (void) so the C prototype is explicit.
-    if (params.empty()) {
+    if (params.empty())
+    {
         params = "void";
     }
     const std::string returns = call.returns == "void" ? "void" : find_type(call.returns)->cpp;
@@ -178,37 +203,50 @@ std::string signature(const IdlCall& call) {
 }
 
 // The body of one trampoline: build the arguments, ask, fall back.
-void render_body(const IdlCall& call, std::vector<std::string>& out) {
+void render_body(const IdlCall& call, std::vector<std::string>& out)
+{
     const bool returns_void = call.returns == "void";
 
-    if (!returns_void) {
+    if (!returns_void)
+    {
         out.push_back(std::string("    ") + find_type(call.returns)->cpp +
                       " result = " + find_type(call.returns)->return_default + ";");
     }
     out.push_back("    try {");
 
-    if (!call.hook.empty()) {
+    if (!call.hook.empty())
+    {
         // A trampoline that has to do something a forward cannot: the calls that
         // remember what a game registered, and the pump that hands it what the
         // backend sent. Recording happens before the forward, so an answer that
         // carries an event of its own arrives with somewhere for it to go.
-        if (call.hook == "register_callback") {
+        if (call.hook == "register_callback")
+        {
             out.push_back("        steammock::callback_registered(" + call.params[0].name + ", " +
                           call.params[1].name + ");");
-        } else if (call.hook == "unregister_callback") {
+        }
+        else if (call.hook == "unregister_callback")
+        {
             out.push_back("        steammock::callback_unregistered(" + call.params[0].name + ");");
-        } else if (call.hook == "register_call_result") {
+        }
+        else if (call.hook == "register_call_result")
+        {
             out.push_back("        steammock::call_result_registered(" + call.params[0].name +
                           ", " + call.params[1].name + ");");
-        } else if (call.hook == "unregister_call_result") {
+        }
+        else if (call.hook == "unregister_call_result")
+        {
             out.push_back("        steammock::call_result_unregistered(" + call.params[0].name +
                           ", " + call.params[1].name + ");");
-        } else if (call.hook == "deliver_events") {
+        }
+        else if (call.hook == "deliver_events")
+        {
             out.push_back("        steammock::deliver_events();");
         }
     }
 
-    if (call.fallback == "context") {
+    if (call.fallback == "context")
+    {
         // The SDK's lazy accessor is the stub's to answer, and it does its own
         // reporting: the game calls this once per use of an interface, and the
         // SDK's cache is what makes that cheap. Forwarding every one of those to
@@ -226,19 +264,25 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
     }
 
     out.push_back("        steammock::Json args = steammock::Json::object();");
-    for (const IdlParam& param : call.params) {
+    for (const IdlParam& param : call.params)
+    {
         const TypeInfo& type = *find_type(param.type);
-        if (param.out) {
+        if (param.out)
+        {
             // Send what the caller passed in, so the backend can see the current
             // value; a null pointer is reported as null and never dereferenced.
             out.push_back("        args[\"" + param.name + "\"] = " + param.name + " != nullptr");
             out.push_back(std::string("                                  ? steammock::") +
                           type.arg_helper + "(static_cast<" + type.cpp + ">(*" + param.name + "))");
             out.push_back("                                  : steammock::Json();");
-        } else if (std::string(param.type) == "cstring") {
+        }
+        else if (std::string(param.type) == "cstring")
+        {
             out.push_back("        args[\"" + param.name + "\"] = steammock::arg_cstring(" +
                           param.name + ");");
-        } else {
+        }
+        else
+        {
             out.push_back(std::string("        args[\"") + param.name +
                           "\"] = steammock::" + type.arg_helper + "(" + param.name + ");");
         }
@@ -248,16 +292,22 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
     const std::string invoke = "steammock::invoke(\"" + call.name + "\", args, reply)";
 
     bool has_out = false;
-    for (const IdlParam& param : call.params) {
+    for (const IdlParam& param : call.params)
+    {
         has_out = has_out || param.out;
     }
 
-    if (returns_void && !has_out) {
+    if (returns_void && !has_out)
+    {
         out.push_back("        (void)" + invoke + ";");
-    } else {
+    }
+    else
+    {
         out.push_back("        if (" + invoke + ") {");
-        for (const IdlParam& param : call.params) {
-            if (!param.out) {
+        for (const IdlParam& param : call.params)
+        {
+            if (!param.out)
+            {
                 continue;
             }
             out.push_back("            if (" + param.name + " != nullptr) {");
@@ -270,31 +320,38 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
             out.push_back("                }");
             out.push_back("            }");
         }
-        if (!returns_void) {
+        if (!returns_void)
+        {
             out.push_back(
                 "            result = " + std::string(find_type(call.returns)->reply_expr) + ";");
         }
         out.push_back("        }");
     }
-    if (!call.fallback.empty()) {
+    if (!call.fallback.empty())
+    {
         // Asked for something this stub can answer itself. A factory call is
         // asked of the backend first, because a scenario may want to name the
         // object or to answer for a version string we have no layout for; the
         // lazy accessor is answered here, and tells the backend when it does.
         out.push_back("        if (result == nullptr) {");
-        if (call.fallback == "interface") {
+        if (call.fallback == "interface")
+        {
             // The user handle this interface is asked for under, when the call names
             // one: the game-server half of an interface has a handle of its own, and at
             // the hand-out that is the only thing that can say which end is asking.
             std::string fallback_user = "0";
-            for (const auto& param : call.params) {
-                if (param.name == "hSteamUser" || param.name == "hSteamuser") {
+            for (const auto& param : call.params)
+            {
+                if (param.name == "hSteamUser" || param.name == "hSteamuser")
+                {
                     fallback_user = param.name;
                 }
             }
             out.push_back(std::string("            result = steammock::interface_object(") +
                           call.fallback_param + ", " + fallback_user + ");");
-        } else {
+        }
+        else
+        {
             out.push_back(std::string("            result = steammock::context_init(") +
                           call.params[0].name + ", \"" + call.name + "\");");
         }
@@ -303,7 +360,8 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
     out.push_back("    } catch (...) {");
     out.push_back("        // Never let an exception cross into the game.");
     out.push_back("    }");
-    if (!returns_void) {
+    if (!returns_void)
+    {
         out.push_back("    return result;");
     }
 }
@@ -323,20 +381,26 @@ void render_body(const IdlCall& call, std::vector<std::string>& out) {
 //  the version string a game asked for, and the SDK's lazy initialiser, which is
 //  given a blob of its own.
 
-std::string hook_for(const std::string& name) {
-    if (name == "SteamAPI_RunCallbacks" || name == "SteamGameServer_RunCallbacks") {
+std::string hook_for(const std::string& name)
+{
+    if (name == "SteamAPI_RunCallbacks" || name == "SteamGameServer_RunCallbacks")
+    {
         return "deliver_events";
     }
-    if (name == "SteamAPI_RegisterCallback") {
+    if (name == "SteamAPI_RegisterCallback")
+    {
         return "register_callback";
     }
-    if (name == "SteamAPI_UnregisterCallback") {
+    if (name == "SteamAPI_UnregisterCallback")
+    {
         return "unregister_callback";
     }
-    if (name == "SteamAPI_RegisterCallResult") {
+    if (name == "SteamAPI_RegisterCallResult")
+    {
         return "register_call_result";
     }
-    if (name == "SteamAPI_UnregisterCallResult") {
+    if (name == "SteamAPI_UnregisterCallResult")
+    {
         return "unregister_call_result";
     }
     return std::string();
@@ -352,33 +416,41 @@ std::string hook_for(const std::string& name) {
 // Both call-result calls take the object and the handle in every SDK read here - 1.39,
 // 1.41 and 1.46 all declare SteamAPI_UnregisterCallResult that way, which is where the
 // surface's own spelling comes from.
-std::vector<const char*> hook_parameter_types(const std::string& hook) {
-    if (hook == "register_callback") {
+std::vector<const char*> hook_parameter_types(const std::string& hook)
+{
+    if (hook == "register_callback")
+    {
         return {"opaque_ptr", "int32"};
     }
-    if (hook == "unregister_callback") {
+    if (hook == "unregister_callback")
+    {
         return {"opaque_ptr"};
     }
-    if (hook == "register_call_result" || hook == "unregister_call_result") {
+    if (hook == "register_call_result" || hook == "unregister_call_result")
+    {
         return {"opaque_ptr", "uint64"};
     }
-    return {};  // deliver_events takes nothing
+    return {}; // deliver_events takes nothing
 }
 
-std::string fallback_for(const std::string& name) {
+std::string fallback_for(const std::string& name)
+{
     if (name == "SteamInternal_CreateInterface" ||
         name == "SteamInternal_FindOrCreateUserInterface" ||
-        name == "SteamInternal_FindOrCreateGameServerInterface") {
+        name == "SteamInternal_FindOrCreateGameServerInterface")
+    {
         return "interface";
     }
-    if (name == "SteamInternal_ContextInit") {
+    if (name == "SteamInternal_ContextInit")
+    {
         return "context";
     }
     return std::string();
 }
 
 std::vector<std::string> generated_header(const Idl& idl, const char* regenerate, const char* open,
-                                          const char* close) {
+                                          const char* close)
+{
     return {open,
             kGeneratedNote,
             "//",
@@ -388,19 +460,22 @@ std::vector<std::string> generated_header(const Idl& idl, const char* regenerate
             close};
 }
 
-}  // namespace
+} // namespace
 
 // ---------------------------------------------------------------------------
 //  The IDL
 // ---------------------------------------------------------------------------
 
-bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
-    if (!document.is_object()) {
+bool Idl::from_json(const Json& document, Idl& out, std::string& error)
+{
+    if (!document.is_object())
+    {
         error = "the IDL has to be a JSON object";
         return false;
     }
     const Json* calls_json = json_member(document, "calls");
-    if (calls_json == nullptr || !calls_json->is_array()) {
+    if (calls_json == nullptr || !calls_json->is_array())
+    {
         error = "the IDL needs a 'calls' array";
         return false;
     }
@@ -411,32 +486,38 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
     std::set<std::string> seen;
     // Which API this is: the name of the surface it was read from - the SDK's own
     // version, or whatever a hand-written one calls itself.
-    if (const Json* surface = json_member(document, "surface"); surface != nullptr) {
+    if (const Json* surface = json_member(document, "surface"); surface != nullptr)
+    {
         // Same as `dir` and `params` below: present and the wrong type is a file written
         // wrongly, not a file that did not say. A non-string one used to be dropped, and the
         // only complaint left was the "a surface with calls needs a 'surface' name" check
         // further down - which names a different mistake.
-        if (!surface->is_string()) {
+        if (!surface->is_string())
+        {
             error = "'surface' has to name the API this was read from";
             return false;
         }
         parsed._surface = as_string(*surface);
     }
 
-    for (const Json& entry : *calls_json) {
-        if (!entry.is_object()) {
+    for (const Json& entry : *calls_json)
+    {
+        if (!entry.is_object())
+        {
             error = "every call has to be a JSON object";
             return false;
         }
         const Json* name = json_member(entry, "name");
-        if (name == nullptr || !name->is_string() || as_string(*name).empty()) {
+        if (name == nullptr || !name->is_string() || as_string(*name).empty())
+        {
             error = "every call needs a 'name'";
             return false;
         }
 
         IdlCall call;
         call.name = as_string(*name);
-        if (!is_identifier(call.name)) {
+        if (!is_identifier(call.name))
+        {
             // Only "not empty" used to be checked, and the name is written as a C++
             // identifier, an export name and a string literal - so anything else produced a
             // generated file that does not compile, with the complaint pointing at the
@@ -446,45 +527,55 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                     "underscores only, and not starting with a digit";
             return false;
         }
-        if (!seen.insert(call.name).second) {
+        if (!seen.insert(call.name).second)
+        {
             error = call.name + " appears twice";
             return false;
         }
 
-        if (const Json* returns = json_member(entry, "returns"); returns != nullptr) {
-            if (!returns->is_string()) {
+        if (const Json* returns = json_member(entry, "returns"); returns != nullptr)
+        {
+            if (!returns->is_string())
+            {
                 error = call.name + ": 'returns' has to be a type name";
                 return false;
             }
             call.returns = as_string(*returns);
         }
-        if (call.returns != "void" && find_type(call.returns) == nullptr) {
+        if (call.returns != "void" && find_type(call.returns) == nullptr)
+        {
             error = call.name + ": unknown return type '" + call.returns + "'";
             return false;
         }
 
-        if (const Json* params = json_member(entry, "params"); params != nullptr) {
+        if (const Json* params = json_member(entry, "params"); params != nullptr)
+        {
             // Present but not a list is a declaration written wrongly, and the two ways it
             // was read before were both silent: a `params` that is not an array was skipped,
             // which generates a signature with no arguments at all.
-            if (!params->is_array()) {
+            if (!params->is_array())
+            {
                 error = call.name + ": 'params' has to be a list of parameters";
                 return false;
             }
-            for (const Json& entry_param : *params) {
-                if (!entry_param.is_object()) {
+            for (const Json& entry_param : *params)
+            {
+                if (!entry_param.is_object())
+                {
                     error = call.name + ": every parameter has to be a JSON object";
                     return false;
                 }
                 IdlParam param;
                 const Json* param_name = json_member(entry_param, "name");
                 if (param_name == nullptr || !param_name->is_string() ||
-                    as_string(*param_name).empty()) {
+                    as_string(*param_name).empty())
+                {
                     error = call.name + ": every parameter needs a 'name'";
                     return false;
                 }
                 param.name = as_string(*param_name);
-                if (!is_identifier(param.name)) {
+                if (!is_identifier(param.name))
+                {
                     // The same reason a call name has to be one: a parameter's name is the
                     // C++ parameter and the key in `args["<name>"]`.
                     error = call.name + ": '" + param.name +
@@ -495,7 +586,8 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
 
                 const Json* param_type = json_member(entry_param, "type");
                 if (param_type == nullptr || !param_type->is_string() ||
-                    find_type(as_string(*param_type)) == nullptr) {
+                    find_type(as_string(*param_type)) == nullptr)
+                {
                     error =
                         call.name + "." + param.name + ": unknown type '" +
                         (param_type != nullptr && param_type->is_string() ? as_string(*param_type)
@@ -506,22 +598,26 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                 param.type = as_string(*param_type);
 
                 std::string direction = "in";
-                if (const Json* dir = json_member(entry_param, "dir"); dir != nullptr) {
+                if (const Json* dir = json_member(entry_param, "dir"); dir != nullptr)
+                {
                     // Present but not a string is not "no direction": it is a declaration
                     // written wrongly, and reading it as `in` silently is how a row that
                     // meant `out` becomes a call whose result nobody ever writes back.
-                    if (!dir->is_string()) {
+                    if (!dir->is_string())
+                    {
                         error = call.name + "." + param.name + ": 'dir' has to be a string";
                         return false;
                     }
                     direction = as_string(*dir);
                 }
-                if (direction != "in" && direction != "out") {
+                if (direction != "in" && direction != "out")
+                {
                     error = call.name + "." + param.name + ": dir must be 'in' or 'out'";
                     return false;
                 }
                 param.out = direction == "out";
-                if (param.out && (param.type == "cstring" || param.type == "opaque_ptr")) {
+                if (param.out && (param.type == "cstring" || param.type == "opaque_ptr"))
+                {
                     error = call.name + "." + param.name + ": out parameters of type '" +
                             param.type +
                             "' need a length or an owned buffer - add a dedicated kind when you "
@@ -538,18 +634,22 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
         // moment it does not.
         call.hook = hook_for(call.name);
         call.fallback = fallback_for(call.name);
-        if (const Json* hook = json_member(entry, "hook"); hook != nullptr) {
+        if (const Json* hook = json_member(entry, "hook"); hook != nullptr)
+        {
             const std::string written = hook->is_string() ? as_string(*hook) : std::string();
-            if (written != call.hook) {
+            if (written != call.hook)
+            {
                 error = call.name + ": 'hook' is the generator's decision now (hook_for), and " +
                         "this says '" + written + "' where the rule says '" + call.hook + "'";
                 return false;
             }
         }
-        if (const Json* fallback = json_member(entry, "fallback"); fallback != nullptr) {
+        if (const Json* fallback = json_member(entry, "fallback"); fallback != nullptr)
+        {
             const std::string written =
                 fallback->is_string() ? as_string(*fallback) : std::string();
-            if (written != call.fallback) {
+            if (written != call.fallback)
+            {
                 error = call.name +
                         ": 'fallback' is the generator's decision now (fallback_for), "
                         "and this says '" +
@@ -565,16 +665,20 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
         // rule hooks whose declaration has the right number of arguments of the wrong types
         // was accepted and generated code that does not compile, or worse, one that
         // compiles after an implicit conversion nobody meant.
-        if (!call.hook.empty()) {
+        if (!call.hook.empty())
+        {
             const std::vector<const char*> wanted = hook_parameter_types(call.hook);
-            if (call.params.size() < wanted.size()) {
+            if (call.params.size() < wanted.size())
+            {
                 error = call.name + ": the '" + call.hook + "' hook reads " +
                         std::to_string(wanted.size()) + " parameter(s) and this takes " +
                         std::to_string(call.params.size());
                 return false;
             }
-            for (std::size_t index = 0; index < wanted.size(); ++index) {
-                if (call.params[index].type != wanted[index]) {
+            for (std::size_t index = 0; index < wanted.size(); ++index)
+            {
+                if (call.params[index].type != wanted[index])
+                {
                     error = call.name + ": the '" + call.hook + "' hook takes " + wanted[index] +
                             " as parameter " + std::to_string(index + 1u) +
                             ", and this declares '" + call.params[index].type + "'";
@@ -587,17 +691,21 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
         // arguments, wherever it sits - and the lazy accessor is handed the SDK's
         // own blob and nothing else. Both are this stub's to answer (see
         // bridge/synth.hpp), so a declaration that no longer fits is refused.
-        if (!call.fallback.empty()) {
+        if (!call.fallback.empty())
+        {
             const bool factory = call.fallback == "interface";
             const IdlParam* version = nullptr;
-            for (const IdlParam& param : call.params) {
-                if (param.type == "cstring" && !param.out) {
+            for (const IdlParam& param : call.params)
+            {
+                if (param.type == "cstring" && !param.out)
+                {
                     // A factory is handed the version string a game wants an interface for,
                     // and `version` is what the renderer passes to interface_object - so two
                     // candidates are not a choice to make here. It used to keep the last one
                     // silently, which hands the wrong version string to the world for every
                     // call a game makes through that object.
-                    if (version != nullptr) {
+                    if (version != nullptr)
+                    {
                         error = call.name + ": a factory takes one version string, and this "
                                             "declares more than one";
                         return false;
@@ -608,7 +716,8 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
             const bool shape_is_right =
                 factory ? version != nullptr
                         : call.params.size() == 1u && call.params[0].type == "opaque_ptr";
-            if (call.returns != "opaque_ptr" || !shape_is_right) {
+            if (call.returns != "opaque_ptr" || !shape_is_right)
+            {
                 error = call.name + ": the '" + call.fallback +
                         "' rule (fallback_for) answers this one itself, and it returns '" +
                         call.returns + "' with " + std::to_string(call.params.size()) +
@@ -616,7 +725,8 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
                         "version string among its arguments";
                 return false;
             }
-            if (version != nullptr) {
+            if (version != nullptr)
+            {
                 call.fallback_param = version->name;
             }
         }
@@ -626,32 +736,38 @@ bool Idl::from_json(const Json& document, Idl& out, std::string& error) {
     // A surface with calls and no name is a file nobody could review: the table
     // travels into the stub and out of --list-api, and "?" there says nothing
     // about which API this build exports.
-    if (!parsed._calls.empty() && parsed._surface == "?") {
+    if (!parsed._calls.empty() && parsed._surface == "?")
+    {
         error = "a surface with calls needs a 'surface' name - which SDK it was read from";
         return false;
     }
     std::sort(parsed._calls.begin(), parsed._calls.end(),
-              [](const IdlCall& left, const IdlCall& right) { return left.name < right.name; });
+              [](const IdlCall& left, const IdlCall& right)
+              { return left.name < right.name; });
     out = std::move(parsed);
     return true;
 }
 
-bool Idl::load_file(const std::string& path, Idl& out, std::string& error) {
+bool Idl::load_file(const std::string& path, Idl& out, std::string& error)
+{
     std::FILE* file = std::fopen(path.c_str(), "rb");
-    if (file == nullptr) {
+    if (file == nullptr)
+    {
         error = "cannot read " + path;
         return false;
     }
     std::string text;
     char buffer[4096];
     std::size_t got = 0;
-    while ((got = std::fread(buffer, 1, sizeof(buffer), file)) > 0) {
+    while ((got = std::fread(buffer, 1, sizeof(buffer), file)) > 0)
+    {
         text.append(buffer, got);
     }
     std::fclose(file);
 
     Json document;
-    if (!parse(text, document)) {
+    if (!parse(text, document))
+    {
         error = path + " is not valid JSON";
         return false;
     }
@@ -662,10 +778,12 @@ bool Idl::load_file(const std::string& path, Idl& out, std::string& error) {
 //  The generated files
 // ---------------------------------------------------------------------------
 
-std::string render_api_stub(const Idl& idl) {
+std::string render_api_stub(const Idl& idl)
+{
     bool needs_synth = false;
     bool needs_empty_string = false;
-    for (const IdlCall& call : idl.calls()) {
+    for (const IdlCall& call : idl.calls())
+    {
         // synth.hpp is where every helper this file reaches for that is not in call.hpp
         // is declared: context_init and interface_object for the calls that answer
         // themselves, and the whole callback registry - deliver_events, the register
@@ -689,7 +807,8 @@ std::string render_api_stub(const Idl& idl) {
     out.push_back("");
     out.push_back("#include \"bridge/call.hpp\"");
     out.push_back("#include \"bridge/export.hpp\"");
-    if (needs_synth) {
+    if (needs_synth)
+    {
         out.push_back("#include \"bridge/synth.hpp\"");
     }
     out.push_back("");
@@ -698,7 +817,8 @@ std::string render_api_stub(const Idl& idl) {
     // Only when something can return one: with no calls at all - a checkout with no
     // surface imported - a constant nobody reads is a warning, and this project
     // treats one as an error.
-    if (needs_empty_string) {
+    if (needs_empty_string)
+    {
         out.push_back("// Handed back for a string-returning call nobody answered, so a game that");
         out.push_back("// skips its null check still reads empty text instead of faulting.");
         out.push_back("const char kEmptyString[] = \"\";");
@@ -707,7 +827,8 @@ std::string render_api_stub(const Idl& idl) {
     out.push_back("}  // namespace");
     out.push_back("");
 
-    for (const IdlCall& call : idl.calls()) {
+    for (const IdlCall& call : idl.calls())
+    {
         out.push_back("// " + call.name);
         out.push_back("STEAMMOCK_EXPORT " + signature(call) + " {");
         render_body(call, out);
@@ -717,13 +838,16 @@ std::string render_api_stub(const Idl& idl) {
     return joined(out);
 }
 
-std::string render_exports_def(const Idl& idl) {
+std::string render_exports_def(const Idl& idl)
+{
     std::vector<std::string> names;
     names.reserve(idl.calls().size() + kDiagnosticExportCount);
-    for (const IdlCall& call : idl.calls()) {
+    for (const IdlCall& call : idl.calls())
+    {
         names.push_back(call.name);
     }
-    for (std::size_t index = 0; index < kDiagnosticExportCount; ++index) {
+    for (std::size_t index = 0; index < kDiagnosticExportCount; ++index)
+    {
         names.emplace_back(kDiagnosticExports[index]);
     }
     std::sort(names.begin(), names.end());
@@ -736,13 +860,15 @@ std::string render_exports_def(const Idl& idl) {
         "; ones games import, with no decoration on x86 and no difference on x64.",
         "EXPORTS",
     };
-    for (const std::string& name : names) {
+    for (const std::string& name : names)
+    {
         out.push_back("    " + name);
     }
     return joined(out) + "\n";
 }
 
-std::string render_api_surface(const Idl& idl) {
+std::string render_api_surface(const Idl& idl)
+{
     const std::vector<IdlCall>& calls = idl.calls();
     std::vector<std::string> out = generated_header(
         idl, kRegenerate,
@@ -754,13 +880,16 @@ std::string render_api_surface(const Idl& idl) {
     out.push_back("namespace steammock {");
     out.push_back("namespace {");
 
-    for (const IdlCall& call : calls) {
-        if (call.params.empty()) {
+    for (const IdlCall& call : calls)
+    {
+        if (call.params.empty())
+        {
             continue;
         }
         out.push_back("");
         out.push_back("const SurfaceParam kParams_" + call.name + "[] = {");
-        for (const IdlParam& param : call.params) {
+        for (const IdlParam& param : call.params)
+        {
             out.push_back("    {\"" + param.name + "\", \"" + param.type + "\", " +
                           (param.out ? "true" : "false") + "},");
         }
@@ -769,13 +898,17 @@ std::string render_api_surface(const Idl& idl) {
 
     out.push_back("");
     out.push_back("const SurfaceCall kCalls[] = {");
-    if (calls.empty()) {
+    if (calls.empty())
+    {
         // A zero-length array is not valid C++, and an IDL with no calls is a
         // mistake worth still being able to render, so this one is a placeholder
         // with the count below set to zero.
         out.push_back("    {\"\", \"\", nullptr, 0},");
-    } else {
-        for (const IdlCall& call : calls) {
+    }
+    else
+    {
+        for (const IdlCall& call : calls)
+        {
             out.push_back("    {\"" + call.name + "\", \"" + call.returns + "\", " +
                           (call.params.empty() ? "nullptr" : "kParams_" + call.name) + ", " +
                           std::to_string(call.params.size()) + "},");
@@ -796,4 +929,4 @@ std::string render_api_surface(const Idl& idl) {
     return joined(out) + "\n";
 }
 
-}  // namespace steammock
+} // namespace steammock

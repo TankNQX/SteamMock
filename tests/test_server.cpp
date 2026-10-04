@@ -37,36 +37,45 @@
 #include "bridge/server.hpp"
 #include "bridge/transport.hpp"
 
-namespace {
+namespace
+{
 
 using steammock::Json;
 
 int g_failures = 0;
 
-void check(const char* what, bool ok) {
+void check(const char* what, bool ok)
+{
     std::printf("  [%s] %s\n", ok ? "ok  " : "FAIL", what);
-    if (!ok) {
+    if (!ok)
+    {
         ++g_failures;
     }
 }
 
 // The server serves each connection on its own thread, so what it has been told
 // arrives a moment after the socket says it did.
-template <typename Predicate> bool wait_until(Predicate ready, double seconds) {
+template <typename Predicate>
+bool wait_until(Predicate ready, double seconds)
+{
     const auto deadline = std::chrono::steady_clock::now() +
                           std::chrono::milliseconds(static_cast<long long>(seconds * 1000.0));
-    for (;;) {
-        if (ready()) {
+    for (;;)
+    {
+        if (ready())
+        {
             return true;
         }
-        if (std::chrono::steady_clock::now() >= deadline) {
+        if (std::chrono::steady_clock::now() >= deadline)
+        {
             return false;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
-Json hello_message() {
+Json hello_message()
+{
     Json message = Json::object();
     message["type"] = Json("hello");
     message["v"] = Json(steammock::kProtocolVersion);
@@ -76,7 +85,8 @@ Json hello_message() {
     return message;
 }
 
-Json call_message(const char* name, std::int64_t seq) {
+Json call_message(const char* name, std::int64_t seq)
+{
     Json message = Json::object();
     message["type"] = Json("call");
     message["v"] = Json(steammock::kProtocolVersion);
@@ -86,15 +96,18 @@ Json call_message(const char* name, std::int64_t seq) {
     return message;
 }
 
-std::string answer_of(const Json& reply) {
+std::string answer_of(const Json& reply)
+{
     const Json* answer = steammock::json_member(reply, "answer");
     return answer != nullptr && answer->is_string() ? steammock::as_string(*answer) : std::string();
 }
 
 // One framed message out, one framed answer back: exactly what a stub does.
-bool exchange(steammock::TcpTransport& client, const Json& message, Json& reply) {
+bool exchange(steammock::TcpTransport& client, const Json& message, Json& reply)
+{
     std::string text;
-    if (!client.exchange(message.dump(), text)) {
+    if (!client.exchange(message.dump(), text))
+    {
         return false;
     }
     return steammock::parse(text, reply);
@@ -105,23 +118,26 @@ bool exchange(steammock::TcpTransport& client, const Json& message, Json& reply)
 const char* kScenario = "{\"profiles\":{\"default\":{\"app_id\":480,\"stats\":{\"Deaths\":3},"
                         "\"scripted\":{\"SteamAPI_Init\":{\"ret\":true}}}}}";
 
-void test_what_the_server_saw() {
+void test_what_the_server_saw()
+{
     std::printf("[:] a real connection, and what the server says about it\n");
 
     Json scenario;
-    if (!steammock::parse(kScenario, scenario)) {
+    if (!steammock::parse(kScenario, scenario))
+    {
         check("the test scenario parses", false);
         return;
     }
 
     steammock::ServerOptions options;
-    options.port = 0;  // let the OS pick, so the test can run beside anything else
-    options.log_level = steammock::LogLevel::error;  // keep the test output clean
+    options.port = 0;                               // let the OS pick, so the test can run beside anything else
+    options.log_level = steammock::LogLevel::error; // keep the test output clean
     steammock::Server server(steammock::Dispatcher(scenario), options);
 
     std::string error;
     check("the server binds a free port", server.start(error));
-    if (!error.empty()) {
+    if (!error.empty())
+    {
         std::printf("        %s\n", error.c_str());
         return;
     }
@@ -153,10 +169,12 @@ void test_what_the_server_saw() {
 
     // Still connected at this point, so the snapshot should say so.
     check("the live session is listed",
-          wait_until([&server] { return server.sessions().size() == 1u; }, 5.0));
+          wait_until([&server]
+                     { return server.sessions().size() == 1u; }, 5.0));
     {
         const std::vector<steammock::SessionSnapshot> sessions = server.sessions();
-        if (sessions.size() == 1u) {
+        if (sessions.size() == 1u)
+        {
             check("the snapshot names the game", sessions[0].exe == "game.exe");
             check("the snapshot carries the process id", sessions[0].pid == 1234);
             check("the snapshot carries the architecture", sessions[0].arch == "x64");
@@ -173,9 +191,11 @@ void test_what_the_server_saw() {
     client.close();
 
     check("the server catches up with the game",
-          wait_until([&server] { return server.call_count() == 3u; }, 5.0));
+          wait_until([&server]
+                     { return server.call_count() == 3u; }, 5.0));
     check("the server notices the game leaving", wait_until(
-                                                     [&server] {
+                                                     [&server]
+                                                     {
                                                          const auto sessions = server.sessions();
                                                          return sessions.size() == 1u &&
                                                                 !sessions[0].connected;
@@ -187,7 +207,8 @@ void test_what_the_server_saw() {
 
     const std::vector<steammock::CallRecord> records = server.records();
     check("every call is in the history", records.size() == 3u);
-    if (records.size() == 3u) {
+    if (records.size() == 3u)
+    {
         check("the history keeps the order the game called in",
               records[0].call == "SteamAPI_Init" && records[1].call == "SteamAPI_GetHSteamUser" &&
                   records[2].call == "SteamAPI_Shutdown");
@@ -232,12 +253,15 @@ void test_what_the_server_saw() {
 // guard that was already true, skip it, and close the same sockets and join the same
 // std::thread a second time. A handle closed twice and a thread joined twice are both
 // faults that say nothing when they happen, so what this test asks for is no crash.
-void test_four_threads_stop_at_once() {
+void test_four_threads_stop_at_once()
+{
     std::printf("[:] four threads calling stop() at once\n");
 
-    for (int attempt = 0; attempt < 5; ++attempt) {
+    for (int attempt = 0; attempt < 5; ++attempt)
+    {
         Json scenario;
-        if (!steammock::parse(kScenario, scenario)) {
+        if (!steammock::parse(kScenario, scenario))
+        {
             check("the test scenario parses", false);
             return;
         }
@@ -248,7 +272,8 @@ void test_four_threads_stop_at_once() {
         steammock::Server server(steammock::Dispatcher(scenario), options);
 
         std::string error;
-        if (!server.start(error)) {
+        if (!server.start(error))
+        {
             check("the server binds a free port", false);
             std::printf("        %s\n", error.c_str());
             return;
@@ -260,8 +285,10 @@ void test_four_threads_stop_at_once() {
         Json reply;
         const bool attached = client.connect("127.0.0.1", server.port()) &&
                               exchange(client, hello_message(), reply) &&
-                              wait_until([&server] { return server.sessions().size() == 1u; }, 5.0);
-        if (!attached) {
+                              wait_until([&server]
+                                         { return server.sessions().size() == 1u; }, 5.0);
+        if (!attached)
+        {
             check("a game is attached before anything stops", false);
             return;
         }
@@ -271,16 +298,18 @@ void test_four_threads_stop_at_once() {
         std::atomic<bool> go{false};
         std::vector<std::thread> stoppers;
         stoppers.reserve(4);
-        for (int index = 0; index < 4; ++index) {
-            stoppers.emplace_back([&server, &go] {
+        for (int index = 0; index < 4; ++index)
+        {
+            stoppers.emplace_back([&server, &go]
+                                  {
                 while (!go.load(std::memory_order_acquire)) {
                     std::this_thread::yield();
                 }
-                server.stop();
-            });
+                server.stop(); });
         }
         go.store(true, std::memory_order_release);
-        for (std::thread& stopper : stoppers) {
+        for (std::thread& stopper : stoppers)
+        {
             stopper.join();
         }
 
@@ -293,7 +322,7 @@ void test_four_threads_stop_at_once() {
         check("and the session it names is marked as gone",
               sessions.size() == 1u && !sessions[0].connected);
         client.close();
-        server.stop();  // and a fifth, afterwards, is still harmless
+        server.stop(); // and a fifth, afterwards, is still harmless
     }
 }
 
@@ -302,11 +331,13 @@ void test_four_threads_stop_at_once() {
 // loop refuses every game that arrived - a port that looks bound and serves nobody,
 // which is worse than a refusal. Starting one twice is the same leak on the other side:
 // the first listener and its thread would have nothing pointing at them.
-void test_a_run_is_not_restartable() {
+void test_a_run_is_not_restartable()
+{
     std::printf("[:] a server starts once, and says so when asked twice\n");
 
     Json scenario;
-    if (!steammock::parse(kScenario, scenario)) {
+    if (!steammock::parse(kScenario, scenario))
+    {
         check("the test scenario parses", false);
         return;
     }
@@ -345,7 +376,8 @@ void test_a_run_is_not_restartable() {
 // so the SYN goes into a hole rather than being refused. A host with no route at all
 // fails this connect immediately instead, which is still a pass - the check is that
 // nothing here takes longer than the timeout says.
-void test_a_connect_is_bounded_by_its_timeout() {
+void test_a_connect_is_bounded_by_its_timeout()
+{
     std::printf("[:] a connect gives up when the timeout says, not when the stack does\n");
 
     steammock::TcpTransport client;
@@ -384,7 +416,8 @@ void test_a_connect_is_bounded_by_its_timeout() {
 // arms is the lock. The assertions are on the two figures rather than on the lock, on purpose:
 // the day the transport stops holding the whole round trip, the first figure comes down to the
 // second's and this is the test that will say so - see docs/architecture.md, "The socket layer".
-void test_a_stalled_backend_costs_each_queued_caller() {
+void test_a_stalled_backend_costs_each_queued_caller()
+{
     std::printf("[:] a backend that never answers in time, and the calls queued behind it\n");
 
     constexpr int kCallers = 3;
@@ -398,7 +431,8 @@ void test_a_stalled_backend_costs_each_queued_caller() {
         "{\"profiles\":{\"default\":{\"app_id\":480,\"scripted\":{\"SteamAPI_Init\":"
         "{\"ret\":true,\"delay_ms\":" +
         std::to_string(kDelayMs) + "}}}}}";
-    if (!steammock::parse(text, scenario)) {
+    if (!steammock::parse(text, scenario))
+    {
         check("the stalled scenario parses", false);
         return;
     }
@@ -409,7 +443,8 @@ void test_a_stalled_backend_costs_each_queued_caller() {
     steammock::Server server(steammock::Dispatcher(scenario), options);
 
     std::string error;
-    if (!server.start(error)) {
+    if (!server.start(error))
+    {
         check("the stalled server binds a free port", false);
         return;
     }
@@ -425,19 +460,22 @@ void test_a_stalled_backend_costs_each_queued_caller() {
 
     // --- arm 1: a game's own threads, behind the one lock ---------------------------------
     const auto queued_started = std::chrono::steady_clock::now();
-    const int answered = [&] {
+    const int answered = [&]
+    {
         int count = 0;
         std::vector<std::thread> callers;
         callers.reserve(kCallers);
-        for (int index = 0; index < kCallers; ++index) {
-            callers.emplace_back([&count] {
+        for (int index = 0; index < kCallers; ++index)
+        {
+            callers.emplace_back([&count]
+                                 {
                 Json reply;
                 if (steammock::invoke("SteamAPI_Init", Json::object(), reply)) {
                     ++count;
-                }
-            });
+                } });
         }
-        for (std::thread& caller : callers) {
+        for (std::thread& caller : callers)
+        {
             caller.join();
         }
         return count;
@@ -453,7 +491,8 @@ void test_a_stalled_backend_costs_each_queued_caller() {
     std::array<steammock::TcpTransport, kCallers> transports;
     bool attached = true;
     Json welcome;
-    for (steammock::TcpTransport& transport : transports) {
+    for (steammock::TcpTransport& transport : transports)
+    {
         transport.set_timeout_ms(static_cast<unsigned>(kTimeoutMs));
         attached = attached && transport.connect("127.0.0.1", server.port()) &&
                    exchange(transport, hello_message(), welcome);
@@ -461,20 +500,23 @@ void test_a_stalled_backend_costs_each_queued_caller() {
     check("three clients of their own attached", attached);
 
     const auto own_started = std::chrono::steady_clock::now();
-    const int own_answered = [&] {
+    const int own_answered = [&]
+    {
         int count = 0;
         std::vector<std::thread> callers;
         callers.reserve(kCallers);
-        for (int index = 0; index < kCallers; ++index) {
-            callers.emplace_back([&transports, &count, index] {
+        for (int index = 0; index < kCallers; ++index)
+        {
+            callers.emplace_back([&transports, &count, index]
+                                 {
                 Json answer;
                 if (exchange(transports[static_cast<std::size_t>(index)],
                              call_message("SteamAPI_Init", 2), answer)) {
                     ++count;
-                }
-            });
+                } });
         }
-        for (std::thread& caller : callers) {
+        for (std::thread& caller : callers)
+        {
             caller.join();
         }
         return count;
@@ -506,14 +548,15 @@ void test_a_stalled_backend_costs_each_queued_caller() {
 // buffer, the biggest thing this API hands over as a value, is about 1.2 MB. docs/architecture.md,
 // "The socket layer", is where this feeds in: whatever replaces the transport has to keep both
 // halves of it, so both are pinned here rather than assumed.
-void test_a_megabyte_goes_either_way() {
+void test_a_megabyte_goes_either_way()
+{
     std::printf("[:] a megabyte through the wire, and the caps that refuse more\n");
 
     // Carried as a size from the start: `1024 * 1024` in an int is a product that widens, which is
     // the sort of arithmetic this check exists to keep out of a buffer length.
     constexpr std::size_t kMegabyte = std::size_t{1024} * 1024;
     const std::string big(kMegabyte, 'a');
-    const std::string over(5 * kMegabyte, 'b');  // more than kMaxFrameBytes
+    const std::string over(5 * kMegabyte, 'b'); // more than kMaxFrameBytes
 
     // One call answered with as much `out` as it was sent, so a single exchange covers both
     // directions; and one answered with more than the wire allows, to see the cap refuse it.
@@ -548,13 +591,14 @@ void test_a_megabyte_goes_either_way() {
     steammock::Server server(steammock::Dispatcher(scenario), options);
 
     std::string error;
-    if (!server.start(error)) {
+    if (!server.start(error))
+    {
         check("the big-frame server binds a free port", false);
         return;
     }
 
     steammock::TcpTransport client;
-    client.set_timeout_ms(5000);  // a megabyte is not a stall, but it is not a ping either
+    client.set_timeout_ms(5000); // a megabyte is not a stall, but it is not a ping either
     Json reply;
     const bool attached =
         client.connect("127.0.0.1", server.port()) && exchange(client, hello_message(), reply);
@@ -569,15 +613,18 @@ void test_a_megabyte_goes_either_way() {
     const Json* echoed = steammock::json_member(big_reply, "out");
     check("and a megabyte of out-parameters came back intact",
           echoed != nullptr && steammock::as_string_member(*echoed, "pvData").size() == big.size());
-    if (echoed != nullptr) {
+    if (echoed != nullptr)
+    {
         check("  byte for byte", steammock::as_string_member(*echoed, "pvData") == big);
     }
 
     // ...and the transcript has the same megabyte in it, which is the other path a big frame
     // travels on: one record for the one call so far, written whole by the same code a small one
     // goes through.
-    const auto read_transcript = [&transcript] {
-        if (!std::filesystem::exists(transcript)) {
+    const auto read_transcript = [&transcript]
+    {
+        if (!std::filesystem::exists(transcript))
+        {
             return std::string();
         }
         std::ifstream file(transcript, std::ios::binary);
@@ -635,11 +682,13 @@ void test_a_megabyte_goes_either_way() {
 // It drives the real constant rather than a test-only window size, which is why it makes
 // 20,001 calls through a socket and takes a few seconds: a check on the edge of the actual
 // history is worth more than a fast one on an edge no run has.
-void test_the_history_is_a_window() {
+void test_the_history_is_a_window()
+{
     std::printf("[:] the history in memory has an edge, and the positions stay absolute\n");
 
     Json scenario;
-    if (!steammock::parse(kScenario, scenario)) {
+    if (!steammock::parse(kScenario, scenario))
+    {
         check("the test scenario parses", false);
         return;
     }
@@ -650,7 +699,8 @@ void test_the_history_is_a_window() {
     steammock::Server server(steammock::Dispatcher(scenario), options);
 
     std::string error;
-    if (!server.start(error)) {
+    if (!server.start(error))
+    {
         check("the server binds a free port", false);
         std::printf("        %s\n", error.c_str());
         return;
@@ -658,7 +708,8 @@ void test_the_history_is_a_window() {
 
     steammock::TcpTransport client;
     Json reply;
-    if (!client.connect("127.0.0.1", server.port()) || !exchange(client, hello_message(), reply)) {
+    if (!client.connect("127.0.0.1", server.port()) || !exchange(client, hello_message(), reply))
+    {
         check("a client is attached", false);
         server.stop();
         return;
@@ -669,10 +720,12 @@ void test_the_history_is_a_window() {
     // say *which* records are here rather than only how many.
     const std::size_t calls = steammock::Server::kMaxRecords + 1u;
     bool answered = true;
-    for (std::size_t index = 0; index < calls; ++index) {
+    for (std::size_t index = 0; index < calls; ++index)
+    {
         if (!exchange(client,
                       call_message("SteamAPI_Shutdown", static_cast<std::int64_t>(index + 1u)),
-                      reply)) {
+                      reply))
+        {
             answered = false;
             break;
         }
@@ -687,7 +740,8 @@ void test_the_history_is_a_window() {
     check("and it holds exactly the window's worth", held.size() == steammock::Server::kMaxRecords);
     check("the oldest recorded call is the first one the window kept",
           server.records_begin() == 1u);
-    if (held.size() == steammock::Server::kMaxRecords) {
+    if (held.size() == steammock::Server::kMaxRecords)
+    {
         check("the records it kept are the newest ones",
               held.front().seq == 2 && held.back().seq == static_cast<std::int64_t>(calls));
     }
@@ -717,7 +771,8 @@ const char* kStateScenario =
     "\"achievements\":[{\"name\":\"ACH_BOOTED\",\"achieved\":false}]}}}";
 
 // One call with one argument, which is the shape of every call below.
-Json call_with(const char* name, std::int64_t seq, const char* key, const Json& value) {
+Json call_with(const char* name, std::int64_t seq, const char* key, const Json& value)
+{
     Json message = call_message(name, seq);
     Json args = Json::object();
     args[key] = value;
@@ -728,19 +783,23 @@ Json call_with(const char* name, std::int64_t seq, const char* key, const Json& 
 // The value a call answered with, out of its `out` object. Null when the reply carried no
 // out-parameter at all, which is how "the call was declined and the caller's variable was
 // left alone" reads from here.
-const Json* out_member(const Json& reply, const char* field) {
+const Json* out_member(const Json& reply, const char* field)
+{
     const Json* out_object = steammock::json_member(reply, "out");
-    if (out_object == nullptr || !out_object->is_object()) {
+    if (out_object == nullptr || !out_object->is_object())
+    {
         return nullptr;
     }
     return steammock::json_member(*out_object, field);
 }
 
-void test_state_survives_a_run() {
+void test_state_survives_a_run()
+{
     std::printf("[:] what one run writes, the next run is handed\n");
 
     Json scenario;
-    if (!steammock::parse(kStateScenario, scenario)) {
+    if (!steammock::parse(kStateScenario, scenario))
+    {
         check("the test scenario parses", false);
         return;
     }
@@ -761,7 +820,8 @@ void test_state_survives_a_run() {
         steammock::Server server(steammock::Dispatcher(scenario), options);
 
         std::string error;
-        if (!server.start(error)) {
+        if (!server.start(error))
+        {
             check("the server binds a free port", false);
             std::printf("        %s\n", error.c_str());
             return;
@@ -770,7 +830,8 @@ void test_state_survives_a_run() {
         steammock::TcpTransport client;
         Json reply;
         if (!client.connect("127.0.0.1", server.port()) ||
-            !exchange(client, hello_message(), reply)) {
+            !exchange(client, hello_message(), reply))
+        {
             check("a client is attached", false);
             server.stop();
             return;
@@ -811,7 +872,8 @@ void test_state_survives_a_run() {
         steammock::Server server(steammock::Dispatcher(scenario), options);
 
         std::string error;
-        if (!server.start(error)) {
+        if (!server.start(error))
+        {
             check("the second run binds a free port", false);
             std::printf("        %s\n", error.c_str());
             return;
@@ -820,7 +882,8 @@ void test_state_survives_a_run() {
         steammock::TcpTransport client;
         Json reply;
         if (!client.connect("127.0.0.1", server.port()) ||
-            !exchange(client, hello_message(), reply)) {
+            !exchange(client, hello_message(), reply))
+        {
             check("a client is attached to the second run", false);
             server.stop();
             return;
@@ -850,7 +913,9 @@ void test_state_survives_a_run() {
         // ...and the session snapshot - what a live view draws - says the same, because a
         // store that the answers came from and a store the view reads were two things that
         // could disagree.
-        if (wait_until([&server] { return server.sessions().size() == 1u; }, 5.0)) {
+        if (wait_until([&server]
+                       { return server.sessions().size() == 1u; }, 5.0))
+        {
             const std::vector<steammock::SessionSnapshot> sessions = server.sessions();
             check("and the snapshot a view draws says so too",
                   sessions[0].achievements.size() == 1u && sessions[0].achievements[0].achieved);
@@ -863,9 +928,10 @@ void test_state_survives_a_run() {
     std::filesystem::remove(state, ignored);
 }
 
-}  // namespace
+} // namespace
 
-int run() {
+int run()
+{
     std::printf("[+] SteamMock server tests\n\n");
     test_what_the_server_saw();
     test_four_threads_stop_at_once();
@@ -876,9 +942,12 @@ int run() {
     test_the_history_is_a_window();
     test_state_survives_a_run();
 
-    if (g_failures == 0) {
+    if (g_failures == 0)
+    {
         std::printf("\n[+] all checks passed\n");
-    } else {
+    }
+    else
+    {
         std::printf("\n[-] %d check(s) FAILED\n", g_failures);
     }
     return g_failures == 0 ? 0 : 1;
@@ -887,13 +956,19 @@ int run() {
 // An exception escaping `main` terminates the process with no message at all, and the
 // only realistic source in a test is a failed allocation. Report it the way a failing
 // check is reported instead, so ctest's output says what happened.
-int main() {
-    try {
+int main()
+{
+    try
+    {
         return run();
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception& error)
+    {
         std::printf("\n[-] the test itself threw: %s\n", error.what());
         return 1;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::printf("\n[-] the test itself threw something that is not a std::exception\n");
         return 1;
     }

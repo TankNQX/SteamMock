@@ -35,65 +35,82 @@
 using steammock_test::ChildProcess;
 using steammock_test::quote;
 
-namespace {
+namespace
+{
 
 int g_failures = 0;
 
-void check(const char* what, bool ok, const std::string& detail = std::string()) {
-    if (ok) {
+void check(const char* what, bool ok, const std::string& detail = std::string())
+{
+    if (ok)
+    {
         std::printf("  [ok  ] %s\n", what);
-    } else {
+    }
+    else
+    {
         ++g_failures;
         std::printf("  [FAIL] %s%s\n", what, detail.empty() ? "" : (" - " + detail).c_str());
     }
 }
 
-bool file_exists(const std::string& path) {
+bool file_exists(const std::string& path)
+{
     std::FILE* file = std::fopen(path.c_str(), "rb");
-    if (file == nullptr) {
+    if (file == nullptr)
+    {
         return false;
     }
     std::fclose(file);
     return true;
 }
 
-bool read_file(const std::string& path, std::string& out) {
+bool read_file(const std::string& path, std::string& out)
+{
     std::FILE* file = std::fopen(path.c_str(), "rb");
-    if (file == nullptr) {
+    if (file == nullptr)
+    {
         return false;
     }
     char buffer[4096];
     std::size_t got = 0;
-    while ((got = std::fread(buffer, 1, sizeof(buffer), file)) > 0) {
+    while ((got = std::fread(buffer, 1, sizeof(buffer), file)) > 0)
+    {
         out.append(buffer, got);
     }
     std::fclose(file);
     return true;
 }
 
-std::string trimmed(std::string text) {
-    while (!text.empty() && (text.front() == ' ' || text.front() == '\t' || text.front() == '\r')) {
+std::string trimmed(std::string text)
+{
+    while (!text.empty() && (text.front() == ' ' || text.front() == '\t' || text.front() == '\r'))
+    {
         text.erase(text.begin());
     }
-    while (!text.empty() && (text.back() == ' ' || text.back() == '\t' || text.back() == '\r')) {
+    while (!text.empty() && (text.back() == ' ' || text.back() == '\t' || text.back() == '\r'))
+    {
         text.pop_back();
     }
     return text;
 }
 
 // One `key=value` per line, each key unique, which is what fake_game prints.
-std::map<std::string, std::string> parse_key_values(const std::string& output) {
+std::map<std::string, std::string> parse_key_values(const std::string& output)
+{
     std::map<std::string, std::string> values;
     std::size_t position = 0;
-    while (position <= output.size()) {
+    while (position <= output.size())
+    {
         std::size_t end = output.find('\n', position);
-        if (end == std::string::npos) {
+        if (end == std::string::npos)
+        {
             end = output.size();
         }
         const std::string line = output.substr(position, end - position);
         position = end + 1;
         const std::size_t equals = line.find('=');
-        if (equals == std::string::npos) {
+        if (equals == std::string::npos)
+        {
             continue;
         }
         values[trimmed(line.substr(0, equals))] = trimmed(line.substr(equals + 1));
@@ -101,43 +118,52 @@ std::map<std::string, std::string> parse_key_values(const std::string& output) {
     return values;
 }
 
-std::string value_of(const std::map<std::string, std::string>& values, const char* key) {
+std::string value_of(const std::map<std::string, std::string>& values, const char* key)
+{
     const auto found = values.find(key);
     return found == values.end() ? std::string() : found->second;
 }
 
-std::vector<steammock::Json> read_transcript(const std::string& path, bool& ok) {
+std::vector<steammock::Json> read_transcript(const std::string& path, bool& ok)
+{
     std::vector<steammock::Json> records;
     std::string text;
     ok = read_file(path, text);
-    if (!ok) {
+    if (!ok)
+    {
         return records;
     }
     std::size_t position = 0;
-    while (position <= text.size()) {
+    while (position <= text.size())
+    {
         std::size_t end = text.find('\n', position);
-        if (end == std::string::npos) {
+        if (end == std::string::npos)
+        {
             end = text.size();
         }
         const std::string line = text.substr(position, end - position);
         position = end + 1;
-        if (trimmed(line).empty()) {
+        if (trimmed(line).empty())
+        {
             continue;
         }
         steammock::Json record;
-        if (steammock::parse(line, record)) {
+        if (steammock::parse(line, record))
+        {
             records.push_back(std::move(record));
         }
     }
     return records;
 }
 
-std::string text_member(const steammock::Json& record, const char* key) {
+std::string text_member(const steammock::Json& record, const char* key)
+{
     const steammock::Json* member = steammock::json_member(record, key);
     return member != nullptr && member->is_string() ? steammock::as_string(*member) : std::string();
 }
 
-bool ends_with(const std::string& text, const std::string& tail) {
+bool ends_with(const std::string& text, const std::string& tail)
+{
     return text.size() >= tail.size() &&
            text.compare(text.size() - tail.size(), tail.size(), tail) == 0;
 }
@@ -145,69 +171,91 @@ bool ends_with(const std::string& text, const std::string& tail) {
 // Pulls the bound address out of the backend's opening line. The line has to be
 // complete before it is believed: reading a half-delivered line would hand the
 // game a truncated port number and it would connect to the wrong place.
-bool extract_address(const std::string& output, std::string& host, std::string& port) {
+bool extract_address(const std::string& output, std::string& host, std::string& port)
+{
     const std::string marker = "listening on";
     const std::size_t at = output.find(marker);
-    if (at == std::string::npos) {
+    if (at == std::string::npos)
+    {
         return false;
     }
     const std::size_t start = at + marker.size();
     const std::size_t end = output.find('\n', start);
-    if (end == std::string::npos) {
+    if (end == std::string::npos)
+    {
         return false;
     }
     const std::string address = trimmed(output.substr(start, end - start));
     const std::size_t colon = address.rfind(':');
-    if (colon == std::string::npos || colon + 1 >= address.size()) {
+    if (colon == std::string::npos || colon + 1 >= address.size())
+    {
         return false;
     }
     host = address.substr(0, colon);
     port = address.substr(colon + 1);
-    for (const char ch : port) {
-        if (ch < '0' || ch > '9') {
+    for (const char ch : port)
+    {
+        if (ch < '0' || ch > '9')
+        {
             return false;
         }
     }
     return !host.empty();
 }
 
-}  // namespace
+} // namespace
 
-int run(int argc, char** argv) {
+int run(int argc, char** argv)
+{
     std::string server_path;
     std::string stub_path;
     std::string game_path;
     std::string scenario_path;
     double timeout = 30.0;
 
-    for (int index = 1; index < argc; ++index) {
+    for (int index = 1; index < argc; ++index)
+    {
         const std::string argument = argv[index];
-        const auto take = [&](std::string& target) {
-            if (index + 1 >= argc) {
+        const auto take = [&](std::string& target)
+        {
+            if (index + 1 >= argc)
+            {
                 return false;
             }
             target = argv[++index];
             return true;
         };
-        if (argument == "--server") {
+        if (argument == "--server")
+        {
             take(server_path);
-        } else if (argument == "--stub") {
+        }
+        else if (argument == "--stub")
+        {
             take(stub_path);
-        } else if (argument == "--game") {
+        }
+        else if (argument == "--game")
+        {
             take(game_path);
-        } else if (argument == "--scenario") {
+        }
+        else if (argument == "--scenario")
+        {
             take(scenario_path);
-        } else if (argument == "--timeout") {
+        }
+        else if (argument == "--timeout")
+        {
             std::string text;
-            if (take(text)) {
+            if (take(text))
+            {
                 timeout = std::atof(text.c_str());
             }
         }
     }
 
     const std::string* const required[] = {&server_path, &stub_path, &game_path, &scenario_path};
-    for (const std::string* path : required) {
-        if (path->empty() || !file_exists(*path)) {
+    for (const std::string* path : required)
+    {
+        if (path->empty() || !file_exists(*path))
+        {
             std::printf("missing input: %s\n", path->c_str());
             return 2;
         }
@@ -227,11 +275,13 @@ int run(int argc, char** argv) {
     ChildProcess backend;
     if (!backend.start(quote(server_path) + " --port 0 --scenario " + quote(scenario_path) +
                            " --transcript " + quote(transcript) + " --log-level debug",
-                       error)) {
+                       error))
+    {
         std::printf("cannot start the backend: %s\n", error.c_str());
         return 2;
     }
-    if (!backend.wait_for("listening on", timeout)) {
+    if (!backend.wait_for("listening on", timeout))
+    {
         std::printf("the backend never started:\n%s\n", backend.output().c_str());
         return 2;
     }
@@ -241,14 +291,17 @@ int run(int argc, char** argv) {
     {
         const auto deadline = std::chrono::steady_clock::now() +
                               std::chrono::milliseconds(static_cast<long long>(timeout * 1000.0));
-        while (!extract_address(backend.output(), host, port)) {
-            if (std::chrono::steady_clock::now() >= deadline) {
+        while (!extract_address(backend.output(), host, port))
+        {
+            if (std::chrono::steady_clock::now() >= deadline)
+            {
                 break;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
     }
-    if (host.empty() || port.empty()) {
+    if (host.empty() || port.empty())
+    {
         std::printf("the backend never said where it was listening:\n%s\n",
                     backend.output().c_str());
         return 2;
@@ -262,12 +315,14 @@ int run(int argc, char** argv) {
     _putenv_s("STEAMMOCK_LOG_LEVEL", "debug");
 
     ChildProcess game;
-    if (!game.start(quote(game_path), error)) {
+    if (!game.start(quote(game_path), error))
+    {
         std::printf("cannot start the fake game: %s\n", error.c_str());
         return 2;
     }
     const int game_exit = game.wait_for_exit(timeout);
-    if (game_exit != 0) {
+    if (game_exit != 0)
+    {
         std::printf("%s\n", game.output().c_str());
     }
     const std::map<std::string, std::string> values = parse_key_values(game.output());
@@ -286,7 +341,8 @@ int run(int argc, char** argv) {
     // the checks that need a flat call are skipped there, and said so - the same
     // shape as the vtable half below.
     const bool have_surface = value_of(values, "surface") != "none";
-    if (!have_surface) {
+    if (!have_surface)
+    {
         std::printf("[!] no API surface was imported (gen/steam_api_surface.json is not in this\n"
                     "    checkout), so the stub exports nothing and every check that needs a\n"
                     "    flat call is skipped.\n");
@@ -294,8 +350,10 @@ int run(int argc, char** argv) {
     // A check that only means something when there is a surface to make the call
     // through: skipped, not failed, and the note above says why.
     const auto check_flat = [have_surface](const char* what, bool ok,
-                                           const std::string& detail = std::string()) {
-        if (have_surface) {
+                                           const std::string& detail = std::string())
+    {
+        if (have_surface)
+        {
             check(what, ok, detail);
         }
     };
@@ -359,10 +417,13 @@ int run(int argc, char** argv) {
     // is the whole check then - pretending the slots were right would be the one
     // thing worse than not checking them at all.
     std::printf("\n[:] the vtable a recent SDK would use\n");
-    if (!have_vtables) {
+    if (!have_vtables)
+    {
         std::printf("[:]     skipped: no interface layouts in this build, so the stub\n");
         std::printf("[:]     handed out no objects (see gen/steam_interfaces.json)\n");
-    } else {
+    }
+    else
+    {
         check_flat("the stub hands out an object for a version string it knows",
                    value_of(values, "vtable.user") == "true");
         check_flat("and another for a second interface",
@@ -478,11 +539,13 @@ int run(int argc, char** argv) {
     std::printf("\n[:] what the backend recorded\n");
     const int forwarded = std::atoi(value_of(values, "forwarded").c_str());
     std::vector<steammock::Json> records;
-    for (int attempt = 0; attempt < 100; ++attempt) {
+    for (int attempt = 0; attempt < 100; ++attempt)
+    {
         bool ok = false;
         records = read_transcript(transcript, ok);
         // Every call the game made has to be there by the time it exits.
-        if (ok && static_cast<int>(records.size()) >= forwarded) {
+        if (ok && static_cast<int>(records.size()) >= forwarded)
+        {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -506,7 +569,8 @@ int run(int argc, char** argv) {
                records.empty() ? "no records" : text_member(records.back(), "call"));
 
     std::map<std::string, std::string> sources;
-    for (const steammock::Json& record : records) {
+    for (const steammock::Json& record : records)
+    {
         sources[text_member(record, "call")] = text_member(record, "via");
     }
     check_flat("identity was answered from the session state",
@@ -521,15 +585,20 @@ int run(int argc, char** argv) {
     // calls. Both arrive under one name, because the backend answers calls rather
     // than callers.
     int steam_id_records = 0;
-    for (const steammock::Json& record : records) {
-        if (text_member(record, "call") == "SteamAPI_ISteamUser_GetSteamID") {
+    for (const steammock::Json& record : records)
+    {
+        if (text_member(record, "call") == "SteamAPI_ISteamUser_GetSteamID")
+        {
             ++steam_id_records;
         }
     }
-    if (have_vtables) {
+    if (have_vtables)
+    {
         check_flat("a vtable call and a flat call reach the backend as the same call",
                    steam_id_records == 2, std::to_string(steam_id_records) + " recorded");
-    } else {
+    }
+    else
+    {
         std::printf("[:]     skipped: the second route is a vtable, and this build has none\n");
     }
 
@@ -537,42 +606,53 @@ int run(int argc, char** argv) {
     // it as the integer it is, so the steam id the game passed by value through
     // the vtable has to be readable in the record of the call.
     bool value_argument_recorded = false;
-    for (const steammock::Json& record : records) {
-        if (text_member(record, "call") != "SteamAPI_ISteamUserStats_GetUserAchievement") {
+    for (const steammock::Json& record : records)
+    {
+        if (text_member(record, "call") != "SteamAPI_ISteamUserStats_GetUserAchievement")
+        {
             continue;
         }
         const steammock::Json* args = steammock::json_member(record, "args");
         if (args != nullptr && steammock::json_member(*args, "steamIDUser") != nullptr &&
             steammock::as_uint64(*steammock::json_member(*args, "steamIDUser")) ==
-                76561198000000001ull) {
+                76561198000000001ull)
+        {
             value_argument_recorded = true;
         }
     }
-    if (have_vtables) {
+    if (have_vtables)
+    {
         check_flat("a value class passed by value reaches the backend", value_argument_recorded);
-    } else {
+    }
+    else
+    {
         std::printf("[:]     skipped: the call carrying it is made through a vtable\n");
     }
 
     bool out_parameter_recorded = false;
     bool stats_write_recorded = false;
     bool every_record_names_its_session = true;
-    for (const steammock::Json& record : records) {
+    for (const steammock::Json& record : records)
+    {
         const std::string call = text_member(record, "call");
         const steammock::Json* out = steammock::json_member(record, "out");
         if (ends_with(call, "GetStat") && out != nullptr &&
             steammock::json_member(*out, "pData") != nullptr &&
-            steammock::as_int64(*steammock::json_member(*out, "pData")) == 0) {
+            steammock::as_int64(*steammock::json_member(*out, "pData")) == 0)
+        {
             out_parameter_recorded = true;
         }
-        if (ends_with(call, "SetStat")) {
+        if (ends_with(call, "SetStat"))
+        {
             const steammock::Json* args = steammock::json_member(record, "args");
             if (args != nullptr && steammock::json_member(*args, "nData") != nullptr &&
-                steammock::as_int64(*steammock::json_member(*args, "nData")) == 4) {
+                steammock::as_int64(*steammock::json_member(*args, "nData")) == 4)
+            {
                 stats_write_recorded = true;
             }
         }
-        if (text_member(record, "session").empty()) {
+        if (text_member(record, "session").empty())
+        {
             every_record_names_its_session = false;
         }
     }
@@ -585,7 +665,8 @@ int run(int argc, char** argv) {
     // person asks it before starting a game at all.
     std::printf("\n[:] the command line\n");
     ChildProcess list_api;
-    if (list_api.start(quote(server_path) + " --list-api", error)) {
+    if (list_api.start(quote(server_path) + " --list-api", error))
+    {
         const int exit = list_api.wait_for_exit(timeout);
         const std::string text = list_api.output();
         check("--list-api exits cleanly", exit == 0, "exit " + std::to_string(exit));
@@ -597,13 +678,16 @@ int run(int argc, char** argv) {
         check_flat("--list-api prints a call", text.find("SteamAPI_Init()") != std::string::npos);
         check_flat("--list-api marks an out parameter",
                    text.find("int32* pData") != std::string::npos);
-    } else {
+    }
+    else
+    {
         check_flat("--list-api can be started", false, error);
     }
 
     ChildProcess show_profiles;
     if (show_profiles.start(
-            quote(server_path) + " --show-profiles --scenario " + quote(scenario_path), error)) {
+            quote(server_path) + " --show-profiles --scenario " + quote(scenario_path), error))
+    {
         const int exit = show_profiles.wait_for_exit(timeout);
         const std::string text = show_profiles.output();
         check("--show-profiles exits cleanly", exit == 0, "exit " + std::to_string(exit));
@@ -611,7 +695,9 @@ int run(int argc, char** argv) {
               text.find("profile 'second_game'") != std::string::npos);
         check("--show-profiles prints a match rule",
               text.find("exe_contains") != std::string::npos);
-    } else {
+    }
+    else
+    {
         check("--show-profiles can be started", false, error);
     }
 
@@ -619,30 +705,39 @@ int run(int argc, char** argv) {
     // silence: a value attached to a flag that takes none, both informational modes at once,
     // and an option whose value is actually the next option.
     ChildProcess attached_value;
-    if (attached_value.start(quote(server_path) + " --list-api=yes", error)) {
+    if (attached_value.start(quote(server_path) + " --list-api=yes", error))
+    {
         const int exit = attached_value.wait_for_exit(timeout);
         check("a flag that takes no value refuses one", exit != 0, "exit " + std::to_string(exit));
-    } else {
+    }
+    else
+    {
         check("the attached-value run can be started", false, error);
     }
 
     ChildProcess both_modes;
-    if (both_modes.start(quote(server_path) + " --list-api --show-profiles", error)) {
+    if (both_modes.start(quote(server_path) + " --list-api --show-profiles", error))
+    {
         const int exit = both_modes.wait_for_exit(timeout);
         const std::string text = both_modes.output();
         check("both informational modes at once is refused", exit != 0,
               "exit " + std::to_string(exit));
         check("  and it says which two", text.find("cannot both") != std::string::npos);
-    } else {
+    }
+    else
+    {
         check("the both-modes run can be started", false, error);
     }
 
     ChildProcess option_as_value;
-    if (option_as_value.start(quote(server_path) + " --host --port 50990", error)) {
+    if (option_as_value.start(quote(server_path) + " --host --port 50990", error))
+    {
         const int exit = option_as_value.wait_for_exit(timeout);
         check("an option cannot be another option's value", exit != 0,
               "exit " + std::to_string(exit));
-    } else {
+    }
+    else
+    {
         check("the option-as-value run can be started", false, error);
     }
 
@@ -660,12 +755,15 @@ int run(int argc, char** argv) {
     // `Deaths` before it writes it, and the scenario it is matched to says 0, so a second
     // run that reads 4 answers the whole question with a value that run was handed before
     // its game had written anything. The achievement is the same question asked twice.
-    if (!have_surface) {
+    if (!have_surface)
+    {
         std::printf("[!] no API surface was imported (gen/steam_api_surface.json is not in this\n"
                     "    checkout), so the two state-file runs are skipped: the fake game\n"
                     "    resolves every export it uses, and a stub that exports nothing gives a\n"
                     "    state file nothing to keep.\n");
-    } else {
+    }
+    else
+    {
         std::printf("\n[:] a state file, over two runs\n");
         const std::string state =
             std::string(temp_directory) + "steammock-e2e-" +
@@ -679,15 +777,18 @@ int run(int argc, char** argv) {
         // to survive - a run closed from a task manager or a window manager leaves the
         // write-ahead log behind, and the next open has to recover from it. That is why the
         // side files are deleted below rather than only the database.
-        const auto run_over_the_state_file = [&]() -> std::map<std::string, std::string> {
+        const auto run_over_the_state_file = [&]() -> std::map<std::string, std::string>
+        {
             ChildProcess server;
             if (!server.start(quote(server_path) + " --port 0 --scenario " + quote(scenario_path) +
                                   " --state " + quote(state),
-                              error)) {
+                              error))
+            {
                 std::printf("cannot start a backend over the state file: %s\n", error.c_str());
                 return {};
             }
-            if (!server.wait_for("listening on", timeout)) {
+            if (!server.wait_for("listening on", timeout))
+            {
                 std::printf("a backend over the state file never started:\n%s\n",
                             server.output().c_str());
                 return {};
@@ -698,10 +799,12 @@ int run(int argc, char** argv) {
                 std::chrono::steady_clock::now() +
                 std::chrono::milliseconds(static_cast<long long>(timeout * 1000.0));
             while (!extract_address(server.output(), state_host, state_port) &&
-                   std::chrono::steady_clock::now() < deadline) {
+                   std::chrono::steady_clock::now() < deadline)
+            {
                 std::this_thread::sleep_for(std::chrono::milliseconds(20));
             }
-            if (state_host.empty() || state_port.empty()) {
+            if (state_host.empty() || state_port.empty())
+            {
                 server.terminate();
                 std::printf("a backend over the state file never said where it was listening\n");
                 return {};
@@ -710,7 +813,8 @@ int run(int argc, char** argv) {
             _putenv_s("STEAMMOCK_PORT", state_port.c_str());
 
             ChildProcess game_again;
-            if (!game_again.start(quote(game_path), error)) {
+            if (!game_again.start(quote(game_path), error))
+            {
                 server.terminate();
                 std::printf("cannot start the fake game against the state file: %s\n",
                             error.c_str());
@@ -744,9 +848,12 @@ int run(int argc, char** argv) {
     DeleteFileA(transcript.c_str());
 
     std::printf("\n");
-    if (g_failures == 0) {
+    if (g_failures == 0)
+    {
         std::printf("[+] all checks passed\n");
-    } else {
+    }
+    else
+    {
         std::printf("[-] %d check(s) FAILED\n", g_failures);
     }
     return g_failures == 0 ? 0 : 1;
@@ -755,13 +862,19 @@ int run(int argc, char** argv) {
 // An exception escaping `main` terminates the process with no message at all, and the
 // only realistic source in a test is a failed allocation. Report it the way a failing
 // check is reported instead, so ctest's output says what happened.
-int main(int argc, char** argv) {
-    try {
+int main(int argc, char** argv)
+{
+    try
+    {
         return run(argc, argv);
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception& error)
+    {
         std::printf("\n[-] the test itself threw: %s\n", error.what());
         return 1;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::printf("\n[-] the test itself threw something that is not a std::exception\n");
         return 1;
     }

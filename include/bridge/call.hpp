@@ -16,13 +16,15 @@
 //  per-call code in the generated file means the stub carries no runtime
 //  description of the API and pays nothing per call for one.
 
-namespace steammock {
+namespace steammock
+{
 
 inline Json arg_bool(bool value) noexcept { return Json(value); }
 
 inline Json arg_int(std::int64_t value) noexcept { return Json(value); }
 
-inline Json arg_uint(std::uint64_t value) noexcept {
+inline Json arg_uint(std::uint64_t value) noexcept
+{
     // Not through an `int64`: the top bit is part of the number, and the wire has an
     // unsigned integer for exactly this. It used to be a cast, which made
     // `2^64-1` and `-1` the same spelling on the wire, and `reply_uint` reads the
@@ -32,7 +34,8 @@ inline Json arg_uint(std::uint64_t value) noexcept {
 
 inline Json arg_real(double value) noexcept { return Json(value); }
 
-inline Json arg_pointer(const void* value) noexcept {
+inline Json arg_pointer(const void* value) noexcept
+{
     // An address is an unsigned integer, and this is the spelling `reply_pointer`
     // asks for back.
     return Json(static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(value)));
@@ -40,22 +43,26 @@ inline Json arg_pointer(const void* value) noexcept {
 
 inline Json arg_cstring(const char* value) { return value != nullptr ? Json(value) : Json(); }
 
-inline bool reply_bool(const Json& reply) noexcept {
+inline bool reply_bool(const Json& reply) noexcept
+{
     const Json* ret = json_member(reply, "ret");
     return ret != nullptr && as_bool(*ret);
 }
 
-inline std::int64_t reply_int(const Json& reply) noexcept {
+inline std::int64_t reply_int(const Json& reply) noexcept
+{
     const Json* ret = json_member(reply, "ret");
     return ret != nullptr ? as_int64(*ret) : 0;
 }
 
-inline std::uint64_t reply_uint(const Json& reply) noexcept {
+inline std::uint64_t reply_uint(const Json& reply) noexcept
+{
     const Json* ret = json_member(reply, "ret");
     return ret != nullptr ? as_uint64(*ret) : 0;
 }
 
-inline double reply_real(const Json& reply) noexcept {
+inline double reply_real(const Json& reply) noexcept
+{
     const Json* ret = json_member(reply, "ret");
     return ret != nullptr ? as_double(*ret) : 0.0;
 }
@@ -63,9 +70,11 @@ inline double reply_real(const Json& reply) noexcept {
 // An interface pointer the backend handed back, as an opaque token that the game
 // will pass straight into other calls - and that those calls send back to the
 // backend unchanged.
-inline void* reply_pointer(const Json& reply) noexcept {
+inline void* reply_pointer(const Json& reply) noexcept
+{
     const Json* ret = json_member(reply, "ret");
-    if (ret == nullptr) {
+    if (ret == nullptr)
+    {
         return nullptr;
     }
     return reinterpret_cast<void*>(static_cast<std::uintptr_t>(as_uint64(*ret)));
@@ -77,9 +86,11 @@ inline void* reply_pointer(const Json& reply) noexcept {
 // covers the way these are used in practice (copied, compared or printed
 // immediately); a game that keeps the pointer for later would be reading its own
 // next call's text, so this is documented rather than hidden.
-inline const char* reply_cstring(const Json& reply, const char* fallback = "") {
+inline const char* reply_cstring(const Json& reply, const char* fallback = "")
+{
     const Json* ret = json_member(reply, "ret");
-    if (ret == nullptr || !ret->is_string()) {
+    if (ret == nullptr || !ret->is_string())
+    {
         return fallback;
     }
     static thread_local std::string buffer;
@@ -90,9 +101,10 @@ inline const char* reply_cstring(const Json& reply, const char* fallback = "") {
 // Returns nullptr when the backend did not send this out-parameter, in which
 // case the value the game passed in is left exactly as it was - that is what
 // makes "answer only the calls you care about" work for out-parameters too.
-inline const Json* reply_out(const Json& reply, const char* name) noexcept {
+inline const Json* reply_out(const Json& reply, const char* name) noexcept
+{
     const Json* out = json_member(reply, "out");
     return out != nullptr ? json_member(*out, name) : nullptr;
 }
 
-}  // namespace steammock
+} // namespace steammock

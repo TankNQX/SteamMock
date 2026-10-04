@@ -9,7 +9,8 @@
 #include "bridge/json_read.hpp"
 #include "bridge/session.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  The lobbies this run has, and who is in them.
@@ -26,7 +27,8 @@ namespace steammock {
 //  get their say in that order: a scenario that wants to lie about a lobby goes on
 //  winning, because the world only speaks about rooms that exist.
 
-struct LobbyMember {
+struct LobbyMember
+{
     std::uint64_t steam_id = 0;
     std::string persona;
     std::vector<std::pair<std::string, std::string>> data;
@@ -35,7 +37,8 @@ struct LobbyMember {
     void set(std::string key, std::string value);
 };
 
-struct Lobby {
+struct Lobby
+{
     std::uint64_t id = 0;
     std::uint64_t owner = 0;
     std::int64_t max_members = 4;
@@ -59,7 +62,8 @@ struct Lobby {
 
 // What one game sent another over Steam's own network: the bytes, the channel they belong
 // to, and who sent them - which is what a reader is told beside the payload.
-struct P2PPacket {
+struct P2PPacket
+{
     std::uint64_t remote = 0;
     std::int32_t channel = 0;
     std::string bytes;
@@ -78,8 +82,9 @@ struct P2PPacket {
 // A notification names a Steam id rather than a session because only the server
 // knows which connection belongs to which identity, and only the server knows who
 // is still connected to hear it.
-class LobbyWorld {
-public:
+class LobbyWorld
+{
+  public:
     // A lobby id the way Steam hands them out: the lobby type and universe in the
     // top bits, so a game is passed something that looks like a CSteamID rather
     // than a small counter it might mistake for an index.
@@ -133,7 +138,7 @@ public:
     bool answer(const Session& session, const std::string& call, const Json& args, Answer& out,
                 std::vector<std::pair<std::uint64_t, Json>>& notifications);
 
-private:
+  private:
     Lobby* find_lobby(std::uint64_t id) noexcept;
     const Lobby* find_lobby(std::uint64_t id) const noexcept;
     const LobbyMember* find_member_anywhere(std::uint64_t steam_id) const noexcept;
@@ -168,10 +173,11 @@ private:
     // which queue, and where in it. Computed in one place so that a read and the drop
     // that follows it cannot choose different packets - which is what erasing by
     // address used to stand for, and what a queue that reallocated would have broken.
-    struct PacketPosition {
+    struct PacketPosition
+    {
         bool found = false;
-        std::size_t queue = 0;  // which entry of `_packets`
-        std::size_t index = 0;  // where in that entry's own vector
+        std::size_t queue = 0; // which entry of `_packets`
+        std::size_t index = 0; // where in that entry's own vector
     };
     PacketPosition locate_packet(std::uint64_t user, std::int32_t hSteamUser,
                                  std::int32_t channel) const noexcept;
@@ -234,4 +240,4 @@ private:
     std::vector<std::pair<std::uint64_t, std::uint64_t>> _contacts;
 };
 
-}  // namespace steammock
+} // namespace steammock

@@ -9,7 +9,8 @@
 
 #include "bridge/json_read.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // Defined in bridge/store.hpp, which includes this header: the store speaks about a
 // Profile, so it cannot be included from here without a cycle. Nothing below needs more
@@ -31,7 +32,8 @@ class Store;
 //    stay "no opinion" unless a scenario scripts them.
 //  * answer anything about ownership, entitlement or licensing.
 
-struct Achievement {
+struct Achievement
+{
     std::string name;
     bool achieved = false;
 };
@@ -43,7 +45,8 @@ struct Achievement {
 // spelling an id out, which is how a run says that two of its own identities are friends.
 // The Dispatcher fills the id and the name in from that profile once every profile has been
 // read, so a friends list written as names cannot drift from the identities it names.
-struct Friend {
+struct Friend
+{
     std::uint64_t steam_id = 0;
     std::string persona_name;
     std::string profile;
@@ -54,8 +57,9 @@ struct Friend {
 // The stat and achievement lists are ordered rather than hashed: a scenario's
 // order is kept, which is what makes the backend's view of a game match the file
 // a person wrote. Counts here are a handful, so a lookup is a short scan.
-class Profile {
-public:
+class Profile
+{
+  public:
     std::string name = "default";
     std::int64_t app_id = 0;
     std::uint64_t steam_id = 76561197960287930ull;
@@ -104,7 +108,8 @@ public:
 // came from, and "none" means nobody had an opinion and the stub used its own
 // default. A transcript records it, so a stale scenario is visible rather than
 // mysterious.
-struct Answer {
+struct Answer
+{
     bool answered = false;
     Json ret;
     Json out;
@@ -116,8 +121,9 @@ struct Answer {
     std::string via = "none";
 };
 
-class Session {
-public:
+class Session
+{
+  public:
     // `store`, when there is one, is where what this session writes is also kept. The
     // profile a session holds is what the scenario and the store agreed on when it
     // connected, so a stat set or an achievement unlocked here has to be written back or
@@ -139,7 +145,8 @@ public:
 
     // What this session has changed, as opposed to what it was told: a game that
     // writes a stat or unlocks an achievement is worth seeing in a transcript.
-    const std::vector<std::pair<std::string, std::int64_t>>& stats_written() const noexcept {
+    const std::vector<std::pair<std::string, std::int64_t>>& stats_written() const noexcept
+    {
         return _stats_written;
     }
     const std::vector<std::string>& achievements_set() const noexcept { return _achievements_set; }
@@ -169,7 +176,7 @@ public:
     // Answers one call, or reports that this session has no opinion.
     Answer handle(const std::string& name, const Json& args);
 
-private:
+  private:
     std::string _id;
     std::int64_t _pid = 0;
     std::string _exe;
@@ -190,4 +197,4 @@ private:
 // exists to catch.
 std::vector<std::string> state_handled_calls();
 
-}  // namespace steammock
+} // namespace steammock

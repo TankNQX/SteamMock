@@ -7,7 +7,8 @@
 #include <string>
 #include <string_view>
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  The JSON the bridge speaks, and how this harness reads a field out of it
@@ -42,8 +43,10 @@ inline constexpr int kMaxJsonDepth = 16;
 // One lookup, not two: `contains` followed by `at` is two scans of the ordered map
 // this harness reads with, and every argument of every call is read this way - which
 // made the most-executed function in the backend the one that walked a list twice.
-inline const Json* json_member(const Json& object, std::string_view key) noexcept {
-    if (!object.is_object()) {
+inline const Json* json_member(const Json& object, std::string_view key) noexcept
+{
+    if (!object.is_object())
+    {
         return nullptr;
     }
     const std::string name(key);
@@ -51,74 +54,93 @@ inline const Json* json_member(const Json& object, std::string_view key) noexcep
     return found == object.end() ? nullptr : &*found;
 }
 
-inline std::int64_t as_int64(const Json& value, std::int64_t fallback = 0) noexcept {
-    if (value.is_number_integer()) {
+inline std::int64_t as_int64(const Json& value, std::int64_t fallback = 0) noexcept
+{
+    if (value.is_number_integer())
+    {
         return value.get<std::int64_t>();
     }
-    if (value.is_number_unsigned()) {
+    if (value.is_number_unsigned())
+    {
         return static_cast<std::int64_t>(value.get<std::uint64_t>());
     }
-    if (value.is_number_float()) {
+    if (value.is_number_float())
+    {
         // A double that is not a number, or one no int64 can hold, is not a number
         // this wire carries. The cast used to be undefined for both - and a reply
         // is the one place a value arrives from a program this does not control.
         const double number = value.get<double>();
         if (!std::isfinite(number) || number >= 9223372036854775808.0 ||
-            number < -9223372036854775808.0) {
+            number < -9223372036854775808.0)
+        {
             return fallback;
         }
         return static_cast<std::int64_t>(number);
     }
     // A game that sends 1 where a boolean belongs is a game being readable rather
     // than wrong, which is why this is not a type error.
-    if (value.is_boolean()) {
+    if (value.is_boolean())
+    {
         return value.get<bool>() ? 1 : 0;
     }
     return fallback;
 }
 
-inline std::uint64_t as_uint64(const Json& value, std::uint64_t fallback = 0) noexcept {
-    if (value.is_number_unsigned()) {
+inline std::uint64_t as_uint64(const Json& value, std::uint64_t fallback = 0) noexcept
+{
+    if (value.is_number_unsigned())
+    {
         return value.get<std::uint64_t>();
     }
-    if (value.is_number_integer()) {
+    if (value.is_number_integer())
+    {
         const std::int64_t number = value.get<std::int64_t>();
         return number < 0 ? fallback : static_cast<std::uint64_t>(number);
     }
-    if (value.is_number_float()) {
+    if (value.is_number_float())
+    {
         // And the unsigned half of the same rule: no negative, and nothing past
         // what a uint64 holds. `static_cast` of either is undefined.
         const double number = value.get<double>();
-        if (!std::isfinite(number) || number < 0.0 || number >= 18446744073709551616.0) {
+        if (!std::isfinite(number) || number < 0.0 || number >= 18446744073709551616.0)
+        {
             return fallback;
         }
         return static_cast<std::uint64_t>(number);
     }
-    if (value.is_boolean()) {
+    if (value.is_boolean())
+    {
         return value.get<bool>() ? 1u : 0u;
     }
     return fallback;
 }
 
-inline double as_double(const Json& value, double fallback = 0.0) noexcept {
-    if (value.is_number()) {
+inline double as_double(const Json& value, double fallback = 0.0) noexcept
+{
+    if (value.is_number())
+    {
         return value.get<double>();
     }
     return fallback;
 }
 
-inline bool as_bool(const Json& value, bool fallback = false) noexcept {
-    if (value.is_boolean()) {
+inline bool as_bool(const Json& value, bool fallback = false) noexcept
+{
+    if (value.is_boolean())
+    {
         return value.get<bool>();
     }
-    if (value.is_number()) {
+    if (value.is_number())
+    {
         return value.get<double>() != 0.0;
     }
     return fallback;
 }
 
-inline std::string as_string(const Json& value, std::string fallback = std::string()) {
-    if (value.is_string()) {
+inline std::string as_string(const Json& value, std::string fallback = std::string())
+{
+    if (value.is_string())
+    {
         return value.get<std::string>();
     }
     return fallback;
@@ -129,37 +151,50 @@ inline std::string as_string(const Json& value, std::string fallback = std::stri
 // want from a field a game sent, and it is the same rule in one place rather than once
 // per reader: bridge/session.hpp's own reader coerces instead, deliberately, for the
 // hand-written values in a scenario.
-inline std::string as_string_member(const Json& object, std::string_view key) {
+inline std::string as_string_member(const Json& object, std::string_view key)
+{
     const Json* value = json_member(object, key);
     return value != nullptr && value->is_string() ? as_string(*value) : std::string();
 }
 
 // Strict, and bounded: trailing text, an unterminated string and a bad escape are
 // all failures, and so is nesting past kMaxJsonDepth.
-inline bool parse(std::string_view text, Json& out) {
+inline bool parse(std::string_view text, Json& out)
+{
     // The depth is checked here because it is the one thing nlohmann does not bound:
     // its parser recurses as deep as the text goes, and a peer that sends a hundred
     // nested arrays is a stack overflow rather than a rejected message.
     int depth = 0;
     bool in_string = false;
-    for (std::size_t index = 0; index < text.size(); ++index) {
+    for (std::size_t index = 0; index < text.size(); ++index)
+    {
         const char ch = text[index];
-        if (in_string) {
-            if (ch == '\\') {
+        if (in_string)
+        {
+            if (ch == '\\')
+            {
                 ++index;
-            } else if (ch == '"') {
+            }
+            else if (ch == '"')
+            {
                 in_string = false;
             }
             continue;
         }
-        if (ch == '"') {
+        if (ch == '"')
+        {
             in_string = true;
-        } else if (ch == '[' || ch == '{') {
-            if (++depth > kMaxJsonDepth) {
+        }
+        else if (ch == '[' || ch == '{')
+        {
+            if (++depth > kMaxJsonDepth)
+            {
                 return false;
             }
-        } else if (ch == ']' || ch == '}') {
-            --depth;  // text that closes more than it opens is nlohmann's to reject
+        }
+        else if (ch == ']' || ch == '}')
+        {
+            --depth; // text that closes more than it opens is nlohmann's to reject
         }
     }
 
@@ -167,4 +202,4 @@ inline bool parse(std::string_view text, Json& out) {
     return !out.is_discarded();
 }
 
-}  // namespace steammock
+} // namespace steammock

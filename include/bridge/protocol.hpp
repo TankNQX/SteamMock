@@ -5,7 +5,8 @@
 
 #include "bridge/json_read.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  The messages both ends agree on.
@@ -53,4 +54,4 @@ Json make_reply(std::int64_t seq, bool answered, const Json& ret, const Json& ou
 // matched to, so a game's log can say which debugging identity it got.
 Json make_welcome(const std::string& session_id, const std::string& profile_name);
 
-}  // namespace steammock
+} // namespace steammock

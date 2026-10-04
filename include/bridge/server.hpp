@@ -24,7 +24,8 @@
 #include "bridge/session.hpp"
 #include "bridge/store.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  The loopback server a game's stub talks to.
@@ -46,7 +47,8 @@ namespace steammock {
 //  socket, and no lock is held while a frame is read or written.
 
 // One call, as the transcript records it and as a live view shows it.
-struct CallRecord {
+struct CallRecord
+{
     std::string session;
     std::int64_t seq = 0;
     std::string call;
@@ -66,7 +68,8 @@ struct CallRecord {
 
 // What one connected game looks like from outside, without handing out a pointer
 // into the server's own state.
-struct SessionSnapshot {
+struct SessionSnapshot
+{
     std::string id;
     std::string exe;
     std::string arch;
@@ -87,20 +90,22 @@ using LogFn = std::function<void(LogLevel, const std::string&)>;
 // can put its own lines in the same shape as the server's.
 void stderr_log_sink(LogLevel level, const std::string& message);
 
-struct ServerOptions {
+struct ServerOptions
+{
     std::string host = kDefaultHost;
-    std::uint16_t port = kDefaultPort;  // 0 lets the operating system pick one
-    std::string transcript;             // empty keeps no transcript
+    std::uint16_t port = kDefaultPort; // 0 lets the operating system pick one
+    std::string transcript;            // empty keeps no transcript
     // Where the state a game writes is kept between runs. Empty - which is what a run
     // with no `--state` passes, and the default - keeps nothing, and is the harness
     // exactly as it was before there was a store.
     std::string state;
     LogLevel log_level = LogLevel::info;
-    LogFn log;  // empty uses timestamped lines on stderr
+    LogFn log; // empty uses timestamped lines on stderr
 };
 
-class Server {
-public:
+class Server
+{
+  public:
     explicit Server(Dispatcher dispatcher, ServerOptions options = ServerOptions{});
     ~Server();
 
@@ -144,7 +149,7 @@ public:
     std::size_t call_count() const;
     std::size_t unanswered_count() const;
 
-private:
+  private:
     void log(LogLevel level, const std::string& message) const;
     void accept_loop(std::uintptr_t listener);
     // One connection, with everything it can throw caught and its socket closed exactly
@@ -242,4 +247,4 @@ private:
     bool _transcript_failed = false;
 };
 
-}  // namespace steammock
+} // namespace steammock

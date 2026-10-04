@@ -7,7 +7,8 @@
 
 #include "bridge/json_read.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  gen/steam_interfaces.json - the interface layouts the stub hands out.
@@ -28,25 +29,27 @@ namespace steammock {
 //  and the long version is a method, the type it returns, its parameters, and an
 //  object of notes for the rare slot that needs one.
 
-struct InterfaceParam {
+struct InterfaceParam
+{
     std::string name;
-    std::string kind;  // the wire kind this argument travels as
-    std::string decl;  // for value and struct kinds, the type it names
-    std::string cpp;   // the declaration this resolves to, pointer included
+    std::string kind; // the wire kind this argument travels as
+    std::string decl; // for value and struct kinds, the type it names
+    std::string cpp;  // the declaration this resolves to, pointer included
     bool out = false;
-    bool opaque = false;  // a buffer the wire can report but not carry
+    bool opaque = false; // a buffer the wire can report but not carry
 
     // For a byte buffer - a kind the wire carries rather than reports - the parameter
     // that says how long it is, which is the second half of what a buffer needs.
     std::string length;
 };
 
-struct InterfaceSlot {
+struct InterfaceSlot
+{
     std::string method;
-    std::string call;  // the name the call travels under on the wire
+    std::string call; // the name the call travels under on the wire
     std::string returns;
     std::string returns_decl;
-    std::string returns_cpp;  // "void", or the declaration the return resolves to
+    std::string returns_cpp; // "void", or the declaration the return resolves to
     std::vector<InterfaceParam> params;
     bool destructor = false;
 
@@ -54,19 +57,21 @@ struct InterfaceSlot {
     // writes a declaration from either of them: they say what the wire cannot
     // carry, which is a fact about the SDK's method rather than about the C++
     // this writes for it. They are kept because the file is the record.
-    bool private_api = false;            // STEAM_PRIVATE_API: owns a slot, has no flat name
-    bool returns_unmarshalable = false;  // the wire cannot carry what is returned
+    bool private_api = false;           // STEAM_PRIVATE_API: owns a slot, has no flat name
+    bool returns_unmarshalable = false; // the wire cannot carry what is returned
 };
 
-struct InterfaceVersion {
-    std::string name;     // the interface's class name, for reporting
-    std::string version;  // the string a game asks CreateInterface for
+struct InterfaceVersion
+{
+    std::string name;    // the interface's class name, for reporting
+    std::string version; // the string a game asks CreateInterface for
     std::vector<InterfaceSlot> slots;
 };
 
 // A structure a declaration needs: the members are what its ABI depends on, and
 // the size is what the layouts were imported with. Nothing reads the bytes.
-struct InterfaceStructure {
+struct InterfaceStructure
+{
     std::string name;
     std::vector<std::pair<std::string, std::string>> members;
     int size = 0;
@@ -87,15 +92,17 @@ using InterfaceEvent = InterfaceStructure;
 
 // A class passed and returned by value - CSteamID, CGameID - which the wire
 // carries as the single integer it is.
-struct InterfaceValueType {
+struct InterfaceValueType
+{
     std::string name;
     std::string wire;
     std::string member;
     int size = 0;
 };
 
-class Interfaces {
-public:
+class Interfaces
+{
+  public:
     // Parses and validates. `error` describes the first problem found, and a
     // kind or a declaration this cannot write is one of them: the generator
     // refusing is better than a compile error in a generated file.
@@ -107,7 +114,7 @@ public:
     const std::vector<InterfaceEvent>& events() const noexcept { return _events; }
     const std::vector<InterfaceValueType>& value_types() const noexcept { return _value_types; }
 
-private:
+  private:
     std::vector<InterfaceVersion> _versions;
     std::vector<InterfaceStructure> _structures;
     std::vector<InterfaceEvent> _events;
@@ -116,4 +123,4 @@ private:
 
 std::string render_api_interfaces(const Interfaces& interfaces);
 
-}  // namespace steammock
+} // namespace steammock

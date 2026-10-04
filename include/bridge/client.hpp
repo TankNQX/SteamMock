@@ -12,7 +12,8 @@
 #include "bridge/json_read.hpp"
 #include "bridge/transport.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  The process-wide bridge client behind every exported stub.
@@ -30,8 +31,9 @@ namespace steammock {
 //  handled" and the stub falls back to its local default - the same values a
 //  game sees when Steam is not running. Nothing here ever throws: an exception
 //  must not cross an exported boundary into the game.
-class Client {
-public:
+class Client
+{
+  public:
     static Client& instance() noexcept;
 
     // Sends one call. True means the backend answered it, and `reply` holds the
@@ -60,13 +62,14 @@ public:
     // them one at a time could see a call counted before the "left to the stub's
     // defaults" count it belongs to, and report a total that never existed. They are
     // written under `_mutex` by call(), so they are read under it here.
-    struct Counts {
+    struct Counts
+    {
         unsigned calls = 0;
         unsigned unhandled = 0;
     };
     Counts counts() const noexcept;
 
-private:
+  private:
     Client() noexcept;
     ~Client();
 
@@ -118,4 +121,4 @@ private:
 // The one call a generated trampoline makes.
 bool invoke(std::string_view name, const Json& args, Json& reply) noexcept;
 
-}  // namespace steammock
+} // namespace steammock

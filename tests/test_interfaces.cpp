@@ -20,20 +20,24 @@
 #include "bridge/interfaces.hpp"
 #include "bridge/json_read.hpp"
 
-namespace {
+namespace
+{
 
 int g_failures = 0;
 
-void check(const char* what, bool ok) {
+void check(const char* what, bool ok)
+{
     std::printf("  [%s] %s\n", ok ? "ok  " : "FAIL", what);
-    if (!ok) {
+    if (!ok)
+    {
         ++g_failures;
     }
 }
 
 // One version with the slots under test, plus a value class and a structure for
 // a row to name - the two kinds of type a row can write instead of a kind.
-std::string document(const std::string& slots) {
+std::string document(const std::string& slots)
+{
     return std::string("{\"value_types\":[{\"name\":\"CGameID\",\"wire\":\"uint64\","
                        "\"member\":\"m_gameid\",\"size\":8}],"
                        "\"structures\":[{\"name\":\"Motion_t\",\"size\":40,"
@@ -43,9 +47,11 @@ std::string document(const std::string& slots) {
            slots + "]}]}";
 }
 
-bool reads(const std::string& text, steammock::Interfaces& out, std::string& error) {
+bool reads(const std::string& text, steammock::Interfaces& out, std::string& error)
+{
     steammock::Json parsed;
-    if (!steammock::parse(text, parsed)) {
+    if (!steammock::parse(text, parsed))
+    {
         error = "the test's own JSON does not parse";
         return false;
     }
@@ -54,12 +60,15 @@ bool reads(const std::string& text, steammock::Interfaces& out, std::string& err
 
 // Whether the one version in `document(slots)` reads, and what the first slot
 // came out as.
-bool reads_slots(const std::string& slots, steammock::InterfaceSlot& first, std::string& error) {
+bool reads_slots(const std::string& slots, steammock::InterfaceSlot& first, std::string& error)
+{
     steammock::Interfaces layouts;
-    if (!reads(document(slots), layouts, error)) {
+    if (!reads(document(slots), layouts, error))
+    {
         return false;
     }
-    if (layouts.versions().empty() || layouts.versions()[0].slots.empty()) {
+    if (layouts.versions().empty() || layouts.versions()[0].slots.empty())
+    {
         error = "no version came out";
         return false;
     }
@@ -67,12 +76,14 @@ bool reads_slots(const std::string& slots, steammock::InterfaceSlot& first, std:
     return true;
 }
 
-bool refuses(const std::string& slots, std::string& error) {
+bool refuses(const std::string& slots, std::string& error)
+{
     steammock::InterfaceSlot slot;
     return !reads_slots(slots, slot, error);
 }
 
-void test_rows() {
+void test_rows()
+{
     std::printf("[:] a row\n");
 
     steammock::InterfaceSlot slot;
@@ -160,7 +171,8 @@ void test_rows() {
             slot.params[0].out && slot.params[0].length == "pcbItems");
 }
 
-void test_notes() {
+void test_notes()
+{
     std::printf("[:] the notes a row may carry\n");
 
     steammock::InterfaceSlot slot;
@@ -190,7 +202,8 @@ void test_notes() {
             slot.destructor && slot.call == "SteamAPI_ISteamHTMLSurface_Destruct");
 }
 
-void test_refusals() {
+void test_refusals()
+{
     std::printf("[:] what a row may not be\n");
 
     std::string error;
@@ -249,13 +262,15 @@ void test_refusals() {
 // with itself but not what it produced. A structure a call fills in has to come out with a way to
 // fill it - and one that is only ever reported must not, because a member write nobody reads is a
 // warning, and a warning is an error in this build.
-void test_what_is_written() {
+void test_what_is_written()
+{
     std::printf("[:] what the generator writes for a structure\n");
 
     steammock::Interfaces filled;
     std::string error;
     if (!reads(document("[\"Get\", \"bool\", [[\"pEntry\", \"Motion_t\", \"out\"]]]"), filled,
-               error)) {
+               error))
+    {
         check("the filling document reads", false);
         return;
     }
@@ -269,7 +284,8 @@ void test_what_is_written() {
           written.find("store_Motion_t(target, value);") != std::string::npos);
 
     steammock::Interfaces reported;
-    if (!reads(document("[\"Get\", \"bool\"]"), reported, error)) {
+    if (!reads(document("[\"Get\", \"bool\"]"), reported, error))
+    {
         check("the reporting document reads", false);
         return;
     }
@@ -282,14 +298,16 @@ void test_what_is_written() {
 // carry rather than the signature: the buffer and the thing that says how long it is travel
 // together, and the length is the buffer's own - sent, and written back through the caller's
 // pointer when the caller passed one.
-void test_what_is_written_for_a_buffer() {
+void test_what_is_written_for_a_buffer()
+{
     std::printf("[:] what the generator writes for a buffer\n");
 
     steammock::Interfaces text;
     std::string error;
     if (!reads(document("[\"GetName\", \"bool\", [[\"pchValue\", \"out_text\", \"punSize\"], "
                         "[\"punSize\", \"uint32\", \"out\"]]]"),
-               text, error)) {
+               text, error))
+    {
         check("the text buffer document reads", false);
         return;
     }
@@ -306,7 +324,8 @@ void test_what_is_written_for_a_buffer() {
     if (!reads(
             document("[\"GetItems\", \"bool\", [[\"pItems\", \"Motion_t\", \"out\", \"punCount\"], "
                      "[\"punCount\", \"uint32\", \"out\"]]]"),
-            list, error)) {
+            list, error))
+    {
         check("the list document reads", false);
         return;
     }
@@ -325,7 +344,8 @@ void test_what_is_written_for_a_buffer() {
     steammock::Interfaces by_value;
     if (!reads(document("[\"Fill\", \"void\", [[\"pchValue\", \"out_text\", \"cchValue\"], "
                         "[\"cchValue\", \"int32\"]]]"),
-               by_value, error)) {
+               by_value, error))
+    {
         check("the by-value document reads", false);
         return;
     }
@@ -335,7 +355,8 @@ void test_what_is_written_for_a_buffer() {
               values.find("BufferLength") == std::string::npos);
 }
 
-void test_document() {
+void test_document()
+{
     std::printf("[:] the document\n");
 
     steammock::Interfaces layouts;
@@ -403,7 +424,7 @@ void test_document() {
               layouts.versions()[1].slots[0].call == "SteamAPI_ISteamUtils_GetAppID");
 }
 
-}  // namespace
+} // namespace
 
 // An exception escaping `main` terminates the process with no message at all, and the only
 // realistic source in a test is a failed allocation - which the checks above can now make
@@ -411,8 +432,10 @@ void test_document() {
 // literals. Report it the way a failing check is reported instead, so ctest's output says what
 // happened. The other four test files answer this the same way; this one had nothing that could
 // throw in its own body until it did.
-int main() {
-    try {
+int main()
+{
+    try
+    {
         std::printf("[+] SteamMock interface-layout tests\n\n");
         test_rows();
         test_notes();
@@ -421,16 +444,23 @@ int main() {
         test_what_is_written_for_a_buffer();
         test_document();
 
-        if (g_failures == 0) {
+        if (g_failures == 0)
+        {
             std::printf("\n[+] all checks passed\n");
-        } else {
+        }
+        else
+        {
             std::printf("\n[-] %d check(s) FAILED\n", g_failures);
         }
         return g_failures == 0 ? 0 : 1;
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception& error)
+    {
         std::printf("\n[-] the test itself threw: %s\n", error.what());
         return 1;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::printf("\n[-] the test itself threw something that is not a std::exception\n");
         return 1;
     }

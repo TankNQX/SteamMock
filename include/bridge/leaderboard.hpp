@@ -8,7 +8,8 @@
 #include "bridge/json_read.hpp"
 #include "bridge/session.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // Defined in bridge/store.hpp, which includes this header: the store speaks about a
 // Leaderboard, so it cannot be included from here without a cycle.
@@ -36,13 +37,15 @@ class Store;
 // beside the score rather than recomputed on the way out, because a download has to
 // answer with the ranking as it was when the game asked - a row read a minute later is
 // still the row that was handed over.
-struct LeaderboardRow {
+struct LeaderboardRow
+{
     std::uint64_t steam_id = 0;
     std::int32_t score = 0;
     std::int32_t global_rank = 0;
 };
 
-struct Leaderboard {
+struct Leaderboard
+{
     std::uint64_t id = 0;
     std::string name;
     // k_ELeaderboardSortMethodAscending or Descending, and what the board's numbers
@@ -59,8 +62,9 @@ struct Leaderboard {
     std::int32_t rank_of(std::uint64_t steam_id) const noexcept;
 };
 
-class LeaderboardWorld {
-public:
+class LeaderboardWorld
+{
+  public:
     // A board handle is the game's to hand back and nothing more: Steam's own is a
     // pointer the game never looks at, so this is a counter with a shape that is not a
     // Steam id - a game that printed one of these would see it is not a player.
@@ -102,7 +106,7 @@ public:
     // it is not visible from the answer to one call.
     const std::vector<Leaderboard>& boards() const noexcept { return _boards; }
 
-private:
+  private:
     Leaderboard* find_board(std::uint64_t id) noexcept;
     Leaderboard* find_board(const std::string& name) noexcept;
 
@@ -128,4 +132,4 @@ private:
     std::uint64_t _next_entries = kFirstEntriesHandle;
 };
 
-}  // namespace steammock
+} // namespace steammock

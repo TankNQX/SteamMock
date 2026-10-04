@@ -9,7 +9,8 @@
 #include "bridge/json_read.hpp"
 #include "bridge/session.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  Turning a scenario file plus a session into an answer.
@@ -35,20 +36,22 @@ namespace steammock {
 // One rule that picks a profile for a connecting process. Rules are tried in
 // order and the first match wins; a rule can look at the executable name or the
 // process id.
-struct MatchRule {
+struct MatchRule
+{
     bool has_exe_contains = false;
     std::string exe_contains;
     bool has_exe = false;
     std::string exe;
     bool has_pid = false;
     std::int64_t pid = 0;
-    std::string profile;  // empty means "the default profile"
+    std::string profile; // empty means "the default profile"
 
     std::string describe() const;
 };
 
-class Dispatcher {
-public:
+class Dispatcher
+{
+  public:
     // A scenario with no name gives a dispatcher that knows only `default`, which
     // is what every call then falls back to. That is what the comment always said and
     // what the code did not do: `= default` left the profile list empty, and `profile_for`
@@ -95,7 +98,7 @@ public:
     // so a file that cannot be served says why at startup rather than only refusing games.
     const std::string& load_error() const noexcept { return _error; }
 
-private:
+  private:
     // `error`, when given, is filled in with what a scenario got wrong and the dispatcher is left
     // as the empty one rather than half-configured - the same refusal `profile_for` makes at
     // match time, made here instead because a friends list naming somebody is checkable at load.
@@ -109,4 +112,4 @@ private:
     std::string _error;
 };
 
-}  // namespace steammock
+} // namespace steammock

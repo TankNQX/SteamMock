@@ -2,7 +2,8 @@
 
 #include <cstddef>
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  What the stub exports, as the backend sees it.
@@ -17,13 +18,15 @@ namespace steammock {
 //  person can ask "what does this stub actually export?" and so a test can prove
 //  every call the state machine answers is really in the IDL.
 
-struct SurfaceParam {
+struct SurfaceParam
+{
     const char* name;
     const char* type;
     bool out;
 };
 
-struct SurfaceCall {
+struct SurfaceCall
+{
     const char* name;
     const char* returns;
     const SurfaceParam* params;
@@ -33,4 +36,4 @@ struct SurfaceCall {
 const char* api_surface_name() noexcept;
 const SurfaceCall* api_surface_calls(std::size_t& count) noexcept;
 
-}  // namespace steammock
+} // namespace steammock

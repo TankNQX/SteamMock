@@ -37,17 +37,20 @@
 //  They sit outside the anonymous namespace so that nothing here pretends to
 //  define a symbol it does not.
 
-struct SteamID {
+struct SteamID
+{
     std::uint64_t value;
 };
 
-struct ISteamUser019 {
+struct ISteamUser019
+{
     virtual std::int32_t GetHSteamUser();
     virtual bool BLoggedOn();
     virtual SteamID GetSteamID();
 };
 
-struct ISteamUtils009 {
+struct ISteamUtils009
+{
     virtual std::uint32_t GetSecondsSinceAppActive();
     virtual std::uint32_t GetSecondsSinceComputerActive();
     virtual std::int32_t GetConnectedUniverse();
@@ -66,7 +69,8 @@ struct ISteamUtils009 {
 // for the two GetStat overloads is the DLL's (float first) rather than the order
 // the SDK's own headers declare them in. Nothing here calls those two: they are
 // declared because the offsets of what follows depend on the count.
-struct ISteamUserStats011 {
+struct ISteamUserStats011
+{
     virtual bool RequestCurrentStats();
     virtual bool GetStat(const char* name, float* value);
     virtual bool GetStat(const char* name, std::int32_t* value);
@@ -92,7 +96,8 @@ struct ISteamUserStats011 {
 
 // One item, as a game's own headers declare it - and as the layouts size it, which is the
 // assertion below. The members are the SDK's names because a game reads them by name.
-struct SteamItemDetails_t {
+struct SteamItemDetails_t
+{
     std::uint64_t m_itemId;
     std::int32_t m_iDefinition;
     std::uint16_t m_unQuantity;
@@ -104,7 +109,8 @@ static_assert(sizeof(SteamItemDetails_t) == 16, "an item is sixteen bytes to the
 // Four of the twenty-five are called and the rest are here for their offsets: a slot the stub
 // put in the wrong place is a call answered with something else, and two of the four are near
 // the bottom, past twenty others.
-struct ISteamInventory002 {
+struct ISteamInventory002
+{
     virtual std::int32_t GetResultStatus(std::int32_t resultHandle);
     virtual bool GetResultItems(std::int32_t resultHandle, SteamItemDetails_t* pOutItemsArray,
                                 std::uint32_t* punOutItemsArraySize);
@@ -155,7 +161,8 @@ struct ISteamInventory002 {
                                                    std::uint32_t* punItemDefIDsArraySize);
 };
 
-namespace {
+namespace
+{
 using init_fn = bool (*)();
 using void_fn = void (*)();
 using bool_fn = bool (*)();
@@ -184,11 +191,11 @@ using begin_auth_fn = std::int32_t (*)(void*, void*, std::int32_t, std::uint64_t
 // dummy second parameter, which is somewhere for the ignored EDX register to land: same
 // register for `this`, same stack arguments, same callee-pops cleanup as the __thiscall the
 // stub calls through. On x64 there is one convention and nothing to say.
-#    define STEAMMOCK_TEST_CALL __fastcall
-#    define STEAMMOCK_TEST_EDX , void*
+#define STEAMMOCK_TEST_CALL __fastcall
+#define STEAMMOCK_TEST_EDX , void*
 #else
-#    define STEAMMOCK_TEST_CALL
-#    define STEAMMOCK_TEST_EDX
+#define STEAMMOCK_TEST_CALL
+#define STEAMMOCK_TEST_EDX
 #endif
 
 // A callback object as the SDK lays one out, with its vtable written out here rather than
@@ -198,12 +205,14 @@ using begin_auth_fn = std::int32_t (*)(void*, void*, std::int32_t, std::uint64_t
 // that overrides two overloads of Run gets one that is not this - which is how this test
 // first read the stub's *size* query as a callback invocation and saw both of its objects
 // called for one delivery.
-struct CountedCallback {
+struct CountedCallback
+{
     const void* const* vtable;
     int* calls;
 };
 
-void STEAMMOCK_TEST_CALL counted_run(void* self STEAMMOCK_TEST_EDX, void* /*payload*/) {
+void STEAMMOCK_TEST_CALL counted_run(void* self STEAMMOCK_TEST_EDX, void* /*payload*/)
+{
     ++(*static_cast<CountedCallback*>(self)->calls);
 }
 
@@ -232,17 +241,20 @@ constexpr std::int32_t kInventoryResultReady = 4700;
 constexpr std::int32_t kInventoryFullUpdate = 4701;
 
 // SteamInventoryResultReady_t: the handle the result belongs to, and the SDK's EResult for it.
-struct ResultReady {
+struct ResultReady
+{
     std::int32_t handle;
     std::int32_t result;
 };
 
-struct ReadyCallback {
+struct ReadyCallback
+{
     const void* const* vtable;
     ResultReady* seen;
 };
 
-void STEAMMOCK_TEST_CALL ready_run(void* self STEAMMOCK_TEST_EDX, void* payload) {
+void STEAMMOCK_TEST_CALL ready_run(void* self STEAMMOCK_TEST_EDX, void* payload)
+{
     const auto* fields = static_cast<const std::int32_t*>(payload);
     ReadyCallback* object = static_cast<ReadyCallback*>(self);
     object->seen->handle = fields[0];
@@ -255,7 +267,8 @@ void STEAMMOCK_TEST_CALL ready_run_of_a_call_result(void* STEAMMOCK_TEST_EDX, vo
 // What this object says it wants, which the stub compares against the payload's own size
 // before calling it - so a payload whose layout came out the wrong size is a payload this is
 // never handed, and the check that reads it fails rather than passing on a stale field.
-std::int32_t STEAMMOCK_TEST_CALL ready_wants(void* STEAMMOCK_TEST_EDX) {
+std::int32_t STEAMMOCK_TEST_CALL ready_wants(void* STEAMMOCK_TEST_EDX)
+{
     return static_cast<std::int32_t>(sizeof(ResultReady));
 }
 
@@ -265,9 +278,12 @@ const void* const kReadyVtable[] = {
     reinterpret_cast<const void*>(&ready_wants),
 };
 
-template <typename Fn> Fn resolve(HMODULE module, const char* name) {
+template <typename Fn>
+Fn resolve(HMODULE module, const char* name)
+{
     const FARPROC address = GetProcAddress(module, name);
-    if (address == nullptr) {
+    if (address == nullptr)
+    {
         std::printf("missing export: %s\n", name);
         std::exit(3);
     }
@@ -281,21 +297,25 @@ template <typename Fn> Fn resolve(HMODULE module, const char* name) {
     return reinterpret_cast<Fn>(reinterpret_cast<void*>(address));
 }
 
-std::string bounded(const char* text) {
+std::string bounded(const char* text)
+{
     return text != nullptr ? std::string(text) : std::string("<null>");
 }
 
-}  // namespace
+} // namespace
 
-int run() {
+int run()
+{
     const char* stub_path = std::getenv("STEAMMOCK_STUB");
-    if (stub_path == nullptr || stub_path[0] == '\0') {
+    if (stub_path == nullptr || stub_path[0] == '\0')
+    {
         std::printf("STEAMMOCK_STUB is not set\n");
         return 2;
     }
 
     HMODULE stub = LoadLibraryA(stub_path);
-    if (stub == nullptr) {
+    if (stub == nullptr)
+    {
         std::printf("cannot load the stub: error %lu\n",
                     static_cast<unsigned long>(GetLastError()));
         return 2;
@@ -306,7 +326,8 @@ int run() {
     // nothing this stand-in can check, so it says so in one line and stops - the
     // end-to-end test reads that and skips the half that needs a surface, rather
     // than this process dying on the first export it cannot find.
-    if (GetProcAddress(stub, "SteamAPI_Init") == nullptr) {
+    if (GetProcAddress(stub, "SteamAPI_Init") == nullptr)
+    {
         std::printf("surface=none\n");
         FreeLibrary(stub);
         return 0;
@@ -436,7 +457,8 @@ int run() {
     std::printf("vtable.unknown=%s\n",
                 create_interface("SteamUser999") == nullptr ? "true" : "false");
 
-    if (modern_user != nullptr) {
+    if (modern_user != nullptr)
+    {
         auto* modern_user_object = static_cast<ISteamUser019*>(modern_user);
         // Answered by the profile, exactly as the flat call is.
         std::printf("vtable.steam_id=%llu\n",
@@ -446,7 +468,8 @@ int run() {
         std::printf("vtable.logged_on=%s\n", modern_user_object->BLoggedOn() ? "true" : "false");
     }
 
-    if (modern_utils != nullptr) {
+    if (modern_utils != nullptr)
+    {
         auto* modern_utils_object = static_cast<ISteamUtils009*>(modern_utils);
         std::printf("vtable.app_id=%u\n", static_cast<unsigned>(modern_utils_object->GetAppID()));
 
@@ -460,7 +483,8 @@ int run() {
                     (width == 999 && height == 999) ? "true" : "false");
     }
 
-    if (modern_stats != nullptr) {
+    if (modern_stats != nullptr)
+    {
         auto* stats = static_cast<ISteamUserStats011*>(modern_stats);
 
         // An out-parameter of a call the backend *does* answer, through the
@@ -549,7 +573,8 @@ int run() {
     // whose length is likewise the game's own pointer.
     void* const inventory_object = create_interface("STEAMINVENTORY_INTERFACE_V002");
     std::printf("vtable.inventory=%s\n", inventory_object != nullptr ? "true" : "false");
-    if (inventory_object != nullptr) {
+    if (inventory_object != nullptr)
+    {
         auto* inventory = static_cast<ISteamInventory002*>(inventory_object);
 
         // A game registers for a payload before it asks for anything, and the id is the only
@@ -638,13 +663,19 @@ int run() {
 
 // A game does not get a message when `main` throws, and the end-to-end test reads this
 // program's output to decide what happened - so it says so rather than dying silently.
-int main() {
-    try {
+int main()
+{
+    try
+    {
         return run();
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception& error)
+    {
         std::printf("the fake game threw: %s\n", error.what());
         return 2;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::printf("the fake game threw something that is not a std::exception\n");
         return 2;
     }

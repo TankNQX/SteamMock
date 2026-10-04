@@ -20,15 +20,17 @@
 #include <cstdint>
 
 #ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
 #include "bridge/log.hpp"
 
-namespace steammock {
-namespace socket_io {
+namespace steammock
+{
+namespace socket_io
+{
 
 // Winsock's own handle type. It is a pointer-sized unsigned integer, which is why
 // the bridge carries one as a std::uintptr_t wherever it has to cross a header that
@@ -45,10 +47,13 @@ inline constexpr socket_t kInvalidSocket = INVALID_SOCKET;
 // layer never came up reported "cannot bind" - or, with a port of 0, said "listening"
 // and then never accepted anything. Once only, deliberately: a startup that failed is
 // not something the next call should try again.
-inline bool ensure_winsock_started() noexcept {
-    static const bool started = []() noexcept {
+inline bool ensure_winsock_started() noexcept
+{
+    static const bool started = []() noexcept
+    {
         WSADATA data{};
-        if (WSAStartup(MAKEWORD(2, 2), &data) != 0) {
+        if (WSAStartup(MAKEWORD(2, 2), &data) != 0)
+        {
             log_write(LogLevel::error,
                       "WSAStartup failed: no socket will work in this process, and none "
                       "will be attempted again");
@@ -61,8 +66,10 @@ inline bool ensure_winsock_started() noexcept {
 
 inline socket_t as_socket(std::uintptr_t value) noexcept { return static_cast<socket_t>(value); }
 
-inline void close_socket(socket_t handle) noexcept {
-    if (handle == kInvalidSocket) {
+inline void close_socket(socket_t handle) noexcept
+{
+    if (handle == kInvalidSocket)
+    {
         return;
     }
     (void)closesocket(handle);
@@ -76,20 +83,24 @@ inline void close_socket(socket_t handle) noexcept {
 // connection: WSAEINTR means "ask again". It used to be read as one, which drops a
 // perfectly good connection - and, on the client, is the difference between a call
 // that answered and a game that falls back to its defaults for no reason.
-inline bool send_all(socket_t handle, const char* data, std::size_t size) noexcept {
+inline bool send_all(socket_t handle, const char* data, std::size_t size) noexcept
+{
     std::size_t sent = 0;
-    while (sent < size) {
+    while (sent < size)
+    {
         const std::size_t remaining = size - sent;
         const int chunk = static_cast<int>(remaining > 0x7FFFFFFFu ? 0x7FFFFFFFu : remaining);
         const int written = ::send(handle, data + sent, chunk, 0);
-        if (written > 0) {
+        if (written > 0)
+        {
             sent += static_cast<std::size_t>(written);
             continue;
         }
-        if (written < 0 && WSAGetLastError() == WSAEINTR) {
-            continue;  // interrupted before a byte went out: the same call made again
+        if (written < 0 && WSAGetLastError() == WSAEINTR)
+        {
+            continue; // interrupted before a byte went out: the same call made again
         }
-        return false;  // a closed socket, a timeout, or a real error
+        return false; // a closed socket, a timeout, or a real error
     }
     return true;
 }
@@ -101,12 +112,14 @@ inline bool send_all(socket_t handle, const char* data, std::size_t size) noexce
 // send direction is not its to abandon - a worker that is mid-reply when the server
 // stops still gets to finish writing it. A full shutdown would fail that send instead,
 // for no gain: the socket is closed by its own thread a moment later either way.
-inline void shutdown_socket(socket_t handle) noexcept {
-    if (handle == kInvalidSocket) {
+inline void shutdown_socket(socket_t handle) noexcept
+{
+    if (handle == kInvalidSocket)
+    {
         return;
     }
     (void)::shutdown(handle, SD_RECEIVE);
 }
 
-}  // namespace socket_io
-}  // namespace steammock
+} // namespace socket_io
+} // namespace steammock

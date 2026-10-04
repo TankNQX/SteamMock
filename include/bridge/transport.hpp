@@ -5,7 +5,8 @@
 #include <string>
 #include <string_view>
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  How a call reaches the backend.
@@ -20,8 +21,9 @@ namespace steammock {
 //  interface rather than to it - so a named-pipe, shared-memory or recording
 //  transport is a different object to construct, not a change to the client.
 //  Client's constructor is the one line that picks which.
-class Transport {
-public:
+class Transport
+{
+  public:
     virtual ~Transport() = default;
 
     virtual bool connect(std::string_view host, std::uint16_t port) = 0;
@@ -37,8 +39,9 @@ public:
     virtual void set_timeout_ms(unsigned) noexcept {}
 };
 
-class TcpTransport final : public Transport {
-public:
+class TcpTransport final : public Transport
+{
+  public:
     TcpTransport() noexcept;
     ~TcpTransport() override;
 
@@ -52,7 +55,7 @@ public:
 
     void set_timeout_ms(unsigned timeout_ms) noexcept override;
 
-private:
+  private:
     // Everything that touches the handle takes this, and holds it for as long as it
     // uses it: the socket is closed and reassigned by `close`, `connect` and the
     // destructor, and a reader of `_socket` that raced one of those either closed a
@@ -69,4 +72,4 @@ private:
     unsigned _timeout_ms;
 };
 
-}  // namespace steammock
+} // namespace steammock

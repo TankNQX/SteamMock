@@ -17,7 +17,8 @@
 #include <string>
 #include <thread>
 
-namespace steammock_test {
+namespace steammock_test
+{
 
 // Quotes one argument for a Win32 command line. Without this a path under
 // "C:\Program Files" splits into two arguments and the child never starts.
@@ -25,16 +26,20 @@ namespace steammock_test {
 // The rules CommandLineToArgvW applies in reverse: a run of backslashes is only
 // doubled when it is followed by a quote, so `C:\dir\` keeps its single trailing
 // backslash and does not turn into an escaped quote.
-inline std::string quote(const std::string& argument) {
+inline std::string quote(const std::string& argument)
+{
     std::string out = "\"";
     std::size_t backslashes = 0;
-    for (const char ch : argument) {
-        if (ch == '\\') {
+    for (const char ch : argument)
+    {
+        if (ch == '\\')
+        {
             ++backslashes;
             out += ch;
             continue;
         }
-        if (ch == '"') {
+        if (ch == '"')
+        {
             out.append(backslashes + 1u, '\\');
         }
         backslashes = 0;
@@ -45,19 +50,24 @@ inline std::string quote(const std::string& argument) {
     return out;
 }
 
-class ChildProcess {
-public:
+class ChildProcess
+{
+  public:
     ChildProcess() = default;
 
-    ~ChildProcess() {
+    ~ChildProcess()
+    {
         terminate();
-        if (_reader.joinable()) {
+        if (_reader.joinable())
+        {
             _reader.join();
         }
-        if (_read != nullptr) {
+        if (_read != nullptr)
+        {
             CloseHandle(_read);
         }
-        if (_process != nullptr) {
+        if (_process != nullptr)
+        {
             CloseHandle(_process);
         }
     }
@@ -67,13 +77,15 @@ public:
 
     // Runs `command_line` with stdout and stderr captured. The child inherits
     // this process's environment, which is how the test hands over a port.
-    bool start(const std::string& command_line, std::string& error) {
+    bool start(const std::string& command_line, std::string& error)
+    {
         SECURITY_ATTRIBUTES attributes{};
         attributes.nLength = sizeof(attributes);
         attributes.bInheritHandle = TRUE;
 
         HANDLE write_end = nullptr;
-        if (!CreatePipe(&_read, &write_end, &attributes, 0)) {
+        if (!CreatePipe(&_read, &write_end, &attributes, 0))
+        {
             error = "cannot create a pipe";
             return false;
         }
@@ -93,36 +105,43 @@ public:
         const BOOL started = CreateProcessA(nullptr, mutable_command.data(), nullptr, nullptr, TRUE,
                                             CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process);
         CloseHandle(write_end);
-        if (!started) {
+        if (!started)
+        {
             error = "cannot start " + command_line;
             return false;
         }
 
         _process = process.hProcess;
         CloseHandle(process.hThread);
-        _reader = std::thread([this] { pump(); });
+        _reader = std::thread([this]
+                              { pump(); });
         return true;
     }
 
     // Everything the child has said so far.
-    std::string output() const {
+    std::string output() const
+    {
         std::scoped_lock lock(_mutex);
         return _text;
     }
 
     // True once some part of the output contains `needle`.
-    bool wait_for(const std::string& needle, double timeout_seconds) const {
+    bool wait_for(const std::string& needle, double timeout_seconds) const
+    {
         const auto deadline =
             std::chrono::steady_clock::now() +
             std::chrono::milliseconds(static_cast<long long>(timeout_seconds * 1000.0));
-        for (;;) {
+        for (;;)
+        {
             {
                 std::scoped_lock lock(_mutex);
-                if (_text.find(needle) != std::string::npos) {
+                if (_text.find(needle) != std::string::npos)
+                {
                     return true;
                 }
             }
-            if (std::chrono::steady_clock::now() >= deadline) {
+            if (std::chrono::steady_clock::now() >= deadline)
+            {
                 return false;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -130,42 +149,52 @@ public:
     }
 
     // The exit code, or -1 if the child is still running when the time is up.
-    int wait_for_exit(double timeout_seconds) {
-        if (_process == nullptr) {
+    int wait_for_exit(double timeout_seconds)
+    {
+        if (_process == nullptr)
+        {
             return -1;
         }
         const DWORD result =
             WaitForSingleObject(_process, static_cast<DWORD>(timeout_seconds * 1000.0));
-        if (result != WAIT_OBJECT_0) {
+        if (result != WAIT_OBJECT_0)
+        {
             return -1;
         }
         DWORD code = 0;
-        if (!GetExitCodeProcess(_process, &code)) {
+        if (!GetExitCodeProcess(_process, &code))
+        {
             return -1;
         }
         _exited = true;
         return static_cast<int>(code);
     }
 
-    bool running() const {
-        if (_process == nullptr || _exited) {
+    bool running() const
+    {
+        if (_process == nullptr || _exited)
+        {
             return false;
         }
         DWORD code = 0;
         return GetExitCodeProcess(_process, &code) && code == STILL_ACTIVE;
     }
 
-    void terminate() {
-        if (_process != nullptr && running()) {
+    void terminate()
+    {
+        if (_process != nullptr && running())
+        {
             TerminateProcess(_process, 1);
         }
     }
 
-private:
-    void pump() {
+  private:
+    void pump()
+    {
         char buffer[4096];
         DWORD got = 0;
-        while (ReadFile(_read, buffer, sizeof(buffer), &got, nullptr) && got > 0) {
+        while (ReadFile(_read, buffer, sizeof(buffer), &got, nullptr) && got > 0)
+        {
             std::scoped_lock lock(_mutex);
             _text.append(buffer, got);
         }
@@ -181,4 +210,4 @@ private:
     std::atomic<bool> _exited{false};
 };
 
-}  // namespace steammock_test
+} // namespace steammock_test

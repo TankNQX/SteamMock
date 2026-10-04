@@ -35,15 +35,18 @@
 #include "bridge/session.hpp"
 #include "bridge/store.hpp"
 
-namespace {
+namespace
+{
 
 using steammock::Json;
 
 int g_failures = 0;
 
-void check(const char* what, bool ok) {
+void check(const char* what, bool ok)
+{
     std::printf("  [%s] %s\n", ok ? "ok  " : "FAIL", what);
-    if (!ok) {
+    if (!ok)
+    {
         ++g_failures;
     }
 }
@@ -52,16 +55,19 @@ void check(const char* what, bool ok) {
 // that made it is done, and removed before it starts as well - a file left behind by a run
 // that failed earlier would otherwise be a run of this test starting from the wrong state,
 // which is the one thing a test of persistence cannot afford.
-class TempState {
-public:
+class TempState
+{
+  public:
     explicit TempState(const char* name)
         : _path(std::filesystem::temp_directory_path() /
-                (std::string("steammock-test-") + name + ".sqlite")) {
+                (std::string("steammock-test-") + name + ".sqlite"))
+    {
         std::error_code ignored;
         std::filesystem::remove(_path, ignored);
     }
 
-    ~TempState() {
+    ~TempState()
+    {
         std::error_code ignored;
         std::filesystem::remove(_path, ignored);
     }
@@ -71,7 +77,7 @@ public:
 
     std::string path() const { return _path.string(); }
 
-private:
+  private:
     std::filesystem::path _path;
 };
 
@@ -79,11 +85,14 @@ private:
 // state file being a database is that somebody can look at it and add to it, so the checks
 // that depend on that use the same door they would. It creates the file if it is not there,
 // exactly as `sqlite3 <path>` does.
-bool run_sql(const std::string& path, const char* sql) {
+bool run_sql(const std::string& path, const char* sql)
+{
     sqlite3* db = nullptr;
     if (sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) !=
-        SQLITE_OK) {
-        if (db != nullptr) {
+        SQLITE_OK)
+    {
+        if (db != nullptr)
+        {
             sqlite3_close_v2(db);
         }
         return false;
@@ -93,17 +102,21 @@ bool run_sql(const std::string& path, const char* sql) {
     return status == SQLITE_OK;
 }
 
-steammock::Profile profile_named(const char* name) {
+steammock::Profile profile_named(const char* name)
+{
     steammock::Profile profile;
     profile.name = name;
     return profile;
 }
 
 // One value out of the file, read the way a person at a prompt would.
-bool read_text(const std::string& path, const char* sql, std::string& out) {
+bool read_text(const std::string& path, const char* sql, std::string& out)
+{
     sqlite3* db = nullptr;
-    if (sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
-        if (db != nullptr) {
+    if (sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK)
+    {
+        if (db != nullptr)
+        {
             sqlite3_close_v2(db);
         }
         return false;
@@ -111,11 +124,13 @@ bool read_text(const std::string& path, const char* sql, std::string& out) {
     sqlite3_stmt* statement = nullptr;
     const bool ok = sqlite3_prepare_v2(db, sql, -1, &statement, nullptr) == SQLITE_OK &&
                     sqlite3_step(statement) == SQLITE_ROW;
-    if (ok) {
+    if (ok)
+    {
         const unsigned char* text = sqlite3_column_text(statement, 0);
         out = text == nullptr ? std::string() : std::string(reinterpret_cast<const char*>(text));
     }
-    if (statement != nullptr) {
+    if (statement != nullptr)
+    {
         sqlite3_finalize(statement);
     }
     sqlite3_close_v2(db);
@@ -124,14 +139,16 @@ bool read_text(const std::string& path, const char* sql, std::string& out) {
 
 // A profile as an authored scenario would leave it: one stat and one achievement that is
 // not earned yet.
-steammock::Profile seeded_hero() {
+steammock::Profile seeded_hero()
+{
     steammock::Profile profile = profile_named("hero");
     profile.stats.emplace_back("Deaths", 3);
     profile.achievements.push_back({"ACH_BOOTED", false});
     return profile;
 }
 
-steammock::Profile player(std::uint64_t steam_id) {
+steammock::Profile player(std::uint64_t steam_id)
+{
     steammock::Profile profile = profile_named("player");
     profile.steam_id = steam_id;
     return profile;
@@ -139,14 +156,16 @@ steammock::Profile player(std::uint64_t steam_id) {
 
 // --- the promises ----------------------------------------------------------
 
-void test_a_state_file_keeps_what_a_run_wrote() {
+void test_a_state_file_keeps_what_a_run_wrote()
+{
     std::printf("[:] what a run wrote, the next run reads\n");
 
     TempState file("keeps");
     std::string error;
     std::unique_ptr<steammock::Store> store = steammock::Store::open(file.path(), error);
     check("a state file is made when there is none", store != nullptr);
-    if (store == nullptr) {
+    if (store == nullptr)
+    {
         std::printf("        %s\n", error.c_str());
         return;
     }
@@ -157,12 +176,13 @@ void test_a_state_file_keeps_what_a_run_wrote() {
     store->write_stat("hero", "Deaths", 9);
     store->write_achievement("hero", "ACH_BOOTED", true);
     check("no write failed", store->error().empty());
-    store.reset();  // the run ends
+    store.reset(); // the run ends
 
     std::string second_error;
     std::unique_ptr<steammock::Store> reopened = steammock::Store::open(file.path(), second_error);
     check("the file opens again as a store", reopened != nullptr);
-    if (reopened == nullptr) {
+    if (reopened == nullptr)
+    {
         std::printf("        %s\n", second_error.c_str());
         return;
     }
@@ -178,14 +198,16 @@ void test_a_state_file_keeps_what_a_run_wrote() {
           unlocked != nullptr && unlocked->achieved);
 }
 
-void test_the_scenario_seeds_and_a_game_has_the_last_word() {
+void test_the_scenario_seeds_and_a_game_has_the_last_word()
+{
     std::printf(
         "[:] a scenario edit reaches a run the game has not written to, and not one it has\n");
 
     TempState file("precedence");
     std::string error;
     std::unique_ptr<steammock::Store> store = steammock::Store::open(file.path(), error);
-    if (store == nullptr) {
+    if (store == nullptr)
+    {
         check("a state file is made when there is none", false);
         std::printf("        %s\n", error.c_str());
         return;
@@ -202,13 +224,14 @@ void test_the_scenario_seeds_and_a_game_has_the_last_word() {
     // The author then edits both values in the scenario.
     std::string second_error;
     std::unique_ptr<steammock::Store> reopened = steammock::Store::open(file.path(), second_error);
-    if (reopened == nullptr) {
+    if (reopened == nullptr)
+    {
         check("the file opens again as a store", false);
         return;
     }
     steammock::Profile edited = profile_named("hero");
-    edited.stats.emplace_back("Deaths", 5);  // only a scenario ever wrote this one
-    edited.stats.emplace_back("Wins", 0);    // the game wrote this one
+    edited.stats.emplace_back("Deaths", 5); // only a scenario ever wrote this one
+    edited.stats.emplace_back("Wins", 0);   // the game wrote this one
     reopened->seed(edited);
 
     steammock::Profile merged = edited;
@@ -221,13 +244,15 @@ void test_the_scenario_seeds_and_a_game_has_the_last_word() {
     check("and does not reach one a game had written", merged.find_stat("Wins", wins) && wins == 7);
 }
 
-void test_nothing_is_ever_deleted() {
+void test_nothing_is_ever_deleted()
+{
     std::printf("[:] a row nobody declares any more is left alone\n");
 
     TempState file("undeclared");
     std::string error;
     std::unique_ptr<steammock::Store> store = steammock::Store::open(file.path(), error);
-    if (store == nullptr) {
+    if (store == nullptr)
+    {
         check("a state file is made when there is none", false);
         return;
     }
@@ -249,13 +274,14 @@ void test_nothing_is_ever_deleted() {
 
     std::string second_error;
     std::unique_ptr<steammock::Store> reopened = steammock::Store::open(file.path(), second_error);
-    if (reopened == nullptr) {
+    if (reopened == nullptr)
+    {
         check("the file opens again as a store", false);
         return;
     }
 
     steammock::Profile empty = profile_named("hero");
-    reopened->seed(empty);  // nothing declared any more
+    reopened->seed(empty); // nothing declared any more
     reopened->merge_into(empty);
 
     std::string named;
@@ -267,13 +293,15 @@ void test_nothing_is_ever_deleted() {
           empty.find_achievement("ACH_GONE") != nullptr);
 }
 
-void test_a_scenario_keeps_its_own_friends_but_the_store_adds() {
+void test_a_scenario_keeps_its_own_friends_but_the_store_adds()
+{
     std::printf("[:] a friend the scenario names answers to the scenario\n");
 
     TempState file("friends");
     std::string error;
     std::unique_ptr<steammock::Store> store = steammock::Store::open(file.path(), error);
-    if (store == nullptr) {
+    if (store == nullptr)
+    {
         check("a state file is made when there is none", false);
         return;
     }
@@ -289,7 +317,8 @@ void test_a_scenario_keeps_its_own_friends_but_the_store_adds() {
     // The author renames that friend, and the store still holds the old name.
     std::string second_error;
     std::unique_ptr<steammock::Store> reopened = steammock::Store::open(file.path(), second_error);
-    if (reopened == nullptr) {
+    if (reopened == nullptr)
+    {
         check("the file opens again as a store", false);
         return;
     }
@@ -309,13 +338,15 @@ void test_a_scenario_keeps_its_own_friends_but_the_store_adds() {
 
 // --- the worlds ------------------------------------------------------------
 
-void test_boards_come_back_ranked() {
+void test_boards_come_back_ranked()
+{
     std::printf("[:] a board and its rows come back, ranked again\n");
 
     TempState file("boards");
     std::string error;
     std::unique_ptr<steammock::Store> store = steammock::Store::open(file.path(), error);
-    if (store == nullptr) {
+    if (store == nullptr)
+    {
         check("a state file is made when there is none", false);
         return;
     }
@@ -343,7 +374,8 @@ void test_boards_come_back_ranked() {
 
     std::string second_error;
     std::unique_ptr<steammock::Store> reopened = steammock::Store::open(file.path(), second_error);
-    if (reopened == nullptr) {
+    if (reopened == nullptr)
+    {
         check("the file opens again as a store", false);
         return;
     }
@@ -353,7 +385,8 @@ void test_boards_come_back_ranked() {
 
     const std::vector<steammock::Leaderboard>& boards = world.boards();
     check("the board is back", boards.size() == 1u);
-    if (boards.size() != 1u) {
+    if (boards.size() != 1u)
+    {
         return;
     }
     check("with its name", boards[0].name == "Feet Traveled");
@@ -362,7 +395,8 @@ void test_boards_come_back_ranked() {
     check("on a handle this run handed out, not the one the last run did",
           boards[0].id == steammock::LeaderboardWorld::kFirstBoardId);
     check("both rows are on it", boards[0].rows.size() == 2u);
-    if (boards[0].rows.size() == 2u) {
+    if (boards[0].rows.size() == 2u)
+    {
         check("and the ascending one is ranked first",
               boards[0].rows[0].steam_id == 76561198000000003ull &&
                   boards[0].rows[0].global_rank == 1);
@@ -372,13 +406,15 @@ void test_boards_come_back_ranked() {
     }
 }
 
-void test_inventories_come_back_and_the_ids_keep_going() {
+void test_inventories_come_back_and_the_ids_keep_going()
+{
     std::printf("[:] what a player holds comes back, and the next item id clears it\n");
 
     TempState file("inventory");
     std::string error;
     std::unique_ptr<steammock::Store> store = steammock::Store::open(file.path(), error);
-    if (store == nullptr) {
+    if (store == nullptr)
+    {
         check("a state file is made when there is none", false);
         return;
     }
@@ -398,7 +434,8 @@ void test_inventories_come_back_and_the_ids_keep_going() {
 
     std::string second_error;
     std::unique_ptr<steammock::Store> reopened = steammock::Store::open(file.path(), second_error);
-    if (reopened == nullptr) {
+    if (reopened == nullptr)
+    {
         check("the file opens again as a store", false);
         return;
     }
@@ -425,7 +462,8 @@ void test_inventories_come_back_and_the_ids_keep_going() {
 
     const std::vector<steammock::ItemDetails>& after = inventory.inventory_of(kPlayer);
     check("the item the player already held was not granted twice", after.size() == 2u);
-    if (after.size() == 2u) {
+    if (after.size() == 2u)
+    {
         check("and the new one has an id the stored one had not used",
               after[1].definition == 101 && after[1].item_id == stored_item + 1u);
     }
@@ -433,14 +471,16 @@ void test_inventories_come_back_and_the_ids_keep_going() {
 
 // --- the file itself, and what a store refuses -----------------------------
 
-void test_the_file_is_kept_the_cheap_way() {
+void test_the_file_is_kept_the_cheap_way()
+{
     std::printf("[:] the file is kept so that a commit is cheap, and left as one file\n");
 
     TempState file("journal");
     std::string error;
     std::unique_ptr<steammock::Store> store = steammock::Store::open(file.path(), error);
     check("a state file is made when there is none", store != nullptr);
-    if (store == nullptr) {
+    if (store == nullptr)
+    {
         std::printf("        %s\n", error.c_str());
         return;
     }
@@ -464,7 +504,8 @@ void test_the_file_is_kept_the_cheap_way() {
           std::filesystem::exists(file.path()) && !std::filesystem::exists(file.path() + "-wal"));
 }
 
-void test_a_file_that_is_not_a_state_file_is_refused() {
+void test_a_file_that_is_not_a_state_file_is_refused()
+{
     std::printf("[:] a file that is not one of these is refused, and not written into\n");
 
     TempState file("not-a-database");
@@ -496,7 +537,8 @@ void test_a_file_that_is_not_a_state_file_is_refused() {
     std::string memory_error;
     std::unique_ptr<steammock::Store> memory = steammock::Store::open(":memory:", memory_error);
     check("a store that is not a file opens", memory != nullptr);
-    if (memory != nullptr) {
+    if (memory != nullptr)
+    {
         memory->seed(seeded_hero());
         steammock::Profile merged = profile_named("hero");
         memory->merge_into(merged);
@@ -505,9 +547,10 @@ void test_a_file_that_is_not_a_state_file_is_refused() {
     }
 }
 
-}  // namespace
+} // namespace
 
-int run() {
+int run()
+{
     std::printf("[+] SteamMock state file tests\n\n");
     test_a_state_file_keeps_what_a_run_wrote();
     test_the_scenario_seeds_and_a_game_has_the_last_word();
@@ -518,9 +561,12 @@ int run() {
     test_the_file_is_kept_the_cheap_way();
     test_a_file_that_is_not_a_state_file_is_refused();
 
-    if (g_failures == 0) {
+    if (g_failures == 0)
+    {
         std::printf("\n[+] all checks passed\n");
-    } else {
+    }
+    else
+    {
         std::printf("\n[-] %d check(s) FAILED\n", g_failures);
     }
     return g_failures == 0 ? 0 : 1;
@@ -529,13 +575,19 @@ int run() {
 // An exception escaping `main` terminates the process with no message at all, and the
 // only realistic source in a test is a failed allocation. Report it the way a failing
 // check is reported instead, so ctest's output says what happened.
-int main() {
-    try {
+int main()
+{
+    try
+    {
         return run();
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception& error)
+    {
         std::printf("\n[-] the test itself threw: %s\n", error.what());
         return 1;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::printf("\n[-] the test itself threw something that is not a std::exception\n");
         return 1;
     }

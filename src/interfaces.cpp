@@ -9,8 +9,10 @@
 #include <utility>
 #include <vector>
 
-namespace steammock {
-namespace {
+namespace steammock
+{
+namespace
+{
 
 // ---------------------------------------------------------------------------
 //  The type table.
@@ -21,7 +23,8 @@ namespace {
 //  pointer is - which is why those two are kinds of their own rather than being
 //  folded into int32 and int64.
 
-struct KindInfo {
+struct KindInfo
+{
     const char* kind;
     const char* cpp;
 };
@@ -51,9 +54,12 @@ constexpr KindInfo kKinds[] = {
     {"out_text", "char*"},
 };
 
-const KindInfo* find_kind(const std::string& name) noexcept {
-    for (const KindInfo& kind : kKinds) {
-        if (name == kind.kind) {
+const KindInfo* find_kind(const std::string& name) noexcept
+{
+    for (const KindInfo& kind : kKinds)
+    {
+        if (name == kind.kind)
+        {
             return &kind;
         }
     }
@@ -67,7 +73,8 @@ bool named_kind(const std::string& kind) noexcept { return kind == "value" || ki
 // The C++ type a member of a structure is declared as. The layouts name members
 // the way the SDK headers do, which is a scalar, or an enum - and an enum is an
 // int, which is the rule the sizes in the file follow.
-bool member_type(const std::string& declared, std::string& out, std::string& error) {
+bool member_type(const std::string& declared, std::string& out, std::string& error)
+{
     static const KindInfo kMembers[] = {
         {"bool", "bool"},
         {"int8", "std::int8_t"},
@@ -81,13 +88,16 @@ bool member_type(const std::string& declared, std::string& out, std::string& err
         {"float", "float"},
         {"double", "double"},
     };
-    for (const KindInfo& kind : kMembers) {
-        if (declared == kind.kind) {
+    for (const KindInfo& kind : kMembers)
+    {
+        if (declared == kind.kind)
+        {
             out = kind.cpp;
             return true;
         }
     }
-    if (declared.size() > 1 && declared[0] == 'E' && declared[1] >= 'A' && declared[1] <= 'Z') {
+    if (declared.size() > 1 && declared[0] == 'E' && declared[1] >= 'A' && declared[1] <= 'Z')
+    {
         out = "std::int32_t";
         return true;
     }
@@ -100,10 +110,12 @@ std::string number(int value) { return std::to_string(value); }
 
 // A version string as an identifier: they are alphanumeric today, and this keeps
 // a file that grew one punctuation mark from producing C++ that does not parse.
-std::string identified(const std::string& version) {
+std::string identified(const std::string& version)
+{
     std::string out;
     out.reserve(version.size());
-    for (const char ch : version) {
+    for (const char ch : version)
+    {
         const bool alphanumeric = (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') ||
                                   (ch >= 'A' && ch <= 'Z') || ch == '_';
         out += alphanumeric ? ch : '_';
@@ -111,29 +123,45 @@ std::string identified(const std::string& version) {
     return out;
 }
 
-std::string literal(const std::string& text) {
+std::string literal(const std::string& text)
+{
     std::string out = "\"";
-    for (const char ch : text) {
-        switch (ch) {
-            case '\\': out += "\\\\"; break;
-            case '"': out += "\\\""; break;
-            case '\n': out += "\\n"; break;
-            case '\t': out += "\\t"; break;
-            case '\r': out += "\\r"; break;
-            default:
-                // Anything else that is not printable, as an octal escape. A raw control
-                // byte inside a "..." literal is either a literal the compiler refuses or
-                // one that ends early and takes the rest of the line with it - and these
-                // strings are method, call, event and version names, which a layouts file
-                // is not supposed to be able to smuggle a newline into at all.
-                if (static_cast<unsigned char>(ch) < 0x20u ||
-                    static_cast<unsigned char>(ch) == 0x7Fu) {
-                    char escape[5] = {};
-                    std::snprintf(escape, sizeof(escape), "\\%03o", static_cast<unsigned char>(ch));
-                    out += escape;
-                } else {
-                    out += ch;
-                }
+    for (const char ch : text)
+    {
+        switch (ch)
+        {
+        case '\\':
+            out += "\\\\";
+            break;
+        case '"':
+            out += "\\\"";
+            break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        default:
+            // Anything else that is not printable, as an octal escape. A raw control
+            // byte inside a "..." literal is either a literal the compiler refuses or
+            // one that ends early and takes the rest of the line with it - and these
+            // strings are method, call, event and version names, which a layouts file
+            // is not supposed to be able to smuggle a newline into at all.
+            if (static_cast<unsigned char>(ch) < 0x20u ||
+                static_cast<unsigned char>(ch) == 0x7Fu)
+            {
+                char escape[5] = {};
+                std::snprintf(escape, sizeof(escape), "\\%03o", static_cast<unsigned char>(ch));
+                out += escape;
+            }
+            else
+            {
+                out += ch;
+            }
         }
     }
     out += '"';
@@ -143,10 +171,12 @@ std::string literal(const std::string& text) {
 // A string for a comment rather than for a literal: nothing here escapes, so a newline or
 // a control byte would end the comment and leave the rest of it as source. Version names
 // and strings go above every class the file writes.
-std::string commented(const std::string& text) {
+std::string commented(const std::string& text)
+{
     std::string out;
     out.reserve(text.size());
-    for (const char ch : text) {
+    for (const char ch : text)
+    {
         const unsigned char byte = static_cast<unsigned char>(ch);
         out += (byte < 0x20u || byte == 0x7Fu) ? ' ' : ch;
     }
@@ -162,14 +192,17 @@ std::string commented(const std::string& text) {
 // False means there was nothing to write: a member the wire cannot carry in one field, an
 // array, is left as the caller had it, and the caller is told so.
 bool push_member_write(const std::string& cpp, const std::string& member, const std::string& fields,
-                       const std::string& target, std::vector<std::string>& out) {
-    if (member.find('[') != std::string::npos) {
+                       const std::string& target, std::vector<std::string>& out)
+{
+    if (member.find('[') != std::string::npos)
+    {
         // An array of char-sized elements is text: the SDK writes a fixed string that way, and a
         // connect string is the one payload member this file has to carry. `std::int8_t` is the
         // signed spelling, so it is the `char[N]` of the two, and it is also what the layouts give
         // a `char[]` member. Every other array stays zeroed, which is what the generated comment
         // promises: the wire has no single field for a list.
-        if (cpp != "std::int8_t") {
+        if (cpp != "std::int8_t")
+        {
             return false;
         }
         const std::string key = member.substr(0, member.find('['));
@@ -181,11 +214,16 @@ bool push_member_write(const std::string& cpp, const std::string& member, const 
         return true;
     }
     std::string read = "as_int64";
-    if (cpp == "bool") {
+    if (cpp == "bool")
+    {
         read = "as_bool";
-    } else if (cpp == "float" || cpp == "double") {
+    }
+    else if (cpp == "float" || cpp == "double")
+    {
         read = "as_double";
-    } else if (cpp.compare(0, 9, "std::uint") == 0 || cpp == "std::size_t") {
+    }
+    else if (cpp.compare(0, 9, "std::uint") == 0 || cpp == "std::size_t")
+    {
         read = "as_uint64";
     }
     out.push_back("    if (const Json* field = steammock::json_member(" + fields + ", " +
@@ -203,12 +241,17 @@ bool push_member_write(const std::string& cpp, const std::string& member, const 
 // Which ones those are is the layouts' answer, not the declaration's: the layouts come from an
 // SDK, the SDK declares most of these as `void*` (see STRUCT_OUT in the importer for the ones
 // that are a single structure and not a list), and a parameter's kind is what says it.
-std::set<std::string> written_structures(const Interfaces& interfaces) {
+std::set<std::string> written_structures(const Interfaces& interfaces)
+{
     std::set<std::string> names;
-    for (const InterfaceVersion& version : interfaces.versions()) {
-        for (const InterfaceSlot& slot : version.slots) {
-            for (const InterfaceParam& param : slot.params) {
-                if (param.out && param.kind == "struct") {
+    for (const InterfaceVersion& version : interfaces.versions())
+    {
+        for (const InterfaceSlot& slot : version.slots)
+        {
+            for (const InterfaceParam& param : slot.params)
+            {
+                if (param.out && param.kind == "struct")
+                {
                     names.insert(param.decl);
                 }
             }
@@ -219,9 +262,12 @@ std::set<std::string> written_structures(const Interfaces& interfaces) {
 
 // The declaration type of a parameter, and of a return value.
 bool declared_type(const std::string& kind, const std::string& decl, std::string& out,
-                   std::string& error, const std::string& where) {
-    if (named_kind(kind)) {
-        if (decl.empty()) {
+                   std::string& error, const std::string& where)
+{
+    if (named_kind(kind))
+    {
+        if (decl.empty())
+        {
             error = where + ": a '" + kind + "' needs a 'decl' to name its type";
             return false;
         }
@@ -229,7 +275,8 @@ bool declared_type(const std::string& kind, const std::string& decl, std::string
         return true;
     }
     const KindInfo* info = find_kind(kind);
-    if (info == nullptr) {
+    if (info == nullptr)
+    {
         error = where + ": the kind '" + kind + "' has no declaration";
         return false;
     }
@@ -242,14 +289,19 @@ bool declared_type(const std::string& kind, const std::string& decl, std::string
 // allocates what came back. Those are the ones the generated call wraps: a length passed by
 // value has nowhere to write an answer, so it travels as the value it is and nothing stores it
 // (which is what `Kind<int32>::out()` being false already says).
-std::set<std::string> pointer_lengths(const InterfaceSlot& slot) {
+std::set<std::string> pointer_lengths(const InterfaceSlot& slot)
+{
     std::set<std::string> names;
-    for (const InterfaceParam& param : slot.params) {
-        if (param.length.empty()) {
+    for (const InterfaceParam& param : slot.params)
+    {
+        if (param.length.empty())
+        {
             continue;
         }
-        for (const InterfaceParam& other : slot.params) {
-            if (other.name == param.length && !other.cpp.empty() && other.cpp.back() == '*') {
+        for (const InterfaceParam& other : slot.params)
+        {
+            if (other.name == param.length && !other.cpp.empty() && other.cpp.back() == '*')
+            {
                 names.insert(param.length);
             }
         }
@@ -259,34 +311,43 @@ std::set<std::string> pointer_lengths(const InterfaceSlot& slot) {
 
 // What one parameter travels as. Most are the parameter itself; a buffer is the value and the
 // thing that says how long it is, together, and those are the wrappers in bridge/synth.hpp.
-std::string argument_of(const InterfaceParam& param, const std::set<std::string>& lengths) {
-    if (lengths.count(param.name) != 0u) {
+std::string argument_of(const InterfaceParam& param, const std::set<std::string>& lengths)
+{
+    if (lengths.count(param.name) != 0u)
+    {
         return "steammock::BufferLength{" + param.name + "}";
     }
-    if (param.kind == "bytes") {
+    if (param.kind == "bytes")
+    {
         // The buffer and how long it is travel together, which is what the layouts name the
         // length parameter for. Braces rather than a call: one of these is an aggregate, and
         // a function-style cast of an aggregate is only spelled that way from C++20 on.
         return "steammock::Bytes{" + param.name + ", " + param.length + "}";
     }
-    if (param.kind == "out_bytes") {
+    if (param.kind == "out_bytes")
+    {
         return "steammock::BytesOut{" + param.name + ", " + param.length + "}";
     }
-    if (param.kind == "out_text") {
+    if (param.kind == "out_text")
+    {
         return "steammock::TextOut{" + param.name + ", " + param.length + "}";
     }
     // A named type that is out *and* names a length is that many of them: one structure is
     // what `out` alone says, and a list of them is what the length adds.
-    if (param.out && named_kind(param.kind) && !param.length.empty()) {
+    if (param.out && named_kind(param.kind) && !param.length.empty())
+    {
         return "steammock::ArrayOut<" + param.decl + ">{" + param.name + ", " + param.length + "}";
     }
     return param.name;
 }
 
-std::string joined(const std::vector<std::string>& lines) {
+std::string joined(const std::vector<std::string>& lines)
+{
     std::string text;
-    for (std::size_t index = 0; index < lines.size(); ++index) {
-        if (index != 0u) {
+    for (std::size_t index = 0; index < lines.size(); ++index)
+    {
+        if (index != 0u)
+        {
             text += "\n";
         }
         text += lines[index];
@@ -305,13 +366,17 @@ std::string joined(const std::vector<std::string>& lines) {
 // identifies one is a return of an interface pointer *and* a string parameter:
 // the other interface-pointer returns take no version string, and the version is
 // the last string in every one of them.
-std::string interface_factory_parameter(const InterfaceSlot& slot) {
-    if (slot.returns != "opaque_ptr") {
+std::string interface_factory_parameter(const InterfaceSlot& slot)
+{
+    if (slot.returns != "opaque_ptr")
+    {
         return std::string();
     }
     std::string name;
-    for (const InterfaceParam& param : slot.params) {
-        if (param.kind == "cstring") {
+    for (const InterfaceParam& param : slot.params)
+    {
+        if (param.kind == "cstring")
+        {
             name = param.name;
         }
     }
@@ -325,16 +390,20 @@ std::string interface_factory_parameter(const InterfaceSlot& slot) {
 //  overload for a `const char*` name, which is what std::string_view is for.
 
 bool read_string(const Json& object, const char* name, bool required, std::string& out,
-                 std::string& error, const std::string& where) {
+                 std::string& error, const std::string& where)
+{
     const Json* value = json_member(object, name);
-    if (value == nullptr || value->is_null()) {
-        if (required) {
+    if (value == nullptr || value->is_null())
+    {
+        if (required)
+        {
             error = where + ": '" + name + "' is missing";
             return false;
         }
         return true;
     }
-    if (!value->is_string()) {
+    if (!value->is_string())
+    {
         error = where + ": '" + name + "' has to be a string";
         return false;
     }
@@ -343,12 +412,15 @@ bool read_string(const Json& object, const char* name, bool required, std::strin
 }
 
 bool read_flag(const Json& object, const char* name, bool& out, std::string& error,
-               const std::string& where) {
+               const std::string& where)
+{
     const Json* value = json_member(object, name);
-    if (value == nullptr) {
+    if (value == nullptr)
+    {
         return true;
     }
-    if (!value->is_boolean()) {
+    if (!value->is_boolean())
+    {
         error = where + ": '" + name + "' has to be true or false";
         return false;
     }
@@ -359,9 +431,11 @@ bool read_flag(const Json& object, const char* name, bool& out, std::string& err
 // A structure's size, which the ABI turns on: null means the size was never
 // established for it, and a declaration without a size is not something this can
 // write - so it is an error rather than a zero.
-bool read_size(const Json& object, int& out, std::string& error, const std::string& where) {
+bool read_size(const Json& object, int& out, std::string& error, const std::string& where)
+{
     const Json* value = json_member(object, "size");
-    if (value == nullptr || !value->is_number()) {
+    if (value == nullptr || !value->is_number())
+    {
         error = where + ": no size - the file has to carry one before a declaration can be written";
         return false;
     }
@@ -370,7 +444,8 @@ bool read_size(const Json& object, int& out, std::string& error, const std::stri
     // generated file carried a structure whose size no longer matched the file's own
     // declaration of it - which is exactly the thing these layouts are read for.
     const std::int64_t size = as_int64(*value);
-    if (size <= 0 || size > static_cast<std::int64_t>(INT_MAX)) {
+    if (size <= 0 || size > static_cast<std::int64_t>(INT_MAX))
+    {
         error = where + ": size " + std::to_string(size) + " is out of range";
         return false;
     }
@@ -408,20 +483,25 @@ bool read_size(const Json& object, int& out, std::string& error, const std::stri
 
 bool resolve_type(const std::string& name,
                   const std::vector<std::pair<std::string, std::string>>& named, std::string& kind,
-                  std::string& decl, std::string& error, const std::string& where) {
-    if (name == "void") {
+                  std::string& decl, std::string& error, const std::string& where)
+{
+    if (name == "void")
+    {
         kind = "void";
         decl.clear();
         return true;
     }
-    if (find_kind(name) != nullptr) {
+    if (find_kind(name) != nullptr)
+    {
         kind = name;
         decl.clear();
         return true;
     }
-    for (const auto& [declared_name, declared_kind] : named) {
-        if (declared_name == name) {
-            kind = declared_kind;  // "value" or "struct"
+    for (const auto& [declared_name, declared_kind] : named)
+    {
+        if (declared_name == name)
+        {
+            kind = declared_kind; // "value" or "struct"
             decl = name;
             return true;
         }
@@ -431,29 +511,39 @@ bool resolve_type(const std::string& name,
 }
 
 bool read_param(const Json& row, const std::vector<std::pair<std::string, std::string>>& named,
-                InterfaceParam& out, std::string& error, const std::string& where) {
-    if (!row.is_array() || row.size() < 2u || !row[0].is_string() || !row[1].is_string()) {
+                InterfaceParam& out, std::string& error, const std::string& where)
+{
+    if (!row.is_array() || row.size() < 2u || !row[0].is_string() || !row[1].is_string())
+    {
         error = where + ": a parameter is [name, type], and 'out' or 'unmarshalable' after it";
         return false;
     }
     out.name = as_string(row[0]);
     const std::string param_where = where + "." + out.name;
-    if (!resolve_type(as_string(row[1]), named, out.kind, out.decl, error, param_where)) {
+    if (!resolve_type(as_string(row[1]), named, out.kind, out.decl, error, param_where))
+    {
         return false;
     }
-    for (std::size_t index = 2; index < row.size(); ++index) {
+    for (std::size_t index = 2; index < row.size(); ++index)
+    {
         const Json& flag = row[index];
-        if (!flag.is_string()) {
+        if (!flag.is_string())
+        {
             error = param_where + ": 'out' and 'unmarshalable' are written as strings";
             return false;
         }
         const std::string text = as_string(flag);
-        if (text == "out") {
+        if (text == "out")
+        {
             out.out = true;
-        } else if (text == "unmarshalable") {
+        }
+        else if (text == "unmarshalable")
+        {
             out.opaque = true;
-        } else if (out.kind == "bytes" || out.kind == "out_bytes" || out.kind == "out_text" ||
-                   named_kind(out.kind)) {
+        }
+        else if (out.kind == "bytes" || out.kind == "out_bytes" || out.kind == "out_text" ||
+                 named_kind(out.kind))
+        {
             // A buffer is two things on the wire, the value and how long it is, and the wire
             // has one value per parameter - so the file has to name the parameter that
             // carries the length rather than the size being guessed at.
@@ -462,22 +552,27 @@ bool read_param(const Json& row, const std::vector<std::pair<std::string, std::s
             // length is named - that many of them, which is what an SDK's "give me the list
             // through my own array and count" call is. `out` is checked below, because a row
             // may write the length before the flag.
-            if (!out.length.empty()) {
+            if (!out.length.empty())
+            {
                 error = param_where + ": a buffer names one length parameter";
                 return false;
             }
             out.length = text;
-        } else {
+        }
+        else
+        {
             error = param_where + ": '" + text + "' is neither 'out' nor 'unmarshalable'";
             return false;
         }
     }
-    if (out.out && (out.kind == "cstring" || out.kind == "opaque_ptr")) {
+    if (out.out && (out.kind == "cstring" || out.kind == "opaque_ptr"))
+    {
         error = param_where + ": an out parameter of kind '" + out.kind +
                 "' is a buffer the wire cannot carry";
         return false;
     }
-    if (!out.length.empty() && named_kind(out.kind) && !out.out) {
+    if (!out.length.empty() && named_kind(out.kind) && !out.out)
+    {
         // One of a named type is what `out` alone says. A length on one is a list of them,
         // and a list is written through the caller's pointer or not at all.
         error = param_where + ": a named type with a length is a list of them, which is an "
@@ -485,7 +580,8 @@ bool read_param(const Json& row, const std::vector<std::pair<std::string, std::s
         return false;
     }
     if ((out.kind == "bytes" || out.kind == "out_bytes" || out.kind == "out_text") &&
-        out.length.empty()) {
+        out.length.empty())
+    {
         // A buffer is two things on the wire, the value and how long it is, and the
         // length parameter is how the row says which of its siblings carries the second -
         // so a row without one cannot be written: the generator emitted
@@ -495,10 +591,12 @@ bool read_param(const Json& row, const std::vector<std::pair<std::string, std::s
             param_where + ": a '" + out.kind + "' buffer names the parameter carrying its length";
         return false;
     }
-    if (!declared_type(out.kind, out.decl, out.cpp, error, param_where)) {
+    if (!declared_type(out.kind, out.decl, out.cpp, error, param_where))
+    {
         return false;
     }
-    if (out.out) {
+    if (out.out)
+    {
         out.cpp += "*";
     }
     return true;
@@ -509,8 +607,10 @@ bool read_param(const Json& row, const std::vector<std::pair<std::string, std::s
 // cannot carry what is returned. A destructor's row may carry the same object,
 // which is how a version that has a flat name for its destructor records it.
 bool read_notes(const Json& notes, InterfaceSlot& out, std::string& error,
-                const std::string& where) {
-    if (!notes.is_object()) {
+                const std::string& where)
+{
+    if (!notes.is_object())
+    {
         error = where + ": what a row says beyond its signature is an object of notes";
         return false;
     }
@@ -523,8 +623,10 @@ bool read_notes(const Json& notes, InterfaceSlot& out, std::string& error,
 // name is derived from when the row does not record one.
 bool read_slot(const Json& row, const std::string& interface_name,
                const std::vector<std::pair<std::string, std::string>>& named, InterfaceSlot& out,
-               std::string& error, const std::string& where) {
-    if (!row.is_array() || row.empty() || !row[0].is_string()) {
+               std::string& error, const std::string& where)
+{
+    if (!row.is_array() || row.empty() || !row[0].is_string())
+    {
         error = where + ": a slot is a row - [method, returns] or [method, returns, params], " +
                 "or [\"~\"] for the destructor";
         return false;
@@ -532,14 +634,16 @@ bool read_slot(const Json& row, const std::string& interface_name,
     const Json& items = row;
     const std::string head = as_string(items[0]);
 
-    if (head == "~") {
+    if (head == "~")
+    {
         // The destructor owns a slot and names no call of its own. Where it sits
         // is what the row's position says, which is first in both versions that
         // have one.
         out.destructor = true;
         out.returns = "void";
         out.returns_cpp = "void";
-        if (items.size() > 2u) {
+        if (items.size() > 2u)
+        {
             error = where + ": the destructor row is [\"~\"] and at most one object of notes";
             return false;
         }
@@ -547,39 +651,48 @@ bool read_slot(const Json& row, const std::string& interface_name,
     }
 
     const std::string slot_where = where + " (" + head + ")";
-    if (items.size() < 2u || !items[1].is_string()) {
+    if (items.size() < 2u || !items[1].is_string())
+    {
         error = slot_where + ": a slot needs the type it returns";
         return false;
     }
     out.method = head;
     if (!resolve_type(as_string(items[1]), named, out.returns, out.returns_decl, error,
-                      slot_where)) {
+                      slot_where))
+    {
         return false;
     }
     out.returns_cpp = "void";
     if (out.returns != "void" &&
-        !declared_type(out.returns, out.returns_decl, out.returns_cpp, error, slot_where)) {
+        !declared_type(out.returns, out.returns_decl, out.returns_cpp, error, slot_where))
+    {
         return false;
     }
 
-    if (items.size() > 2u && !items[2].is_null()) {
-        if (!items[2].is_array()) {
+    if (items.size() > 2u && !items[2].is_null())
+    {
+        if (!items[2].is_array())
+        {
             error = slot_where + ": a slot's parameters are a list of rows";
             return false;
         }
-        for (const Json& declared : items[2]) {
+        for (const Json& declared : items[2])
+        {
             InterfaceParam param;
-            if (!read_param(declared, named, param, error, slot_where)) {
+            if (!read_param(declared, named, param, error, slot_where))
+            {
                 return false;
             }
             out.params.push_back(std::move(param));
         }
     }
 
-    if (items.size() > 3u && !read_notes(items[3], out, error, slot_where)) {
+    if (items.size() > 3u && !read_notes(items[3], out, error, slot_where))
+    {
         return false;
     }
-    if (items.size() > 4u) {
+    if (items.size() > 4u)
+    {
         error = slot_where + ": a slot row carries a method, a return type, its parameters " +
                 "and at most one object of notes";
         return false;
@@ -589,20 +702,25 @@ bool read_slot(const Json& row, const std::string& interface_name,
     // signature reads it by name, so a length that names nothing is `Bytes{pv, cbLength}`
     // with no `cbLength` in scope. That can only be checked now, once every parameter of
     // the row has been read.
-    for (const InterfaceParam& param : out.params) {
-        if (param.length.empty()) {
+    for (const InterfaceParam& param : out.params)
+    {
+        if (param.length.empty())
+        {
             continue;
         }
         bool found = false;
         bool pointer = false;
-        for (const InterfaceParam& other : out.params) {
-            if (other.name == param.length) {
+        for (const InterfaceParam& other : out.params)
+        {
+            if (other.name == param.length)
+            {
                 found = true;
                 pointer = !other.cpp.empty() && other.cpp.back() == '*';
                 break;
             }
         }
-        if (!found) {
+        if (!found)
+        {
             error = slot_where + "." + param.name + ": '" + param.length +
                     "' is not a parameter of this call, so there is no length to pass";
             return false;
@@ -610,7 +728,8 @@ bool read_slot(const Json& row, const std::string& interface_name,
         // Only a buffer the *caller* owns can be told what it got: what the call reads is
         // already in the caller's memory, so a length that is a pointer would be a room
         // nothing could report against - and `Bytes` has no place to put the number.
-        if (param.kind == "bytes" && pointer) {
+        if (param.kind == "bytes" && pointer)
+        {
             error = slot_where + "." + param.name + ": '" + param.length +
                     "' is a pointer, and a buffer the call reads has no length to report";
             return false;
@@ -619,7 +738,8 @@ bool read_slot(const Json& row, const std::string& interface_name,
 
     // The flat name the call travels under, which is the method's own unless the
     // row recorded the one an overload or an implemented-in-terms-of threw away.
-    if (out.call.empty()) {
+    if (out.call.empty())
+    {
         out.call = "SteamAPI_" + interface_name + "_" + out.method;
     }
     return true;
@@ -629,38 +749,47 @@ bool read_slot(const Json& row, const std::string& interface_name,
 // layouts were imported with, and the members that size is made of - so one
 // reader serves both. `what` is only there to name the thing in an error.
 bool read_layouts(const Json& document, const char* key, const char* what,
-                  std::vector<InterfaceStructure>& out, std::string& error) {
+                  std::vector<InterfaceStructure>& out, std::string& error)
+{
     const Json* entries = json_member(document, key);
-    if (entries == nullptr || !entries->is_array()) {
+    if (entries == nullptr || !entries->is_array())
+    {
         return true;
     }
-    for (const Json& entry : *entries) {
+    for (const Json& entry : *entries)
+    {
         InterfaceStructure layout;
         const std::string where = std::string(key) + "[" + std::to_string(out.size()) + "]";
         if (!read_string(entry, "name", true, layout.name, error, where) ||
-            !read_size(entry, layout.size, error, where)) {
+            !read_size(entry, layout.size, error, where))
+        {
             return false;
         }
         const Json* members = json_member(entry, "members");
-        if (members == nullptr || !members->is_array()) {
+        if (members == nullptr || !members->is_array())
+        {
             error = where + ": a " + what + " needs its members - that is what its ABI is";
             return false;
         }
         // A payload with no fields is a real shape: plenty of the SDK's callbacks are
         // notifications with nothing in them. A structure with no members is a
         // declaration that says nothing at all, so only the empty event is allowed.
-        if (members->empty() && std::string(what) != "event") {
+        if (members->empty() && std::string(what) != "event")
+        {
             error = where + ": a " + what + " with no members says nothing about its ABI";
             return false;
         }
-        for (const Json& declared : *members) {
-            if (!declared.is_array() || declared.size() != 2u) {
+        for (const Json& declared : *members)
+        {
+            if (!declared.is_array() || declared.size() != 2u)
+            {
                 error = where + ": every member is a pair of a type and a name";
                 return false;
             }
             const std::string type = as_string(declared[0]);
             std::string cpp;
-            if (!member_type(type, cpp, error)) {
+            if (!member_type(type, cpp, error))
+            {
                 error = where + " (" + layout.name + "): " + error;
                 return false;
             }
@@ -671,15 +800,18 @@ bool read_layouts(const Json& document, const char* key, const char* what,
     return true;
 }
 
-}  // namespace
+} // namespace
 
-bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& error) {
-    if (!document.is_object()) {
+bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& error)
+{
+    if (!document.is_object())
+    {
         error = "the layouts have to be a JSON object";
         return false;
     }
     const Json* versions = json_member(document, "interfaces");
-    if (versions == nullptr || !versions->is_array()) {
+    if (versions == nullptr || !versions->is_array())
+    {
         error = "the layouts need an 'interfaces' array";
         return false;
     }
@@ -687,18 +819,22 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
     Interfaces parsed;
 
     if (const Json* values = json_member(document, "value_types");
-        values != nullptr && values->is_array()) {
-        for (const Json& entry : *values) {
+        values != nullptr && values->is_array())
+    {
+        for (const Json& entry : *values)
+        {
             InterfaceValueType value;
             const std::string where =
                 "value_types[" + std::to_string(parsed._value_types.size()) + "]";
             if (!read_string(entry, "name", true, value.name, error, where) ||
                 !read_string(entry, "wire", true, value.wire, error, where) ||
                 !read_string(entry, "member", true, value.member, error, where) ||
-                !read_size(entry, value.size, error, where)) {
+                !read_size(entry, value.size, error, where))
+            {
                 return false;
             }
-            if (value.wire != "uint64") {
+            if (value.wire != "uint64")
+            {
                 error = where + ": the wire for a value class is a 64-bit integer, not '" +
                         value.wire + "'";
                 return false;
@@ -708,7 +844,8 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
     }
 
     if (!read_layouts(document, "structures", "structure", parsed._structures, error) ||
-        !read_layouts(document, "events", "event", parsed._events, error)) {
+        !read_layouts(document, "events", "event", parsed._events, error))
+    {
         return false;
     }
 
@@ -723,11 +860,14 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
     // an error for anything it would not read - so nothing reached the comparison that could
     // have failed it.
     if (const Json* events = json_member(document, "events");
-        events != nullptr && events->is_array()) {
-        for (std::size_t index = 0; index < parsed._events.size(); ++index) {
+        events != nullptr && events->is_array())
+    {
+        for (std::size_t index = 0; index < parsed._events.size(); ++index)
+        {
             const std::string where = "events[" + std::to_string(index) + "]";
             const Json* callback = json_member((*events)[index], "callback");
-            if (callback == nullptr || !callback->is_number()) {
+            if (callback == nullptr || !callback->is_number())
+            {
                 error = where + ": an event needs the callback id a game registers it under";
                 return false;
             }
@@ -739,10 +879,12 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
     // now, which is what lets a type name be told from a kind.
     std::vector<std::pair<std::string, std::string>> named;
     named.reserve(parsed._value_types.size() + parsed._structures.size());
-    for (const InterfaceValueType& value : parsed._value_types) {
+    for (const InterfaceValueType& value : parsed._value_types)
+    {
         named.emplace_back(value.name, "value");
     }
-    for (const InterfaceStructure& structure : parsed._structures) {
+    for (const InterfaceStructure& structure : parsed._structures)
+    {
         named.emplace_back(structure.name, "struct");
     }
 
@@ -758,35 +900,42 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
     // layouts that produced it.
     std::map<std::string, std::string> seen_identifiers;
 
-    for (const Json& entry : *versions) {
+    for (const Json& entry : *versions)
+    {
         InterfaceVersion version;
         const std::string where = "interfaces[" + std::to_string(parsed._versions.size()) + "]";
         if (!read_string(entry, "name", true, version.name, error, where) ||
-            !read_string(entry, "version", true, version.version, error, where)) {
+            !read_string(entry, "version", true, version.version, error, where))
+        {
             return false;
         }
         const Json* slots = json_member(entry, "slots");
-        if (slots == nullptr || !slots->is_array() || slots->empty()) {
+        if (slots == nullptr || !slots->is_array() || slots->empty())
+        {
             error = where + " (" + version.version + "): a version needs its slots";
             return false;
         }
 
-        for (const Json& declared : *slots) {
+        for (const Json& declared : *slots)
+        {
             InterfaceSlot slot;
             if (!read_slot(declared, version.name, named, slot, error,
-                           where + " (" + version.version + ")")) {
+                           where + " (" + version.version + ")"))
+            {
                 return false;
             }
             version.slots.push_back(std::move(slot));
         }
 
-        if (!seen_versions.insert(version.version).second) {
+        if (!seen_versions.insert(version.version).second)
+        {
             error = version.version + " appears twice";
             return false;
         }
         const std::string identifier = identified(version.version);
         const auto clash = seen_identifiers.find(identifier);
-        if (clash != seen_identifiers.end()) {
+        if (clash != seen_identifiers.end())
+        {
             error = "'" + version.version + "' and '" + clash->second +
                     "' are the same identifier ('" + identifier +
                     "'): the classes and tables this writes are named after it";
@@ -800,22 +949,26 @@ bool Interfaces::from_json(const Json& document, Interfaces& out, std::string& e
     return true;
 }
 
-bool Interfaces::load_file(const std::string& path, Interfaces& out, std::string& error) {
+bool Interfaces::load_file(const std::string& path, Interfaces& out, std::string& error)
+{
     std::FILE* file = std::fopen(path.c_str(), "rb");
-    if (file == nullptr) {
+    if (file == nullptr)
+    {
         error = "cannot read " + path;
         return false;
     }
     std::string text;
     char buffer[4096];
     std::size_t got = 0;
-    while ((got = std::fread(buffer, 1, sizeof(buffer), file)) > 0) {
+    while ((got = std::fread(buffer, 1, sizeof(buffer), file)) > 0)
+    {
         text.append(buffer, got);
     }
     std::fclose(file);
 
     Json document;
-    if (!parse(text, document)) {
+    if (!parse(text, document))
+    {
         error = path + " is not valid JSON";
         return false;
     }
@@ -835,7 +988,8 @@ bool Interfaces::load_file(const std::string& path, Interfaces& out, std::string
 //  The compiler still lays out the vtable and the calling convention, which is
 //  the part that has to be exactly right.
 
-std::string render_api_interfaces(const Interfaces& interfaces) {
+std::string render_api_interfaces(const Interfaces& interfaces)
+{
     // Which structures this file has to be able to *write*, asked once: a call that fills one in
     // through a pointer needs the trait below to have a store, and one that is only ever reported
     // must not have one (an unused member write is a warning here, and a warning is an error).
@@ -850,32 +1004,37 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     //  rather than as a mystery in a diff.
     std::vector<std::vector<std::string>> param_lists;
     std::map<std::string, int> param_index;
-    std::vector<std::pair<std::string, int>> calls;  // the call, and its names (-1: none)
+    std::vector<std::pair<std::string, int>> calls; // the call, and its names (-1: none)
     std::map<std::string, int> call_index;
 
     // A call with no arguments has no names to pool, and `nullptr` is what the
     // descriptor says instead - which is also what a slot with no names has
     // always carried.
-    const auto intern_names = [&](const InterfaceSlot& slot) {
+    const auto intern_names = [&](const InterfaceSlot& slot)
+    {
         std::vector<std::string> names;
         names.reserve(slot.params.size());
-        for (const InterfaceParam& param : slot.params) {
+        for (const InterfaceParam& param : slot.params)
+        {
             names.push_back(param.name);
         }
-        if (names.empty()) {
+        if (names.empty())
+        {
             return -1;
         }
 
         // \x1f because a name is text: it cannot appear in one, so no two lists
         // can run together into the same key.
         std::string key;
-        for (const std::string& name : names) {
+        for (const std::string& name : names)
+        {
             key += name;
             key += '\x1f';
         }
 
         const auto found = param_index.find(key);
-        if (found != param_index.end()) {
+        if (found != param_index.end())
+        {
             return found->second;
         }
         const int index = static_cast<int>(param_lists.size());
@@ -886,11 +1045,14 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
 
     std::size_t slot_count = 0;
     std::vector<std::vector<int>> slot_call(interfaces.versions().size());
-    for (std::size_t v = 0; v < interfaces.versions().size(); ++v) {
+    for (std::size_t v = 0; v < interfaces.versions().size(); ++v)
+    {
         const InterfaceVersion& version = interfaces.versions()[v];
         slot_count += version.slots.size();
-        for (const InterfaceSlot& slot : version.slots) {
-            if (slot.destructor) {
+        for (const InterfaceSlot& slot : version.slots)
+        {
+            if (slot.destructor)
+            {
                 // The destructor owns a slot and names no call.
                 slot_call[v].push_back(-1);
                 continue;
@@ -898,7 +1060,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             const int names = intern_names(slot);
             const std::string key = slot.call + '\x1f' + number(names);
             const auto found = call_index.find(key);
-            if (found != call_index.end()) {
+            if (found != call_index.end())
+            {
                 slot_call[v].push_back(found->second);
                 continue;
             }
@@ -944,7 +1107,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         "#pragma pack(push, 8)",
     };
 
-    for (const InterfaceValueType& value : interfaces.value_types()) {
+    for (const InterfaceValueType& value : interfaces.value_types())
+    {
         out.push_back("struct " + value.name + " {");
         out.push_back("    std::uint64_t " + value.member + ";");
         out.push_back("};");
@@ -952,13 +1116,16 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                       value.name + " has to be the size the wire carries\");");
     }
 
-    if (!interfaces.value_types().empty()) {
+    if (!interfaces.value_types().empty())
+    {
         out.push_back("");
     }
 
-    for (const InterfaceStructure& structure : interfaces.structures()) {
+    for (const InterfaceStructure& structure : interfaces.structures())
+    {
         out.push_back("struct " + structure.name + " {");
-        for (const auto& declared_member : structure.members) {
+        for (const auto& declared_member : structure.members)
+        {
             out.push_back("    " + declared_member.first + " " + declared_member.second + ";");
         }
         out.push_back("};");
@@ -969,9 +1136,11 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     // A payload a call can be completed with is the SDK's own struct, so it is
     // declared in the same packed block - and asserted the same way, because a
     // size that is wrong here is a game reading past what the stub wrote.
-    for (const InterfaceEvent& event : interfaces.events()) {
+    for (const InterfaceEvent& event : interfaces.events())
+    {
         out.push_back("struct " + event.name + " {");
-        for (const auto& declared_member : event.members) {
+        for (const auto& declared_member : event.members)
+        {
             out.push_back("    " + declared_member.first + " " + declared_member.second + ";");
         }
         out.push_back("};");
@@ -992,8 +1161,10 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     // it is checked against null and why a member the wire cannot carry is left as the caller had
     // it rather than zeroed. One function per structure rather than the work inline in the trait,
     // because the trait is a template specialisation and this is where the type is complete.
-    for (const InterfaceStructure& structure : interfaces.structures()) {
-        if (written.find(structure.name) == written.end()) {
+    for (const InterfaceStructure& structure : interfaces.structures())
+    {
+        if (written.find(structure.name) == written.end())
+        {
             continue;
         }
         out.push_back("// " + structure.name + ", as a call fills it in: the fields the layouts");
@@ -1005,7 +1176,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         // commented-out name is how a parameter that exists for the signature's sake says so.
         std::vector<std::string> body;
         bool writes = false;
-        for (const auto& declared_member : structure.members) {
+        for (const auto& declared_member : structure.members)
+        {
             writes = push_member_write(declared_member.first, declared_member.second, "fields",
                                        "target->", body) ||
                      writes;
@@ -1016,7 +1188,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("    if (target == nullptr) {");
         out.push_back("        return;");
         out.push_back("    }");
-        for (const std::string& line : body) {
+        for (const std::string& line : body)
+        {
             out.push_back(line);
         }
         out.push_back("}");
@@ -1026,7 +1199,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("}  // namespace");
     out.push_back("");
 
-    if (!interfaces.value_types().empty() || !interfaces.structures().empty()) {
+    if (!interfaces.value_types().empty() || !interfaces.structures().empty())
+    {
         out.push_back("// The kinds for the types above: a value class is the one integer the");
         out.push_back(
             "// wire carries it as, and a structure the wire cannot carry is a value the");
@@ -1041,7 +1215,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("// tools/steamworks_sdk_import.py for the ones that are a single structure");
         out.push_back("// and not a list of them.");
         out.push_back("");
-        for (const InterfaceValueType& value : interfaces.value_types()) {
+        for (const InterfaceValueType& value : interfaces.value_types())
+        {
             out.push_back("template <> struct Kind<" + value.name + "> {");
             out.push_back("    static constexpr bool out() noexcept { return false; }");
             out.push_back("");
@@ -1063,7 +1238,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("};");
             out.push_back("");
         }
-        for (const InterfaceStructure& structure : interfaces.structures()) {
+        for (const InterfaceStructure& structure : interfaces.structures())
+        {
             out.push_back("template <> struct Kind<" + structure.name + "> {");
             out.push_back("    static constexpr bool out() noexcept { return false; }");
             out.push_back("");
@@ -1073,7 +1249,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("    static " + structure.name + " from(const Json&) noexcept {");
             out.push_back("        return " + structure.name + "{};");
             out.push_back("    }");
-            if (written.find(structure.name) != written.end()) {
+            if (written.find(structure.name) != written.end())
+            {
                 // The structure a call fills in: the pointer is sent as the address it is, and
                 // the answer's fields are written through it - which is the whole of what makes
                 // an `out` structure different from one that is only ever reported.
@@ -1104,25 +1281,30 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("//  list, which is what the null in its descriptor says.");
     out.push_back("");
 
-    for (std::size_t index = 0; index < param_lists.size(); ++index) {
+    for (std::size_t index = 0; index < param_lists.size(); ++index)
+    {
         const std::vector<std::string>& names = param_lists[index];
         const std::string head =
             "const char* const kParams_" + number(static_cast<int>(index)) + "[] = {";
 
         std::string one = head;
-        for (std::size_t at = 0; at < names.size(); ++at) {
-            if (at != 0u) {
+        for (std::size_t at = 0; at < names.size(); ++at)
+        {
+            if (at != 0u)
+            {
                 one += " ";
             }
             one += literal(names[at]) + (at + 1u == names.size() ? "};" : ",");
         }
-        if (one.size() <= 100u) {
+        if (one.size() <= 100u)
+        {
             out.push_back(one);
             continue;
         }
 
         out.push_back(head);
-        for (const std::string& name : names) {
+        for (const std::string& name : names)
+        {
             out.push_back("    " + literal(name) + ",");
         }
         out.push_back("};");
@@ -1141,7 +1323,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     out.push_back("//  which is the whole of what a slot knows about itself.");
     out.push_back("");
 
-    for (std::size_t index = 0; index < calls.size(); ++index) {
+    for (std::size_t index = 0; index < calls.size(); ++index)
+    {
         const int names = calls[index].second;
         out.push_back("const steammock::SlotInfo kCall_" + number(static_cast<int>(index)) +
                       " = {" + literal(calls[index].first) + ", " +
@@ -1152,7 +1335,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     // -----------------------------------------------------------------------
     //  One class per version, whose virtuals mirror its slots in order.
     // -----------------------------------------------------------------------
-    for (std::size_t v = 0; v < interfaces.versions().size(); ++v) {
+    for (std::size_t v = 0; v < interfaces.versions().size(); ++v)
+    {
         const InterfaceVersion& version = interfaces.versions()[v];
         const std::string id = identified(version.version);
 
@@ -1175,9 +1359,11 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         // zero there is a real answer - the caller did not say which handle - so a claim
         // that stored zero would leave the object looking unclaimed and hand it out again.
         out.push_back("    std::atomic<bool> _claimed{false};");
-        for (std::size_t index = 0; index < version.slots.size(); ++index) {
+        for (std::size_t index = 0; index < version.slots.size(); ++index)
+        {
             const InterfaceSlot& slot = version.slots[index];
-            if (slot.destructor) {
+            if (slot.destructor)
+            {
                 out.push_back("    virtual ~Version_" + id + "() {}");
                 continue;
             }
@@ -1196,8 +1382,10 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             const std::set<std::string> lengths = pointer_lengths(slot);
             std::string parameters;
             std::string arguments;
-            for (const InterfaceParam& param : slot.params) {
-                if (!parameters.empty()) {
+            for (const InterfaceParam& param : slot.params)
+            {
+                if (!parameters.empty())
+                {
                     parameters += ", ";
                     arguments += ", ";
                 }
@@ -1213,8 +1401,10 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             // spelling, `hSteamuser` in a few of its declarations - and at the hand-out
             // this is the only thing that can tell the two of them apart.
             std::string factory_user = "0";
-            for (const InterfaceParam& param : slot.params) {
-                if (param.name == "hSteamUser" || param.name == "hSteamuser") {
+            for (const InterfaceParam& param : slot.params)
+            {
+                if (param.name == "hSteamUser" || param.name == "hSteamuser")
+                {
                     factory_user = param.name;
                 }
             }
@@ -1223,14 +1413,16 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             // them are. The ones that answer with an object of ours keep the
             // fallback under the signature, and so do the signatures that a
             // single line cannot hold.
-            if (factory.empty()) {
+            if (factory.empty())
+            {
                 const std::string one =
                     "    virtual " + slot.returns_cpp + " " + slot.method + "(" + parameters +
                     ") { " +
                     (slot.returns == "void"
                          ? "steammock::slot<void>(" + passed + "); }"
                          : "return steammock::slot<" + slot.returns_cpp + ">(" + passed + "); }");
-                if (one.size() <= 100u) {
+                if (one.size() <= 100u)
+                {
                     out.push_back(one);
                     continue;
                 }
@@ -1238,12 +1430,17 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
 
             out.push_back("    virtual " + slot.returns_cpp + " " + slot.method + "(" + parameters +
                           ") {");
-            if (slot.returns == "void") {
+            if (slot.returns == "void")
+            {
                 out.push_back("        steammock::slot<void>(" + passed + ");");
-            } else if (factory.empty()) {
+            }
+            else if (factory.empty())
+            {
                 out.push_back("        return steammock::slot<" + slot.returns_cpp + ">(" + passed +
                               ");");
-            } else {
+            }
+            else
+            {
                 // The same fallback the factory call in api_stub.cpp has: the
                 // backend answered, or this is the object of ours for the string
                 // the game named.
@@ -1271,7 +1468,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     //  have to be the game's layout - which is what the assertions above are for.
     //  A member the wire cannot carry in one field, an array, is left zeroed: a
     //  payload that needs one needs a rule this does not have yet.
-    if (!interfaces.events().empty()) {
+    if (!interfaces.events().empty())
+    {
         out.push_back(
             "// ---------------------------------------------------------------------------");
         out.push_back("//  The payloads a call can be completed with.");
@@ -1284,13 +1482,15 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         out.push_back("//  wire cannot carry in one field is left zeroed.");
         out.push_back("");
 
-        for (const InterfaceEvent& event : interfaces.events()) {
+        for (const InterfaceEvent& event : interfaces.events())
+        {
             // The payload is written first for the same reason a structure's body is: a
             // notification with no member of its own reads nothing, and the signature is what
             // has to say so. The memcpy that hands the object over stays last either way.
             std::vector<std::string> body;
             bool reads = false;
-            for (const auto& declared_member : event.members) {
+            for (const auto& declared_member : event.members)
+            {
                 reads = push_member_write(declared_member.first, declared_member.second, "fields",
                                           "value.", body) ||
                         reads;
@@ -1298,7 +1498,8 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
             out.push_back("void fill_" + event.name + "(const Json& " +
                           (reads ? "fields" : "/*fields*/") + ", void* buffer) noexcept {");
             out.push_back("    " + event.name + " value{};");
-            for (const std::string& line : body) {
+            for (const std::string& line : body)
+            {
                 out.push_back(line);
             }
             out.push_back("    std::memcpy(buffer, &value, sizeof(value));");
@@ -1307,14 +1508,17 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
         }
 
         out.push_back("const steammock::EventInfo kEvents[] = {");
-        for (const InterfaceEvent& event : interfaces.events()) {
+        for (const InterfaceEvent& event : interfaces.events())
+        {
             out.push_back("    {" + literal(event.name) + ",");
             out.push_back("     sizeof(" + event.name + "),");
             out.push_back("     " + number(event.callback) + ",");
             out.push_back("     &fill_" + event.name + "},");
         }
         out.push_back("};");
-    } else {
+    }
+    else
+    {
         // The payloads are declared in the layouts file, so a build with none has none.
         // A table with nothing in it is not C++, so it is a null one - and the count and
         // the lookup below are the same either way, because a constant nobody reads is a
@@ -1345,9 +1549,11 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     // what a fresh clone has, since Valve's layouts are not part of the checkout -
     // has no versions at all. So the table exists when there is one, and the count
     // is what the two lookups below go by.
-    if (!interfaces.versions().empty()) {
+    if (!interfaces.versions().empty())
+    {
         out.push_back("const steammock::InterfaceVersion kVersions[] = {");
-        for (const InterfaceVersion& version : interfaces.versions()) {
+        for (const InterfaceVersion& version : interfaces.versions())
+        {
             // One row per version, carrying every object that version is handed out as
             // and the place each of them keeps its user handle in. Both, because a
             // version asked for under two handles is two objects, and the object is the
@@ -1360,7 +1566,9 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
                           identified(version.version) + "[1]._claimed}},");
         }
         out.push_back("};");
-    } else {
+    }
+    else
+    {
         out.push_back("const steammock::InterfaceVersion* const kVersions = nullptr;");
     }
     out.push_back("const std::size_t kVersionCount = " +
@@ -1424,4 +1632,4 @@ std::string render_api_interfaces(const Interfaces& interfaces) {
     return joined(out) + "\n";
 }
 
-}  // namespace steammock
+} // namespace steammock

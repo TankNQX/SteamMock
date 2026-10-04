@@ -5,7 +5,8 @@
 
 #include "bridge/json_read.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  The surface the stub exports, and what the mock does with it.
@@ -18,13 +19,15 @@ namespace steammock {
 //  render everything and compare it with what is in the tree, which is what
 //  catches an edit that was never regenerated.
 
-struct IdlParam {
+struct IdlParam
+{
     std::string name;
     std::string type;
     bool out = false;
 };
 
-struct IdlCall {
+struct IdlCall
+{
     std::string name;
     std::string returns = "void";
     // What to do when nobody answered. Empty means "the game gets the default";
@@ -48,8 +51,9 @@ struct IdlCall {
     std::vector<IdlParam> params;
 };
 
-class Idl {
-public:
+class Idl
+{
+  public:
     // Parses and validates. `error` describes the first problem found.
     static bool load_file(const std::string& path, Idl& out, std::string& error);
     static bool from_json(const Json& document, Idl& out, std::string& error);
@@ -59,7 +63,7 @@ public:
     // Sorted by name: the order every generated file is written in.
     const std::vector<IdlCall>& calls() const noexcept { return _calls; }
 
-private:
+  private:
     std::string _surface = "?";
     std::vector<IdlCall> _calls;
 };
@@ -68,4 +72,4 @@ std::string render_api_stub(const Idl& idl);
 std::string render_exports_def(const Idl& idl);
 std::string render_api_surface(const Idl& idl);
 
-}  // namespace steammock
+} // namespace steammock

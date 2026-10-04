@@ -12,7 +12,8 @@
 #include "bridge/client.hpp"
 #include "bridge/json_read.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // ---------------------------------------------------------------------------
 //  The interfaces the stub hands out itself.
@@ -49,7 +50,8 @@ namespace steammock {
 // One slot: the name the call travels under, and the names of its parameters.
 // Both are baked in by the generator, so a call costs one string and nothing per
 // kind. `parameters` is null when the slot takes none.
-struct SlotInfo {
+struct SlotInfo
+{
     const char* call;
     const char* const* parameters;
 };
@@ -81,7 +83,8 @@ inline constexpr std::size_t kInterfaceEndpoints = 2;
 // with no handle were handed the same object, and a third that named a handle was handed
 // that object too, under its own handle, so the calls the first two made stopped being
 // theirs. See `interface_object`, which the generated file writes.
-struct InterfaceVersion {
+struct InterfaceVersion
+{
     const char* version;
     void* object[kInterfaceEndpoints];
     std::atomic<std::int32_t>* user[kInterfaceEndpoints];
@@ -123,7 +126,8 @@ inline Arg wire_real(double value) noexcept { return Arg(value); }
 // An address travels as the integer it is, which is what the protocol has for a
 // handle no side can dereference - and as the unsigned one, because an address has
 // no sign.
-inline Arg wire_pointer(const void* value) noexcept {
+inline Arg wire_pointer(const void* value) noexcept
+{
     return Arg(static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(value)));
 }
 
@@ -144,48 +148,75 @@ inline Arg wire_cstring(const char* value) noexcept { return Arg(value); }
 //  in the generated file earned a -Wunused-const-variable. A predicate is read the
 //  same way and warns about nothing.
 
-template <class T, class = void> struct Kind {
+template <class T, class = void>
+struct Kind
+{
     static_assert(std::is_arithmetic_v<T>,
                   "no wire kind for this type: the generated file has to specialize "
                   "steammock::Kind for it");
 
     static constexpr bool out() noexcept { return false; }
 
-    static Arg arg(T value) noexcept {
-        if constexpr (std::is_same_v<T, bool>) {
+    static Arg arg(T value) noexcept
+    {
+        if constexpr (std::is_same_v<T, bool>)
+        {
             return wire_bool(value);
-        } else if constexpr (std::is_floating_point_v<T>) {
+        }
+        else if constexpr (std::is_floating_point_v<T>)
+        {
             return wire_real(static_cast<double>(value));
-        } else if constexpr (std::is_signed_v<T>) {
+        }
+        else if constexpr (std::is_signed_v<T>)
+        {
             return wire_int(static_cast<std::int64_t>(value));
-        } else {
+        }
+        else
+        {
             return wire_uint(static_cast<std::uint64_t>(value));
         }
     }
 
-    static T from(const Json& reply) noexcept {
-        if constexpr (std::is_same_v<T, bool>) {
+    static T from(const Json& reply) noexcept
+    {
+        if constexpr (std::is_same_v<T, bool>)
+        {
             return reply_bool(reply);
-        } else if constexpr (std::is_floating_point_v<T>) {
+        }
+        else if constexpr (std::is_floating_point_v<T>)
+        {
             return static_cast<T>(reply_real(reply));
-        } else if constexpr (std::is_signed_v<T>) {
+        }
+        else if constexpr (std::is_signed_v<T>)
+        {
             return static_cast<T>(reply_int(reply));
-        } else {
+        }
+        else
+        {
             return static_cast<T>(reply_uint(reply));
         }
     }
 
-    static void store(T* target, const Json& value) noexcept {
-        if (target == nullptr) {
+    static void store(T* target, const Json& value) noexcept
+    {
+        if (target == nullptr)
+        {
             return;
         }
-        if constexpr (std::is_same_v<T, bool>) {
+        if constexpr (std::is_same_v<T, bool>)
+        {
             *target = as_bool(value);
-        } else if constexpr (std::is_floating_point_v<T>) {
+        }
+        else if constexpr (std::is_floating_point_v<T>)
+        {
             *target = static_cast<T>(as_double(value));
-        } else if constexpr (std::is_signed_v<T>) {
+        }
+        else if constexpr (std::is_signed_v<T>)
+        {
             *target = static_cast<T>(as_int64(value));
-        } else {
+        }
+        else
+        {
             *target = static_cast<T>(as_uint64(value));
         }
     }
@@ -194,7 +225,9 @@ template <class T, class = void> struct Kind {
 };
 
 // A call that returns nothing: there is no value to read and no default to pick.
-template <> struct Kind<void> {
+template <>
+struct Kind<void>
+{
     static constexpr bool out() noexcept { return false; }
     static void from(const Json& /*reply*/) noexcept {}
     static void fallback() noexcept {}
@@ -202,7 +235,9 @@ template <> struct Kind<void> {
 
 // A string the game receives, copied out of the reply (see bridge/call.hpp).
 // One a game sends is text rather than a buffer, which is why it is not opaque.
-template <> struct Kind<const char*> {
+template <>
+struct Kind<const char*>
+{
     static constexpr bool out() noexcept { return false; }
 
     static Arg arg(const char* value) noexcept { return wire_cstring(value); }
@@ -211,7 +246,9 @@ template <> struct Kind<const char*> {
 };
 
 // An opaque pointer: an interface, a buffer, a handle the backend only echoes.
-template <> struct Kind<void*> {
+template <>
+struct Kind<void*>
+{
     static constexpr bool out() noexcept { return false; }
 
     static Arg arg(const void* value) noexcept { return wire_pointer(value); }
@@ -223,29 +260,36 @@ template <> struct Kind<void*> {
 // and hex is the one shape the protocol already has for text - the marshalling asks for
 // the buffer and its length together, and the hex lives until the end of the call that
 // built it, which is as long as anything reads it.
-inline std::string hex_of(const void* data, std::uint32_t size) {
+inline std::string hex_of(const void* data, std::uint32_t size)
+{
     static constexpr char kDigits[] = "0123456789abcdef";
     std::string text;
-    if (data == nullptr || size == 0) {
+    if (data == nullptr || size == 0)
+    {
         return text;
     }
     const unsigned char* bytes = static_cast<const unsigned char*>(data);
     text.reserve(static_cast<std::size_t>(size) * 2u);
-    for (std::uint32_t index = 0; index < size; ++index) {
+    for (std::uint32_t index = 0; index < size; ++index)
+    {
         text.push_back(kDigits[bytes[index] >> 4u]);
         text.push_back(kDigits[bytes[index] & 0x0Fu]);
     }
     return text;
 }
 
-inline int hex_digit(char value) noexcept {
-    if (value >= '0' && value <= '9') {
+inline int hex_digit(char value) noexcept
+{
+    if (value >= '0' && value <= '9')
+    {
         return value - '0';
     }
-    if (value >= 'a' && value <= 'f') {
+    if (value >= 'a' && value <= 'f')
+    {
         return value - 'a' + 10;
     }
-    if (value >= 'A' && value <= 'F') {
+    if (value >= 'A' && value <= 'F')
+    {
         return value - 'A' + 10;
     }
     return -1;
@@ -254,16 +298,20 @@ inline int hex_digit(char value) noexcept {
 // Writes as much of the hex as the game's buffer has room for, and answers how much that
 // was: the game passed the capacity, and a stub that overran it would be writing into
 // whatever is next to it in the game's own memory.
-inline std::uint32_t bytes_into(void* data, std::uint32_t capacity, const std::string& hex) {
+inline std::uint32_t bytes_into(void* data, std::uint32_t capacity, const std::string& hex)
+{
     unsigned char* target = static_cast<unsigned char*>(data);
-    if (target == nullptr || capacity == 0) {
+    if (target == nullptr || capacity == 0)
+    {
         return 0;
     }
     std::uint32_t written = 0;
-    for (std::size_t index = 0; index + 1 < hex.size() && written < capacity; index += 2) {
+    for (std::size_t index = 0; index + 1 < hex.size() && written < capacity; index += 2)
+    {
         const int high = hex_digit(hex[index]);
         const int low = hex_digit(hex[index + 1]);
-        if (high < 0 || low < 0) {
+        if (high < 0 || low < 0)
+        {
             break;
         }
         target[written++] = static_cast<unsigned char>((high << 4) | low);
@@ -275,14 +323,15 @@ inline std::uint32_t bytes_into(void* data, std::uint32_t capacity, const std::s
 // and hex is the one shape the protocol already has for text. The size is taken as a
 // signed 64-bit value because the SDK declares these lengths both ways - a packet's is
 // a uint32 and a chat line's an int32 - and braces will not narrow.
-class Bytes {
-public:
+class Bytes
+{
+  public:
     Bytes(const void* data, std::int64_t size)
         : _hex(hex_of(data, size > 0 ? static_cast<std::uint32_t>(size) : 0u)) {}
 
     const std::string& text() const noexcept { return _hex; }
 
-private:
+  private:
     std::string _hex;
 };
 
@@ -294,7 +343,8 @@ private:
 // which is the room on the way in and the number the value needs on the way out. `written`
 // is what tells the two apart, and it is declared before `size` because the constructor
 // reads through it.
-struct BytesOut {
+struct BytesOut
+{
     void* data = nullptr;
     std::uint32_t* written = nullptr;
     std::uint32_t size = 0;
@@ -306,7 +356,9 @@ struct BytesOut {
         : data(target), written(out_size), size(out_size != nullptr ? *out_size : 0u) {}
 };
 
-template <> struct Kind<Bytes> {
+template <>
+struct Kind<Bytes>
+{
     static constexpr bool out() noexcept { return false; }
 
     // The wire gets a pointer into the Bytes object's own text rather than a copy of it.
@@ -319,7 +371,9 @@ template <> struct Kind<Bytes> {
     static Bytes fallback() noexcept { return Bytes(nullptr, 0); }
 };
 
-template <> struct Kind<BytesOut> {
+template <>
+struct Kind<BytesOut>
+{
     static constexpr bool out() noexcept { return true; }
 
     static Arg arg(const BytesOut& /*value*/) noexcept { return wire_null(); }
@@ -330,10 +384,12 @@ template <> struct Kind<BytesOut> {
     // it with reply_cstring asked a string for a member named "ret" and got nothing back,
     // so every buffer read this way stayed exactly as the game left it: a game that read a
     // packet read its own uninitialised bytes and said so.
-    static void store(BytesOut target, const Json& value) noexcept {
+    static void store(BytesOut target, const Json& value) noexcept
+    {
         const std::string hex = as_string(value);
         bytes_into(target.data, target.size, hex);
-        if (target.written != nullptr) {
+        if (target.written != nullptr)
+        {
             // Two hex digits are one byte, so this is the number the value needs - the same
             // answer the text buffer gives, and the one a caller that passed a null buffer
             // is asking for.
@@ -350,9 +406,11 @@ template <> struct Kind<BytesOut> {
 // not the number that fit. They are the same whenever the caller had the room, which is what
 // makes the one number both "what you got" and "what you would need", and it is what a
 // caller asking with a null buffer reads: that is how a game sizes a buffer it has not got.
-inline std::uint32_t text_into(char* data, std::uint32_t capacity, const std::string& text) {
+inline std::uint32_t text_into(char* data, std::uint32_t capacity, const std::string& text)
+{
     const std::uint32_t needed = static_cast<std::uint32_t>(text.size()) + 1u;
-    if (data == nullptr || needed > capacity) {
+    if (data == nullptr || needed > capacity)
+    {
         return needed;
     }
     std::memcpy(data, text.data(), text.size());
@@ -364,8 +422,10 @@ inline std::uint32_t text_into(char* data, std::uint32_t capacity, const std::st
 // to ask for a bigger one. What fits is written and the rest is cut, because a payload that arrives
 // with something in it beats one that arrives with nothing, which is what the all-or-nothing rule
 // above would leave behind if a string outgrew its field.
-inline void text_fit(char* data, std::size_t capacity, const std::string& text) noexcept {
-    if (data == nullptr || capacity == 0) {
+inline void text_fit(char* data, std::size_t capacity, const std::string& text) noexcept
+{
+    if (data == nullptr || capacity == 0)
+    {
         return;
     }
     const std::size_t room = text.size() < capacity ? text.size() : capacity - 1u;
@@ -373,7 +433,8 @@ inline void text_fit(char* data, std::size_t capacity, const std::string& text) 
     data[room] = '\0';
 }
 
-struct TextOut {
+struct TextOut
+{
     char* data = nullptr;
     std::uint32_t* written = nullptr;
     std::uint32_t capacity = 0;
@@ -387,14 +448,18 @@ struct TextOut {
         : data(target), written(out_size), capacity(out_size != nullptr ? *out_size : 0u) {}
 };
 
-template <> struct Kind<TextOut> {
+template <>
+struct Kind<TextOut>
+{
     static constexpr bool out() noexcept { return true; }
 
     static Arg arg(const TextOut& /*value*/) noexcept { return wire_null(); }
     static TextOut from(const Json& /*reply*/) noexcept { return TextOut{}; }
-    static void store(TextOut target, const Json& value) noexcept {
+    static void store(TextOut target, const Json& value) noexcept
+    {
         const std::uint32_t needed = text_into(target.data, target.capacity, as_string(value));
-        if (target.written != nullptr) {
+        if (target.written != nullptr)
+        {
             *target.written = needed;
         }
     }
@@ -408,7 +473,9 @@ template <> struct Kind<TextOut> {
 //
 // What is written is the elements that fit; what is reported is how many there are, so a
 // caller that asked with a null buffer and a count of zero is handed the number to allocate.
-template <class T> struct ArrayOut {
+template <class T>
+struct ArrayOut
+{
     T* data = nullptr;
     std::uint32_t* written = nullptr;
     std::uint32_t capacity = 0;
@@ -420,7 +487,9 @@ template <class T> struct ArrayOut {
         : data(target), written(out_size), capacity(out_size != nullptr ? *out_size : 0u) {}
 };
 
-template <class T> struct Kind<ArrayOut<T>> {
+template <class T>
+struct Kind<ArrayOut<T>>
+{
     static constexpr bool out() noexcept { return true; }
 
     static Arg arg(const ArrayOut<T>& /*value*/) noexcept { return wire_null(); }
@@ -428,17 +497,22 @@ template <class T> struct Kind<ArrayOut<T>> {
     // Each element is written by the kind of the thing it is, which is the same store a
     // single structure handed back through a pointer goes through - so a list of them costs
     // one loop here and nothing per structure in the generated file.
-    static void store(ArrayOut<T> target, const Json& value) noexcept {
+    static void store(ArrayOut<T> target, const Json& value) noexcept
+    {
         const std::size_t total = value.is_array() ? value.size() : 0u;
-        if (target.written != nullptr) {
+        if (target.written != nullptr)
+        {
             *target.written = static_cast<std::uint32_t>(total);
         }
-        if (target.data == nullptr) {
+        if (target.data == nullptr)
+        {
             return;
         }
         std::size_t index = 0;
-        for (const Json& element : value) {
-            if (index >= target.capacity) {
+        for (const Json& element : value)
+        {
+            if (index >= target.capacity)
+            {
                 break;
             }
             Kind<T>::store(&target.data[index], element);
@@ -457,22 +531,31 @@ template <class T> struct Kind<ArrayOut<T>> {
 // The constructor is what lets the generated call write `BufferLength{punCount}`: a
 // constructor gives the type an implicit deduction guide, and this tree is C++17, where an
 // aggregate's own members do not.
-template <class T> struct BufferLength {
+template <class T>
+struct BufferLength
+{
     T* value = nullptr;
 
     explicit BufferLength(T* length) noexcept : value(length) {}
 };
 
-template <class T> struct Kind<BufferLength<T>> {
+template <class T>
+struct Kind<BufferLength<T>>
+{
     static constexpr bool out() noexcept { return false; }
 
-    static Arg arg(BufferLength<T> length) noexcept {
-        if (length.value == nullptr) {
+    static Arg arg(BufferLength<T> length) noexcept
+    {
+        if (length.value == nullptr)
+        {
             return wire_null();
         }
-        if constexpr (std::is_signed_v<T>) {
+        if constexpr (std::is_signed_v<T>)
+        {
             return wire_int(static_cast<std::int64_t>(*length.value));
-        } else {
+        }
+        else
+        {
             return wire_uint(static_cast<std::uint64_t>(*length.value));
         }
     }
@@ -485,10 +568,13 @@ template <class T> struct Kind<BufferLength<T>> {
 //
 // Sending it is the value it points at, widened by that type's own kind, so the
 // pointer itself has a kind only when there is nothing to point at.
-template <class T> struct Kind<T*, void> {
+template <class T>
+struct Kind<T*, void>
+{
     static constexpr bool out() noexcept { return true; }
 
-    static Arg arg(T* value) noexcept {
+    static Arg arg(T* value) noexcept
+    {
         return value != nullptr ? Kind<T>::arg(*value) : wire_null();
     }
 
@@ -502,7 +588,8 @@ template <class T> struct Kind<T*, void> {
 // A null parameter-name array is only reachable if the generator emitted a slot
 // with parameters and no names for them, which a test would catch; reading one
 // safely is cheaper than trusting it here.
-inline const char* name_at(const SlotInfo& info, std::size_t index) noexcept {
+inline const char* name_at(const SlotInfo& info, std::size_t index) noexcept
+{
     return info.parameters != nullptr ? info.parameters[index] : "";
 }
 
@@ -525,10 +612,13 @@ bool run_slot(std::int32_t hSteamUser, const SlotInfo& info, const Arg* args, st
 // out, and the attribute is the language's own answer for "not every branch here uses it".
 template <class Parameter>
 void store_out([[maybe_unused]] const SlotInfo& info, [[maybe_unused]] std::size_t index,
-               [[maybe_unused]] const Json& reply, [[maybe_unused]] Parameter parameter) noexcept {
-    if constexpr (Kind<Parameter>::out()) {
+               [[maybe_unused]] const Json& reply, [[maybe_unused]] Parameter parameter) noexcept
+{
+    if constexpr (Kind<Parameter>::out())
+    {
         const Json* value = reply_out(reply, name_at(info, index));
-        if (value != nullptr && !value->is_null()) {
+        if (value != nullptr && !value->is_null())
+        {
             Kind<Parameter>::store(parameter, *value);
         }
     }
@@ -538,29 +628,35 @@ void store_out([[maybe_unused]] const SlotInfo& info, [[maybe_unused]] std::size
 // made without one cannot drift apart. hSteamUser is the handle the object was handed
 // out for, or 0 when the call came through no object at all.
 template <class Return, class... Parameters>
-Return call_slot(std::int32_t hSteamUser, const SlotInfo& info, Parameters... parameters) noexcept {
-    try {
+Return call_slot(std::int32_t hSteamUser, const SlotInfo& info, Parameters... parameters) noexcept
+{
+    try
+    {
         // One slot more than there are arguments, always: a call that takes none would
         // otherwise declare a zero-length array, which is not standard C++ - and the
         // extra element is never read, because the count is what run_slot goes by.
         const Arg packed[sizeof...(Parameters) + 1] = {Kind<Parameters>::arg(parameters)...};
         Json reply;
 
-        if (!run_slot(hSteamUser, info, packed, sizeof...(Parameters), reply)) {
+        if (!run_slot(hSteamUser, info, packed, sizeof...(Parameters), reply))
+        {
             return Kind<Return>::fallback();
         }
 
         std::size_t index = 0;
         (store_out(info, index++, reply, parameters), ...);
         return Kind<Return>::from(reply);
-    } catch (...) {
+    }
+    catch (...)
+    {
         // Never let an exception cross into the game.
         return Kind<Return>::fallback();
     }
 }
 
 template <class Return, class... Parameters>
-Return slot(const SlotInfo& info, Parameters... parameters) noexcept {
+Return slot(const SlotInfo& info, Parameters... parameters) noexcept
+{
     return call_slot<Return>(0, info, parameters...);
 }
 
@@ -570,7 +666,8 @@ Return slot(const SlotInfo& info, Parameters... parameters) noexcept {
 // call name, and a version of an interface asked for under two handles is two
 // objects, which is how a customer's call is told from a game server's.
 template <class Return, class... Parameters>
-Return slot(std::int32_t hSteamUser, const SlotInfo& info, Parameters... parameters) noexcept {
+Return slot(std::int32_t hSteamUser, const SlotInfo& info, Parameters... parameters) noexcept
+{
     return call_slot<Return>(hSteamUser, info, parameters...);
 }
 
@@ -594,7 +691,8 @@ void* interface_object(const char* version, std::int32_t hSteamUser) noexcept;
 //  id a game registers it under. Nothing here reads a payload back - the bytes go
 //  into the game's own object.
 
-struct EventInfo {
+struct EventInfo
+{
     const char* name;
     std::size_t size;
     // The SDK's own id for this callback, which is the only thing that can tie a
@@ -676,18 +774,22 @@ void deliver_events() noexcept;
 //  after the first are the game's accessor checking the SDK's cache, once per use
 //  of an interface, and those are not reported: the cache lives inside the DLL,
 //  and the real one does not treat them as calls either.
-inline void* context_init(void* p_context_init_data, const char* call) noexcept {
-    struct ContextInitData {
+inline void* context_init(void* p_context_init_data, const char* call) noexcept
+{
+    struct ContextInitData
+    {
         void (*initialize)(void* value);
         std::uintptr_t counter;
         void* value;
     };
 
     auto* context = static_cast<ContextInitData*>(p_context_init_data);
-    if (context == nullptr) {
+    if (context == nullptr)
+    {
         return nullptr;
     }
-    if (context->counter != 0 || context->initialize == nullptr) {
+    if (context->counter != 0 || context->initialize == nullptr)
+    {
         return &context->value;
     }
 
@@ -701,4 +803,4 @@ inline void* context_init(void* p_context_init_data, const char* call) noexcept 
     return &context->value;
 }
 
-}  // namespace steammock
+} // namespace steammock

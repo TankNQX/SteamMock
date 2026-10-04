@@ -11,8 +11,10 @@
 #include "bridge/protocol.hpp"
 #include "socket_io.hpp"
 
-namespace steammock {
-namespace {
+namespace steammock
+{
+namespace
+{
 
 using socket_io::as_socket;
 using socket_io::close_socket;
@@ -39,10 +41,13 @@ constexpr long kReadSliceMicroseconds = 200 * 1000;
 // One recv() per slice rather than a loop to the end of the frame, because a partial
 // frame must not be able to park this thread any longer than a slice either.
 bool recv_all(socket_t handle, char* data, std::size_t size,
-              const std::atomic<bool>& stopping) noexcept {
+              const std::atomic<bool>& stopping) noexcept
+{
     std::size_t received = 0;
-    while (received < size) {
-        if (stopping.load(std::memory_order_acquire)) {
+    while (received < size)
+    {
+        if (stopping.load(std::memory_order_acquire))
+        {
             return false;
         }
         fd_set readable;
@@ -52,16 +57,19 @@ bool recv_all(socket_t handle, char* data, std::size_t size,
         slice.tv_sec = 0;
         slice.tv_usec = kReadSliceMicroseconds;
         const int ready = ::select(0, &readable, nullptr, nullptr, &slice);
-        if (ready == SOCKET_ERROR) {
+        if (ready == SOCKET_ERROR)
+        {
             return false;
         }
-        if (ready == 0) {
+        if (ready == 0)
+        {
             continue;
         }
         const std::size_t remaining = size - received;
         const int chunk = static_cast<int>(remaining > 0x7FFFFFFFu ? 0x7FFFFFFFu : remaining);
         const int got = ::recv(handle, data + received, chunk, 0);
-        if (got <= 0) {
+        if (got <= 0)
+        {
             return false;
         }
         received += static_cast<std::size_t>(got);
@@ -69,8 +77,10 @@ bool recv_all(socket_t handle, char* data, std::size_t size,
     return true;
 }
 
-bool send_frame(socket_t handle, const std::string& payload) noexcept {
-    if (payload.empty() || payload.size() > kMaxFrameBytes) {
+bool send_frame(socket_t handle, const std::string& payload) noexcept
+{
+    if (payload.empty() || payload.size() > kMaxFrameBytes)
+    {
         return false;
     }
     char header[4] = {};
@@ -81,55 +91,70 @@ bool send_frame(socket_t handle, const std::string& payload) noexcept {
 
 // Reads exactly one frame. False means the peer went away, the server is stopping, or
 // something arrived that is not a frame - either way this connection is finished.
-bool recv_frame(socket_t handle, std::string& payload, const std::atomic<bool>& stopping) noexcept {
-    try {
+bool recv_frame(socket_t handle, std::string& payload, const std::atomic<bool>& stopping) noexcept
+{
+    try
+    {
         char header[4] = {};
-        if (!recv_all(handle, header, sizeof(header), stopping)) {
+        if (!recv_all(handle, header, sizeof(header), stopping))
+        {
             return false;
         }
         const std::uint32_t length = read_frame_length(header);
-        if (length == 0u || length > kMaxFrameBytes) {
+        if (length == 0u || length > kMaxFrameBytes)
+        {
             return false;
         }
         payload.assign(length, '\0');
         return recv_all(handle, payload.data(), length, stopping);
-    } catch (...) {
+    }
+    catch (...)
+    {
         // A frame this process cannot hold is a frame it cannot serve, so the
         // connection ends - which is what a false return already means.
         return false;
     }
 }
 
-std::string peer_name(socket_t handle) {
+std::string peer_name(socket_t handle)
+{
     sockaddr_storage address{};
     socklen_t length = sizeof(address);
-    if (::getpeername(handle, reinterpret_cast<sockaddr*>(&address), &length) != 0) {
+    if (::getpeername(handle, reinterpret_cast<sockaddr*>(&address), &length) != 0)
+    {
         return "unknown peer";
     }
     char host[INET6_ADDRSTRLEN] = {};
     unsigned port = 0;
-    if (address.ss_family == AF_INET) {
+    if (address.ss_family == AF_INET)
+    {
         const auto* v4 = reinterpret_cast<const sockaddr_in*>(&address);
         (void)::inet_ntop(AF_INET, &v4->sin_addr, host, sizeof(host));
         port = ntohs(v4->sin_port);
-    } else if (address.ss_family == AF_INET6) {
+    }
+    else if (address.ss_family == AF_INET6)
+    {
         const auto* v6 = reinterpret_cast<const sockaddr_in6*>(&address);
         (void)::inet_ntop(AF_INET6, &v6->sin6_addr, host, sizeof(host));
         port = ntohs(v6->sin6_port);
-    } else {
+    }
+    else
+    {
         return "unknown peer";
     }
     return std::string(host) + ":" + std::to_string(port);
 }
 
-std::int64_t unix_milliseconds_now() noexcept {
+std::int64_t unix_milliseconds_now() noexcept
+{
     const auto now = std::chrono::system_clock::now().time_since_epoch();
     return std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
 }
 
 // A session id only has to be unique within one run and readable in a log, so it
 // is a random prefix plus a counter rather than a UUID.
-std::string make_session_id() {
+std::string make_session_id()
+{
     static std::atomic<std::uint64_t> counter{0};
     static const std::uint64_t seed =
         static_cast<std::uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count()) ^
@@ -143,10 +168,11 @@ std::string make_session_id() {
     return std::string(buffer);
 }
 
-}  // namespace
+} // namespace
 
 // The backend's own line format, the one the console used to print.
-void stderr_log_sink(LogLevel level, const std::string& message) {
+void stderr_log_sink(LogLevel level, const std::string& message)
+{
     const std::time_t now = std::time(nullptr);
     std::tm parts{};
     localtime_s(&parts, &now);
@@ -161,7 +187,8 @@ void stderr_log_sink(LogLevel level, const std::string& message) {
 //  A record, as the transcript spells it
 // ---------------------------------------------------------------------------
 
-Json CallRecord::to_json() const {
+Json CallRecord::to_json() const
+{
     Json json = Json::object();
     json["session"] = Json(session);
     json["seq"] = Json(seq);
@@ -175,9 +202,11 @@ Json CallRecord::to_json() const {
     // sessions' calls against each other - and a race between sessions is exactly what
     // a transcript is read for once the two are behaving differently.
     json["at_unix_ms"] = Json(at_unix_ms);
-    if (answered) {
+    if (answered)
+    {
         json["ret"] = ret;
-        if (carries_out(out)) {
+        if (carries_out(out))
+        {
             json["out"] = out;
         }
     }
@@ -189,22 +218,28 @@ Json CallRecord::to_json() const {
 // ---------------------------------------------------------------------------
 
 Server::Server(Dispatcher dispatcher, ServerOptions options)
-    : _dispatcher(std::move(dispatcher)), _options(std::move(options)) {
-    if (!_options.log) {
+    : _dispatcher(std::move(dispatcher)), _options(std::move(options))
+{
+    if (!_options.log)
+    {
         _options.log = &stderr_log_sink;
     }
 }
 
 Server::~Server() { stop(); }
 
-void Server::log(LogLevel level, const std::string& message) const {
-    if (!_options.log || level > _options.log_level) {
+void Server::log(LogLevel level, const std::string& message) const
+{
+    if (!_options.log || level > _options.log_level)
+    {
         return;
     }
-    try {
+    try
+    {
         _options.log(level, message);
-        // NOLINTNEXTLINE(bugprone-empty-catch) - losing the line is the whole of the failure
-    } catch (...) {
+    }
+    catch (...) // NOLINT(bugprone-empty-catch) - losing the line is the whole of the failure
+    {
         // The sink is somebody else's code - a console, a window's log panel - and this
         // is called from the connection threads, where an exception has nothing to
         // return to and ends the process. Losing the line is the whole of what can go
@@ -213,11 +248,13 @@ void Server::log(LogLevel level, const std::string& message) const {
     }
 }
 
-bool Server::start(std::string& error) {
+bool Server::start(std::string& error)
+{
     // Before anything is opened, so a process whose socket layer never came up says
     // exactly that - it used to be a log line and a `true`, and the failure arrived
     // later as "cannot bind", which is a different problem with a different cause.
-    if (!ensure_winsock_started()) {
+    if (!ensure_winsock_started())
+    {
         error = "the socket layer could not be started (WSAStartup failed)";
         return false;
     }
@@ -231,15 +268,18 @@ bool Server::start(std::string& error) {
         // answer to both; restarting a run means a new Server, which is what both front
         // ends do.
         std::scoped_lock once(_stop_mutex);
-        if (_stopped || _listener != kNoSocket) {
+        if (_stopped || _listener != kNoSocket)
+        {
             error = "the server was already started, and a run is not restartable";
             return false;
         }
     }
 
-    if (!_options.transcript.empty()) {
+    if (!_options.transcript.empty())
+    {
         _transcript = std::fopen(_options.transcript.c_str(), "ab");
-        if (_transcript == nullptr) {
+        if (_transcript == nullptr)
+        {
             error = "cannot open the transcript " + _options.transcript;
             return false;
         }
@@ -253,8 +293,10 @@ bool Server::start(std::string& error) {
     // not about tidiness: the worlds above point into it, and this path leaves a server
     // that is about to be destroyed - a failed start is not restartable, and both front
     // ends drop it. The unique_ptr closes the file with the object, after them.
-    const auto give_up = [this](std::string message) {
-        if (_transcript != nullptr) {
+    const auto give_up = [this](std::string message)
+    {
+        if (_transcript != nullptr)
+        {
             std::fclose(_transcript);
             _transcript = nullptr;
         }
@@ -265,10 +307,12 @@ bool Server::start(std::string& error) {
     // path that cannot be written is said at startup - the same as a transcript that
     // cannot be written - and not discovered a run later as state that quietly was not
     // being kept.
-    if (!_options.state.empty()) {
+    if (!_options.state.empty())
+    {
         std::string why;
         _store = Store::open(_options.state, why);
-        if (_store == nullptr) {
+        if (_store == nullptr)
+        {
             error = give_up(std::move(why));
             return false;
         }
@@ -291,21 +335,25 @@ bool Server::start(std::string& error) {
 
     addrinfo* results = nullptr;
     const char* host = _options.host.empty() ? nullptr : _options.host.c_str();
-    if (getaddrinfo(host, service, &hints, &results) != 0 || results == nullptr) {
+    if (getaddrinfo(host, service, &hints, &results) != 0 || results == nullptr)
+    {
         error = give_up("cannot resolve " + _options.host);
         return false;
     }
 
     socket_t listener = kInvalidSocket;
-    for (addrinfo* candidate = results; candidate != nullptr; candidate = candidate->ai_next) {
+    for (addrinfo* candidate = results; candidate != nullptr; candidate = candidate->ai_next)
+    {
         listener = ::socket(candidate->ai_family, candidate->ai_socktype, candidate->ai_protocol);
-        if (listener == kInvalidSocket) {
+        if (listener == kInvalidSocket)
+        {
             continue;
         }
         const int enable = 1;
         (void)setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&enable),
                          sizeof(enable));
-        if (::bind(listener, candidate->ai_addr, static_cast<int>(candidate->ai_addrlen)) == 0) {
+        if (::bind(listener, candidate->ai_addr, static_cast<int>(candidate->ai_addrlen)) == 0)
+        {
             break;
         }
         close_socket(listener);
@@ -313,11 +361,13 @@ bool Server::start(std::string& error) {
     }
     freeaddrinfo(results);
 
-    if (listener == kInvalidSocket) {
+    if (listener == kInvalidSocket)
+    {
         error = give_up("cannot bind " + _options.host + ":" + std::to_string(_options.port));
         return false;
     }
-    if (::listen(listener, 16) != 0) {
+    if (::listen(listener, 16) != 0)
+    {
         close_socket(listener);
         error = give_up("cannot listen on " + _options.host + ":" + std::to_string(_options.port));
         return false;
@@ -328,15 +378,20 @@ bool Server::start(std::string& error) {
     sockaddr_in bound{};
     socklen_t bound_length = sizeof(bound);
     _port = _options.port;
-    if (::getsockname(listener, reinterpret_cast<sockaddr*>(&bound), &bound_length) == 0) {
+    if (::getsockname(listener, reinterpret_cast<sockaddr*>(&bound), &bound_length) == 0)
+    {
         _port = ntohs(bound.sin_port);
     }
 
     _listener = static_cast<std::uintptr_t>(listener);
-    try {
+    try
+    {
         _accept_thread =
-            std::thread([this, listener] { accept_loop(static_cast<std::uintptr_t>(listener)); });
-    } catch (...) {
+            std::thread([this, listener]
+                        { accept_loop(static_cast<std::uintptr_t>(listener)); });
+    }
+    catch (...)
+    {
         // The handle is published a line above and the thread that owns it is not, which
         // is the one state stop() cannot clean up: it closes `_listener`, but `_listener`
         // is also what refuses a second start(), so the run would be unstartable as well
@@ -352,7 +407,8 @@ bool Server::start(std::string& error) {
     return true;
 }
 
-void Server::stop() {
+void Server::stop()
+{
     // Held for the whole of it. `_stopping` is what tells the accept loop to finish,
     // and it cannot also be the "already stopped" test: it is set before any of this
     // work is done, so a second caller arriving mid-stop would find it set, skip the
@@ -360,8 +416,9 @@ void Server::stop() {
     // lock is nobody else's, so waiting here cannot be a wait for a worker that is
     // waiting on `_mutex`.
     std::scoped_lock once(_stop_mutex);
-    if (_stopped) {
-        return;  // already stopped
+    if (_stopped)
+    {
+        return; // already stopped
     }
     _stopped = true;
 
@@ -371,7 +428,8 @@ void Server::stop() {
 
     // Only this thread can be here, and start() wrote the listener before any of this
     // existed, so the handle needs no lock of its own.
-    if (_listener != kNoSocket) {
+    if (_listener != kNoSocket)
+    {
         // The accept() parked on this handle is woken by the close, not by the shutdown:
         // a listening socket has nothing for shutdown() to shut down, whatever it
         // returns. Both are here because shutting down and then closing is the sequence
@@ -380,7 +438,8 @@ void Server::stop() {
         close_socket(as_socket(_listener));
         _listener = kNoSocket;
     }
-    if (_accept_thread.joinable()) {
+    if (_accept_thread.joinable())
+    {
         _accept_thread.join();
     }
 
@@ -388,15 +447,18 @@ void Server::stop() {
     // are waiting on their own sockets.
     {
         std::scoped_lock lock(_mutex);
-        for (const std::uintptr_t client : _clients) {
+        for (const std::uintptr_t client : _clients)
+        {
             // The reader in that connection's thread is in a read slice and will look
             // at `_stopping` on its own; this tells the game's end the connection is
             // over, which is what makes it stop waiting for an answer.
             shutdown_socket(as_socket(client));
         }
     }
-    for (std::thread& worker : _workers) {
-        if (worker.joinable()) {
+    for (std::thread& worker : _workers)
+    {
+        if (worker.joinable())
+        {
             worker.join();
         }
     }
@@ -405,7 +467,8 @@ void Server::stop() {
     std::scoped_lock lock(_mutex);
     _clients.clear();
     // The workers were joined above, so nothing can still be writing to this.
-    if (_transcript != nullptr) {
+    if (_transcript != nullptr)
+    {
         std::fflush(_transcript);
         std::fclose(_transcript);
         _transcript = nullptr;
@@ -414,7 +477,8 @@ void Server::stop() {
 
 std::uint16_t Server::port() const noexcept { return _port; }
 
-std::string Server::summary() const {
+std::string Server::summary() const
+{
     std::scoped_lock lock(_mutex);
     const std::size_t answered = _total_calls - _unanswered_calls;
     return std::to_string(_sessions.size()) + " game session(s), " + std::to_string(_total_calls) +
@@ -422,11 +486,13 @@ std::string Server::summary() const {
            std::to_string(_unanswered_calls) + " left to the stub's defaults";
 }
 
-std::vector<SessionSnapshot> Server::sessions() const {
+std::vector<SessionSnapshot> Server::sessions() const
+{
     std::scoped_lock lock(_mutex);
     std::vector<SessionSnapshot> snapshots;
     snapshots.reserve(_sessions.size());
-    for (const std::unique_ptr<Session>& session : _sessions) {
+    for (const std::unique_ptr<Session>& session : _sessions)
+    {
         SessionSnapshot snapshot;
         snapshot.id = session->id();
         snapshot.exe = session->exe();
@@ -445,24 +511,28 @@ std::vector<SessionSnapshot> Server::sessions() const {
     return snapshots;
 }
 
-std::vector<CallRecord> Server::records() const {
+std::vector<CallRecord> Server::records() const
+{
     std::scoped_lock lock(_mutex);
     return std::vector<CallRecord>(_records.begin(), _records.end());
 }
 
-std::size_t Server::record_count() const {
+std::size_t Server::record_count() const
+{
     std::scoped_lock lock(_mutex);
     // What the run made, not what is still held: the count is a position in the
     // history, and the history is allowed to forget its beginning.
     return _records_dropped + _records.size();
 }
 
-std::size_t Server::records_begin() const {
+std::size_t Server::records_begin() const
+{
     std::scoped_lock lock(_mutex);
     return _records_dropped;
 }
 
-std::vector<CallRecord> Server::records_since(std::size_t index) const {
+std::vector<CallRecord> Server::records_since(std::size_t index) const
+{
     std::scoped_lock lock(_mutex);
     std::vector<CallRecord> tail;
     // `index` is an absolute position in the run's history, the same one record_count()
@@ -470,49 +540,59 @@ std::vector<CallRecord> Server::records_since(std::size_t index) const {
     // reads as "from the beginning of what is here", not as nothing at all. A reader that
     // wants to know it has fallen behind asks records_begin() and moves its cursor up.
     const std::size_t first = index > _records_dropped ? index - _records_dropped : 0u;
-    if (first >= _records.size()) {
+    if (first >= _records.size())
+    {
         return tail;
     }
     tail.reserve(_records.size() - first);
-    for (std::size_t position = first; position < _records.size(); ++position) {
+    for (std::size_t position = first; position < _records.size(); ++position)
+    {
         tail.push_back(_records[position]);
     }
     return tail;
 }
 
-std::size_t Server::call_count() const {
+std::size_t Server::call_count() const
+{
     std::scoped_lock lock(_mutex);
     return _total_calls;
 }
 
-std::size_t Server::unanswered_count() const {
+std::size_t Server::unanswered_count() const
+{
     std::scoped_lock lock(_mutex);
     return _unanswered_calls;
 }
 
-void Server::accept_loop(std::uintptr_t listener) {
+void Server::accept_loop(std::uintptr_t listener)
+{
     const socket_t socket = as_socket(listener);
-    int reported_error = 0;  // the last accept failure this loop said out loud
-    for (;;) {
+    int reported_error = 0; // the last accept failure this loop said out loud
+    for (;;)
+    {
         // One connection's worth of work is not worth the process, and this runs on a
         // thread: anything that escapes here would end the run for every game attached.
         // An accept that failed says why and carries on, which is what a listener that
         // is still open deserves.
-        try {
+        try
+        {
             const socket_t client = ::accept(socket, nullptr, nullptr);
-            if (client == kInvalidSocket) {
+            if (client == kInvalidSocket)
+            {
                 // Read before anything else can touch it: this code is the only thing that
                 // says why the accept failed, and taking the lock can set the thread's own
                 // last error on the way in.
                 const int error = WSAGetLastError();
-                if (_stopping.load(std::memory_order_acquire)) {
-                    return;  // the listener was closed: we are stopping
+                if (_stopping.load(std::memory_order_acquire))
+                {
+                    return; // the listener was closed: we are stopping
                 }
                 // An accept that failed is not a listener that is finished. Returning here
                 // used to end this loop for the rest of the run on a single aborted
                 // connection, and with it every game that had not connected yet: the
                 // listener is still open, so the next accept is the same call made again.
-                if (error != reported_error) {
+                if (error != reported_error)
+                {
                     // Once per kind of failure rather than twenty times a second: a
                     // condition that persists is one line, not a log nobody can read.
                     reported_error = error;
@@ -525,7 +605,8 @@ void Server::accept_loop(std::uintptr_t listener) {
             reported_error = 0;
 
             std::scoped_lock lock(_mutex);
-            if (_stopping.load(std::memory_order_acquire)) {
+            if (_stopping.load(std::memory_order_acquire))
+            {
                 close_socket(client);
                 return;
             }
@@ -533,24 +614,35 @@ void Server::accept_loop(std::uintptr_t listener) {
             // The worker closes its own socket and forgets its own entry, so what is left
             // here is the set of connections that are still attached - which is what stop()
             // shuts down and what a snapshot is asked about.
-            _workers.emplace_back([this, client] { serve(static_cast<std::uintptr_t>(client)); });
-        } catch (const std::exception& error) {
+            _workers.emplace_back([this, client]
+                                  { serve(static_cast<std::uintptr_t>(client)); });
+        }
+        catch (const std::exception& error)
+        {
             log(LogLevel::error, "the accept loop threw: " + std::string(error.what()));
             Sleep(50);
-        } catch (...) {
+        }
+        catch (...)
+        {
             log(LogLevel::error, "the accept loop threw");
             Sleep(50);
         }
     }
 }
 
-void Server::serve(std::uintptr_t client) {
+void Server::serve(std::uintptr_t client)
+{
     const socket_t socket = as_socket(client);
-    try {
+    try
+    {
         serve_connection(client);
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception& error)
+    {
         log(LogLevel::error, "a connection threw: " + std::string(error.what()));
-    } catch (...) {
+    }
+    catch (...)
+    {
         log(LogLevel::error, "a connection threw");
     }
     {
@@ -559,8 +651,10 @@ void Server::serve(std::uintptr_t client) {
         // would be the new connection's - which is how a live game goes missing from the
         // set stop() shuts down.
         std::scoped_lock lock(_mutex);
-        for (auto entry = _clients.begin(); entry != _clients.end(); ++entry) {
-            if (*entry == client) {
+        for (auto entry = _clients.begin(); entry != _clients.end(); ++entry)
+        {
+            if (*entry == client)
+            {
                 _clients.erase(entry);
                 break;
             }
@@ -571,7 +665,8 @@ void Server::serve(std::uintptr_t client) {
     close_socket(socket);
 }
 
-void Server::serve_connection(std::uintptr_t client) {
+void Server::serve_connection(std::uintptr_t client)
+{
     const socket_t socket = as_socket(client);
     const std::string peer = peer_name(socket);
     const auto connected_at = std::chrono::steady_clock::now();
@@ -580,18 +675,21 @@ void Server::serve_connection(std::uintptr_t client) {
     std::string session_id;
 
     std::string payload;
-    if (!recv_frame(socket, payload, _stopping)) {
+    if (!recv_frame(socket, payload, _stopping))
+    {
         log(LogLevel::warn, "a connection from " + peer + " closed before it said hello");
         return;
     }
 
     Json hello;
-    if (!parse(payload, hello) || !hello.is_object()) {
+    if (!parse(payload, hello) || !hello.is_object())
+    {
         log(LogLevel::warn, "the first frame from " + peer + " was not a JSON object");
         return;
     }
     const std::string kind = as_string_member(hello, "type");
-    if (kind != "hello") {
+    if (kind != "hello")
+    {
         log(LogLevel::warn, "first message from " + peer + " was '" + kind + "', not a hello");
         return;
     }
@@ -606,7 +704,8 @@ void Server::serve_connection(std::uintptr_t client) {
         // a lobby with a member missing.
         std::string refused;
         const std::optional<Profile> profile = _dispatcher.profile_for(hello, &refused);
-        if (!profile) {
+        if (!profile)
+        {
             log(LogLevel::error, "refusing a handshake: the scenario has no profile '" +
                                      (refused.empty() ? std::string("?") : refused) + "'");
             return;
@@ -618,7 +717,8 @@ void Server::serve_connection(std::uintptr_t client) {
         // store knows, which is also how two games matched to one profile see each
         // other's writes - see include/bridge/store.hpp for why that is deliberate.
         Profile resolved = *profile;
-        if (_store != nullptr) {
+        if (_store != nullptr)
+        {
             _store->seed(resolved);
             _store->merge_into(resolved);
         }
@@ -629,10 +729,13 @@ void Server::serve_connection(std::uintptr_t client) {
     }
     log(LogLevel::info, "game connected: " + session->describe());
 
-    if (send_frame(socket, make_welcome(session_id, session->profile().name).dump())) {
-        for (;;) {
-            if (!recv_frame(socket, payload, _stopping)) {
-                break;  // the normal way a game leaves, or the server is stopping
+    if (send_frame(socket, make_welcome(session_id, session->profile().name).dump()))
+    {
+        for (;;)
+        {
+            if (!recv_frame(socket, payload, _stopping))
+            {
+                break; // the normal way a game leaves, or the server is stopping
             }
             // One frame is not worth the process. This runs on a thread of its own,
             // so anything that escapes here - a parse that throws, an answer whose
@@ -640,18 +743,22 @@ void Server::serve_connection(std::uintptr_t client) {
             // with it. The frame is dropped and the connection kept: the frame was
             // read whole, so the stream is still where it should be, and a
             // connection that really is wedged fails on the next read anyway.
-            try {
+            try
+            {
                 Json message;
-                if (!parse(payload, message) || !message.is_object()) {
+                if (!parse(payload, message) || !message.is_object())
+                {
                     log(LogLevel::warn,
                         "protocol error from " + session_id + ": an unparsable frame");
                     break;
                 }
                 const std::string message_kind = as_string_member(message, "type");
-                if (message_kind == "bye") {
+                if (message_kind == "bye")
+                {
                     break;
                 }
-                if (message_kind != "call") {
+                if (message_kind != "call")
+                {
                     std::string ignored = "ignoring a '";
                     ignored += message_kind;
                     ignored += "' message from ";
@@ -659,13 +766,18 @@ void Server::serve_connection(std::uintptr_t client) {
                     log(LogLevel::warn, ignored);
                     continue;
                 }
-                if (!send_frame(socket, handle_call(*session, message))) {
+                if (!send_frame(socket, handle_call(*session, message)))
+                {
                     break;
                 }
-            } catch (const std::exception& error) {
+            }
+            catch (const std::exception& error)
+            {
                 log(LogLevel::error, "a frame from " + session_id + " threw: " + error.what());
                 continue;
-            } catch (...) {
+            }
+            catch (...)
+            {
                 log(LogLevel::error, "a frame from " + session_id + " threw");
                 continue;
             }
@@ -693,18 +805,23 @@ void Server::serve_connection(std::uintptr_t client) {
                             std::to_string(calls) + " calls)");
 }
 
-std::string Server::handle_call(Session& session, const Json& message) {
+std::string Server::handle_call(Session& session, const Json& message)
+{
     const std::string name = as_string_member(message, "name");
 
     Json args = Json::object();
-    if (const Json* value = json_member(message, "args"); value != nullptr && value->is_object()) {
+    if (const Json* value = json_member(message, "args"); value != nullptr && value->is_object())
+    {
         args = *value;
-    } else if (value != nullptr && !value->is_null()) {
+    }
+    else if (value != nullptr && !value->is_null())
+    {
         log(LogLevel::warn, name + ": arguments were not an object; using none");
     }
 
     std::int64_t seq = 0;
-    if (const Json* value = json_member(message, "seq"); value != nullptr && value->is_number()) {
+    if (const Json* value = json_member(message, "seq"); value != nullptr && value->is_number())
+    {
         seq = as_int64(*value);
     }
 
@@ -717,7 +834,8 @@ std::string Server::handle_call(Session& session, const Json& message) {
     // be a delay for every other game attached to the run instead. `started` is above it, so
     // the transcript's `ms` counts the wait, which is what a reader comparing two calls is
     // looking at.
-    if (const std::int64_t delay_ms = _dispatcher.delay_for(session, name); delay_ms > 0) {
+    if (const std::int64_t delay_ms = _dispatcher.delay_for(session, name); delay_ms > 0)
+    {
         log(LogLevel::debug, name + ": waiting " + std::to_string(delay_ms) +
                                  " ms before answering, as the scenario says");
         std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
@@ -748,27 +866,34 @@ std::string Server::handle_call(Session& session, const Json& message) {
         // session's own state.
         if (!_world.answer(session, name, args, answer, notifications) &&
             !_leaderboards.answer(session, name, args, answer) &&
-            !_inventory.answer(session, name, args, answer)) {
+            !_inventory.answer(session, name, args, answer))
+        {
             answer = _dispatcher.answer(session, name, args);
         }
 
         // What the other members have to be told: theirs is not the call that did
         // this, so it waits for them and rides back on whatever reply they make
         // next - which is the only way a game ever learns anything.
-        for (const auto& notification : notifications) {
-            for (const auto& other : _sessions) {
-                if (other->connected() && other->profile().steam_id == notification.first) {
+        for (const auto& notification : notifications)
+        {
+            for (const auto& other : _sessions)
+            {
+                if (other->connected() && other->profile().steam_id == notification.first)
+                {
                     _inbox[other->id()].push_back(notification.second);
                 }
             }
         }
 
         // ...and whatever this game was told while it was busy, on this reply.
-        if (const auto queued = _inbox.find(session.id()); queued != _inbox.end()) {
-            if (!answer.events.is_array()) {
+        if (const auto queued = _inbox.find(session.id()); queued != _inbox.end())
+        {
+            if (!answer.events.is_array())
+            {
                 answer.events = Json::array();
             }
-            for (const Json& payload : queued->second) {
+            for (const Json& payload : queued->second)
+            {
                 answer.events.push_back(payload);
             }
             _inbox.erase(queued);
@@ -790,7 +915,8 @@ std::string Server::handle_call(Session& session, const Json& message) {
         record.at_unix_ms = unix_milliseconds_now();
 
         ++_total_calls;
-        if (!answer.answered) {
+        if (!answer.answered)
+        {
             ++_unanswered_calls;
         }
         _records.push_back(record);
@@ -801,7 +927,8 @@ std::string Server::handle_call(Session& session, const Json& message) {
         // state lock. The transcript is the record that keeps everything; this is a
         // window for a live view and a test, and `_records_dropped` is what keeps the
         // positions in it absolute, so a reader's cursor still means something.
-        if (_records.size() > kMaxRecords) {
+        if (_records.size() > kMaxRecords)
+        {
             _records.pop_front();
             ++_records_dropped;
         }
@@ -810,7 +937,8 @@ std::string Server::handle_call(Session& session, const Json& message) {
         // nobody could notice on their own: every call still answers, every transcript line
         // still lands, and only the keeping of state has quietly stopped happening. Said
         // once - on the first call to find it - and not on every call after that.
-        if (_store != nullptr && !_store_failure_reported && !_store->error().empty()) {
+        if (_store != nullptr && !_store_failure_reported && !_store->error().empty())
+        {
             _store_failure_reported = true;
             store_failure = _store->error();
         }
@@ -820,17 +948,22 @@ std::string Server::handle_call(Session& session, const Json& message) {
     // which is what a reader orders by; the file's own order was never the promise.
     write_transcript(record);
 
-    if (answer.answered) {
+    if (answer.answered)
+    {
         std::string line = "-> " + name + " = " + answer.ret.dump();
-        if (carries_out(answer.out)) {
+        if (carries_out(answer.out))
+        {
             line += " out=" + answer.out.dump();
         }
         log(LogLevel::debug, line);
-    } else {
+    }
+    else
+    {
         log(LogLevel::debug, "-- " + name + ": no opinion, the stub uses its default");
     }
 
-    if (!store_failure.empty()) {
+    if (!store_failure.empty())
+    {
         log(LogLevel::error, "the state file has stopped accepting writes, so this run is no "
                              "longer keeping anything: " +
                                  store_failure);
@@ -840,7 +973,8 @@ std::string Server::handle_call(Session& session, const Json& message) {
     // queues it and hands it over on the game's own next RunCallbacks, which is
     // the only place a callback object may be called from.
     Json reply = make_reply(seq, answer.answered, answer.ret, answer.out);
-    if (answer.events.is_array() && !answer.events.empty()) {
+    if (answer.events.is_array() && !answer.events.empty())
+    {
         reply["events"] = answer.events;
         log(LogLevel::debug, "   .. " + std::to_string(answer.events.size()) +
                                  " payload(s) for the game, on its next pump");
@@ -848,7 +982,8 @@ std::string Server::handle_call(Session& session, const Json& message) {
     return reply.dump();
 }
 
-void Server::write_transcript(const CallRecord& record) {
+void Server::write_transcript(const CallRecord& record)
+{
     // Serialised on its own lock rather than on `_mutex`: two games' threads write this
     // file, and a line half of one call and half of another is not a transcript. The
     // lock is not `_mutex`, because the write is to disk and a game's next call should
@@ -857,10 +992,12 @@ void Server::write_transcript(const CallRecord& record) {
     // carries its sequence number and its arrival time, and that is what a reader
     // orders by.
     std::scoped_lock lock(_transcript_mutex);
-    if (_transcript == nullptr) {
-        return;  // the run has ended, or no file was ever asked for
+    if (_transcript == nullptr)
+    {
+        return; // the run has ended, or no file was ever asked for
     }
-    if (_transcript_failed) {
+    if (_transcript_failed)
+    {
         // A line was left unfinished below. Appending more would put the next record
         // straight after the part of this one that did make it, which is a truncated
         // line merged into the following one - the file would stop being JSON lines at
@@ -874,9 +1011,11 @@ void Server::write_transcript(const CallRecord& record) {
     // one full disk corrupted the framing of everything that followed it.
     const char* cursor = line.data();
     std::size_t remaining = line.size();
-    while (remaining > 0u) {
+    while (remaining > 0u)
+    {
         const std::size_t written = std::fwrite(cursor, 1, remaining, _transcript);
-        if (written == 0u) {
+        if (written == 0u)
+        {
             // Said once: a full disk is not twenty thousand lines' worth of news. The
             // file is left as it is, and no further record is appended to it.
             _transcript_failed = true;
@@ -890,4 +1029,4 @@ void Server::write_transcript(const CallRecord& record) {
     std::fflush(_transcript);
 }
 
-}  // namespace steammock
+} // namespace steammock

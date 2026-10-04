@@ -35,10 +35,11 @@
 #include "bridge/synth.hpp"
 
 #ifndef STEAMMOCK_SCENARIO_PATH
-#    error "STEAMMOCK_SCENARIO_PATH must name the example scenario"
+#error "STEAMMOCK_SCENARIO_PATH must name the example scenario"
 #endif
 
-namespace {
+namespace
+{
 
 using steammock::Answer;
 using steammock::Dispatcher;
@@ -51,29 +52,35 @@ using steammock::Session;
 
 int g_failures = 0;
 
-void check(const char* what, bool ok) {
+void check(const char* what, bool ok)
+{
     std::printf("  [%s] %s\n", ok ? "ok  " : "FAIL", what);
-    if (!ok) {
+    if (!ok)
+    {
         ++g_failures;
     }
 }
 
-std::string text_of(const Json& value, const char* key) {
+std::string text_of(const Json& value, const char* key)
+{
     const Json* member = steammock::json_member(value, key);
     return member != nullptr && member->is_string() ? steammock::as_string(*member) : std::string();
 }
 
-std::int64_t int_of(const Json& value, const char* key) {
+std::int64_t int_of(const Json& value, const char* key)
+{
     const Json* member = steammock::json_member(value, key);
     return member != nullptr ? steammock::as_int64(*member) : 0;
 }
 
-bool out_flag(const Answer& answer, const char* key) {
+bool out_flag(const Answer& answer, const char* key)
+{
     const Json* value = steammock::json_member(answer.out, key);
     return value != nullptr && steammock::as_bool(*value);
 }
 
-std::int64_t out_int(const Answer& answer, const char* key) {
+std::int64_t out_int(const Answer& answer, const char* key)
+{
     const Json* value = steammock::json_member(answer.out, key);
     return value != nullptr ? steammock::as_int64(*value) : 0;
 }
@@ -84,35 +91,40 @@ bool has_out(const Answer& answer) { return steammock::carries_out(answer.out); 
 // none. A check should be able to say which identity a game resolved to without the
 // test dying of `bad_optional_access` when the answer is "none" - which, one line
 // down, is often exactly what is being checked.
-std::int64_t served_app_id(const Dispatcher& dispatcher, const Json& hello) {
+std::int64_t served_app_id(const Dispatcher& dispatcher, const Json& hello)
+{
     const std::optional<Profile> profile = dispatcher.profile_for(hello);
     return profile.has_value() ? profile->app_id : -1;
 }
 
 // The same fixture the Python tests used, so the ported expectations still mean
 // something: one game, one known stat, one locked achievement.
-Profile make_profile(const char* scripted = "{}") {
+Profile make_profile(const char* scripted = "{}")
+{
     const std::string text =
         std::string("{\"app_id\":480,\"steam_id\":76561198000000001,\"persona_name\":\"Tester\",") +
         "\"language\":\"english\",\"stats\":{\"Deaths\":3}," +
         "\"achievements\":[{\"name\":\"ACH_BOOTED\",\"achieved\":false}],\"scripted\":" + scripted +
         "}";
     Json data;
-    if (!steammock::parse(text, data)) {
+    if (!steammock::parse(text, data))
+    {
         check("the test fixture parses", false);
         return Profile{};
     }
     return Profile::from_json("test", data);
 }
 
-Session make_session(const char* scripted = "{}") {
+Session make_session(const char* scripted = "{}")
+{
     Json hello = Json::object();
     hello["exe"] = Json("game.exe");
     hello["pid"] = Json(1234);
     return Session("session0", hello, make_profile(scripted));
 }
 
-Json name_argument(const char* name) {
+Json name_argument(const char* name)
+{
     Json args = Json::object();
     args["pchName"] = Json(name);
     return args;
@@ -120,7 +132,8 @@ Json name_argument(const char* name) {
 
 // ---------------------------------------------------------------------------
 
-void test_replies() {
+void test_replies()
+{
     std::printf("[:] replies\n");
 
     const Json unanswered = steammock::make_reply(7, false, Json(), Json());
@@ -190,7 +203,8 @@ void test_replies() {
     check("and that ret is null", steammock::json_member(bare, "ret")->is_null());
 }
 
-void test_relabelling() {
+void test_relabelling()
+{
     std::printf("[:] where an answer came from\n");
 
     const Dispatcher dispatcher;
@@ -217,7 +231,8 @@ void test_relabelling() {
     check("an unanswered call is labelled none", !unanswered.answered && unanswered.via == "none");
 }
 
-void test_identity() {
+void test_identity()
+{
     std::printf("[:] identity comes from the profile\n");
 
     Session session = make_session();
@@ -252,7 +267,8 @@ void test_identity() {
 // The friends list is the scenario's, and what a game gets is a list of ids and names: a friend
 // named as a profile resolves to that profile's identity, and one spelled out is somebody this
 // run simply does not have. An invite needs the first kind, because an id is what it is sent to.
-void test_friends() {
+void test_friends()
+{
     std::printf("[:] friends\n");
 
     Json document;
@@ -269,7 +285,8 @@ void test_friends() {
     hello["profile"] = Json("default");
     const std::optional<Profile> profile = dispatcher.profile_for(hello);
     check("the profile is served", profile.has_value());
-    if (!profile.has_value()) {
+    if (!profile.has_value())
+    {
         return;
     }
 
@@ -327,11 +344,13 @@ void test_friends() {
 // An invite goes from a member of a room to a friend who is not in it, and the friend is told.
 // The payload names the room and the person who asked, and the three ways of asking for an invite
 // that goes nowhere are answered false rather than half-done.
-void test_invites() {
+void test_invites()
+{
     std::printf("[:] invites\n");
 
     auto profile_with_friend = [](const char* persona, std::uint64_t steam_id,
-                                  std::uint64_t friend_id) {
+                                  std::uint64_t friend_id)
+    {
         const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
                                  std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
                                  "\",\"friends\":[{\"steam_id\":" + std::to_string(friend_id) +
@@ -353,14 +372,16 @@ void test_invites() {
 
     LobbyWorld world;
     std::vector<std::pair<std::uint64_t, Json>> told;
-    auto ask = [&](Session& who, const char* call, const Json& args) {
+    auto ask = [&](Session& who, const char* call, const Json& args)
+    {
         Answer answer;
         told.clear();
         check((std::string("the world answers ") + call).c_str(),
               world.answer(who, call, args, answer, told));
         return answer;
     };
-    auto invitation = [](std::uint64_t room, std::uint64_t invitee) {
+    auto invitation = [](std::uint64_t room, std::uint64_t invitee)
+    {
         Json args = Json::object();
         args["steamIDLobby"] = Json(static_cast<std::int64_t>(room));
         args["steamIDInvitee"] = Json(static_cast<std::int64_t>(invitee));
@@ -439,7 +460,8 @@ void test_invites() {
     check("nor is a friend already in the room invited again by the overlay", told.empty());
 }
 
-void test_stats() {
+void test_stats()
+{
     std::printf("[:] stats\n");
 
     Session session = make_session();
@@ -492,7 +514,8 @@ void test_stats() {
     }
 }
 
-void test_achievements() {
+void test_achievements()
+{
     std::printf("[:] achievements\n");
 
     Session session = make_session();
@@ -539,7 +562,8 @@ void test_achievements() {
               .empty());
 }
 
-void test_describe() {
+void test_describe()
+{
     std::printf("[:] a session can describe itself\n");
 
     const Session session = make_session();
@@ -550,7 +574,8 @@ void test_describe() {
     check("the process id is read from the hello", session.pid() == 1234);
 }
 
-void test_scenarios() {
+void test_scenarios()
+{
     std::printf("[:] scenarios and match rules\n");
 
     Json document;
@@ -638,7 +663,8 @@ void test_scenarios() {
     std::string error;
     const bool ok = Dispatcher::load_file(STEAMMOCK_SCENARIO_PATH, loaded, error);
     check("the bundled example scenario loads", ok);
-    if (!ok) {
+    if (!ok)
+    {
         std::printf("        %s\n", error.c_str());
         return;
     }
@@ -647,18 +673,19 @@ void test_scenarios() {
     const std::optional<Profile> served = loaded.profile_for(fake_game);
     check("the example gives fake_game the default profile",
           served.has_value() && served->app_id == 480);
-    if (!served.has_value()) {
-        return;  // every check below would only say the same thing again
+    if (!served.has_value())
+    {
+        return; // every check below would only say the same thing again
     }
     const Profile& profile = *served;
     check("the example scripts SteamAPI_Init",
           profile.scripted_for("SteamAPI_Init") != nullptr &&
               steammock::as_bool(
                   *steammock::json_member(*profile.scripted_for("SteamAPI_Init"), "ret")));
-    check("the example seeds a stat", [&profile] {
+    check("the example seeds a stat", [&profile]
+          {
         std::int64_t deaths = -1;
-        return profile.find_stat("Deaths", deaths) && deaths == 0;
-    }());
+        return profile.find_stat("Deaths", deaths) && deaths == 0; }());
     check("the example names both games", loaded.profile_names().size() == 2u);
     check("the example carries match rules", loaded.match_rules().size() == 2u);
 
@@ -671,14 +698,16 @@ void test_scenarios() {
 // Each session gets its own copy of a profile, so two games matched to the same
 // scenario cannot see each other's stats. The README says several games run side
 // by side "each with its own profile"; this is what makes that true.
-void test_profiles_are_per_session() {
+void test_profiles_are_per_session()
+{
     std::printf("[:] sessions do not share their profile\n");
 
     const Dispatcher dispatcher;
     Json game = Json::object();
     game["exe"] = Json("game.exe");
     const std::optional<Profile> served = dispatcher.profile_for(game);
-    if (!served.has_value()) {
+    if (!served.has_value())
+    {
         check("the scenario serves this game a profile", false);
         return;
     }
@@ -703,10 +732,12 @@ void test_profiles_are_per_session() {
 // so what is worth proving is what two games can see of each other through it: one
 // makes a room, the other finds it, joins it, and reads back a roster that neither
 // of them was told.
-void test_the_lobbies_a_run_holds() {
+void test_the_lobbies_a_run_holds()
+{
     std::printf("[:] the lobbies a run holds\n");
 
-    auto profile_for = [](const char* persona, std::uint64_t steam_id) {
+    auto profile_for = [](const char* persona, std::uint64_t steam_id)
+    {
         const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
                                  std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
                                  "\",\"language\":\"english\"}";
@@ -717,7 +748,8 @@ void test_the_lobbies_a_run_holds() {
     constexpr std::uint64_t kHostId = 76561198000000001ull;
     constexpr std::uint64_t kGuestId = 76561198000000002ull;
 
-    auto session_for = [](const char* id, const Profile& profile) {
+    auto session_for = [](const char* id, const Profile& profile)
+    {
         Json hello = Json::object();
         hello["exe"] = Json("game.exe");
         hello["pid"] = Json(1234);
@@ -732,7 +764,8 @@ void test_the_lobbies_a_run_holds() {
     // the next call tells.
     std::vector<std::pair<std::uint64_t, Json>> told;
 
-    auto ask = [&](Session& who, const char* call, const Json& args) {
+    auto ask = [&](Session& who, const char* call, const Json& args)
+    {
         Answer answer;
         told.clear();
         const bool handled = world.answer(who, call, args, answer, told);
@@ -740,14 +773,17 @@ void test_the_lobbies_a_run_holds() {
         return answer;
     };
     // The field of the payload a call came with, which is how the world completes one.
-    auto field_of = [](const Answer& answer, const char* field) -> const Json* {
-        if (!answer.events.is_array() || answer.events.empty()) {
+    auto field_of = [](const Answer& answer, const char* field) -> const Json*
+    {
+        if (!answer.events.is_array() || answer.events.empty())
+        {
             return nullptr;
         }
         const Json* in = steammock::json_member(answer.events.front(), "in");
         return in != nullptr ? steammock::json_member(*in, field) : nullptr;
     };
-    auto lobby_argument = [](const char* key, std::uint64_t value, const char* /*call*/) {
+    auto lobby_argument = [](const char* key, std::uint64_t value, const char* /*call*/)
+    {
         Json args = Json::object();
         args[key] = Json(static_cast<std::int64_t>(value));
         return args;
@@ -770,7 +806,8 @@ void test_the_lobbies_a_run_holds() {
     check("and the world says so", created.via == "lobby");
 
     const Json* call_of_payload = nullptr;
-    if (created.events.is_array() && !created.events.empty()) {
+    if (created.events.is_array() && !created.events.empty())
+    {
         call_of_payload = steammock::json_member(created.events.front(), "call");
     }
     check("the payload completes the call the answer returned",
@@ -813,7 +850,8 @@ void test_the_lobbies_a_run_holds() {
 
     bool told_host = false;
     bool told_guest = false;
-    for (const auto& note : told) {
+    for (const auto& note : told)
+    {
         told_host = told_host || note.first == kHostId;
         told_guest = told_guest || note.first == kGuestId;
     }
@@ -870,10 +908,12 @@ void test_the_lobbies_a_run_holds() {
 // The calls here are the menu's own sequence - find the board, ask for its name, download a
 // range, read a row out of what came back - because the shape a game actually uses is the
 // shape that has to work.
-void test_the_boards() {
+void test_the_boards()
+{
     std::printf("[:] the boards\n");
 
-    auto profile_for = [](const char* persona, std::uint64_t steam_id) {
+    auto profile_for = [](const char* persona, std::uint64_t steam_id)
+    {
         const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
                                  std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
                                  "\",\"language\":\"english\"}";
@@ -884,7 +924,8 @@ void test_the_boards() {
     constexpr std::uint64_t kHostId = 76561198000000001ull;
     constexpr std::uint64_t kGuestId = 76561198000000002ull;
 
-    auto session_for = [](const char* id, const Profile& profile) {
+    auto session_for = [](const char* id, const Profile& profile)
+    {
         Json hello = Json::object();
         hello["exe"] = Json("game.exe");
         hello["pid"] = Json(1234);
@@ -896,14 +937,17 @@ void test_the_boards() {
 
     LeaderboardWorld boards;
 
-    auto ask = [&](const Session& who, const char* call, const Json& args) {
+    auto ask = [&](const Session& who, const char* call, const Json& args)
+    {
         Answer answer;
         const bool handled = boards.answer(who, call, args, answer);
         check((std::string("the world answers ") + call).c_str(), handled);
         return answer;
     };
-    auto field_of = [](const Answer& answer, const char* field) -> const Json* {
-        if (!answer.events.is_array() || answer.events.empty()) {
+    auto field_of = [](const Answer& answer, const char* field) -> const Json*
+    {
+        if (!answer.events.is_array() || answer.events.empty())
+        {
             return nullptr;
         }
         const Json* in = steammock::json_member(answer.events.front(), "in");
@@ -921,8 +965,8 @@ void test_the_boards() {
           missing_flag != nullptr && steammock::as_int64(*missing_flag) == 0);
 
     Json create = wanted;
-    create["eLeaderboardSortMethod"] = Json(2);   // descending: the biggest wins
-    create["eLeaderboardDisplayType"] = Json(1);  // a plain number
+    create["eLeaderboardSortMethod"] = Json(2);  // descending: the biggest wins
+    create["eLeaderboardDisplayType"] = Json(1); // a plain number
     const Answer created = ask(host, "SteamAPI_ISteamUserStats_FindOrCreateLeaderboard", create);
     const std::uint64_t board = created.ret.is_number() ? steammock::as_uint64(created.ret) : 0;
     check("find-or-create makes one and completes the call with it", board != 0);
@@ -949,7 +993,8 @@ void test_the_boards() {
               ask(host, "SteamAPI_ISteamUserStats_GetLeaderboardSortMethod", of_board).ret) == 2);
 
     // Two players post scores, and the board ranks them.
-    auto upload = [&](const Session& who, std::int64_t method, std::int64_t score) {
+    auto upload = [&](const Session& who, std::int64_t method, std::int64_t score)
+    {
         Json args = of_board;
         args["eLeaderboardUploadScoreMethod"] = Json(method);
         args["nScore"] = Json(score);
@@ -958,7 +1003,7 @@ void test_the_boards() {
         return ask(who, "SteamAPI_ISteamUserStats_UploadLeaderboardScore", args);
     };
 
-    const Answer host_first = upload(host, 1, 100);  // keep best
+    const Answer host_first = upload(host, 1, 100); // keep best
     check("a player who was not on the board is ranked when they post",
           steammock::as_int64(*field_of(host_first, "m_nGlobalRankNew")) == 1 &&
               steammock::as_int64(*field_of(host_first, "m_nGlobalRankPrevious")) == 0);
@@ -988,7 +1033,7 @@ void test_the_boards() {
 
     // Now the menu's own read: a range of global ranks, top first, and a row out of it.
     Json download = of_board;
-    download["eLeaderboardDataRequest"] = Json(0);  // global
+    download["eLeaderboardDataRequest"] = Json(0); // global
     download["nRangeStart"] = Json(1);
     download["nRangeEnd"] = Json(10);
     const Answer rows = ask(guest, "SteamAPI_ISteamUserStats_DownloadLeaderboardEntries", download);
@@ -1001,7 +1046,8 @@ void test_the_boards() {
     const std::uint64_t entries =
         entries_handle != nullptr ? steammock::as_uint64(*entries_handle) : 0;
 
-    auto row_args = [&](std::int64_t index, std::int64_t details_max) {
+    auto row_args = [&](std::int64_t index, std::int64_t details_max)
+    {
         Json args = Json::object();
         args["hSteamLeaderboardEntries"] = Json(static_cast<std::int64_t>(entries));
         args["index"] = Json(index);
@@ -1030,7 +1076,8 @@ void test_the_boards() {
     check("and a handle nobody was given has no rows either",
           !boards.answer(
               guest, "SteamAPI_ISteamUserStats_GetDownloadedLeaderboardEntry",
-              [&] {
+              [&]
+              {
                   Json args = row_args(0, 0);
                   args["hSteamLeaderboardEntries"] = Json(static_cast<std::int64_t>(4242));
                   return args;
@@ -1061,10 +1108,12 @@ void test_the_boards() {
 // at once: Spacewar's own ticket exchange sends from the customer's ISteamNetworking to
 // another player, and a packet stamped with the game server's id instead is one the peer
 // reads as something the server sent, and drops.
-void test_who_sent_a_packet() {
+void test_who_sent_a_packet()
+{
     std::printf("[:] who sent a packet\n");
 
-    auto profile_for = [](const char* persona, std::uint64_t steam_id) {
+    auto profile_for = [](const char* persona, std::uint64_t steam_id)
+    {
         const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
                                  std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
                                  "\",\"language\":\"english\"}";
@@ -1075,7 +1124,8 @@ void test_who_sent_a_packet() {
     constexpr std::uint64_t kHostId = 76561198000000001ull;
     constexpr std::uint64_t kGuestId = 76561198000000002ull;
 
-    auto session_for = [](const char* id, const Profile& profile) {
+    auto session_for = [](const char* id, const Profile& profile)
+    {
         Json hello = Json::object();
         hello["exe"] = Json("game.exe");
         hello["pid"] = Json(1234);
@@ -1088,14 +1138,16 @@ void test_who_sent_a_packet() {
     LobbyWorld world;
     std::vector<std::pair<std::uint64_t, Json>> told;
 
-    auto ask = [&](Session& who, const char* call, const Json& args) {
+    auto ask = [&](Session& who, const char* call, const Json& args)
+    {
         Answer answer;
         told.clear();
         const bool handled = world.answer(who, call, args, answer, told);
         check((std::string("the world answers ") + call).c_str(), handled);
         return answer;
     };
-    auto send = [](std::uint64_t to, const char* bytes, std::int32_t h_user) {
+    auto send = [](std::uint64_t to, const char* bytes, std::int32_t h_user)
+    {
         Json args = Json::object();
         args["steamIDRemote"] = Json(static_cast<std::int64_t>(to));
         args["pubData"] = Json(bytes);
@@ -1105,18 +1157,21 @@ void test_who_sent_a_packet() {
         args["hSteamUser"] = Json(static_cast<std::int64_t>(h_user));
         return args;
     };
-    auto read_args = [](std::int32_t h_user, std::int32_t channel) {
+    auto read_args = [](std::int32_t h_user, std::int32_t channel)
+    {
         Json args = Json::object();
         args["hSteamUser"] = Json(static_cast<std::int64_t>(h_user));
         args["nChannel"] = Json(channel);
         return args;
     };
-    auto read = [&](Session& who, std::int32_t h_user, Answer& into) {
+    auto read = [&](Session& who, std::int32_t h_user, Answer& into)
+    {
         told.clear();
         return world.answer(who, "SteamAPI_ISteamNetworking_ReadP2PPacket", read_args(h_user, 0),
                             into, told);
     };
-    auto remote_of = [](const Answer& answer) {
+    auto remote_of = [](const Answer& answer)
+    {
         const Json* value = steammock::json_member(answer.out, "psteamIDRemote");
         return value != nullptr ? steammock::as_uint64(*value) : 0ull;
     };
@@ -1212,7 +1267,8 @@ void test_who_sent_a_packet() {
     // player waiting for a validation that never comes - until the game's own ticket
     // timeout drops the peer it asked about, which is a client leaving a server that had
     // never registered it.
-    auto auth_args = [](std::uint64_t peer) {
+    auto auth_args = [](std::uint64_t peer)
+    {
         Json args = Json::object();
         args["pAuthTicket"] = Json(static_cast<std::int64_t>(0x1000));
         args["cbAuthTicket"] = Json(14);
@@ -1248,10 +1304,12 @@ void test_who_sent_a_packet() {
 // played and re-asks for every name whenever it rebuilds the list, so answering only for
 // current members of a room means declining most of those - a game drawing an empty name
 // where a player's is.
-void test_names_after_the_room() {
+void test_names_after_the_room()
+{
     std::printf("[:] names for players who have left\n");
 
-    auto profile_for = [](const char* persona, std::uint64_t steam_id) {
+    auto profile_for = [](const char* persona, std::uint64_t steam_id)
+    {
         const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
                                  std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
                                  "\",\"language\":\"english\"}";
@@ -1263,7 +1321,8 @@ void test_names_after_the_room() {
     constexpr std::uint64_t kGuestId = 76561198000000002ull;
     constexpr std::uint64_t kStrangerId = 76561198000000099ull;
 
-    auto session_for = [](const char* id, const Profile& profile) {
+    auto session_for = [](const char* id, const Profile& profile)
+    {
         Json hello = Json::object();
         hello["exe"] = Json("game.exe");
         hello["pid"] = Json(1234);
@@ -1275,14 +1334,16 @@ void test_names_after_the_room() {
 
     LobbyWorld world;
     std::vector<std::pair<std::uint64_t, Json>> told;
-    auto ask = [&](Session& who, const char* call, const Json& args) {
+    auto ask = [&](Session& who, const char* call, const Json& args)
+    {
         Answer answer;
         told.clear();
         check((std::string("the world answers ") + call).c_str(),
               world.answer(who, call, args, answer, told));
         return answer;
     };
-    auto name_of = [](std::uint64_t steam_id) {
+    auto name_of = [](std::uint64_t steam_id)
+    {
         Json args = Json::object();
         args["steamIDFriend"] = Json(static_cast<std::int64_t>(steam_id));
         return args;
@@ -1330,10 +1391,12 @@ void test_names_after_the_room() {
 
 // Everything an inventory is, from the world's side: the catalogue a game reads names out of,
 // what a player holds and how it got there, and the two payloads that end a result.
-void test_the_items() {
+void test_the_items()
+{
     std::printf("[:] the items\n");
 
-    auto profile_for = [](const char* persona, std::uint64_t steam_id) {
+    auto profile_for = [](const char* persona, std::uint64_t steam_id)
+    {
         const std::string text = std::string("{\"app_id\":480,\"steam_id\":") +
                                  std::to_string(steam_id) + ",\"persona_name\":\"" + persona +
                                  "\",\"language\":\"english\"}";
@@ -1344,7 +1407,8 @@ void test_the_items() {
     constexpr std::uint64_t kPlayerId = 76561198000000011ull;
     constexpr std::uint64_t kStrangerId = 76561198000000012ull;
 
-    auto session_for = [](const char* id, const Profile& profile) {
+    auto session_for = [](const char* id, const Profile& profile)
+    {
         Json hello = Json::object();
         hello["exe"] = Json("game.exe");
         hello["pid"] = Json(1234);
@@ -1356,39 +1420,49 @@ void test_the_items() {
 
     InventoryWorld items;
 
-    auto ask = [&](const Session& who, const char* call, const Json& args) {
+    auto ask = [&](const Session& who, const char* call, const Json& args)
+    {
         Answer answer;
         const bool handled = items.answer(who, call, args, answer);
         check((std::string("the world answers ") + call).c_str(), handled);
         return answer;
     };
-    auto handle_of = [](const Answer& answer) {
+    auto handle_of = [](const Answer& answer)
+    {
         // The handle the answer handed this game, which is an out parameter rather than the
         // return value: `GetAllItems( NULL )` is the call a game makes without wanting one.
         const Json* value = steammock::json_member(answer.out, "pResultHandle");
         return value != nullptr ? static_cast<std::int32_t>(steammock::as_int64(*value)) : -1;
     };
-    auto events_of = [](const Answer& answer, const char* name) {
-        if (!answer.events.is_array()) {
+    auto events_of = [](const Answer& answer, const char* name)
+    {
+        if (!answer.events.is_array())
+        {
             return 0;
         }
         int count = 0;
-        for (const Json& event : answer.events) {
+        for (const Json& event : answer.events)
+        {
             const Json* field = steammock::json_member(event, "event");
-            if (field != nullptr && steammock::as_string(*field) == name) {
+            if (field != nullptr && steammock::as_string(*field) == name)
+            {
                 ++count;
             }
         }
         return count;
     };
     auto event_field = [](const Answer& answer, const char* name,
-                          const char* field) -> const Json* {
-        if (!answer.events.is_array()) {
+                          const char* field) -> const Json*
+    {
+        if (!answer.events.is_array())
+        {
             return nullptr;
         }
-        for (const Json& event : answer.events) {
+        for (const Json& event : answer.events)
+        {
             const Json* what = steammock::json_member(event, "event");
-            if (what == nullptr || steammock::as_string(*what) != name) {
+            if (what == nullptr || steammock::as_string(*what) != name)
+            {
                 continue;
             }
             const Json* in = steammock::json_member(event, "in");
@@ -1424,15 +1498,18 @@ void test_the_items() {
     // What a game does next: read the result, twice - once with a null array to be told how
     // many there are, and once with an array of that many. What the world answers is the same
     // list both times; how much of it lands in the game's array is the buffer's business.
-    auto id_args = [](const char* name, std::int32_t handle) {
+    auto id_args = [](const char* name, std::int32_t handle)
+    {
         Json args = Json::object();
         args[name] = Json(static_cast<std::int64_t>(handle));
         return args;
     };
-    auto item_list = [](const Answer& answer) -> const Json* {
+    auto item_list = [](const Answer& answer) -> const Json*
+    {
         return steammock::json_member(answer.out, "pOutItemsArray");
     };
-    auto definition_of = [](const Json& item) {
+    auto definition_of = [](const Json& item)
+    {
         const Json* value = steammock::json_member(item, "m_iDefinition");
         return value != nullptr ? static_cast<std::int32_t>(steammock::as_int64(*value)) : -1;
     };
@@ -1576,18 +1653,23 @@ void test_the_items() {
 // The surface is generated from gen/steam_api_surface.json, which is Valve's API and not in
 // this repository - so a checkout with no SDK has nothing to check against, and says so
 // rather than passing by default.
-void test_the_worlds_handle_calls_the_stub_has() {
+void test_the_worlds_handle_calls_the_stub_has()
+{
     std::printf("[:] the calls the worlds answer\n");
 
     std::size_t count = 0;
     const steammock::SurfaceCall* calls = steammock::api_surface_calls(count);
-    if (count == 0) {
+    if (count == 0)
+    {
         std::printf("  [skip] no generated surface in this checkout: nothing to check against\n");
         return;
     }
-    auto exported = [calls, count](const std::string& name) {
-        for (std::size_t index = 0; index < count; ++index) {
-            if (name == calls[index].name) {
+    auto exported = [calls, count](const std::string& name)
+    {
+        for (std::size_t index = 0; index < count; ++index)
+        {
+            if (name == calls[index].name)
+            {
                 return true;
             }
         }
@@ -1595,15 +1677,19 @@ void test_the_worlds_handle_calls_the_stub_has() {
     };
 
     std::vector<std::string> claimed = LobbyWorld::handled_calls();
-    for (const std::string& call : LeaderboardWorld::handled_calls()) {
+    for (const std::string& call : LeaderboardWorld::handled_calls())
+    {
         claimed.push_back(call);
     }
-    for (const std::string& call : InventoryWorld::handled_calls()) {
+    for (const std::string& call : InventoryWorld::handled_calls())
+    {
         claimed.push_back(call);
     }
     std::size_t unknown = 0;
-    for (const std::string& call : claimed) {
-        if (!exported(call)) {
+    for (const std::string& call : claimed)
+    {
+        if (!exported(call))
+        {
             std::printf("        not in the surface: %s\n", call.c_str());
             ++unknown;
         }
@@ -1611,7 +1697,8 @@ void test_the_worlds_handle_calls_the_stub_has() {
     check("every call the worlds answer is one the stub exports", unknown == 0);
 }
 
-void test_surface_matches_the_idl() {
+void test_surface_matches_the_idl()
+{
     std::printf("[:] the generated surface\n");
 
     std::size_t count = 0;
@@ -1621,12 +1708,14 @@ void test_surface_matches_the_idl() {
     // nothing but its own diagnostics. Saying so is the check, rather than failing
     // on a table that is empty on purpose - the same shape as the end-to-end test's
     // half that needs an interface layout.
-    if (count == 0u) {
+    if (count == 0u)
+    {
         std::printf("  [skip] no API surface was imported, so there is nothing here to check\n");
         return;
     }
     std::set<std::string> names;
-    for (std::size_t index = 0; index < count; ++index) {
+    for (std::size_t index = 0; index < count; ++index)
+    {
         names.insert(calls[index].name);
     }
     check("the surface has calls", count > 0u);
@@ -1644,20 +1733,25 @@ void test_surface_matches_the_idl() {
     // Every call the state machine answers has to be in the surface, or the stub
     // and the backend have drifted apart.
     std::vector<std::string> missing;
-    for (const std::string& handled : steammock::state_handled_calls()) {
-        if (names.count(handled) == 0u) {
+    for (const std::string& handled : steammock::state_handled_calls())
+    {
+        if (names.count(handled) == 0u)
+        {
             missing.push_back(handled);
         }
     }
-    for (const std::string& name : missing) {
+    for (const std::string& name : missing)
+    {
         std::printf("        the state machine answers %s, which the IDL does not export\n",
                     name.c_str());
     }
     check("every call the state machine answers is exported", missing.empty());
 
     // And the surface has to describe the parameters --list-api prints.
-    for (std::size_t index = 0; index < count; ++index) {
-        if (std::string(calls[index].name) != "SteamAPI_ISteamUserStats_GetStat") {
+    for (std::size_t index = 0; index < count; ++index)
+    {
+        if (std::string(calls[index].name) != "SteamAPI_ISteamUserStats_GetStat")
+        {
             continue;
         }
         check("the out parameter is marked as one",
@@ -1667,7 +1761,8 @@ void test_surface_matches_the_idl() {
     }
 }
 
-void test_numbers() {
+void test_numbers()
+{
     std::printf("[:] numbers in a transcript\n");
 
     // Readability: a transcript is meant to be read by a person.
@@ -1683,9 +1778,11 @@ void test_numbers() {
     // Exactness: the writer only shortens when the text still denotes the very
     // same double, which is what the C library reading it back proves.
     for (const double value :
-         {0.164, 1500.0, 0.1, 1.0 / 3.0, -2.5, 3.141592653589793, 1e-300, 1e300}) {
+         {0.164, 1500.0, 0.1, 1.0 / 3.0, -2.5, 3.141592653589793, 1e-300, 1e300})
+    {
         const std::string text = steammock::Json(value).dump();
-        if (std::strtod(text.c_str(), nullptr) != value) {
+        if (std::strtod(text.c_str(), nullptr) != value)
+        {
             std::printf("        %s is not the same double as the value written\n", text.c_str());
         }
         check("a written double is exactly what a reader parses back",
@@ -1698,7 +1795,8 @@ void test_numbers() {
     // limit is older than this work, and it is the same reason a float parameter
     // is documented as travelling through a double.
     Json back;
-    for (const double value : {0.5, -2.5, 1500.0, 0.0}) {
+    for (const double value : {0.5, -2.5, 1500.0, 0.0})
+    {
         check("a binary-exact double is read back unchanged",
               steammock::parse(steammock::Json(value).dump(), back) &&
                   steammock::as_double(back) == value);
@@ -1708,9 +1806,10 @@ void test_numbers() {
               std::fabs(steammock::as_double(back) - 0.164) < 1e-15);
 }
 
-}  // namespace
+} // namespace
 
-int run() {
+int run()
+{
     std::printf("[+] SteamMock backend tests\n\n");
     test_replies();
     test_relabelling();
@@ -1731,9 +1830,12 @@ int run() {
     test_surface_matches_the_idl();
     test_numbers();
 
-    if (g_failures == 0) {
+    if (g_failures == 0)
+    {
         std::printf("\n[+] all checks passed\n");
-    } else {
+    }
+    else
+    {
         std::printf("\n[-] %d check(s) FAILED\n", g_failures);
     }
     return g_failures == 0 ? 0 : 1;
@@ -1742,13 +1844,19 @@ int run() {
 // An exception escaping `main` terminates the process with no message at all, and the
 // only realistic source in a test is a failed allocation. Report it the way a failing
 // check is reported instead, so ctest's output says what happened.
-int main() {
-    try {
+int main()
+{
+    try
+    {
         return run();
-    } catch (const std::exception& error) {
+    }
+    catch (const std::exception& error)
+    {
         std::printf("\n[-] the test itself threw: %s\n", error.what());
         return 1;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::printf("\n[-] the test itself threw something that is not a std::exception\n");
         return 1;
     }

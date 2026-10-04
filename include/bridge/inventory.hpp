@@ -9,7 +9,8 @@
 #include "bridge/json_read.hpp"
 #include "bridge/session.hpp"
 
-namespace steammock {
+namespace steammock
+{
 
 // Defined in bridge/store.hpp, which includes this header: the store speaks about an
 // ItemDetails, so it cannot be included from here without a cycle.
@@ -34,7 +35,8 @@ class Store;
 // One instance a player holds: which instance, of what definition, how many, and the SDK's own
 // flags. Sixteen bytes, which is what the game's own array is made of - see SteamItemDetails_t
 // in the layouts, which is what `GetResultItems` fills in.
-struct ItemDetails {
+struct ItemDetails
+{
     std::uint64_t item_id = 0;
     std::int32_t definition = 0;
     std::uint16_t quantity = 0;
@@ -43,15 +45,17 @@ struct ItemDetails {
 
 // What the app says one *kind* of item is. Every player's inventory is made of these, which is
 // why the catalogue is not per session.
-struct ItemDefinition {
+struct ItemDefinition
+{
     std::int32_t id = 0;
     std::string name;
     std::string description;
     std::string icon_url;
 };
 
-class InventoryWorld {
-public:
+class InventoryWorld
+{
+  public:
     // An item instance id is the game's to hand back and nothing more: Steam's own is opaque,
     // so this is a counter with a shape that is not a SteamID - a game that printed one would
     // see that it is not a player.
@@ -92,10 +96,11 @@ public:
     const std::vector<ItemDefinition>& definitions() const noexcept { return _definitions; }
     const std::vector<ItemDetails>& inventory_of(std::uint64_t steam_id) const noexcept;
 
-private:
+  private:
     // One result handle, and what a game reading it gets: the items it was handed and which
     // player's inventory they are.
-    struct Result {
+    struct Result
+    {
         std::uint64_t owner = 0;
         std::vector<ItemDetails> items;
     };
@@ -120,4 +125,4 @@ private:
     Store* _store = nullptr;
 };
 
-}  // namespace steammock
+} // namespace steammock

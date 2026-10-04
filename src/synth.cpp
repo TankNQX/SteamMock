@@ -31,28 +31,36 @@
 #include "bridge/log.hpp"
 #include "bridge/protocol.hpp"
 
-namespace steammock {
-namespace {
+namespace steammock
+{
+namespace
+{
 
 // One packed argument as the request carries it. The names travel with the
 // values rather than inside them, so a kind is only ever a question of how to
 // spell the value a declaration already gave us.
-Json packed_value(const Arg& argument) {
-    if (const bool* value = std::get_if<bool>(&argument)) {
+Json packed_value(const Arg& argument)
+{
+    if (const bool* value = std::get_if<bool>(&argument))
+    {
         return Json(*value);
     }
-    if (const std::int64_t* value = std::get_if<std::int64_t>(&argument)) {
+    if (const std::int64_t* value = std::get_if<std::int64_t>(&argument))
+    {
         return Json(*value);
     }
     // The one that used to need a cast: a value whose top bit is set is written
     // as the unsigned number it is, and the reply readers ask for it back that way.
-    if (const std::uint64_t* value = std::get_if<std::uint64_t>(&argument)) {
+    if (const std::uint64_t* value = std::get_if<std::uint64_t>(&argument))
+    {
         return Json(*value);
     }
-    if (const double* value = std::get_if<double>(&argument)) {
+    if (const double* value = std::get_if<double>(&argument))
+    {
         return Json(*value);
     }
-    if (const char* const* value = std::get_if<const char*>(&argument)) {
+    if (const char* const* value = std::get_if<const char*>(&argument))
+    {
         return *value == nullptr ? Json() : Json(*value);
     }
     // A value the wire cannot carry, or an out-parameter nobody passed - the same
@@ -60,7 +68,7 @@ Json packed_value(const Arg& argument) {
     return Json();
 }
 
-}  // namespace
+} // namespace
 
 // The calls a game can make through two objects that answer to the same name, where
 // nothing in the arguments says which one it used. A process that hosts has a customer
@@ -69,13 +77,17 @@ Json packed_value(const Arg& argument) {
 // wire - so these calls carry the user handle they were made through, and the world
 // reads the queue of the end that asked. Only these: every other call is answered for
 // the interface it names.
-bool needs_user_handle(const char* call) noexcept {
+bool needs_user_handle(const char* call) noexcept
+{
     constexpr const char* kPrefix = "SteamAPI_ISteamNetworking_";
-    if (call == nullptr) {
+    if (call == nullptr)
+    {
         return false;
     }
-    for (std::size_t index = 0; kPrefix[index] != '\0'; ++index) {
-        if (call[index] != kPrefix[index]) {
+    for (std::size_t index = 0; kPrefix[index] != '\0'; ++index)
+    {
+        if (call[index] != kPrefix[index])
+        {
             return false;
         }
     }
@@ -83,19 +95,25 @@ bool needs_user_handle(const char* call) noexcept {
 }
 
 bool run_slot(std::int32_t hSteamUser, const SlotInfo& info, const Arg* args, std::size_t count,
-              Json& reply) noexcept {
-    try {
+              Json& reply) noexcept
+{
+    try
+    {
         Json request = Json::object();
-        for (std::size_t index = 0; index < count; ++index) {
+        for (std::size_t index = 0; index < count; ++index)
+        {
             request[name_at(info, index)] = packed_value(args[index]);
         }
-        if (hSteamUser != 0 && needs_user_handle(info.call)) {
+        if (hSteamUser != 0 && needs_user_handle(info.call))
+        {
             // The handle this was called through, under the name the SDK's own accessor
             // calls it by - the same word, because it is the same fact.
             request["hSteamUser"] = Json(hSteamUser);
         }
         return invoke(info.call, request, reply);
-    } catch (...) {
+    }
+    catch (...)
+    {
         // Never let an exception cross into the game: a slot that cannot send
         // its call is a slot nobody answered, which is what false means here.
         return false;
@@ -111,7 +129,8 @@ bool run_slot(std::int32_t hSteamUser, const SlotInfo& info, const Arg* args, st
 //  Delivery happens in RunCallbacks - the game's own thread, inside the game's own
 //  call - so nothing here runs on a thread the game does not know about.
 
-namespace {
+namespace
+{
 
 constexpr std::size_t kMaxEventsPerPump = 64;
 
@@ -120,7 +139,8 @@ constexpr std::size_t kMaxEventsPerPump = 64;
 // object while the delivery is on its way to it. See `deliver_one` for what that cost
 // and why the lock is recursive: the call is into the game's code, which may come back
 // in here to register or unregister before it returns.
-std::recursive_mutex& registry_mutex() noexcept {
+std::recursive_mutex& registry_mutex() noexcept
+{
     static std::recursive_mutex mutex;
     return mutex;
 }
@@ -145,14 +165,16 @@ std::recursive_mutex& registry_mutex() noexcept {
 // lobby until the game's own 30-second ticket timeout and then leaves. What a run leaves
 // behind to read it back: "callback id N: first/adding ... wants M bytes" at registration,
 // and "delivering ... to the first/last of K callback(s)" at delivery.
-std::map<std::int32_t, std::vector<void*>>& callbacks_by_id() {
+std::map<std::int32_t, std::vector<void*>>& callbacks_by_id()
+{
     static std::map<std::int32_t, std::vector<void*>> by_id;
     return by_id;
 }
 
 // One object per call handle, though: a handle names the call whose result the game
 // registered for, so there is no second object a result could be meant for.
-std::map<std::uint64_t, void*>& results_by_call() {
+std::map<std::uint64_t, void*>& results_by_call()
+{
     static std::map<std::uint64_t, void*> by_call;
     return by_call;
 }
@@ -160,12 +182,15 @@ std::map<std::uint64_t, void*>& results_by_call() {
 // Who a payload is about, when it says: a validation response names the player it is
 // for, and delivery is where that has to be readable - "which id, to which object" is
 // the whole of who heard about what.
-std::string subject_of(const Json* fields) {
-    if (fields == nullptr) {
+std::string subject_of(const Json* fields)
+{
+    if (fields == nullptr)
+    {
         return std::string();
     }
     const Json* id = json_member(*fields, "m_SteamID");
-    if (id == nullptr || !id->is_number()) {
+    if (id == nullptr || !id->is_number())
+    {
         return std::string();
     }
     return " for steam id " + std::to_string(as_uint64(*id));
@@ -179,9 +204,9 @@ std::size_t wanted_size(void* object) noexcept;
 // its own arguments - a plain function pointer would be the caller's convention
 // and would corrupt the stack. On x64 there is one convention and nothing to say.
 #if defined(_M_IX86)
-#    define STEAMMOCK_MEMBER_CALL __thiscall
+#define STEAMMOCK_MEMBER_CALL __thiscall
 #else
-#    define STEAMMOCK_MEMBER_CALL
+#define STEAMMOCK_MEMBER_CALL
 #endif
 
 // CCallbackBase is Run(pvParam) first and Run(pvParam, bIOFailure, hSteamAPICall)
@@ -203,9 +228,11 @@ static_assert(sizeof(SizeFunction) == sizeof(void*), "a vtable slot is one point
 
 // What an object says it wants, or zero when it does not say - which is what a
 // hand-written object in a test does, and those are called.
-std::size_t wanted_size(void* object) noexcept {
+std::size_t wanted_size(void* object) noexcept
+{
     void* const* const vtable = *reinterpret_cast<void* const* const*>(object);
-    if (vtable == nullptr || vtable[2] == nullptr) {
+    if (vtable == nullptr || vtable[2] == nullptr)
+    {
         return 0;
     }
     const SizeFunction size = reinterpret_cast<SizeFunction>(vtable[2]);
@@ -214,24 +241,29 @@ std::size_t wanted_size(void* object) noexcept {
 }
 
 void call_object(void* object, const EventInfo& event, const Json* fields, std::uint64_t call,
-                 bool call_result) noexcept {
+                 bool call_result) noexcept
+{
     // Zeroed, and as large as `kMaxEventBytes`: the generated asserts beside each
     // payload in the layouts are what keep that bound honest, so a file that grows
     // past it fails the build rather than writing past the end of this.
     alignas(std::uint64_t) unsigned char payload[steammock::kMaxEventBytes] = {};
-    if (fields != nullptr) {
+    if (fields != nullptr)
+    {
         event.fill(*fields, payload);
     }
 
     void* const* const vtable = *reinterpret_cast<void* const* const*>(object);
-    if (vtable == nullptr) {
+    if (vtable == nullptr)
+    {
         return;
     }
     // Each slot takes its own argument list, and on x86 the callee pops what it was
     // declared with - so a callback gets called as a callback and a call result as
     // a call result, rather than one of them being handed the other's stack.
-    if (call_result) {
-        if (vtable[1] == nullptr) {
+    if (call_result)
+    {
+        if (vtable[1] == nullptr)
+        {
             log_write(LogLevel::warn, "a callback object has no slot to run a call result in");
             return;
         }
@@ -239,7 +271,8 @@ void call_object(void* object, const EventInfo& event, const Json* fields, std::
         run(object, payload, false, call);
         return;
     }
-    if (vtable[0] == nullptr) {
+    if (vtable[0] == nullptr)
+    {
         log_write(LogLevel::warn, "a callback object has no slot to run a callback in");
         return;
     }
@@ -259,7 +292,8 @@ void call_object(void* object, const EventInfo& event, const Json* fields, std::
 // code and the faulting address go to the log, and the filter returns CONTINUE_SEARCH,
 // so the fault still ends up where it was already going. Swallowing it would hide the
 // one fact worth having.
-void report_callback_fault(unsigned long code, const void* address) noexcept {
+void report_callback_fault(unsigned long code, const void* address) noexcept
+{
     // Nothing here allocates, and that is the point. This runs inside the `__except`
     // filter expression, while the fault is still in flight and before anything has
     // unwound: a std::string built here - which is what this used to do, one
@@ -274,15 +308,19 @@ void report_callback_fault(unsigned long code, const void* address) noexcept {
 }
 
 void call_object_guarded(void* object, const EventInfo& event, const Json* fields,
-                         std::uint64_t call, bool call_result) noexcept {
+                         std::uint64_t call, bool call_result) noexcept
+{
     // No local with a destructor in here on purpose: MSVC refuses `__try` in a
     // function that needs object unwinding, which is why this is a function of its
     // own rather than a guard wrapped around the body of `call_object`.
-    __try {
+    __try
+    {
         call_object(object, event, fields, call, call_result);
-    } __except (report_callback_fault(static_cast<unsigned long>(GetExceptionCode()),
-                                      GetExceptionInformation()->ExceptionRecord->ExceptionAddress),
-                EXCEPTION_CONTINUE_SEARCH) {
+    }
+    __except (report_callback_fault(static_cast<unsigned long>(GetExceptionCode()),
+                                    GetExceptionInformation()->ExceptionRecord->ExceptionAddress),
+              EXCEPTION_CONTINUE_SEARCH)
+    {
         // Not reached: the filter always continues the search, and `__except` wants
         // a handler regardless.
     }
@@ -291,7 +329,8 @@ void call_object_guarded(void* object, const EventInfo& event, const Json* field
 // One event, as the backend spells it: the payload's name, and either the call it
 // completes, the callback id it belongs to, or neither - in which case it is
 // something that happened to a game rather than an answer to something it asked.
-void deliver_one(const Json& event) noexcept {
+void deliver_one(const Json& event) noexcept
+{
     // `noexcept`, because this runs inside a game's own `RunCallbacks` and a
     // throw out of it would be a throw into the game. What it does with a payload
     // allocates - the event's name is copied to be looked up, and every log line
@@ -299,13 +338,16 @@ void deliver_one(const Json& event) noexcept {
     // handler may do is call a logger that catches its own failures and never
     // lets one out. A payload that cannot be delivered is dropped, loudly, rather
     // than taking the game down.
-    try {
+    try
+    {
         const Json* name = json_member(event, "event");
-        if (name == nullptr || !name->is_string()) {
+        if (name == nullptr || !name->is_string())
+        {
             return;
         }
         const EventInfo* info = find_event(as_string(*name).c_str());
-        if (info == nullptr) {
+        if (info == nullptr)
+        {
             log_write(LogLevel::warn, "an event the layouts do not declare: " + as_string(*name));
             return;
         }
@@ -334,14 +376,18 @@ void deliver_one(const Json& event) noexcept {
         void* object = nullptr;
         std::uint64_t call = 0;
         bool call_result = false;
-        if (names_a_call) {
+        if (names_a_call)
+        {
             call = as_uint64(*handle);
             const auto found = results_by_call().find(call);
-            if (found != results_by_call().end()) {
+            if (found != results_by_call().end())
+            {
                 object = found->second;
                 call_result = true;
             }
-        } else {
+        }
+        else
+        {
             // The id the payload names, or - for one that is not an answer to anything,
             // like a room changing or a packet arriving - the one the SDK gives it,
             // which is what a game registered under when it said it wanted to hear
@@ -350,7 +396,8 @@ void deliver_one(const Json& event) noexcept {
                                             ? static_cast<std::int32_t>(as_int64(*id))
                                             : info->callback;
             const auto found = callbacks_by_id().find(wanted);
-            if (found != callbacks_by_id().end()) {
+            if (found != callbacks_by_id().end())
+            {
                 // Which object hears it. An answer to a game server's ticket check is for
                 // the end that asked, and that end is the first registered - a hosting
                 // process's game server comes up before its client has any peers.
@@ -368,7 +415,8 @@ void deliver_one(const Json& event) noexcept {
             }
         }
 
-        if (object == nullptr) {
+        if (object == nullptr)
+        {
             // Nobody is waiting: a result the game never registered, one it has already
             // unregistered, or something it never asked to hear about. The real SDK
             // drops those too - but it says so, because an event that goes nowhere is
@@ -385,17 +433,21 @@ void deliver_one(const Json& event) noexcept {
         // a match, and it is not this commit - a hosted process registers several objects
         // for one lobby id, and calling all of them stops that game's lobby dead.
         call_object_guarded(object, *info, fields, call, call_result);
-    } catch (...) {
+    }
+    catch (...)
+    {
         // A literal, so building the message cannot allocate on the way in, and
         // `log_write` catches its own failures: nothing here can throw again.
         log_write(LogLevel::error, "a payload could not be delivered");
     }
 }
 
-}  // namespace
+} // namespace
 
-void callback_registered(void* object, std::int32_t id) noexcept {
-    try {
+void callback_registered(void* object, std::int32_t id) noexcept
+{
+    try
+    {
         // What the object wants is asked *before* the lock, because asking is a virtual
         // call into the game's own object: a handler that registered another callback
         // from inside its own GetCallbackSizeBytes would come back for this mutex, and
@@ -415,23 +467,29 @@ void callback_registered(void* object, std::int32_t id) noexcept {
 
         const std::scoped_lock lock(registry_mutex());
         std::vector<void*>& objects = callbacks_by_id()[id];
-        if (std::find(objects.begin(), objects.end(), object) != objects.end()) {
+        if (std::find(objects.begin(), objects.end(), object) != objects.end())
+        {
             // Registering one object twice for one id would have it called twice, which
             // no game asks for and a handler that counts events would not survive.
             log_write(LogLevel::debug, "callback id " + std::to_string(id) + ": " + address +
                                            " is already registered");
             return;
         }
-        if (objects.empty()) {
+        if (objects.empty())
+        {
             log_write(LogLevel::debug,
                       "callback id " + std::to_string(id) + ": first, " + address + wants);
-        } else {
+        }
+        else
+        {
             log_write(LogLevel::debug, "callback id " + std::to_string(id) + ": adding " + address +
                                            wants + " beside " + std::to_string(objects.size()) +
                                            " other(s)");
         }
         objects.push_back(object);
-    } catch (...) {
+    }
+    catch (...)
+    {
         // A registry that cannot grow is a game that gets no callbacks, which is what it
         // gets with no backend at all - but it says so now. Crossing the DLL boundary with
         // a `catch (...)` is the deliberate part: this must not throw into the game.
@@ -441,23 +499,31 @@ void callback_registered(void* object, std::int32_t id) noexcept {
     }
 }
 
-void callback_unregistered(void* object) noexcept {
-    try {
+void callback_unregistered(void* object) noexcept
+{
+    try
+    {
         const std::scoped_lock lock(registry_mutex());
         // By object, because that is all UnregisterCallback is given: the id lives
         // in the object the game handed us, and it is not ours to read. An object can
         // only have been registered under the ids it was registered for, so every list
         // that holds it is the right one to take it out of.
-        for (auto entry = callbacks_by_id().begin(); entry != callbacks_by_id().end();) {
+        for (auto entry = callbacks_by_id().begin(); entry != callbacks_by_id().end();)
+        {
             std::vector<void*>& objects = entry->second;
             objects.erase(std::remove(objects.begin(), objects.end(), object), objects.end());
-            if (objects.empty()) {
+            if (objects.empty())
+            {
                 entry = callbacks_by_id().erase(entry);
-            } else {
+            }
+            else
+            {
                 ++entry;
             }
         }
-    } catch (...) {
+    }
+    catch (...)
+    {
         // The registry is the stub's, not the game's - but an object the game believes it
         // unregistered and this still holds is one it may destroy, and the next payload
         // for that id would go to freed memory. Silence here is the expensive kind.
@@ -465,34 +531,46 @@ void callback_unregistered(void* object) noexcept {
     }
 }
 
-void call_result_registered(void* object, std::uint64_t call) noexcept {
-    try {
+void call_result_registered(void* object, std::uint64_t call) noexcept
+{
+    try
+    {
         const std::scoped_lock lock(registry_mutex());
         results_by_call()[call] = object;
-    } catch (...) {
+    }
+    catch (...)
+    {
         log_write(LogLevel::error, "the stub could not remember a call result");
     }
 }
 
-void call_result_unregistered(void* object, std::uint64_t call) noexcept {
-    try {
+void call_result_unregistered(void* object, std::uint64_t call) noexcept
+{
+    try
+    {
         const std::scoped_lock lock(registry_mutex());
         const auto found = results_by_call().find(call);
-        if (found != results_by_call().end() && found->second == object) {
+        if (found != results_by_call().end() && found->second == object)
+        {
             results_by_call().erase(found);
         }
-        // NOLINTNEXTLINE(bugprone-empty-catch) - the registry is the stub's, not the game's
-    } catch (...) {
+    }
+    catch (...) // NOLINT(bugprone-empty-catch) - the registry is the stub's, not the game's
+    {
     }
 }
 
-void deliver_events() noexcept {
-    try {
+void deliver_events() noexcept
+{
+    try
+    {
         // Bounded, so a scenario that queued a burst drains in one pump and a game
         // that is not pumping cannot be walked over a queue that keeps growing.
         Json event;
-        for (std::size_t delivered = 0; delivered < kMaxEventsPerPump; ++delivered) {
-            if (!Client::instance().take_event(event)) {
+        for (std::size_t delivered = 0; delivered < kMaxEventsPerPump; ++delivered)
+        {
+            if (!Client::instance().take_event(event))
+            {
                 return;
             }
             // Said out loud, because a payload that comes out of the queue and then does
@@ -504,9 +582,10 @@ void deliver_events() noexcept {
                                                                 : std::string("<no name>")));
             deliver_one(event);
         }
-        // NOLINTNEXTLINE(bugprone-empty-catch) - a payload that cannot be handed over is said so inside
-    } catch (...) {
+    }
+    catch (...) // NOLINT(bugprone-empty-catch) - a payload that cannot be handed over is said so inside
+    {
     }
 }
 
-}  // namespace steammock
+} // namespace steammock
