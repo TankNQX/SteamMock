@@ -275,7 +275,8 @@ int run(int argc, char** argv)
         {join_path(root, "src/generated/api_stub.cpp"), steammock::render_api_stub(idl)},
         {join_path(root, "src/generated/steam_api_exports.def"),
          steammock::render_exports_def(idl)},
-        {join_path(root, "src/generated/api_surface.cpp"), steammock::render_api_surface(idl)},
+        {join_path(root, "src/generated/api_surface.cpp"),
+         steammock::render_api_surface(idl, interfaces)},
         {join_path(root, "src/generated/api_interfaces.cpp"),
          steammock::render_api_interfaces(interfaces)},
     };

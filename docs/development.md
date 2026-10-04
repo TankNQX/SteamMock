@@ -69,6 +69,24 @@ and the backend logs which name it could not serve. A rule that names no profile
 case, because saying nothing is a request for the default. Handing one identity out for another is how
 three clients came to run as two players while every run still looked plausible.
 
+A scenario can also state what it is testing, with a top-level `overrides` block: one entry per call
+name, written in a `scripted` entry's own words.
+
+```json
+"overrides": { "SteamAPI_ISteamMatchmaking_CreateLobby": { "ret": 0 } }
+```
+
+That is what makes it different from a profile's `scripted`, which a lobby, a board or an inventory can
+answer over. An override is answered before the profile and before those, because pretending a call
+failed is what it is for. It applies to every game in the run, since the call is what is being tested
+rather than the game. The live view's `config` tab edits the same thing at the keyboard, and its set
+wins over the file's, so an override that works there can be written down into the file afterwards.
+The transcript says which it was: `via: override` for the file and `via: live` for the keyboard.
+
+The block is read at startup like everything else in the file. An `overrides` that is not an object,
+and an entry inside it that says nothing, are both refused, so a scenario that cannot mean what it says
+stops the run rather than being half-served.
+
 ## The state file
 
 Everything else in this backend is a function of the scenario and of what the games in *this* run have
@@ -198,6 +216,14 @@ The build runs `steammock_codegen`, which validates the flat API and rewrites
 `src/generated/api_surface.cpp`. Those files are outputs, not sources: they are not committed, and
 the `generated_files_are_current` test fails if the tree is stale. `steammock --list-api` prints the
 exported calls as the backend sees them, named after the SDK they came from.
+
+The surface table is annotated from the layouts, which the same run reads: each name records the
+interface that declares it, and how many slots one version of that interface gives the method. The
+second number is the only way a table keyed by one name can show that the SDK overloads a method. A C
+function cannot be overloaded, so `ISteamUserStats`'s two `GetStat`s travel under the one name and an
+override on it covers both. Ten names are overloads here, nine of them two slots and
+`SteamAPI_ISteamInventory_SetProperty` four. The live view's `config` tab shows that number beside the
+name; nothing on the wire says which slot was called, so two overloads cannot be overridden apart.
 
 A game notices a missing export at load time, not at call time: Windows resolves the whole import
 table first, so one name the flat API does not cover stops the game before `DllMain`. Compare the

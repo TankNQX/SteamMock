@@ -1,9 +1,11 @@
 #include "bridge/idl.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cstddef>
 #include <cstdio>
 #include <iterator>
+#include <map>
 #include <set>
 #include <string>
 #include <utility>
@@ -867,9 +869,41 @@ std::string render_exports_def(const Idl& idl)
     return joined(out) + "\n";
 }
 
-std::string render_api_surface(const Idl& idl)
+std::string render_api_surface(const Idl& idl, const Interfaces& interfaces)
 {
     const std::vector<IdlCall>& calls = idl.calls();
+
+    // What each flat name is made of, taken from the layouts. A name is the wire spelling of one
+    // slot per interface version that declares the method, so the interesting number is how many
+    // slots *one* version gives it: more than one is an overload. The internals of one version
+    // are counted first, because that is the only place a method can appear twice.
+    std::map<std::string, std::string> interface_of;
+    std::map<std::string, std::size_t> overloads_of;
+    for (const InterfaceVersion& version : interfaces.versions())
+    {
+        std::map<std::string, std::size_t> per_method;
+        for (const InterfaceSlot& slot : version.slots)
+        {
+            ++per_method[slot.method];
+        }
+        for (const InterfaceSlot& slot : version.slots)
+        {
+            // A slot with no call name is one that does not travel: a private API, or a version
+            // whose destructor is its own. There is nothing for the surface to say about it.
+            if (slot.call.empty())
+            {
+                continue;
+            }
+            interface_of[slot.call] = version.name;
+            const std::size_t count = per_method[slot.method];
+            const auto found = overloads_of.find(slot.call);
+            if (found == overloads_of.end() || found->second < count)
+            {
+                overloads_of[slot.call] = count;
+            }
+        }
+    }
+
     std::vector<std::string> out = generated_header(
         idl, kRegenerate,
         "// ============================================================================",
@@ -903,13 +937,43 @@ std::string render_api_surface(const Idl& idl)
         // A zero-length array is not valid C++, and an IDL with no calls is a
         // mistake worth still being able to render, so this one is a placeholder
         // with the count below set to zero.
-        out.push_back("    {\"\", \"\", nullptr, 0},");
+        out.push_back("    {\"\", \"\", \"\", 1, nullptr, 0},");
     }
     else
     {
         for (const IdlCall& call : calls)
         {
+            std::string owner;
+            const auto declared = interface_of.find(call.name);
+            if (declared != interface_of.end())
+            {
+                owner = declared->second;
+            }
+            else
+            {
+                // A flat alias the SDK declares for an overload: `GetStat0`, `SetProperty0`. The
+                // layouts name a slot by the canonical name only, so the alias is matched by the
+                // digits on the end of it. It is one slot rather than the whole method, so its
+                // count stays one: an override on it covers the one slot it names.
+                std::size_t cut = call.name.size();
+                while (cut > 0 && std::isdigit(static_cast<unsigned char>(call.name[cut - 1])) != 0)
+                {
+                    --cut;
+                }
+                if (cut < call.name.size())
+                {
+                    const auto base = interface_of.find(call.name.substr(0, cut));
+                    if (base != interface_of.end())
+                    {
+                        owner = base->second;
+                    }
+                }
+            }
+            const auto overloads = overloads_of.find(call.name);
             out.push_back("    {\"" + call.name + "\", \"" + call.returns + "\", " +
+                          (owner.empty() ? std::string("\"\"") : cpp_string_literal(owner)) + ", " +
+                          std::to_string(overloads == overloads_of.end() ? 1 : overloads->second) +
+                          ", " +
                           (call.params.empty() ? "nullptr" : "kParams_" + call.name) + ", " +
                           std::to_string(call.params.size()) + "},");
         }

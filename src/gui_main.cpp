@@ -147,6 +147,14 @@ std::string entry_of(const CallRecord& record)
     return entry.dump();
 }
 
+// One row of the `config` tab's list: either a call to draw, or the header that opens the group of
+// an interface's methods. A header carries no call, which is what tells the two apart.
+struct ConfigRow
+{
+    const SurfaceCall* call = nullptr;
+    const char* group = nullptr;
+};
+
 struct CallTally
 {
     std::size_t calls = 0;
@@ -794,6 +802,53 @@ class LiveView
         return nullptr;
     }
 
+    // The list as it is drawn: the calls the filter lets through, each under a header for its
+    // interface. Sorted by interface and then by name, because a header only means anything when
+    // the rows under it are that interface's and no others.
+    std::vector<ConfigRow> config_rows(const SurfaceCall* calls, std::size_t exported) const
+    {
+        std::vector<const SurfaceCall*> matches;
+        for (std::size_t index = 0; index < exported; ++index)
+        {
+            if (!_known_filter.PassFilter(calls[index].name))
+            {
+                continue;
+            }
+            if (_only_overridden && _in_force.count(calls[index].name) == 0)
+            {
+                continue;
+            }
+            matches.push_back(&calls[index]);
+        }
+        std::sort(matches.begin(), matches.end(),
+                  [](const SurfaceCall* left, const SurfaceCall* right)
+                  {
+                      const int by_interface =
+                          std::strcmp(left->interface_name, right->interface_name);
+                      if (by_interface != 0)
+                      {
+                          return by_interface < 0;
+                      }
+                      return std::strcmp(left->name, right->name) < 0;
+                  });
+
+        std::vector<ConfigRow> rows;
+        rows.reserve(matches.size() + 32u);
+        const char* group = nullptr;
+        for (const SurfaceCall* call : matches)
+        {
+            if (group == nullptr || std::strcmp(group, call->interface_name) != 0)
+            {
+                group = call->interface_name;
+                // A call with no interface is one of the top-level entry points, which are a
+                // group of their own rather than a heading with nothing under it.
+                rows.push_back(ConfigRow{nullptr, group[0] == '\0' ? "top level" : group});
+            }
+            rows.push_back(ConfigRow{call, nullptr});
+        }
+        return rows;
+    }
+
     // The config tab: one row per call the stub exports, each answer editable where it
     // stands.
     //
@@ -820,21 +875,18 @@ class LiveView
 
         std::size_t exported = 0;
         const SurfaceCall* calls = steammock::api_surface_calls(exported);
-        std::vector<const SurfaceCall*> matches;
-        for (std::size_t index = 0; index < exported; ++index)
+
+        // The rows to draw, with a header wherever the interface changes. A flat list of 826
+        // names is a list nobody reads: the interface is what a game's own code names, so the
+        // surface is shown under the same headings a person already has in mind.
+        const std::vector<ConfigRow> rows = config_rows(calls, exported);
+        std::size_t listed = 0;
+        for (const ConfigRow& row : rows)
         {
-            if (!_known_filter.PassFilter(calls[index].name))
-            {
-                continue;
-            }
-            if (_only_overridden && _in_force.count(calls[index].name) == 0)
-            {
-                continue;
-            }
-            matches.push_back(&calls[index]);
+            listed += row.call == nullptr ? 0u : 1u;
         }
 
-        ImGui::TextDisabled("%zu of %zu exported call(s), %zu overridden", matches.size(), exported,
+        ImGui::TextDisabled("%zu of %zu exported call(s), %zu overridden", listed, exported,
                             _in_force.size());
         if (!_override_note.empty())
         {
@@ -857,18 +909,45 @@ class LiveView
             // two it happened to see first.
             const float row = ImGui::GetFrameHeightWithSpacing();
             ImGuiListClipper clipper;
-            clipper.Begin(static_cast<int>(matches.size()), row);
+            clipper.Begin(static_cast<int>(rows.size()), row);
             while (clipper.Step())
             {
                 for (int at = clipper.DisplayStart; at < clipper.DisplayEnd; ++at)
                 {
-                    const SurfaceCall& call = *matches[static_cast<std::size_t>(at)];
+                    const ConfigRow& entry = rows[static_cast<std::size_t>(at)];
+                    if (entry.call == nullptr)
+                    {
+                        ImGui::TableNextRow();
+                        ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(
+                                                                              ImGuiCol_TableHeaderBg));
+                        ImGui::TableNextColumn();
+                        ImGui::TextDisabled("%s", entry.group);
+                        continue;
+                    }
+                    const SurfaceCall& call = *entry.call;
                     // A name is unique in this table, so it is the row's identity - the one
                     // thing the live list's rows could not offer.
                     ImGui::PushID(call.name);
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
                     ImGui::TextUnformatted(call.name);
+                    // The mark the surface table carries: this one name is the wire spelling of
+                    // more than one slot, so an override here covers every one of them. Saying
+                    // it beside the name is the whole of what can be shown without the stub
+                    // telling the backend which slot it called.
+                    if (call.overloads > 1u)
+                    {
+                        ImGui::SameLine();
+                        ImGui::TextDisabled("x%zu", call.overloads);
+                        if (ImGui::IsItemHovered())
+                        {
+                            ImGui::SetTooltip(
+                                "the SDK declares this method %zu times in one interface version, and\n"
+                                "a C function cannot be overloaded: all %zu travel under this name.\n"
+                                "An override here covers every one of them.",
+                                call.overloads, call.overloads);
+                        }
+                    }
                     ImGui::TableNextColumn();
                     draw_answers_now(call.name);
                     ImGui::TableNextColumn();

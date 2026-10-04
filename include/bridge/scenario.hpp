@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <string>
 #include <utility>
@@ -19,25 +20,33 @@ namespace steammock
 //
 //  0. a live override set from the live view - a `scripted` entry written
 //     while the process runs                                     (via: live)
-//  1. a `scripted` entry for that call in the game's profile   (via: scripted)
-//  2. the session state machine - identity, stats, achievements (via: state)
-//  3. nobody: the backend reports "no opinion", and the stub uses its own
+//  1. the scenario's own `overrides` block, which is how a testing scenario
+//     states what it is testing                                 (via: override)
+//  2. a `scripted` entry for that call in the game's profile   (via: scripted)
+//  3. the session state machine - identity, stats, achievements (via: state)
+//  4. nobody: the backend reports "no opinion", and the stub uses its own
 //     default                                                   (via: none)
 //
 //  That last line is the important one. A call nobody answers behaves exactly as
 //  it would with Steam not running, so a game cannot be handed a success it did
-//  not ask a scenario for - and the transcript always says which of the four
+//  not ask a scenario for - and the transcript always says which of the five
 //  happened.
+//
+//  Both overrides sit above the profile's `scripted` entries, because pretending a
+//  call failed is what an override is for and a `scripted` entry cannot do that in
+//  the face of a world that answers the call itself. The two differ in who wrote
+//  them: rung 1 is the file a person hands to somebody else, and rung 0 is the same
+//  thing typed while the run is going. The live one wins, so an override that works
+//  at the keyboard can be written down afterwards.
 //
 //  There is deliberately no "arbitrary code as a hook" rung any more. The Python
 //  backend had one; it is the only thing that could not survive the move to C++,
 //  and a scenario that says what it means is easier to hand to someone else than
-//  a lambda buried in a script. The live view is the replacement: an override is
-//  a `scripted` entry entered while the process runs, answered by the same code
-//  as one read from a file, and reported under its own rung so no transcript
-//  mistakes it for the scenario. Rung 0 is the *backend's* rather than this
-//  class's - the live view hands the entry to Server, which is what holds the
-//  running process, and Server calls `answer_from_entry` with it.
+//  a lambda buried in a script. An override is the replacement: a `scripted` entry
+//  answered by the same code as one read from a file, which the file itself can
+//  carry. Rung 0 is the *backend's* rather than this class's, because it is the
+//  live view that holds the running process; the backend asks for rung 1 through
+//  `override_for`.
 
 // One rule that picks a profile for a connecting process. Rules are tried in
 // order and the first match wins; a rule can look at the executable name or the
@@ -98,6 +107,14 @@ class Dispatcher
     // scenario entry cannot answer one call two different ways.
     Answer answer_from_entry(const Json& scripted, const std::string& via) const;
 
+    // The `overrides` block a scenario declares, which is rung 1 of the order above. It is
+    // asked rather than answered here because the rung has to sit above the worlds, and the
+    // worlds are the backend's: `Server` asks for one before it asks any of them.
+    //
+    // Null when the file says nothing about this call. There is no lock and no copy: the
+    // block is read once, in `configure`, and never written again.
+    const Json* override_for(const std::string& call) const noexcept;
+
     // How long a scripted entry says this call should take to answer; 0 for every call that
     // does not say, which is every call in every scenario written so far. It is asked
     // separately from `answer` because it has to be known *before* the call is resolved: a
@@ -122,6 +139,10 @@ class Dispatcher
 
     std::vector<std::pair<std::string, Profile>> _profiles;
     std::vector<MatchRule> _match;
+    // The `overrides` block, by call name. Unlike a profile's `scripted` entries these are not
+    // per game: what is being tested is the call, and a scenario that says "this call fails"
+    // means it for every game in the run.
+    std::map<std::string, Json> _overrides;
     std::string _default_profile = "default";
     std::string _error;
 };

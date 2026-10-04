@@ -151,9 +151,14 @@ class Server
 
     // The live view's overrides: the answer a call gets from now on, whatever the
     // scenario, the worlds and this session's own state would have said. This is the
-    // resolution order's first rung (see bridge/scenario.hpp), so an override is also
-    // how a failure path is reached - a call that has to fail to be tested does not need
-    // a scenario written for it, and does not need the process restarted either.
+    // resolution order's first rung (see bridge/scenario.hpp), which a scenario can also
+    // reach from below with its own `overrides` block - the two differ in who wrote them,
+    // and the live one wins, so an override that works at the keyboard can be written down
+    // into the file afterwards.
+    //
+    // An override is also how a failure path is reached: a call that has to fail to be
+    // tested does not need a scenario written for it, and does not need the process
+    // restarted either.
     //
     // `entry` is written in a `scripted` entry's own words, because it is answered by the
     // same code: `ret`, `out`, and `then` mean here what they mean in a file. `delay_ms`

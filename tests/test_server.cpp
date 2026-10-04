@@ -436,6 +436,84 @@ void test_a_live_override_speaks_first()
     server.stop();
 }
 
+// A scenario's own `overrides` block is the rung below the live view's, and above the profile's
+// `scripted` entries. The order is the point: a call that has to fail is reached without a
+// scenario being written for it, and the file a person hands to somebody else can carry the very
+// same thing. A live set that swallowed the file's would also be a file that quietly stopped
+// applying, which is worse than either.
+void test_a_declared_override_sits_under_the_live_one()
+{
+    std::printf("[:] a scenario's own overrides, under the live view's\n");
+
+    // SteamAPI_Init is `scripted` to true, and the file's overrides block says false.
+    const char* text = "{\"profiles\":{\"default\":{\"app_id\":480,"
+                       "\"scripted\":{\"SteamAPI_Init\":{\"ret\":true}}}},"
+                       "\"overrides\":{\"SteamAPI_Init\":{\"ret\":false}}}";
+    Json scenario;
+    if (!steammock::parse(text, scenario))
+    {
+        check("the two-rung scenario parses", false);
+        return;
+    }
+
+    steammock::ServerOptions options;
+    options.port = 0;
+    options.log_level = steammock::LogLevel::error;
+    steammock::Server server(steammock::Dispatcher(scenario), options);
+
+    std::string error;
+    check("the server binds a free port", server.start(error));
+
+    steammock::TcpTransport client;
+    check("a client connects through the transport a stub uses",
+          client.connect("127.0.0.1", server.port()));
+
+    Json reply;
+    check("the handshake is answered", exchange(client, hello_message(), reply));
+
+    check("the block beats the profile's scripted entry",
+          exchange(client, call_message("SteamAPI_Init", 1), reply) &&
+              answer_of(reply) == "handled" &&
+              steammock::json_member(reply, "ret") != nullptr &&
+              !steammock::as_bool(*steammock::json_member(reply, "ret")));
+    check("and the run's record says the file declared it",
+          wait_until(
+              [&server]
+              {
+                  const std::vector<steammock::CallRecord> records = server.records();
+                  return !records.empty() && records.back().via == "override";
+              },
+              5.0));
+
+    // The live view's set sits above the file's: an override tried at the keyboard is tried,
+    // and it is the one that wins for as long as it is there.
+    Json live = Json::object();
+    live["ret"] = Json(true);
+    server.set_override("SteamAPI_Init", live);
+    check("the live set beats the block",
+          exchange(client, call_message("SteamAPI_Init", 2), reply) &&
+              steammock::json_member(reply, "ret") != nullptr &&
+              steammock::as_bool(*steammock::json_member(reply, "ret")));
+    check("and the record says it was the live view",
+          wait_until(
+              [&server]
+              {
+                  const std::vector<steammock::CallRecord> records = server.records();
+                  return !records.empty() && records.back().via == "live";
+              },
+              5.0));
+
+    // Clearing the live one must not take the file's entry with it, or the file would look as
+    // though it had stopped saying what it says.
+    server.clear_override("SteamAPI_Init");
+    check("clearing the live one hands the call back to the file",
+          exchange(client, call_message("SteamAPI_Init", 3), reply) &&
+              steammock::json_member(reply, "ret") != nullptr &&
+              !steammock::as_bool(*steammock::json_member(reply, "ret")));
+
+    server.stop();
+}
+
 // A connect has to be bounded by the timeout the caller asked for. It is not the
 // socket's own receive/send timeouts that do that - they are read and write timeouts,
 // and a `::connect` is neither, so on Windows a blocking one waits for the TCP stack
@@ -1010,6 +1088,7 @@ int run()
     test_four_threads_stop_at_once();
     test_a_run_is_not_restartable();
     test_a_live_override_speaks_first();
+    test_a_declared_override_sits_under_the_live_one();
     test_a_connect_is_bounded_by_its_timeout();
     test_a_stalled_backend_costs_each_queued_caller();
     test_a_megabyte_goes_either_way();

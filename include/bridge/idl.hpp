@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "bridge/interfaces.hpp"
 #include "bridge/json_read.hpp"
 
 namespace steammock
@@ -70,6 +71,9 @@ class Idl
 
 std::string render_api_stub(const Idl& idl);
 std::string render_exports_def(const Idl& idl);
-std::string render_api_surface(const Idl& idl);
+// `interfaces` is what says which interface each flat name belongs to, and how many slots one
+// version of it gives the method - which is how an overload is visible in a table that can only
+// be keyed by the one name a C function travels under.
+std::string render_api_surface(const Idl& idl, const Interfaces& interfaces);
 
 } // namespace steammock

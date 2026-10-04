@@ -108,6 +108,7 @@ void Dispatcher::configure(const Json& scenario, std::string* error)
 {
     _profiles.clear();
     _match.clear();
+    _overrides.clear();
     _default_profile = "default";
     _error.clear();
 
@@ -208,6 +209,52 @@ void Dispatcher::configure(const Json& scenario, std::string* error)
             _match.push_back(std::move(rule));
         }
     }
+
+    // The `overrides` block: what a call answers from now on, whatever the profile and the
+    // session would have said. Refused rather than skipped when it is not an object, and each
+    // entry with it, because a scenario that cannot mean what it says is the mistake this
+    // whole file exists to report at startup.
+    if (const Json* overrides = json_member(scenario, "overrides"); overrides != nullptr)
+    {
+        if (!overrides->is_object())
+        {
+            _error = "overrides is not an object: one entry per call name, such as "
+                     "\"SteamAPI_Init\": {\"ret\": false}";
+            if (error != nullptr)
+            {
+                *error = _error;
+            }
+            _profiles.clear();
+            _match.clear();
+            _overrides.clear();
+            return;
+        }
+        for (const auto& [call, entry] : overrides->items())
+        {
+            // An entry that says nothing is the file saying nothing twice: leaving the call
+            // out gets the same run, and an entry with no `ret`, no `out` and no `then` is
+            // empty on purpose by nobody.
+            if (!entry.is_object() || entry.empty())
+            {
+                _error = "overrides." + call + " says nothing: an entry carries ret, out or then";
+                if (error != nullptr)
+                {
+                    *error = _error;
+                }
+                _profiles.clear();
+                _match.clear();
+                _overrides.clear();
+                return;
+            }
+            _overrides[call] = entry;
+        }
+    }
+}
+
+const Json* Dispatcher::override_for(const std::string& call) const noexcept
+{
+    const auto found = _overrides.find(call);
+    return found == _overrides.end() ? nullptr : &found->second;
 }
 
 std::vector<std::string> Dispatcher::profile_names() const

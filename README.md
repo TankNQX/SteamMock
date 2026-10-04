@@ -76,9 +76,11 @@ the tests, and what to check [when nothing appears](docs/development.md#when-not
   first, which stays readable when a game polls one call every frame. **live** is the call-by-call
   list, where `via` says where each answer came from and `ms` says how long it took. **config** is
   the one thing here you *set* rather than read: an override, an answer a call gives from then on
-  whatever the scenario and the worlds would say. It is one row per call the stub exports, with each
-  answer editable where it stands, so a call the game has not reached yet has a row to edit too.
-  `answers now` is what this run saw the call give, the filter narrows 826 rows, and `set only`
+  whatever the scenario and the worlds would say. It is one row per call the stub exports, grouped
+  under the interface that declares it, with each answer editable where it stands, so a call the game
+  has not reached yet has a row to edit too. A name the SDK overloads carries the number of slots
+  behind it, because a C function cannot be overloaded and an override on the name covers all of
+  them. `answers now` is what this run saw the call give, the filter narrows 826 rows, and `set only`
   reads back what is in force. An entry is a `scripted` entry, so `ret`, `out` and `then` mean here
   what they mean in a scenario file; Enter sets it, and an empty box takes it off. An answer set
   this way needs no restart, and is recorded as `via: live`.

@@ -693,6 +693,40 @@ void test_scenarios()
     std::string why;
     check("a scenario that is not there reports why",
           !Dispatcher::load_file("no/such/scenario.json", nowhere, why) && !why.empty());
+
+    // The `overrides` block: the file stating what it is testing. It is read at startup like
+    // everything else in the file, so an entry that cannot be answered is refused then rather
+    // than discovered by a game at call time.
+    Json with_overrides;
+    check("a scenario with an overrides block parses",
+          steammock::parse("{\"profiles\":{\"default\":{\"app_id\":1}},"
+                           "\"overrides\":{\"SteamAPI_Init\":{\"ret\":false}}}",
+                           with_overrides));
+    const Dispatcher overriding(with_overrides);
+    check("it loads", overriding.load_error().empty());
+    const Json* entry = overriding.override_for("SteamAPI_Init");
+    check("the block is read by call name", entry != nullptr);
+    check("and carries what the file wrote",
+          entry != nullptr && steammock::json_member(*entry, "ret") != nullptr &&
+              !steammock::as_bool(*steammock::json_member(*entry, "ret")));
+    check("a call the file passes over has no override",
+          overriding.override_for("SteamAPI_Shutdown") == nullptr);
+
+    // Neither half of a block that cannot be answered is skipped: an `overrides` that is not
+    // an object, and an entry inside it that says nothing. Both are files that cannot mean
+    // what they say, which is what this scenario reader refuses rather than half-serves.
+    Json not_an_object;
+    check("an overrides block that is not an object parses",
+          steammock::parse("{\"overrides\":[]}", not_an_object));
+    const Dispatcher refused_block(not_an_object);
+    check("it is refused", refused_block.load_error().find("overrides") != std::string::npos);
+    check("and nothing is served from it", !refused_block.has_profile("default"));
+
+    Json empty_entry;
+    check("an entry that says nothing parses",
+          steammock::parse("{\"overrides\":{\"SteamAPI_Init\":{}}}", empty_entry));
+    const Dispatcher refused_entry(empty_entry);
+    check("it is refused too", refused_entry.load_error().find("SteamAPI_Init") != std::string::npos);
 }
 
 // Each session gets its own copy of a profile, so two games matched to the same
@@ -1759,6 +1793,54 @@ void test_surface_matches_the_idl()
         check("the out parameter keeps its name",
               std::string(calls[index].params[2].name) == "pData");
     }
+
+    // Which interface a name belongs to, and how many slots one version of it gives the method.
+    // The second is the only way a table keyed by one name can show that the SDK overloads a
+    // method: a C function cannot be overloaded, so `GetStat`'s int32 slot and its float slot
+    // travel under the one name and an override on it covers both. A reader has to be told that,
+    // and this is where the layouts and the surface are held together.
+    std::size_t overloaded_names = 0;
+    std::size_t unnamed_overloads = 0;
+    for (std::size_t index = 0; index < count; ++index)
+    {
+        const std::string name(calls[index].name);
+        const std::string owner(calls[index].interface_name);
+        if (name == "SteamAPI_ISteamUserStats_GetStat")
+        {
+            check("the name says which interface declares it", owner == "ISteamUserStats");
+            check("and that its method is declared twice", calls[index].overloads == 2u);
+        }
+        if (name == "SteamAPI_ISteamInventory_SetProperty")
+        {
+            check("a name the SDK overloads four times says four", calls[index].overloads == 4u);
+        }
+        if (name == "SteamAPI_ISteamUserStats_GetStat0")
+        {
+            // The SDK's own flat alias for one overload of `GetStat`. The layouts name the slot by
+            // the canonical name only, so the alias is matched by the digits on the end - without
+            // which it looks like an entry point of its own, which is how it was grouped before.
+            check("an alias knows which interface it belongs to", owner == "ISteamUserStats");
+            check("and it covers the one slot it names", calls[index].overloads == 1u);
+        }
+        if (name == "SteamAPI_Init")
+        {
+            check("a top-level entry point belongs to no interface", owner.empty());
+            check("and is not an overload", calls[index].overloads == 1u);
+        }
+        if (calls[index].overloads > 1u)
+        {
+            ++overloaded_names;
+            // Only a slot can be an overload, so a name that is one has to name an interface.
+            // Counted rather than checked where it is found, because the same sentence printed
+            // once per call is not a report.
+            if (owner.empty())
+            {
+                ++unnamed_overloads;
+            }
+        }
+    }
+    check("the surface knows which names are overloads", overloaded_names > 0u);
+    check("and every overloaded name names an interface", unnamed_overloads == 0u);
 }
 
 void test_numbers()

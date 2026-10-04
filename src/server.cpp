@@ -887,15 +887,19 @@ std::string Server::handle_call(Session& session, const Json& message)
         std::scoped_lock lock(_mutex);
 
         std::vector<std::pair<std::uint64_t, Json>> notifications;
-        // A live override, when there is one, is the whole answer: it is the one thing
-        // here a person set on purpose while watching this run, so it speaks before the
-        // worlds and before the scenario. Nothing else runs for that call, which is what
-        // makes it an override rather than one more voice - and it is how a call that has
-        // to fail is reached without a scenario written for it.
+        // An override, when there is one, is the whole answer: it is the one thing here set on
+        // purpose, so it speaks before the worlds and before the scenario. Nothing else runs for
+        // that call, which is what makes it an override rather than one more voice - and it is
+        // how a call that has to fail is reached. The live view's set is asked first, so what was
+        // typed at the keyboard beats what a file declared.
         const auto overridden = _overrides.find(name);
         if (overridden != _overrides.end())
         {
             answer = _dispatcher.answer_from_entry(overridden->second, "live");
+        }
+        else if (const Json* declared = _dispatcher.override_for(name); declared != nullptr)
+        {
+            answer = _dispatcher.answer_from_entry(*declared, "override");
         }
         // The worlds answer in turn, each speaking only about what it has grounds for: the
         // rooms and the packets games made, the boards they posted scores to, and the items
