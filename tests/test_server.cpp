@@ -363,6 +363,79 @@ void test_a_run_is_not_restartable()
     check("with nothing left listening", server.call_count() == 0u);
 }
 
+// An answer a person sets while the run is live, and what the run's own record says about
+// it. It is the only answer in this harness that is written to a running process rather
+// than to a file, so two things have to hold of it: it speaks before everything else,
+// and a transcript read afterwards says where it came from.
+void test_a_live_override_speaks_first()
+{
+    std::printf("[:] an answer set while the run is live, and the record it leaves\n");
+
+    Json scenario;
+    if (!steammock::parse(kScenario, scenario))
+    {
+        check("the test scenario parses", false);
+        return;
+    }
+
+    steammock::ServerOptions options;
+    options.port = 0;
+    options.log_level = steammock::LogLevel::error;
+    steammock::Server server(steammock::Dispatcher(scenario), options);
+
+    std::string error;
+    check("the server binds a free port", server.start(error));
+
+    // Set before any game is attached, because an override is about the call rather than
+    // about the game making it, and that is the ordinary case: the call is on screen from
+    // one game and the next game to run is the one it is for.
+    Json override_entry = Json::object();
+    override_entry["ret"] = Json(false);
+    server.set_override("SteamAPI_Init", override_entry);
+    check("the override is listed", server.overrides().size() == 1u);
+
+    steammock::TcpTransport client;
+    check("a client connects through the transport a stub uses",
+          client.connect("127.0.0.1", server.port()));
+
+    Json reply;
+    check("the handshake is answered", exchange(client, hello_message(), reply));
+
+    // The scenario says this call answers true. The override says false.
+    check("the call is answered",
+          exchange(client, call_message("SteamAPI_Init", 1), reply) && answer_of(reply) == "handled");
+    check("with the override's value rather than the scenario's",
+          steammock::json_member(reply, "ret") != nullptr &&
+              *steammock::json_member(reply, "ret") == Json(false));
+    check("the run's record says the answer came from the live view",
+          wait_until(
+              [&server]
+              {
+                  const std::vector<steammock::CallRecord> records = server.records();
+                  return !records.empty() && records.back().via == "live";
+              },
+              5.0));
+
+    // An override that declines is not the same as no override: the call is still the live
+    // view's, and it is still the live view that is saying nothing.
+    Json declining = Json::object();
+    declining["answer"] = Json("default");
+    server.set_override("SteamAPI_Init", declining);
+    check("declining through an override is still the override answering",
+          exchange(client, call_message("SteamAPI_Init", 2), reply) &&
+              answer_of(reply) == "default");
+
+    server.clear_override("SteamAPI_Init");
+    check("cleared, nothing is overridden", server.overrides().empty());
+    check("and the scenario answers again",
+          exchange(client, call_message("SteamAPI_Init", 3), reply) &&
+              answer_of(reply) == "handled" &&
+              steammock::json_member(reply, "ret") != nullptr &&
+              *steammock::json_member(reply, "ret") == Json(true));
+
+    server.stop();
+}
+
 // A connect has to be bounded by the timeout the caller asked for. It is not the
 // socket's own receive/send timeouts that do that - they are read and write timeouts,
 // and a `::connect` is neither, so on Windows a blocking one waits for the TCP stack
@@ -936,6 +1009,7 @@ int run()
     test_what_the_server_saw();
     test_four_threads_stop_at_once();
     test_a_run_is_not_restartable();
+    test_a_live_override_speaks_first();
     test_a_connect_is_bounded_by_its_timeout();
     test_a_stalled_backend_costs_each_queued_caller();
     test_a_megabyte_goes_either_way();

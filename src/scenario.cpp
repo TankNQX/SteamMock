@@ -357,69 +357,73 @@ std::int64_t Dispatcher::delay_for(const Session& session, const std::string& na
     return wanted > kMaxDelayMs ? kMaxDelayMs : wanted;
 }
 
+Answer Dispatcher::answer_from_entry(const Json& scripted, const std::string& via) const
+{
+    Answer answer;
+    answer.via = via;
+    if (!scripted.is_object())
+    {
+        // An entry that is not an object cannot say anything, so it
+        // declines - the same as an explicit "answer": "default".
+        return answer;
+    }
+    const Json* mode = json_member(scripted, "answer");
+    if (mode != nullptr && mode->is_string() && as_string(*mode) == "default")
+    {
+        return answer;
+    }
+    answer.answered = true;
+    if (const Json* ret = json_member(scripted, "ret"))
+    {
+        answer.ret = *ret;
+    }
+    if (const Json* out = json_member(scripted, "out"))
+    {
+        answer.out = *out;
+    }
+    // A `then` list is what should happen to the game once this answer is on
+    // its way: each entry names a payload and the fields to write into it, and
+    // the call it completes is the handle this entry just returned - so a
+    // scenario says "create the lobby" once rather than twice.
+    if (const Json* then = json_member(scripted, "then"); then != nullptr && then->is_array())
+    {
+        Json events = Json::array();
+        for (const Json& entry : *then)
+        {
+            if (!entry.is_object())
+            {
+                continue;
+            }
+            Json event = entry;
+            if (json_member(event, "call") == nullptr && json_member(event, "id") == nullptr)
+            {
+                if (!answer.ret.is_number())
+                {
+                    // Nothing to route this by. A `then` entry is how a scenario says
+                    // "and now complete the call I just returned" - so an entry with
+                    // no call, no id and a return value that is not a handle has no
+                    // one to complete, and the payload would be delivered to whoever
+                    // registered for the event's own default id: some object that was
+                    // waiting for something else, or nobody at all. It is not sent.
+                    continue;
+                }
+                event["call"] = answer.ret;
+            }
+            events.push_back(std::move(event));
+        }
+        if (!events.empty())
+        {
+            answer.events = std::move(events);
+        }
+    }
+    return answer;
+}
+
 Answer Dispatcher::answer(Session& session, const std::string& name, const Json& args) const
 {
     if (const Json* scripted = session.profile().scripted_for(name))
     {
-        Answer answer;
-        answer.via = "scripted";
-        if (!scripted->is_object())
-        {
-            // A scripted entry that is not an object cannot say anything, so it
-            // declines - the same as an explicit "answer": "default".
-            return answer;
-        }
-        const Json* mode = json_member(*scripted, "answer");
-        if (mode != nullptr && mode->is_string() && as_string(*mode) == "default")
-        {
-            return answer;
-        }
-        answer.answered = true;
-        if (const Json* ret = json_member(*scripted, "ret"))
-        {
-            answer.ret = *ret;
-        }
-        if (const Json* out = json_member(*scripted, "out"))
-        {
-            answer.out = *out;
-        }
-        // A `then` list is what should happen to the game once this answer is on
-        // its way: each entry names a payload and the fields to write into it, and
-        // the call it completes is the handle this entry just returned - so a
-        // scenario says "create the lobby" once rather than twice.
-        if (const Json* then = json_member(*scripted, "then");
-            then != nullptr && then->is_array())
-        {
-            Json events = Json::array();
-            for (const Json& entry : *then)
-            {
-                if (!entry.is_object())
-                {
-                    continue;
-                }
-                Json event = entry;
-                if (json_member(event, "call") == nullptr && json_member(event, "id") == nullptr)
-                {
-                    if (!answer.ret.is_number())
-                    {
-                        // Nothing to route this by. A `then` entry is how a scenario says
-                        // "and now complete the call I just returned" - so an entry with
-                        // no call, no id and a return value that is not a handle has no
-                        // one to complete, and the payload would be delivered to whoever
-                        // registered for the event's own default id: some object that was
-                        // waiting for something else, or nobody at all. It is not sent.
-                        continue;
-                    }
-                    event["call"] = answer.ret;
-                }
-                events.push_back(std::move(event));
-            }
-            if (!events.empty())
-            {
-                answer.events = std::move(events);
-            }
-        }
-        return answer;
+        return answer_from_entry(*scripted, "scripted");
     }
 
     Answer answer = session.handle(name, args);

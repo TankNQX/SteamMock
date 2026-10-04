@@ -564,6 +564,33 @@ std::size_t Server::unanswered_count() const
     return _unanswered_calls;
 }
 
+void Server::set_override(const std::string& call, Json entry)
+{
+    std::scoped_lock lock(_mutex);
+    // An entry answered by nobody and saying nothing is the same as no override, and keeping
+    // it would leave a call reading `via: live` while the scenario answered it. `{}` is the
+    // one spelling of that here: an entry with no `ret` and no `out` is one nothing can be
+    // read out of, and typing it in the live view means the same as blanking the box.
+    if (entry.is_object() && entry.empty())
+    {
+        _overrides.erase(call);
+        return;
+    }
+    _overrides[call] = std::move(entry);
+}
+
+void Server::clear_override(const std::string& call)
+{
+    std::scoped_lock lock(_mutex);
+    _overrides.erase(call);
+}
+
+std::vector<std::pair<std::string, Json>> Server::overrides() const
+{
+    std::scoped_lock lock(_mutex);
+    return {_overrides.begin(), _overrides.end()};
+}
+
 void Server::accept_loop(std::uintptr_t listener)
 {
     const socket_t socket = as_socket(listener);
@@ -860,13 +887,23 @@ std::string Server::handle_call(Session& session, const Json& message)
         std::scoped_lock lock(_mutex);
 
         std::vector<std::pair<std::uint64_t, Json>> notifications;
+        // A live override, when there is one, is the whole answer: it is the one thing
+        // here a person set on purpose while watching this run, so it speaks before the
+        // worlds and before the scenario. Nothing else runs for that call, which is what
+        // makes it an override rather than one more voice - and it is how a call that has
+        // to fail is reached without a scenario written for it.
+        const auto overridden = _overrides.find(name);
+        if (overridden != _overrides.end())
+        {
+            answer = _dispatcher.answer_from_entry(overridden->second, "live");
+        }
         // The worlds answer in turn, each speaking only about what it has grounds for: the
         // rooms and the packets games made, the boards they posted scores to, and the items
         // they hold. A call none of them claims is the scenario's to answer, and then this
         // session's own state.
-        if (!_world.answer(session, name, args, answer, notifications) &&
-            !_leaderboards.answer(session, name, args, answer) &&
-            !_inventory.answer(session, name, args, answer))
+        else if (!_world.answer(session, name, args, answer, notifications) &&
+                 !_leaderboards.answer(session, name, args, answer) &&
+                 !_inventory.answer(session, name, args, answer))
         {
             answer = _dispatcher.answer(session, name, args);
         }

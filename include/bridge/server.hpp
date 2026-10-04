@@ -149,6 +149,25 @@ class Server
     std::size_t call_count() const;
     std::size_t unanswered_count() const;
 
+    // The live view's overrides: the answer a call gets from now on, whatever the
+    // scenario, the worlds and this session's own state would have said. This is the
+    // resolution order's first rung (see bridge/scenario.hpp), so an override is also
+    // how a failure path is reached - a call that has to fail to be tested does not need
+    // a scenario written for it, and does not need the process restarted either.
+    //
+    // `entry` is written in a `scripted` entry's own words, because it is answered by the
+    // same code: `ret`, `out`, and `then` mean here what they mean in a file. `delay_ms`
+    // is the one word it does not honour - a call's delay is known before it is resolved,
+    // and reading it from an override would put a second lock on the path every call in
+    // the run takes.
+    //
+    // An override applies to every game in the run, since the call is what is being
+    // tested rather than the game; and it is what the transcript reports as `via: live`,
+    // so a reader can always tell an override from the scenario.
+    void set_override(const std::string& call, Json entry);
+    void clear_override(const std::string& call);
+    std::vector<std::pair<std::string, Json>> overrides() const;
+
   private:
     void log(LogLevel level, const std::string& message) const;
     void accept_loop(std::uintptr_t listener);
@@ -213,6 +232,11 @@ class Server
     // Recursive: a call resolves under it, and resolving one runs the world's own
     // answers, which may ask this server about itself (see the header's comment).
     mutable std::recursive_mutex _mutex;
+    // The live view's overrides, by call name: what that call answers from now on.
+    // Guarded by `_mutex` rather than by a lock of its own, because every call already
+    // resolves under that one, and a second lock on the path every call in the run takes
+    // would be paid for by the calls no override touches.
+    std::map<std::string, Json> _overrides;
     // stop() is the one entry point a second thread may arrive at while the first is
     // still inside it - the workers it joins need `_mutex`, so the "already stopped"
     // test cannot live there. This is what makes it happen once.

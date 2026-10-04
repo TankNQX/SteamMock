@@ -27,6 +27,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <exception>
 #include <map>
 #include <memory>
@@ -39,6 +40,7 @@
 #include "bridge/log.hpp"
 #include "bridge/scenario.hpp"
 #include "bridge/server.hpp"
+#include "bridge/surface.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -50,10 +52,12 @@ namespace
 {
 
 using steammock::CallRecord;
+using steammock::Json;
 using steammock::LogLevel;
 using steammock::Server;
 using steammock::ServerOptions;
 using steammock::SessionSnapshot;
+using steammock::SurfaceCall;
 
 // Enough log to see what happened, not enough to grow without bound while a
 // game runs for hours.
@@ -91,15 +95,68 @@ void panel_header(const char* title)
     ImGui::Separator();
 }
 
+// The entry a call starts from when nobody has an opinion yet: the value that says "nothing
+// happened", so an override begins at the dullest answer and the change is the part somebody
+// meant. The kinds are the ones `gen/steam_api_surface.json` carries.
+std::string default_entry_for(const char* returns)
+{
+    const char* kind = returns == nullptr ? "" : returns;
+    Json entry = Json::object();
+    if (std::strcmp(kind, "void") == 0)
+    {
+        return entry.dump(); // nothing comes back, so the entry says nothing
+    }
+    if (std::strcmp(kind, "bool") == 0)
+    {
+        entry["ret"] = false;
+    }
+    else if (std::strcmp(kind, "float") == 0 || std::strcmp(kind, "double") == 0)
+    {
+        entry["ret"] = 0.0;
+    }
+    else if (std::strcmp(kind, "cstring") == 0)
+    {
+        entry["ret"] = "";
+    }
+    else
+    {
+        entry["ret"] = 0;
+    }
+    return entry.dump();
+}
+
 // How often one call has been seen, and how much of it was answered. Kept as the
 // calls arrive rather than counted from the history, because the history grows
 // without bound while a game runs - and the panel that shows this is the one
 // that has to stay usable when a game has made tens of thousands of calls.
+// One record's answer in the words a `scripted` entry uses, which is what a scenario file, a
+// transcript and the config tab all read.
+std::string entry_of(const CallRecord& record)
+{
+    Json entry = Json::object();
+    if (!record.ret.is_null())
+    {
+        entry["ret"] = record.ret;
+    }
+    // An out-parameter is the harder half of an entry to write by hand, and the half a call
+    // cannot be answered without, so it comes along when there was one.
+    if (record.out.is_object() && !record.out.empty())
+    {
+        entry["out"] = record.out;
+    }
+    return entry.dump();
+}
+
 struct CallTally
 {
     std::size_t calls = 0;
     std::size_t answered = 0;
     double total_ms = 0.0;
+    // The last answer this call gave, in the words a `scripted` entry uses. Kept as the calls
+    // arrive rather than looked for in the history, because the config tab asks it of every
+    // exported call it draws - and walking a twenty-thousand record history per row per frame
+    // is not a thing a window can do.
+    std::string entry;
 };
 
 using CallTallies = std::map<std::string, CallTally>;
@@ -326,6 +383,7 @@ class LiveView
             if (record.answered)
             {
                 ++tally.answered;
+                tally.entry = entry_of(record);
             }
             tally.total_ms += record.ms;
             // ...and the row the filter lets through joins the index here, so the list
@@ -376,8 +434,9 @@ class LiveView
         if (_server)
         {
             ImGui::SameLine();
-            ImGui::Text("%zu call(s), %zu left to the stub's defaults", _server->call_count(),
-                        _server->unanswered_count());
+            ImGui::Text("%zu call(s), %zu left to the stub's defaults, %zu overridden",
+                        _server->call_count(), _server->unanswered_count(),
+                        _server->overrides().size());
         }
         if (!_status.empty())
         {
@@ -446,9 +505,10 @@ class LiveView
         }
     }
 
-    // Two views of the same calls, because one game in its own loop is enough to
-    // make one of them useless: a call somebody polls every frame buries every
-    // other call in the list, so the count comes first and the sequence second.
+    // Views of the same run: one game in its own loop is enough to make the first of
+    // them useless, because a call somebody polls every frame buries every other call in
+    // the list - so the count comes first and the sequence second. The third is not a
+    // view at all, but the one thing here a person *sets* rather than reads.
     void draw_calls()
     {
         panel_header("Calls");
@@ -462,6 +522,11 @@ class LiveView
             if (ImGui::BeginTabItem("live"))
             {
                 draw_calls_live();
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("config"))
+            {
+                draw_config();
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
@@ -729,6 +794,221 @@ class LiveView
         return nullptr;
     }
 
+    // The config tab: one row per call the stub exports, each answer editable where it
+    // stands.
+    //
+    // One row per *name* is the whole reason this is a tab of its own. A call somebody polls
+    // every frame is one row in the live list for every time it was made, so a control there
+    // says "this call, this time" - which is not what an override is. Here the row and the
+    // thing being set are the same thing, and every call the stub can send has a row whether
+    // the game has asked for it yet or not.
+    void draw_config()
+    {
+        ImGui::SetNextItemWidth(180);
+        _known_filter.Draw("filter");
+        ImGui::SameLine();
+        ImGui::Checkbox("set only", &_only_overridden);
+
+        // Taken once a frame rather than once a row: the server hands the overrides back by
+        // value, and asking 826 times a frame to look at two of them is not worth doing.
+        const std::vector<std::pair<std::string, Json>> in_force = overrides();
+        _in_force.clear();
+        for (const std::pair<std::string, Json>& entry : in_force)
+        {
+            _in_force.insert(entry);
+        }
+
+        std::size_t exported = 0;
+        const SurfaceCall* calls = steammock::api_surface_calls(exported);
+        std::vector<const SurfaceCall*> matches;
+        for (std::size_t index = 0; index < exported; ++index)
+        {
+            if (!_known_filter.PassFilter(calls[index].name))
+            {
+                continue;
+            }
+            if (_only_overridden && _in_force.count(calls[index].name) == 0)
+            {
+                continue;
+            }
+            matches.push_back(&calls[index]);
+        }
+
+        ImGui::TextDisabled("%zu of %zu exported call(s), %zu overridden", matches.size(), exported,
+                            _in_force.size());
+        if (!_override_note.empty())
+        {
+            ImGui::TextWrapped("%s", _override_note.c_str());
+        }
+
+        const ImGuiTableFlags flags =
+            ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
+        if (ImGui::BeginTable("exported_calls", 3, flags))
+        {
+            ImGui::TableSetupScrollFreeze(0, 1);
+            ImGui::TableSetupColumn("call", ImGuiTableColumnFlags_WidthStretch, 3.0f);
+            ImGui::TableSetupColumn("answers now", ImGuiTableColumnFlags_WidthStretch, 2.0f);
+            ImGui::TableSetupColumn("override", ImGuiTableColumnFlags_WidthStretch, 2.0f);
+            ImGui::TableHeadersRow();
+
+            // The rows off screen are not drawn, and the height is handed in rather than
+            // measured: a row holds a text box while it is being edited and a line of text
+            // while it is not, and the table must not learn its height from whichever of the
+            // two it happened to see first.
+            const float row = ImGui::GetFrameHeightWithSpacing();
+            ImGuiListClipper clipper;
+            clipper.Begin(static_cast<int>(matches.size()), row);
+            while (clipper.Step())
+            {
+                for (int at = clipper.DisplayStart; at < clipper.DisplayEnd; ++at)
+                {
+                    const SurfaceCall& call = *matches[static_cast<std::size_t>(at)];
+                    // A name is unique in this table, so it is the row's identity - the one
+                    // thing the live list's rows could not offer.
+                    ImGui::PushID(call.name);
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+                    ImGui::TextUnformatted(call.name);
+                    ImGui::TableNextColumn();
+                    draw_answers_now(call.name);
+                    ImGui::TableNextColumn();
+                    draw_inline_entry(call);
+                    ImGui::PopID();
+                }
+            }
+            ImGui::EndTable();
+        }
+        ImGui::TextDisabled(
+            "click an override to edit it: Enter sets it, and an empty box takes it off");
+    }
+
+    // What the call gave this run, beside the cell a person edits, so the decision is made
+    // next to the evidence. "never asked" is said out loud rather than left blank: a call the
+    // game has not reached is exactly the one an override is often being written for.
+    void draw_answers_now(const std::string& name) const
+    {
+        const auto tally = _tallies.find(name);
+        if (tally == _tallies.end() || tally->second.entry.empty())
+        {
+            ImGui::TextDisabled("never asked");
+            return;
+        }
+        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
+        ImGui::TextUnformatted(tally->second.entry.c_str());
+        ImGui::PopStyleColor();
+    }
+
+    // The override, edited where it stands. One buffer is enough because one row is open at a
+    // time, and what the box holds when it opens is the answer already set, or the one this
+    // run saw the call give, or the value its own return kind calls "nothing happened" - so
+    // the usual edit is one field changed rather than an entry written from nothing.
+    void draw_inline_entry(const SurfaceCall& call)
+    {
+        const auto in_force = _in_force.find(call.name);
+        const bool set = in_force != _in_force.end();
+
+        if (_editing != call.name)
+        {
+            if (!set)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text,
+                                      ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
+            }
+            const bool clicked = ImGui::Selectable(set ? in_force->second.dump().c_str() : "not set");
+            if (!set)
+            {
+                ImGui::PopStyleColor();
+            }
+            if (clicked)
+            {
+                begin_inline(call, set ? in_force->second.dump() : std::string());
+            }
+            return;
+        }
+
+        if (_focus_edit)
+        {
+            _focus_edit = false;
+            // The row was just clicked, so the caret belongs in this box rather than wherever
+            // the keyboard was pointed before.
+            ImGui::SetKeyboardFocusHere();
+        }
+        ImGui::SetNextItemWidth(-1.0f);
+        const bool entered = ImGui::InputText("##entry", _edit_text, sizeof(_edit_text),
+                                              ImGuiInputTextFlags_EnterReturnsTrue);
+        const bool left = ImGui::IsItemDeactivated();
+        if (entered)
+        {
+            apply_inline(call);
+        }
+        else if (left)
+        {
+            _editing.clear(); // clicked away, or Escape: nothing was changed
+        }
+    }
+
+    // Opens a row for editing. What the box holds is the override already set, or - when
+    // there is none - the answer this run saw the call give, or the value its own return kind
+    // calls "nothing happened". So the usual edit is one field changed rather than an entry
+    // written from nothing.
+    void begin_inline(const SurfaceCall& call, const std::string& already_set)
+    {
+        _editing = call.name;
+        _override_note.clear();
+        const std::string start = already_set.empty() ? suggested_entry(call) : already_set;
+        std::snprintf(_edit_text, sizeof(_edit_text), "%s", start.c_str());
+        _focus_edit = true;
+    }
+
+    // An empty box is how an override comes off. That is one control fewer than a Clear
+    // button, and the same spelling an empty entry already means to the server.
+    void apply_inline(const SurfaceCall& call)
+    {
+        _editing.clear();
+        _override_note.clear();
+        if (!_server)
+        {
+            _override_note = "the server is not running, so there is nothing to override";
+            return;
+        }
+        const std::string text(_edit_text);
+        if (text.find_first_not_of(" \t") == std::string::npos)
+        {
+            _server->clear_override(call.name);
+            _override_note = std::string("no override on ") + call.name + " any more";
+            return;
+        }
+        // Parsed without exceptions, because this is somebody's typing and a half-finished
+        // entry arrives here every time.
+        const Json entry = Json::parse(text, nullptr, false);
+        if (entry.is_discarded() || !entry.is_object())
+        {
+            _override_note = std::string(call.name) + ": that is not an entry, so nothing changed";
+            return;
+        }
+        _server->set_override(call.name, entry);
+        _override_note = std::string("overriding ") + call.name;
+    }
+
+    // What the box starts from when nothing is set: what this run saw the call give, or the
+    // value its own return kind calls "nothing happened".
+    std::string suggested_entry(const SurfaceCall& call) const
+    {
+        const auto tally = _tallies.find(call.name);
+        if (tally != _tallies.end() && !tally->second.entry.empty())
+        {
+            return tally->second.entry;
+        }
+        return default_entry_for(call.returns);
+    }
+
+    // What the server is holding. Asked for rather than kept here: the server owns the
+    // overrides, and a copy in the window would be a second answer to what is in force.
+    std::vector<std::pair<std::string, Json>> overrides() const
+    {
+        return _server ? _server->overrides() : std::vector<std::pair<std::string, Json>>();
+    }
+
     char _host[64] = {};
     // The port the stub and the backend default to, because the whole point of the
     // window is to be started and then forgotten while a game is run beside it. A
@@ -766,6 +1046,18 @@ class LiveView
     ImGuiTextFilter _filter;
     bool _follow = true;
     bool _start_on_launch = false;
+
+    // The config tab: the filter over the exported calls, the overrides taken once a frame so
+    // that a row can look itself up, and one row at a time open for editing - which is why
+    // one buffer is enough for the entry being typed. `_only_overridden` is how what is in
+    // force is read in one place rather than hunted for among 826 rows.
+    ImGuiTextFilter _known_filter;
+    std::map<std::string, Json> _in_force;
+    std::string _editing;
+    char _edit_text[512] = {};
+    bool _focus_edit = false;
+    bool _only_overridden = false;
+    std::string _override_note;
 
     std::mutex _log_mutex;
     std::vector<std::string> _log;

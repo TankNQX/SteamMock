@@ -17,6 +17,8 @@ namespace steammock
 // ---------------------------------------------------------------------------
 //  Resolution order for every call, first one that speaks wins:
 //
+//  0. a live override set from the live view - a `scripted` entry written
+//     while the process runs                                     (via: live)
 //  1. a `scripted` entry for that call in the game's profile   (via: scripted)
 //  2. the session state machine - identity, stats, achievements (via: state)
 //  3. nobody: the backend reports "no opinion", and the stub uses its own
@@ -24,14 +26,18 @@ namespace steammock
 //
 //  That last line is the important one. A call nobody answers behaves exactly as
 //  it would with Steam not running, so a game cannot be handed a success it did
-//  not ask a scenario for - and the transcript always says which of the three
+//  not ask a scenario for - and the transcript always says which of the four
 //  happened.
 //
 //  There is deliberately no "arbitrary code as a hook" rung any more. The Python
 //  backend had one; it is the only thing that could not survive the move to C++,
 //  and a scenario that says what it means is easier to hand to someone else than
-//  a lambda buried in a script. Live editing of the same structures from a GUI is
-//  the replacement.
+//  a lambda buried in a script. The live view is the replacement: an override is
+//  a `scripted` entry entered while the process runs, answered by the same code
+//  as one read from a file, and reported under its own rung so no transcript
+//  mistakes it for the scenario. Rung 0 is the *backend's* rather than this
+//  class's - the live view hands the entry to Server, which is what holds the
+//  running process, and Server calls `answer_from_entry` with it.
 
 // One rule that picks a profile for a connecting process. Rules are tried in
 // order and the first match wins; a rule can look at the executable name or the
@@ -83,6 +89,14 @@ class Dispatcher
     std::optional<Profile> profile_for(const Json& hello, std::string* refused = nullptr) const;
 
     Answer answer(Session& session, const std::string& name, const Json& args) const;
+
+    // Answers a call from an entry already in hand, exactly as a `scripted` entry in a
+    // profile is answered. `via` is the rung the answer is reported under, so a live
+    // override says "live" rather than borrowing the scenario's name, and `scripted` is
+    // the entry to answer from - a profile's own, or a live override, which is written in
+    // the same words on purpose. Overrides come through here so that an override and a
+    // scenario entry cannot answer one call two different ways.
+    Answer answer_from_entry(const Json& scripted, const std::string& via) const;
 
     // How long a scripted entry says this call should take to answer; 0 for every call that
     // does not say, which is every call in every scenario written so far. It is asked
