@@ -218,12 +218,23 @@ the `generated_files_are_current` test fails if the tree is stale. `steammock --
 exported calls as the backend sees them, named after the SDK they came from.
 
 The surface table is annotated from the layouts, which the same run reads: each name records the
-interface that declares it, and how many slots one version of that interface gives the method. The
-second number is the only way a table keyed by one name can show that the SDK overloads a method. A C
-function cannot be overloaded, so `ISteamUserStats`'s two `GetStat`s travel under the one name and an
-override on it covers both. Ten names are overloads here, nine of them two slots and
-`SteamAPI_ISteamInventory_SetProperty` four. The live view's `config` tab shows that number beside the
-name; nothing on the wire says which slot was called, so two overloads cannot be overridden apart.
+interface that declares it, and how many slots travel under it. The second number is not decoration. A
+C function cannot be overloaded, so when an import leaves two slots sharing one name, every call
+behind that name answers out of the same entry.
+
+The import tool took a slot's name from the method first, which an overload always has, so `GetStat`'s
+int32 slot and its float slot both came back as `SteamAPI_ISteamUserStats_GetStat`. The getters survive
+that: both variants read the same stat, and the integer comes back through `as_double`. A setter does
+not. The float `SetStat` sends `fData`, the handler looks for `nData`, and a stat the game wrote is left
+at 0. The tool now takes the method's own name only when the signature agrees, and matches the rest by
+the argument kinds, which is what `--selftest` covers.
+
+With the imports this tree was built from, ten names carry more than one slot: nine carry two and
+`SteamAPI_ISteamInventory_SetProperty` carries four. The live view's `config` tab marks those, and an
+override on one covers every slot behind it. A re-import with each SDK ends that: the marks go away
+because each slot travels under the name the SDK's own flat header gave it, `SteamAPI_ISteamUserStats_GetStat0`
+among them. `test_backend` pins the interface each name belongs to rather than the count, since the
+count is a property of the import.
 
 A game notices a missing export at load time, not at call time: Windows resolves the whole import
 table first, so one name the flat API does not cover stops the game before `DllMain`. Compare the

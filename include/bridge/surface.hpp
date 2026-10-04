@@ -32,10 +32,11 @@ struct SurfaceCall
     // The interface whose slots travel under this name, empty when the name is one of the
     // top-level `SteamAPI_*` entry points rather than a slot of an interface.
     const char* interface_name;
-    // How many slots one version of that interface gives this method. More than one is an
-    // overload: a C function cannot be overloaded, so `GetStat`'s int32 slot and its float slot
-    // travel under the one name and an override on the name covers both. One means the name is
-    // the method's own.
+    // How many slots travel under this name. More than one is the case a reader cannot see for
+    // themselves: a C function cannot be overloaded, so `GetStat`'s int32 slot and its float slot
+    // both answer from the one entry behind the name. An import that resolves each overload to the
+    // name the SDK's own flat header gives it leaves every name with one slot, which is the good
+    // state and shows no mark at all.
     std::size_t overloads;
     const SurfaceParam* params;
     std::size_t param_count;

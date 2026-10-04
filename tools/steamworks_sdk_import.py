@@ -1296,7 +1296,13 @@ class Builder:
         derived = "SteamAPI_%s_%s" % (interface.name, method_name)
         wanted = self._param_kinds(method)
         for candidate in candidates:
-            if candidate.name == derived:
+            # The method's own name is the answer only when the signature agrees. An overload
+            # takes the same name, so a name that matches with the *wrong* arguments is a
+            # different slot's name: taking it is what left both `GetStat`s travelling under
+            # `SteamAPI_ISteamUserStats_GetStat`, and the float one answered out of the int32
+            # entry - a value the stub then read into a `float*`, and a write lost because the
+            # handler looks for `nData` and the float overload sends `fData`.
+            if candidate.name == derived and self._flat_param_kinds(candidate) == wanted:
                 return derived
         for candidate in candidates:
             if len(candidate.params) != len(method.parameters) + 1:
@@ -2138,6 +2144,7 @@ public:
 #include "steam_api_common.h"
 #include "isteamtest.h"
 S_API uint64 SteamAPI_ISteamTest_GetTestID( ISteamTest* self );
+S_API bool SteamAPI_ISteamTest_GetStat( ISteamTest* self, const char * pchName, int32 * pData );
 S_API bool SteamAPI_ISteamTest_GetStatInt32( ISteamTest* self, const char * pchName, int32 * pData );
 S_API bool SteamAPI_ISteamTest_GetStatFloat( ISteamTest* self, const char * pchName, float * pData );
 S_API SteamIPAddress_t SteamAPI_ISteamTest_GetAddress( ISteamTest* self );
@@ -2204,6 +2211,16 @@ def selftest() -> int:
                 "header": "steam_api_flat.h",
             },
             {
+                "name": "SteamAPI_ISteamTest_GetStat",
+                "returns": "bool",
+                "params": [
+                    {"name": "self", "type": "opaque_ptr"},
+                    {"name": "pchName", "type": "cstring"},
+                    {"name": "pData", "type": "int32", "dir": "out"},
+                ],
+                "header": "steam_api_flat.h",
+            },
+            {
                 "name": "SteamAPI_ISteamTest_GetStatFloat",
                 "returns": "bool",
                 "params": [
@@ -2265,7 +2282,7 @@ def selftest() -> int:
             expected = [
                 ["~", {"call": "SteamAPI_ISteamTest_DestructISteamTest"}],
                 ["GetTestID", "uint64"],
-                ["GetStat", "bool", [["pchName", "cstring"], ["pData", "int32", "out"]], {"call": "SteamAPI_ISteamTest_GetStatInt32"}],
+                ["GetStat", "bool", [["pchName", "cstring"], ["pData", "int32", "out"]]],
                 ["GetStat", "bool", [["pchName", "cstring"], ["pData", "float", "out"]], {"call": "SteamAPI_ISteamTest_GetStatFloat"}],
                 ["GetAddress", "SteamIPAddress_t", [], {"unmarshalable": True}],
                 ["GetTable", "bool", [["pTable", "opaque_ptr"]]],

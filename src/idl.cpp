@@ -873,19 +873,19 @@ std::string render_api_surface(const Idl& idl, const Interfaces& interfaces)
 {
     const std::vector<IdlCall>& calls = idl.calls();
 
-    // What each flat name is made of, taken from the layouts. A name is the wire spelling of one
-    // slot per interface version that declares the method, so the interesting number is how many
-    // slots *one* version gives it: more than one is an overload. The internals of one version
-    // are counted first, because that is the only place a method can appear twice.
+    // What each flat name is made of, taken from the layouts: which interface declares it, and how
+    // many slots *travel under that one name*. More than one means the SDK's own flat header names
+    // the overloads separately and this import did not use them, so every slot behind the name is
+    // answered with the same entry - which is worth showing, because it is the one case a reader
+    // cannot see for themselves.
     std::map<std::string, std::string> interface_of;
     std::map<std::string, std::size_t> overloads_of;
     for (const InterfaceVersion& version : interfaces.versions())
     {
-        std::map<std::string, std::size_t> per_method;
-        for (const InterfaceSlot& slot : version.slots)
-        {
-            ++per_method[slot.method];
-        }
+        // Counted per version and then kept as the largest any one version gives. A name several
+        // *versions* declare is not an overload, and summing would call every method of
+        // `ISteamClient` one.
+        std::map<std::string, std::size_t> per_name;
         for (const InterfaceSlot& slot : version.slots)
         {
             // A slot with no call name is one that does not travel: a private API, or a version
@@ -895,11 +895,14 @@ std::string render_api_surface(const Idl& idl, const Interfaces& interfaces)
                 continue;
             }
             interface_of[slot.call] = version.name;
-            const std::size_t count = per_method[slot.method];
-            const auto found = overloads_of.find(slot.call);
+            ++per_name[slot.call];
+        }
+        for (const auto& [call, count] : per_name)
+        {
+            const auto found = overloads_of.find(call);
             if (found == overloads_of.end() || found->second < count)
             {
-                overloads_of[slot.call] = count;
+                overloads_of[call] = count;
             }
         }
     }

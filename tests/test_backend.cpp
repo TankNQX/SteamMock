@@ -1799,7 +1799,6 @@ void test_surface_matches_the_idl()
     // method: a C function cannot be overloaded, so `GetStat`'s int32 slot and its float slot
     // travel under the one name and an override on it covers both. A reader has to be told that,
     // and this is where the layouts and the surface are held together.
-    std::size_t overloaded_names = 0;
     std::size_t unnamed_overloads = 0;
     for (std::size_t index = 0; index < count; ++index)
     {
@@ -1808,39 +1807,28 @@ void test_surface_matches_the_idl()
         if (name == "SteamAPI_ISteamUserStats_GetStat")
         {
             check("the name says which interface declares it", owner == "ISteamUserStats");
-            check("and that its method is declared twice", calls[index].overloads == 2u);
-        }
-        if (name == "SteamAPI_ISteamInventory_SetProperty")
-        {
-            check("a name the SDK overloads four times says four", calls[index].overloads == 4u);
         }
         if (name == "SteamAPI_ISteamUserStats_GetStat0")
         {
-            // The SDK's own flat alias for one overload of `GetStat`. The layouts name the slot by
-            // the canonical name only, so the alias is matched by the digits on the end - without
-            // which it looks like an entry point of its own, which is how it was grouped before.
+            // The SDK's own flat alias for one overload of `GetStat`. Whether the layouts name the
+            // slot with it depends on the import, so what is pinned is that the alias knows its
+            // interface either way: matched by the digits on the end, or named by the slot itself.
             check("an alias knows which interface it belongs to", owner == "ISteamUserStats");
-            check("and it covers the one slot it names", calls[index].overloads == 1u);
         }
         if (name == "SteamAPI_Init")
         {
             check("a top-level entry point belongs to no interface", owner.empty());
-            check("and is not an overload", calls[index].overloads == 1u);
+            check("and carries its own slot alone", calls[index].overloads == 1u);
         }
-        if (calls[index].overloads > 1u)
+        // Only a slot can share a name with another, so a name that does has to name an interface.
+        // Counted rather than checked where it is found, because the same sentence printed once per
+        // call is not a report.
+        if (calls[index].overloads > 1u && owner.empty())
         {
-            ++overloaded_names;
-            // Only a slot can be an overload, so a name that is one has to name an interface.
-            // Counted rather than checked where it is found, because the same sentence printed
-            // once per call is not a report.
-            if (owner.empty())
-            {
-                ++unnamed_overloads;
-            }
+            ++unnamed_overloads;
         }
     }
-    check("the surface knows which names are overloads", overloaded_names > 0u);
-    check("and every overloaded name names an interface", unnamed_overloads == 0u);
+    check("every name shared by slots names an interface", unnamed_overloads == 0u);
 }
 
 void test_numbers()
