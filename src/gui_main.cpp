@@ -58,6 +58,7 @@ using steammock::Server;
 using steammock::ServerOptions;
 using steammock::SessionSnapshot;
 using steammock::SurfaceCall;
+using steammock::SurfaceParam;
 
 // Enough log to see what happened, not enough to grow without bound while a
 // game runs for hours.
@@ -154,6 +155,39 @@ struct ConfigRow
     const SurfaceCall* call = nullptr;
     const char* group = nullptr;
 };
+
+// `(cstring pchName, float* pData) -> bool`, which is what turns a row from a name into a call.
+//
+// The surface carries a slot's parameters already, because the stub marshals them, so this is
+// only a rendering of what the build knows. Types are what tell two overloads apart - `GetStat`
+// takes an `int32*` where `GetStat0` takes a `float*` - and the parameter names are the keys an
+// override's `out` object uses, so both are here. The filter matches this text as well, which is
+// why the name is not part of it: a row draws the name in one column and this in the next.
+std::string call_signature(const SurfaceCall& call)
+{
+    std::string signature = "(";
+    for (std::size_t index = 0; index < call.param_count; ++index)
+    {
+        const SurfaceParam& param = call.params[index];
+        if (index != 0u)
+        {
+            signature += ", ";
+        }
+        signature += param.type != nullptr ? param.type : "?";
+        if (param.out)
+        {
+            signature.push_back('*');
+        }
+        if (param.name != nullptr && param.name[0] != '\0')
+        {
+            signature.push_back(' ');
+            signature += param.name;
+        }
+    }
+    signature += ") -> ";
+    signature += call.returns != nullptr ? call.returns : "?";
+    return signature;
+}
 
 struct CallTally
 {
@@ -810,7 +844,11 @@ class LiveView
         std::vector<const SurfaceCall*> matches;
         for (std::size_t index = 0; index < exported; ++index)
         {
-            if (!_known_filter.PassFilter(calls[index].name))
+            // The name and the signature both go through the filter, so "pchName" and "float*"
+            // each find the calls that take one - which is how a person picks a row out of 826.
+            std::string filterable(calls[index].name);
+            filterable += call_signature(calls[index]);
+            if (!_known_filter.PassFilter(filterable.c_str()))
             {
                 continue;
             }
@@ -895,11 +933,12 @@ class LiveView
 
         const ImGuiTableFlags flags =
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
-        if (ImGui::BeginTable("exported_calls", 3, flags))
+        if (ImGui::BeginTable("exported_calls", 4, flags))
         {
             ImGui::TableSetupScrollFreeze(0, 1);
-            ImGui::TableSetupColumn("call", ImGuiTableColumnFlags_WidthStretch, 3.0f);
-            ImGui::TableSetupColumn("answers now", ImGuiTableColumnFlags_WidthStretch, 2.0f);
+            ImGui::TableSetupColumn("call", ImGuiTableColumnFlags_WidthStretch, 2.6f);
+            ImGui::TableSetupColumn("signature", ImGuiTableColumnFlags_WidthStretch, 3.4f);
+            ImGui::TableSetupColumn("answers now", ImGuiTableColumnFlags_WidthStretch, 1.8f);
             ImGui::TableSetupColumn("override", ImGuiTableColumnFlags_WidthStretch, 2.0f);
             ImGui::TableHeadersRow();
 
@@ -948,6 +987,13 @@ class LiveView
                                 call.overloads, call.overloads);
                         }
                     }
+                    // The signature is the row's second column rather than a suffix on the name,
+                    // because a long name fills the first cell and ImGui clips whatever follows
+                    // it: a suffix on `SteamAPI_ISteamMatchmakingPingResponse` is never drawn at
+                    // all. Two overloads of one method differ only in these types, so a row
+                    // without one does not say which call it is.
+                    ImGui::TableNextColumn();
+                    ImGui::TextDisabled("%s", call_signature(call).c_str());
                     ImGui::TableNextColumn();
                     draw_answers_now(call.name);
                     ImGui::TableNextColumn();

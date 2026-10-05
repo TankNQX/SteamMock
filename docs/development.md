@@ -239,6 +239,11 @@ the integer one sends `nData`, so a table that knows only the first leaves every
 answered by nothing. `test_backend` pins the interface each name belongs to rather than the count,
 since a count is a property of the import.
 
+The signature those slots carry is what the live view's `config` tab draws beside each name, and what
+its filter searches, because a name alone does not tell two overloads apart: `GetStat` takes an
+`int32*` and `GetStat0` a `float*`. It is read out of the same table the stub marshals from, so a row
+shows what the build knows rather than a second copy of it.
+
 A game notices a missing export at load time, not at call time: Windows resolves the whole import
 table first, so one name the flat API does not cover stops the game before `DllMain`. Compare the
 game's `steam_api.dll` imports against `steammock --list-api` when a game will not start, which is
