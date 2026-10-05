@@ -80,7 +80,9 @@ the tests, and what to check [when nothing appears](docs/development.md#when-not
   under the interface that declares it, with each answer editable where it stands, so a call the game
   has not reached yet has a row to edit too. Each row shows the call's own signature beside its name,
   which is what tells two overloads of one method apart, and the filter searches that as well as the
-  name. A name several slots share would carry the number of them,
+  name. The `for` list beside it is which game the entries you set answer for: `every game`, or one of
+  the run's identities, which is how a single client is made to fail a call while the rest carry on.
+  A name several slots share would carry the number of them,
   because a C function cannot be overloaded and an override on it covers all of them; with the imports
   this tree carries, no name is shared. `answers now` is what this run saw the call give, the filter
   narrows 826 rows, and `set only` reads back what is in force. An entry is a `scripted` entry, so `ret`,

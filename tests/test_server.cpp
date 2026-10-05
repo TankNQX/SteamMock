@@ -74,7 +74,9 @@ bool wait_until(Predicate ready, double seconds)
     }
 }
 
-Json hello_message()
+// `profile` asked for by name is the other way a game is matched: the stub sends what
+// STEAMMOCK_PROFILE holds, and the scenario either has that identity or refuses the handshake.
+Json hello_message(const std::string& profile = std::string())
 {
     Json message = Json::object();
     message["type"] = Json("hello");
@@ -82,6 +84,10 @@ Json hello_message()
     message["exe"] = Json("game.exe");
     message["arch"] = Json("x64");
     message["pid"] = Json(1234);
+    if (!profile.empty())
+    {
+        message["profile"] = Json(profile);
+    }
     return message;
 }
 
@@ -510,6 +516,94 @@ void test_a_declared_override_sits_under_the_live_one()
           exchange(client, call_message("SteamAPI_Init", 3), reply) &&
               steammock::json_member(reply, "ret") != nullptr &&
               !steammock::as_bool(*steammock::json_member(reply, "ret")));
+
+    server.stop();
+}
+
+// A scenario that answers SteamAPI_Init for two identities, which is what a scoped override needs
+// to be told apart from an unscoped one.
+const char* kTwoGames =
+    "{\"profiles\":{\"default\":{\"app_id\":480,\"scripted\":{\"SteamAPI_Init\":{\"ret\":true}}},"
+    "\"second_player\":{\"app_id\":480,\"scripted\":{\"SteamAPI_Init\":{\"ret\":true}}}}}";
+
+// An override can name the game it answers for, which is how one client is made to fail a call in
+// a run of several - the live view's scope chooser, and the file's `for` underneath it. This is
+// the live half, set on one identity while the other carries on with what the scenario says.
+void test_an_override_answers_one_game()
+{
+    std::printf("[:] an override that answers one game\n");
+
+    Json scenario;
+    if (!steammock::parse(kTwoGames, scenario))
+    {
+        check("the two-game scenario parses", false);
+        return;
+    }
+
+    steammock::ServerOptions options;
+    options.port = 0;
+    options.log_level = steammock::LogLevel::error;
+    steammock::Server server(steammock::Dispatcher(scenario), options);
+
+    std::string error;
+    check("the server binds a free port", server.start(error));
+
+    Json failing_entry = Json::object();
+    failing_entry["ret"] = Json(false);
+    server.set_override("second_player", "SteamAPI_Init", failing_entry);
+    check("the scoped override is one of the ones in force", server.override_count() == 1u);
+    check("and the listing names the game it is for",
+          server.overrides().size() == 1u &&
+              std::get<0>(server.overrides()[0]) == "second_player" &&
+              std::get<1>(server.overrides()[0]) == "SteamAPI_Init");
+
+    // The game it is not for. The scenario answers this call true, and the override must not
+    // reach it: one client failing is the whole point of naming one.
+    steammock::TcpTransport other;
+    check("the game it is not for connects", other.connect("127.0.0.1", server.port()));
+    Json reply;
+    check("its handshake is answered", exchange(other, hello_message("default"), reply));
+    check("and the scenario's own answer reaches it",
+          exchange(other, call_message("SteamAPI_Init", 1), reply) &&
+              steammock::json_member(reply, "ret") != nullptr &&
+              steammock::as_bool(*steammock::json_member(reply, "ret")));
+
+    // The game it is for.
+    steammock::TcpTransport failing;
+    check("the game it is for connects", failing.connect("127.0.0.1", server.port()));
+    check("its handshake is answered", exchange(failing, hello_message("second_player"), reply));
+    check("the override answers it",
+          exchange(failing, call_message("SteamAPI_Init", 1), reply) &&
+              steammock::json_member(reply, "ret") != nullptr &&
+              !steammock::as_bool(*steammock::json_member(reply, "ret")));
+    check("and the record says it was the live view",
+          wait_until(
+              [&server]
+              {
+                  const std::vector<steammock::CallRecord> records = server.records();
+                  return !records.empty() && records.back().via == "live";
+              },
+              5.0));
+
+    // The same entry written for every game answers both, which is what an override was before a
+    // scope existed - and a game's own entry still beats it.
+    server.clear_override("second_player", "SteamAPI_Init");
+    check("cleared for that game, nothing is overridden", server.override_count() == 0u);
+    check("and the scenario answers it again",
+          exchange(failing, call_message("SteamAPI_Init", 2), reply) &&
+              steammock::json_member(reply, "ret") != nullptr &&
+              steammock::as_bool(*steammock::json_member(reply, "ret")));
+
+    server.set_override("SteamAPI_Init", failing_entry);
+    check("an unscoped override answers the game it was not for",
+          exchange(other, call_message("SteamAPI_Init", 2), reply) &&
+              !steammock::as_bool(*steammock::json_member(reply, "ret")));
+    server.set_override("default", "SteamAPI_Init", failing_entry);
+    server.set_override("SteamAPI_Init", Json::object());
+    check("and an entry that says nothing takes the unscoped one off", server.override_count() == 1u);
+    check("leaving the game's own entry in force",
+          std::get<1>(server.overrides()[0]) == "SteamAPI_Init" &&
+              std::get<0>(server.overrides()[0]) == "default");
 
     server.stop();
 }
@@ -1089,6 +1183,7 @@ int run()
     test_a_run_is_not_restartable();
     test_a_live_override_speaks_first();
     test_a_declared_override_sits_under_the_live_one();
+    test_an_override_answers_one_game();
     test_a_connect_is_bounded_by_its_timeout();
     test_a_stalled_backend_costs_each_queued_caller();
     test_a_megabyte_goes_either_way();

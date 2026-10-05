@@ -32,7 +32,9 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -478,7 +480,7 @@ class LiveView
             ImGui::SameLine();
             ImGui::Text("%zu call(s), %zu left to the stub's defaults, %zu overridden",
                         _server->call_count(), _server->unanswered_count(),
-                        _server->overrides().size());
+                        _server->override_count());
         }
         if (!_status.empty())
         {
@@ -852,7 +854,7 @@ class LiveView
             {
                 continue;
             }
-            if (_only_overridden && _in_force.count(calls[index].name) == 0)
+            if (_only_overridden && scoped_entry(calls[index].name) == nullptr)
             {
                 continue;
             }
@@ -901,15 +903,31 @@ class LiveView
         _known_filter.Draw("filter");
         ImGui::SameLine();
         ImGui::Checkbox("set only", &_only_overridden);
+        ImGui::SameLine();
+        // The scope: which identity the entries this tab sets answer for. "every game" is the empty
+        // name, so this is the tab as it was before a scope existed, with one more chooser on it.
+        ImGui::TextUnformatted("for");
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(160);
+        if (ImGui::BeginCombo("##scope", scope_name().c_str()))
+        {
+            if (ImGui::Selectable("every game", _scope.empty()))
+            {
+                _scope.clear();
+            }
+            for (const std::string& profile : scope_choices())
+            {
+                if (ImGui::Selectable(profile.c_str(), _scope == profile))
+                {
+                    _scope = profile;
+                }
+            }
+            ImGui::EndCombo();
+        }
 
         // Taken once a frame rather than once a row: the server hands the overrides back by
         // value, and asking 826 times a frame to look at two of them is not worth doing.
-        const std::vector<std::pair<std::string, Json>> in_force = overrides();
-        _in_force.clear();
-        for (const std::pair<std::string, Json>& entry : in_force)
-        {
-            _in_force.insert(entry);
-        }
+        _in_force = overrides();
 
         std::size_t exported = 0;
         const SurfaceCall* calls = steammock::api_surface_calls(exported);
@@ -924,8 +942,13 @@ class LiveView
             listed += row.call == nullptr ? 0u : 1u;
         }
 
-        ImGui::TextDisabled("%zu of %zu exported call(s), %zu overridden", listed, exported,
-                            _in_force.size());
+        ImGui::TextDisabled("%zu of %zu exported call(s), %zu overridden for %s", listed, exported,
+                            scoped_count(), scope_name().c_str());
+        if (elsewhere_count() != 0u)
+        {
+            ImGui::SameLine();
+            ImGui::TextDisabled("(%zu for another game)", elsewhere_count());
+        }
         if (!_override_note.empty())
         {
             ImGui::TextWrapped("%s", _override_note.c_str());
@@ -1004,7 +1027,96 @@ class LiveView
             ImGui::EndTable();
         }
         ImGui::TextDisabled(
-            "click an override to edit it: Enter sets it, and an empty box takes it off");
+            "click an override to edit it: Enter sets it, and an empty box takes it off. `for` "
+            "above is which game the entries written here answer for");
+    }
+
+    // What the call gives for the identity this tab is set to, or nullptr when nothing here is
+    // set for it. Answered by walking the few entries in force rather than by rebuilding a map
+    // every frame to look two rows up in.
+    const Json* scoped_entry(const std::string& call) const
+    {
+        for (const auto& entry : _in_force)
+        {
+            if (std::get<0>(entry) == _scope && std::get<1>(entry) == call)
+            {
+                return &std::get<2>(entry);
+            }
+        }
+        return nullptr;
+    }
+
+    // The entry some *other* identity holds for this call, and which identity that is, so a row
+    // can say so rather than claiming nothing is set. The empty name is the every-game entry,
+    // which is in force for this identity too whenever it has no entry of its own.
+    std::pair<std::string, const Json*> entry_elsewhere(const std::string& call) const
+    {
+        for (const auto& entry : _in_force)
+        {
+            const std::string& profile = std::get<0>(entry);
+            if (profile != _scope && std::get<1>(entry) == call)
+            {
+                return {profile, &std::get<2>(entry)};
+            }
+        }
+        return {std::string(), nullptr};
+    }
+
+    std::size_t scoped_count() const
+    {
+        std::size_t count = 0;
+        for (const auto& entry : _in_force)
+        {
+            count += std::get<0>(entry) == _scope ? 1u : 0u;
+        }
+        return count;
+    }
+
+    std::size_t elsewhere_count() const { return _in_force.size() - scoped_count(); }
+
+    // What the chooser calls the identity being set: a profile's name, or the words for the scope
+    // that answers every game in the run.
+    std::string scope_name() const
+    {
+        return _scope.empty() ? std::string("every game") : _scope;
+    }
+
+    // The identities the chooser offers: what the scenario declares, what is connected now, and
+    // what an entry already names - so a scope does not vanish from the list when the game it was
+    // set for leaves the run.
+    std::vector<std::string> scope_choices() const
+    {
+        std::set<std::string> names;
+        if (_server)
+        {
+            for (const std::string& profile : _server->profile_names())
+            {
+                names.insert(profile);
+            }
+        }
+        for (const SessionSnapshot& game : _games)
+        {
+            names.insert(game.profile);
+        }
+        for (const auto& entry : _in_force)
+        {
+            names.insert(std::get<0>(entry));
+        }
+        names.erase(std::string());
+        return {names.begin(), names.end()};
+    }
+
+    // What the row shows when this identity has no entry of its own: the entry another one holds,
+    // with the identity it was written for, or the plain "not set".
+    std::string hint_for(const std::string& call) const
+    {
+        const auto elsewhere = entry_elsewhere(call);
+        if (elsewhere.second == nullptr)
+        {
+            return "not set";
+        }
+        return (elsewhere.first.empty() ? std::string("every game") : elsewhere.first) + ": " +
+               elsewhere.second->dump();
     }
 
     // What the call gave this run, beside the cell a person edits, so the decision is made
@@ -1029,8 +1141,8 @@ class LiveView
     // the usual edit is one field changed rather than an entry written from nothing.
     void draw_inline_entry(const SurfaceCall& call)
     {
-        const auto in_force = _in_force.find(call.name);
-        const bool set = in_force != _in_force.end();
+        const Json* in_force = scoped_entry(call.name);
+        const bool set = in_force != nullptr;
 
         if (_editing != call.name)
         {
@@ -1039,14 +1151,17 @@ class LiveView
                 ImGui::PushStyleColor(ImGuiCol_Text,
                                       ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
             }
-            const bool clicked = ImGui::Selectable(set ? in_force->second.dump().c_str() : "not set");
+            // Caught before the pointer is handed to the selectable: `shown` has to outlive the
+            // call that draws it.
+            const std::string shown = set ? in_force->dump() : hint_for(call.name);
+            const bool clicked = ImGui::Selectable(shown.c_str());
             if (!set)
             {
                 ImGui::PopStyleColor();
             }
             if (clicked)
             {
-                begin_inline(call, set ? in_force->second.dump() : std::string());
+                begin_inline(call, set ? in_force->dump() : std::string());
             }
             return;
         }
@@ -1099,8 +1214,9 @@ class LiveView
         const std::string text(_edit_text);
         if (text.find_first_not_of(" \t") == std::string::npos)
         {
-            _server->clear_override(call.name);
-            _override_note = std::string("no override on ") + call.name + " any more";
+            _server->clear_override(_scope, call.name);
+            _override_note =
+                std::string("no override on ") + call.name + " for " + scope_name() + " any more";
             return;
         }
         // Parsed without exceptions, because this is somebody's typing and a half-finished
@@ -1111,8 +1227,8 @@ class LiveView
             _override_note = std::string(call.name) + ": that is not an entry, so nothing changed";
             return;
         }
-        _server->set_override(call.name, entry);
-        _override_note = std::string("overriding ") + call.name;
+        _server->set_override(_scope, call.name, entry);
+        _override_note = std::string("overriding ") + call.name + " for " + scope_name();
     }
 
     // What the box starts from when nothing is set: what this run saw the call give, or the
@@ -1129,9 +1245,10 @@ class LiveView
 
     // What the server is holding. Asked for rather than kept here: the server owns the
     // overrides, and a copy in the window would be a second answer to what is in force.
-    std::vector<std::pair<std::string, Json>> overrides() const
+    std::vector<std::tuple<std::string, std::string, Json>> overrides() const
     {
-        return _server ? _server->overrides() : std::vector<std::pair<std::string, Json>>();
+        return _server ? _server->overrides()
+                       : std::vector<std::tuple<std::string, std::string, Json>>();
     }
 
     char _host[64] = {};
@@ -1173,11 +1290,16 @@ class LiveView
     bool _start_on_launch = false;
 
     // The config tab: the filter over the exported calls, the overrides taken once a frame so
-    // that a row can look itself up, and one row at a time open for editing - which is why
-    // one buffer is enough for the entry being typed. `_only_overridden` is how what is in
-    // force is read in one place rather than hunted for among 826 rows.
+    // that a row can look itself up, the identity those overrides are being set for, and one row
+    // at a time open for editing - which is why one buffer is enough for the entry being typed.
+    // `_only_overridden` is how what is in force is read in one place rather than hunted for
+    // among 826 rows.
     ImGuiTextFilter _known_filter;
-    std::map<std::string, Json> _in_force;
+    // Every override the server holds, as (profile, call, entry), taken once a frame. A copy:
+    // the server owns them, and a window that kept its own copy would be a second answer to what
+    // is in force. The scope is empty for the overrides that apply to every game in the run.
+    std::vector<std::tuple<std::string, std::string, Json>> _in_force;
+    std::string _scope;
     std::string _editing;
     char _edit_text[512] = {};
     bool _focus_edit = false;

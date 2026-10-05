@@ -782,13 +782,46 @@ void test_scenarios()
                            with_overrides));
     const Dispatcher overriding(with_overrides);
     check("it loads", overriding.load_error().empty());
-    const Json* entry = overriding.override_for("SteamAPI_Init");
+    const Json* entry = overriding.override_for(std::string(), "SteamAPI_Init");
     check("the block is read by call name", entry != nullptr);
     check("and carries what the file wrote",
           entry != nullptr && steammock::json_member(*entry, "ret") != nullptr &&
               !steammock::as_bool(*steammock::json_member(*entry, "ret")));
     check("a call the file passes over has no override",
-          overriding.override_for("SteamAPI_Shutdown") == nullptr);
+          overriding.override_for(std::string(), "SteamAPI_Shutdown") == nullptr);
+
+    // `for` is whose call it is, and it is the one field of an entry that is not the answer: it is
+    // read into the scope the entry is held under, so a scenario can say that one game alone fails
+    // a call while the rest of the run carries on.
+    Json scoped;
+    check("a scenario with a scoped override parses",
+          steammock::parse(
+              "{\"profiles\":{\"default\":{\"app_id\":1},\"second_player\":{\"app_id\":1}},"
+              "\"overrides\":{\"SteamAPI_Init\":{\"ret\":false,\"for\":\"second_player\"}}}",
+              scoped));
+    const Dispatcher scoping(scoped);
+    check("it loads", scoping.load_error().empty());
+    check("the entry answers for the game it names",
+          scoping.override_for("second_player", "SteamAPI_Init") != nullptr);
+    check("and not for another one", scoping.override_for("default", "SteamAPI_Init") == nullptr);
+    check("and it carries the answer without the name of the game",
+          steammock::json_member(*scoping.override_for("second_player", "SteamAPI_Init"), "for") ==
+              nullptr);
+
+    Json bad_scope;
+    check("an override scoped to something that is not a name parses",
+          steammock::parse("{\"overrides\":{\"SteamAPI_Init\":{\"ret\":false,\"for\":7}}}",
+                           bad_scope));
+    const Dispatcher refused_scope(bad_scope);
+    check("and is refused", refused_scope.load_error().find("for") != std::string::npos);
+
+    Json only_a_scope;
+    check("an override that says nothing but whose call it is parses",
+          steammock::parse("{\"overrides\":{\"SteamAPI_Init\":{\"for\":\"default\"}}}",
+                           only_a_scope));
+    const Dispatcher refused_scope_only(only_a_scope);
+    check("and is refused rather than kept as an entry that answers nothing",
+          refused_scope_only.load_error().find("says nothing") != std::string::npos);
 
     // Neither half of a block that cannot be answered is skipped: an `overrides` that is not
     // an object, and an entry inside it that says nothing. Both are files that cannot mean

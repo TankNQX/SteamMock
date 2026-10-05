@@ -169,9 +169,25 @@ class Server
     // An override applies to every game in the run, since the call is what is being
     // tested rather than the game; and it is what the transcript reports as `via: live`,
     // so a reader can always tell an override from the scenario.
+    // An override answers for every game in the run when `profile` is empty, which is the call
+    // being tested rather than the game; naming a profile is how one game alone is made to fail,
+    // which a run of several clients otherwise cannot be told apart by. A game's own entry beats
+    // the run-wide one. Either way it is what the transcript reports as `via: live`, so a reader
+    // can always tell an override from the scenario.
+    void set_override(const std::string& profile, const std::string& call, Json entry);
+    void clear_override(const std::string& profile, const std::string& call);
+    // The same two without a scope: the entry that answers every game in the run, which is what
+    // an override was before one could name a game.
     void set_override(const std::string& call, Json entry);
     void clear_override(const std::string& call);
-    std::vector<std::pair<std::string, Json>> overrides() const;
+    // Every override in force, as (profile, call, entry): what a window draws, and what a person
+    // copies into a scenario's `overrides` block when an override turns out to be worth keeping.
+    std::vector<std::tuple<std::string, std::string, Json>> overrides() const;
+    std::size_t override_count() const;
+    // The identities the scenario declares, which is what the live view's scope chooser offers
+    // beside the games currently connected: an override for a game that has not joined yet is
+    // worth being able to set while the run is going.
+    std::vector<std::string> profile_names() const;
 
   private:
     void log(LogLevel level, const std::string& message) const;
@@ -237,11 +253,11 @@ class Server
     // Recursive: a call resolves under it, and resolving one runs the world's own
     // answers, which may ask this server about itself (see the header's comment).
     mutable std::recursive_mutex _mutex;
-    // The live view's overrides, by call name: what that call answers from now on.
-    // Guarded by `_mutex` rather than by a lock of its own, because every call already
-    // resolves under that one, and a second lock on the path every call in the run takes
-    // would be paid for by the calls no override touches.
-    std::map<std::string, Json> _overrides;
+    // The live view's overrides, by the identity each entry answers for. Guarded by `_mutex` rather
+    // than by a lock of its own, because every call already resolves under that one, and a second
+    // lock on the path every call in the run takes would be paid for by the calls no override
+    // touches.
+    Overrides _overrides;
     // stop() is the one entry point a second thread may arrive at while the first is
     // still inside it - the workers it joins need `_mutex`, so the "already stopped"
     // test cannot live there. This is what makes it happen once.

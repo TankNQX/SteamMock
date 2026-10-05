@@ -564,31 +564,49 @@ std::size_t Server::unanswered_count() const
     return _unanswered_calls;
 }
 
-void Server::set_override(const std::string& call, Json entry)
+void Server::set_override(const std::string& profile, const std::string& call, Json entry)
 {
     std::scoped_lock lock(_mutex);
     // An entry answered by nobody and saying nothing is the same as no override, and keeping
     // it would leave a call reading `via: live` while the scenario answered it. `{}` is the
     // one spelling of that here: an entry with no `ret` and no `out` is one nothing can be
-    // read out of, and typing it in the live view means the same as blanking the box.
-    if (entry.is_object() && entry.empty())
-    {
-        _overrides.erase(call);
-        return;
-    }
-    _overrides[call] = std::move(entry);
+    // read out of, and typing it in the live view means the same as blanking the box. That rule
+    // lives in the container, so a scenario's block and the keyboard's set forget a call the
+    // same way.
+    _overrides.set(profile, call, std::move(entry));
+}
+
+void Server::clear_override(const std::string& profile, const std::string& call)
+{
+    std::scoped_lock lock(_mutex);
+    _overrides.clear(profile, call);
+}
+
+void Server::set_override(const std::string& call, Json entry)
+{
+    set_override(std::string(), call, std::move(entry));
 }
 
 void Server::clear_override(const std::string& call)
 {
-    std::scoped_lock lock(_mutex);
-    _overrides.erase(call);
+    clear_override(std::string(), call);
 }
 
-std::vector<std::pair<std::string, Json>> Server::overrides() const
+std::vector<std::tuple<std::string, std::string, Json>> Server::overrides() const
 {
     std::scoped_lock lock(_mutex);
-    return {_overrides.begin(), _overrides.end()};
+    return _overrides.entries();
+}
+
+std::size_t Server::override_count() const
+{
+    std::scoped_lock lock(_mutex);
+    return _overrides.size();
+}
+
+std::vector<std::string> Server::profile_names() const
+{
+    return _dispatcher.profile_names();
 }
 
 void Server::accept_loop(std::uintptr_t listener)
@@ -890,14 +908,17 @@ std::string Server::handle_call(Session& session, const Json& message)
         // An override, when there is one, is the whole answer: it is the one thing here set on
         // purpose, so it speaks before the worlds and before the scenario. Nothing else runs for
         // that call, which is what makes it an override rather than one more voice - and it is
-        // how a call that has to fail is reached. The live view's set is asked first, so what was
-        // typed at the keyboard beats what a file declared.
-        const auto overridden = _overrides.find(name);
-        if (overridden != _overrides.end())
+        // how a call that has to fail is reached. Both rungs are asked for this game's own
+        // identity first and for the entry written for every game second, and the live view's set
+        // is asked before the file's, so what was typed at the keyboard beats what a file declared.
+        const std::string& profile = session.profile().name;
+        const Json* live = _overrides.find(profile, name);
+        const Json* declared = live != nullptr ? nullptr : _dispatcher.override_for(profile, name);
+        if (live != nullptr)
         {
-            answer = _dispatcher.answer_from_entry(overridden->second, "live");
+            answer = _dispatcher.answer_from_entry(*live, "live");
         }
-        else if (const Json* declared = _dispatcher.override_for(name); declared != nullptr)
+        else if (declared != nullptr)
         {
             answer = _dispatcher.answer_from_entry(*declared, "override");
         }

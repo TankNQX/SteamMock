@@ -108,7 +108,7 @@ void Dispatcher::configure(const Json& scenario, std::string* error)
 {
     _profiles.clear();
     _match.clear();
-    _overrides.clear();
+    _overrides.clear_all();
     _default_profile = "default";
     _error.clear();
 
@@ -211,9 +211,10 @@ void Dispatcher::configure(const Json& scenario, std::string* error)
     }
 
     // The `overrides` block: what a call answers from now on, whatever the profile and the
-    // session would have said. Refused rather than skipped when it is not an object, and each
-    // entry with it, because a scenario that cannot mean what it says is the mistake this
-    // whole file exists to report at startup.
+    // session would have said. Each entry may name the identity it answers for, so a scenario can
+    // describe one game's failure as well as the run's. Refused rather than skipped when the
+    // block is not an object, and each entry with it, because a scenario that cannot mean what it
+    // says is the mistake this whole file exists to report at startup.
     if (const Json* overrides = json_member(scenario, "overrides"); overrides != nullptr)
     {
         if (!overrides->is_object())
@@ -226,7 +227,7 @@ void Dispatcher::configure(const Json& scenario, std::string* error)
             }
             _profiles.clear();
             _match.clear();
-            _overrides.clear();
+            _overrides.clear_all();
             return;
         }
         for (const auto& [call, entry] : overrides->items())
@@ -243,18 +244,53 @@ void Dispatcher::configure(const Json& scenario, std::string* error)
                 }
                 _profiles.clear();
                 _match.clear();
-                _overrides.clear();
+                _overrides.clear_all();
                 return;
             }
-            _overrides[call] = entry;
+            // `for` is the one field that is not part of the answer: it names whose call this is,
+            // and it is read here rather than by the answer so that an entry in force carries
+            // `ret`, `out` and `then` however it was written.
+            std::string scope;
+            if (const Json* target = json_member(entry, "for"); target != nullptr)
+            {
+                if (!target->is_string())
+                {
+                    _error = "overrides." + call + ".for is not a profile name: it is a string, "
+                                                   "such as \"second_player\"";
+                    if (error != nullptr)
+                    {
+                        *error = _error;
+                    }
+                    _profiles.clear();
+                    _match.clear();
+                    _overrides.clear_all();
+                    return;
+                }
+                scope = as_string(*target);
+            }
+            Json answer = entry;
+            answer.erase("for");
+            if (answer.empty())
+            {
+                _error = "overrides." + call + " says nothing but which game it is for";
+                if (error != nullptr)
+                {
+                    *error = _error;
+                }
+                _profiles.clear();
+                _match.clear();
+                _overrides.clear_all();
+                return;
+            }
+            _overrides.set(scope, call, std::move(answer));
         }
     }
 }
 
-const Json* Dispatcher::override_for(const std::string& call) const noexcept
+const Json* Dispatcher::override_for(const std::string& profile,
+                                     const std::string& call) const noexcept
 {
-    const auto found = _overrides.find(call);
-    return found == _overrides.end() ? nullptr : &found->second;
+    return _overrides.find(profile, call);
 }
 
 std::vector<std::string> Dispatcher::profile_names() const

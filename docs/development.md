@@ -73,19 +73,26 @@ A scenario can also state what it is testing, with a top-level `overrides` block
 name, written in a `scripted` entry's own words.
 
 ```json
-"overrides": { "SteamAPI_ISteamMatchmaking_CreateLobby": { "ret": 0 } }
+"overrides": {
+  "SteamAPI_ISteamMatchmaking_CreateLobby": { "ret": 0 },
+  "SteamAPI_ISteamUser_BeginAuthSession": { "ret": false, "for": "second_player" }
+}
 ```
 
 That is what makes it different from a profile's `scripted`, which a lobby, a board or an inventory can
 answer over. An override is answered before the profile and before those, because pretending a call
-failed is what it is for. It applies to every game in the run, since the call is what is being tested
-rather than the game. The live view's `config` tab edits the same thing at the keyboard, and its set
+failed is what it is for.
+
+`for` is which game the entry answers for, and leaving it out means every game in the run, since the
+call is what is being tested rather than the game. Naming an identity is how one client is made to
+fail while the others carry on, which is a run of several clients' whole subject. The live view's
+`config` tab edits the same thing at the keyboard, with the same choice in its `for` list, and its set
 wins over the file's, so an override that works there can be written down into the file afterwards.
 The transcript says which it was: `via: override` for the file and `via: live` for the keyboard.
 
 The block is read at startup like everything else in the file. An `overrides` that is not an object,
-and an entry inside it that says nothing, are both refused, so a scenario that cannot mean what it says
-stops the run rather than being half-served.
+an entry inside it that says nothing, and a `for` that is not a profile name, are all refused, so a
+scenario that cannot mean what it says stops the run rather than being half-served.
 
 ## The state file
 

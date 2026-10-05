@@ -4,6 +4,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -39,6 +40,18 @@ namespace steammock
 //  thing typed while the run is going. The live one wins, so an override that works
 //  at the keyboard can be written down afterwards.
 //
+//  Every override also says which games it answers *for*, because a run has several
+//  and one of them failing is usually the point. A scenario's entry carries
+//  `"for": "second_player"` and the live view names the same thing in its scope
+//  chooser; an entry with no scope answers every game. Rungs 0 and 1 therefore hold
+//  four entries between them, and the order they are asked in is:
+//
+//    this game's live entry, the live entry for every game, this game's file entry,
+//    the file's entry for every game
+//
+//  A scope does not move an entry between the rungs: what the keyboard wrote still
+//  speaks before the file, which is the rule above and not a second one.
+//
 //  There is deliberately no "arbitrary code as a hook" rung any more. The Python
 //  backend had one; it is the only thing that could not survive the move to C++,
 //  and a scenario that says what it means is easier to hand to someone else than
@@ -47,6 +60,100 @@ namespace steammock
 //  carry. Rung 0 is the *backend's* rather than this class's, because it is the
 //  live view that holds the running process; the backend asks for rung 1 through
 //  `override_for`.
+
+// ---------------------------------------------------------------------------
+//  The overrides in force, and which game each of them answers for.
+// ---------------------------------------------------------------------------
+//  Both rungs above are this container - the file's block and the live view's own set - so the two
+//  cannot come to disagree about what a scoped entry means.
+//
+//  A scope is a profile name: what a run names its players by, what the live view's Games table
+//  shows, and what a scenario already spells elsewhere in the file. The empty name is the scope
+//  that answers every game in the run.
+class Overrides
+{
+  public:
+    // The entry `call` answers with for a game on `profile`: that identity's own if it has one,
+    // then the entry written for every game, then nullptr - which is "nothing here says anything
+    // about this call" rather than an answer.
+    const Json* find(const std::string& profile, const std::string& call) const noexcept
+    {
+        const Json* scoped = find_in(profile, call);
+        return scoped != nullptr ? scoped : find_in(std::string(), call);
+    }
+
+    // An entry that says nothing means the same as no entry: `{}` is a call nothing can be read
+    // out of, and typing it in the live view means the same as blanking the box.
+    void set(const std::string& profile, const std::string& call, Json entry)
+    {
+        if (entry.is_object() && entry.empty())
+        {
+            clear(profile, call);
+            return;
+        }
+        _by_profile[profile][call] = std::move(entry);
+    }
+
+    void clear(const std::string& profile, const std::string& call)
+    {
+        const auto scoped = _by_profile.find(profile);
+        if (scoped == _by_profile.end())
+        {
+            return;
+        }
+        scoped->second.erase(call);
+        if (scoped->second.empty())
+        {
+            // A scope left behind with nothing in it would put a profile in the live view's
+            // chooser that has nothing set for it.
+            _by_profile.erase(scoped);
+        }
+    }
+
+    void clear_all() { _by_profile.clear(); }
+
+    std::size_t size() const noexcept
+    {
+        std::size_t total = 0;
+        for (const auto& scope : _by_profile)
+        {
+            total += scope.second.size();
+        }
+        return total;
+    }
+
+    // Every entry in force, as (profile, call, entry), copied out: the caller is a window that
+    // draws what it is told while calls are still arriving, and handing it the container itself
+    // would be a copy of the map taken under a lock nobody took.
+    std::vector<std::tuple<std::string, std::string, Json>> entries() const
+    {
+        std::vector<std::tuple<std::string, std::string, Json>> all;
+        all.reserve(size());
+        for (const auto& [profile, by_call] : _by_profile)
+        {
+            for (const auto& [call, entry] : by_call)
+            {
+                all.emplace_back(profile, call, entry);
+            }
+        }
+        return all;
+    }
+
+  private:
+    const Json* find_in(const std::string& profile, const std::string& call) const noexcept
+    {
+        const auto scoped = _by_profile.find(profile);
+        if (scoped == _by_profile.end())
+        {
+            return nullptr;
+        }
+        const auto found = scoped->second.find(call);
+        return found == scoped->second.end() ? nullptr : &found->second;
+    }
+
+    // Profile first: the empty name is the scope that answers every game.
+    std::map<std::string, std::map<std::string, Json>> _by_profile;
+};
 
 // One rule that picks a profile for a connecting process. Rules are tried in
 // order and the first match wins; a rule can look at the executable name or the
@@ -111,9 +218,10 @@ class Dispatcher
     // asked rather than answered here because the rung has to sit above the worlds, and the
     // worlds are the backend's: `Server` asks for one before it asks any of them.
     //
-    // Null when the file says nothing about this call. There is no lock and no copy: the
-    // block is read once, in `configure`, and never written again.
-    const Json* override_for(const std::string& call) const noexcept;
+    // Null when the file says nothing about this call for a game on `profile`, which is the empty
+    // name for a game the scenario has no profile of its own for. There is no lock and no copy:
+    // the block is read once, in `configure`, and never written again.
+    const Json* override_for(const std::string& profile, const std::string& call) const noexcept;
 
     // How long a scripted entry says this call should take to answer; 0 for every call that
     // does not say, which is every call in every scenario written so far. It is asked
@@ -139,10 +247,11 @@ class Dispatcher
 
     std::vector<std::pair<std::string, Profile>> _profiles;
     std::vector<MatchRule> _match;
-    // The `overrides` block, by call name. Unlike a profile's `scripted` entries these are not
-    // per game: what is being tested is the call, and a scenario that says "this call fails"
-    // means it for every game in the run.
-    std::map<std::string, Json> _overrides;
+    // The `overrides` block, by the identity each entry answers for. Unlike a profile's `scripted`
+    // entries these are not read out of the profile the game was matched to: what is being tested
+    // is the call, so an entry with no `for` means it for every game in the run and
+    // `"for": "second_player"` means it for that identity alone.
+    Overrides _overrides;
     std::string _default_profile = "default";
     std::string _error;
 };
