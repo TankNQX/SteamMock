@@ -36,6 +36,12 @@ struct Achievement
 {
     std::string name;
     bool achieved = false;
+    // What a game draws the achievement with. Steam hands this text out per key through
+    // `GetAchievementDisplayAttribute`, and the two keys every game asks for are "name" and
+    // "desc". A scenario is where it comes from, because no call writes it. Empty by default,
+    // which is what a scenario that describes an achievement by id alone gets.
+    std::string display_name{};
+    std::string display_description{};
 };
 
 // One person a profile is friends with: the id an invite is addressed to, and the name a

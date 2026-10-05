@@ -23,8 +23,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
@@ -65,8 +71,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
@@ -100,8 +112,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
@@ -135,8 +153,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
@@ -170,8 +194,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
@@ -205,8 +235,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
@@ -240,8 +276,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
@@ -275,8 +317,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
@@ -310,8 +358,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
@@ -345,8 +399,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },
@@ -380,8 +440,14 @@
         "AverageSpeed": 8
       },
       "achievements": [
-        { "name": "ACH_BOOTED", "achieved": true },
-        { "name": "ACH_FINISHED", "achieved": false }
+        { "name": "ACH_WIN_ONE_GAME", "achieved": true, "display_name": "Winner",
+          "display_description": "Win one game" },
+        { "name": "ACH_WIN_100_GAMES", "achieved": false, "display_name": "Champion",
+          "display_description": "Win 100 games" },
+        { "name": "ACH_TRAVEL_FAR_ACCUM", "achieved": false, "display_name": "Interstellar",
+          "display_description": "Travel 100,000 feet in total" },
+        { "name": "ACH_TRAVEL_FAR_SINGLE", "achieved": false, "display_name": "Orbiter",
+          "display_description": "Travel 10,000 feet in one round" }
       ],
       "scripted": {
         "SteamAPI_Init": { "ret": true },

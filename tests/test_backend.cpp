@@ -110,8 +110,10 @@ Profile make_profile(const char* scripted = "{}")
     const std::string text =
         std::string("{\"app_id\":480,\"steam_id\":76561198000000001,\"persona_name\":\"Tester\",") +
         "\"language\":\"english\",\"stats\":{\"Deaths\":3}," +
-        "\"achievements\":[{\"name\":\"ACH_BOOTED\",\"achieved\":false}],\"scripted\":" + scripted +
-        "}";
+        "\"achievements\":[{\"name\":\"ACH_BOOTED\",\"achieved\":false,"
+        "\"display_name\":\"Booted\",\"display_description\":\"Start the game\"}],"
+        "\"scripted\":" +
+        scripted + "}";
     Json data;
     if (!steammock::parse(text, data))
     {
@@ -606,6 +608,35 @@ void test_achievements()
     check("an index past the end is empty text",
           steammock::as_string(
               session.handle("SteamAPI_ISteamUserStats_GetAchievementName", past_the_end).ret)
+              .empty());
+
+    // The text a game draws the achievement with: Steam hands it out per key, and the two keys
+    // every game asks for are the pair the scenario writes.
+    Json attribute = name_argument("ACH_BOOTED");
+    attribute["pchKey"] = Json("name");
+    check("an achievement draws the name the scenario gave it",
+          steammock::as_string(
+              session.handle("SteamAPI_ISteamUserStats_GetAchievementDisplayAttribute", attribute)
+                  .ret) == "Booted");
+    attribute["pchKey"] = Json("desc");
+    check("and its description",
+          steammock::as_string(
+              session.handle("SteamAPI_ISteamUserStats_GetAchievementDisplayAttribute", attribute)
+                  .ret) == "Start the game");
+
+    attribute["pchKey"] = Json("hidden");
+    check("a key no scenario describes is empty text",
+          steammock::as_string(
+              session.handle("SteamAPI_ISteamUserStats_GetAchievementDisplayAttribute", attribute)
+                  .ret)
+              .empty());
+    Json unknown_attribute = name_argument("ACH_MISSING");
+    unknown_attribute["pchKey"] = Json("name");
+    check("and so is an achievement the profile does not have",
+          steammock::as_string(session.handle(
+                                          "SteamAPI_ISteamUserStats_GetAchievementDisplayAttribute",
+                                          unknown_attribute)
+                                   .ret)
               .empty());
 }
 

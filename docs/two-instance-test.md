@@ -169,7 +169,10 @@ the async call results and the persona roster all visible in one screen.
 The feet those scores are measured in start from the profile, not from zero: the scenario seeds
 each profile with the six stats Spacewar reads (`NumGames`, `NumWins`, `NumLosses`, `FeetTraveled`,
 `MaxFeetTraveled` and `AverageSpeed`), so a client begins a match with the history a Steam account
-would have and the round adds to it. The scenario used to script `SteamAPI_ISteamUserStats_GetStat`
+would have and the round adds to it. Its four achievements are seeded under the ids the game asks
+about (`ACH_WIN_ONE_GAME`, `ACH_WIN_100_GAMES`, `ACH_TRAVEL_FAR_ACCUM` and `ACH_TRAVEL_FAR_SINGLE`),
+each with the text the screen prints beside it, which a game reads through
+`GetAchievementDisplayAttribute`. The scenario used to script `SteamAPI_ISteamUserStats_GetStat`
 beside those seeds, and a scripted answer is keyed by call name rather than by stat: it gave every
 stat the same number. The session answers the call by name now, so that entry is gone, and the
 stats screen draws what the profile holds.

@@ -440,6 +440,23 @@ Answer h_achievement_name(Session& session, const Json& args)
     return from_state(Json(session.profile().achievements[static_cast<std::size_t>(index)].name));
 }
 
+// The text a game draws an achievement with. Steam keys it by a short word, and the two keys
+// every game asks for are "name" and "desc": a game that reads them is showing one of its own
+// achievements, and one that reads a key nobody describes gets empty text, which is what Steam
+// gives for a key it does not know.
+Answer h_achievement_display_attribute(Session& session, const Json& args)
+{
+    const std::string key = string_member(args, "pchKey");
+    const int index = session.profile().achievement_index(string_member(args, "pchName"));
+    if (index < 0 || (key != "name" && key != "desc"))
+    {
+        return from_state(Json(""));
+    }
+    const Achievement& achievement = session.profile().achievements[static_cast<std::size_t>(index)];
+    return from_state(
+        Json(key == "name" ? achievement.display_name : achievement.display_description));
+}
+
 // Calls answered from session state. Everything absent here is either scripted
 // by the scenario or reported as "no opinion", which makes the stub fall back to
 // the value it would use with Steam not running.
@@ -486,6 +503,7 @@ constexpr HandlerEntry kHandlers[] = {
     {"SteamAPI_ISteamUserStats_SetAchievement", &h_set_achievement},
     {"SteamAPI_ISteamUserStats_GetNumAchievements", &h_num_achievements},
     {"SteamAPI_ISteamUserStats_GetAchievementName", &h_achievement_name},
+    {"SteamAPI_ISteamUserStats_GetAchievementDisplayAttribute", &h_achievement_display_attribute},
 };
 
 } // namespace
@@ -558,6 +576,14 @@ Profile Profile::from_json(const std::string& profile_name, const Json& data)
             if (const Json* achieved = json_member(entry, "achieved"))
             {
                 achievement.achieved = to_bool(*achieved, false);
+            }
+            if (const Json* display = json_member(entry, "display_name"))
+            {
+                achievement.display_name = to_text(*display, std::string());
+            }
+            if (const Json* description = json_member(entry, "display_description"))
+            {
+                achievement.display_description = to_text(*description, std::string());
             }
             profile.achievements.push_back(std::move(achievement));
         }
