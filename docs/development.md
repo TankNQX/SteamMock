@@ -88,6 +88,8 @@ call is what is being tested rather than the game. Naming an identity is how one
 fail while the others carry on, which is a run of several clients' whole subject. The live view's
 `config` tab edits the same thing at the keyboard, with the same choice in its `for` list, and its set
 wins over the file's, so an override that works there can be written down into the file afterwards.
+The tab draws the file's own entries as well, marked `the file: ...`, so a call this file already
+answers is not a row that reads "not set" - clicking one opens it as a live entry beside it.
 The transcript says which it was: `via: override` for the file and `via: live` for the keyboard.
 
 The block is read at startup like everything else in the file. An `overrides` that is not an object,

@@ -182,7 +182,11 @@ class Server
     void clear_override(const std::string& call);
     // Every override in force, as (profile, call, entry): what a window draws, and what a person
     // copies into a scenario's `overrides` block when an override turns out to be worth keeping.
-    std::vector<std::tuple<std::string, std::string, Json>> overrides() const;
+    Overrides::List overrides() const;
+    // And every entry the scenario *declares*, in the same shape, which is the rung underneath:
+    // a window draws both so a person can see what the file is already answering, and for whom,
+    // without reading the file.
+    Overrides::List scenario_overrides() const;
     std::size_t override_count() const;
     // The identities the scenario declares, which is what the live view's scope chooser offers
     // beside the games currently connected: an override for a game that has not joined yet is

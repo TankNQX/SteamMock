@@ -73,6 +73,10 @@ namespace steammock
 class Overrides
 {
   public:
+    // One entry as a person reads it: the identity it answers for - empty for every game in the
+    // run - the call it answers, and the entry itself.
+    using Entry = std::tuple<std::string, std::string, Json>;
+    using List = std::vector<Entry>;
     // The entry `call` answers with for a game on `profile`: that identity's own if it has one,
     // then the entry written for every game, then nullptr - which is "nothing here says anything
     // about this call" rather than an answer.
@@ -125,9 +129,9 @@ class Overrides
     // Every entry in force, as (profile, call, entry), copied out: the caller is a window that
     // draws what it is told while calls are still arriving, and handing it the container itself
     // would be a copy of the map taken under a lock nobody took.
-    std::vector<std::tuple<std::string, std::string, Json>> entries() const
+    List entries() const
     {
-        std::vector<std::tuple<std::string, std::string, Json>> all;
+        List all;
         all.reserve(size());
         for (const auto& [profile, by_call] : _by_profile)
         {
@@ -232,6 +236,10 @@ class Dispatcher
 
     const std::vector<MatchRule>& match_rules() const noexcept { return _match; }
     const std::string& default_profile() const noexcept { return _default_profile; }
+
+    // Every entry the `overrides` block declares, as (profile, call, entry): what a window draws
+    // beside the overrides set at the keyboard, so both are visible without reading the file.
+    Overrides::List overrides() const;
 
     // What a scenario got wrong, empty when it loaded. It is reported by `load_file` as well,
     // so a file that cannot be served says why at startup rather than only refusing games.

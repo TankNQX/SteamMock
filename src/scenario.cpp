@@ -293,6 +293,11 @@ const Json* Dispatcher::override_for(const std::string& profile,
     return _overrides.find(profile, call);
 }
 
+Overrides::List Dispatcher::overrides() const
+{
+    return _overrides.entries();
+}
+
 std::vector<std::string> Dispatcher::profile_names() const
 {
     std::vector<std::string> names;

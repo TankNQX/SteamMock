@@ -82,6 +82,7 @@ the tests, and what to check [when nothing appears](docs/development.md#when-not
   which is what tells two overloads of one method apart, and the filter searches that as well as the
   name. The `for` list beside it is which game the entries you set answer for: `every game`, or one of
   the run's identities, which is how a single client is made to fail a call while the rest carry on.
+  The entries a scenario's own `overrides` block declares are drawn here too, marked as the file's.
   A name several slots share would carry the number of them,
   because a C function cannot be overloaded and an override on it covers all of them; with the imports
   this tree carries, no name is shared. `answers now` is what this run saw the call give, the filter

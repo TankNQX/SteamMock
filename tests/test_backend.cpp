@@ -807,6 +807,10 @@ void test_scenarios()
     check("and it carries the answer without the name of the game",
           steammock::json_member(*scoping.override_for("second_player", "SteamAPI_Init"), "for") ==
               nullptr);
+    check("and the file's own entries can be listed, for a window to draw",
+          scoping.overrides().size() == 1u &&
+              std::get<0>(scoping.overrides()[0]) == "second_player" &&
+              std::get<1>(scoping.overrides()[0]) == "SteamAPI_Init");
 
     Json bad_scope;
     check("an override scoped to something that is not a name parses",

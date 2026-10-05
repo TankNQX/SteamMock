@@ -592,10 +592,16 @@ void Server::clear_override(const std::string& call)
     clear_override(std::string(), call);
 }
 
-std::vector<std::tuple<std::string, std::string, Json>> Server::overrides() const
+Overrides::List Server::overrides() const
 {
     std::scoped_lock lock(_mutex);
     return _overrides.entries();
+}
+
+Overrides::List Server::scenario_overrides() const
+{
+    // No lock: the block is read once, before any game is served, and never written again.
+    return _dispatcher.overrides();
 }
 
 std::size_t Server::override_count() const
