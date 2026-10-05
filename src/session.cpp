@@ -1,6 +1,7 @@
 #include "bridge/session.hpp"
 
 #include <chrono>
+#include <cmath>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -363,6 +364,30 @@ Answer h_set_stat_float(Session& session, const Json& args)
     return write_stat(session, args, "fData");
 }
 
+// The stat an average rate goes into. Steam keeps a running average of the rate a game reports
+// each session, and a profile here holds one number per stat with no history to average over, so
+// what lands is the rate for the session just reported. A rate needs a session to divide by, so a
+// length that is not a positive number is refused rather than guessed at.
+Answer h_update_avg_rate_stat(Session& session, const Json& args)
+{
+    const std::string key = string_member(args, "pchName");
+    const Json* count = json_member(args, "flCountThisSession");
+    const Json* length = json_member(args, "dSessionLength");
+    const double session_count = count != nullptr ? as_double(*count, 0.0) : 0.0;
+    const double session_length = length != nullptr ? as_double(*length, 0.0) : 0.0;
+    const double rate = session_count / session_length;
+    if (!(session_length > 0.0) || !std::isfinite(rate))
+    {
+        return from_state(Json(false));
+    }
+    // The whole part of it, like every other number this profile holds - and `to_int64` is what
+    // guards the cast, so a rate no int64 can hold is refused rather than wrapped.
+    const std::int64_t number = to_int64(Json(rate), 0);
+    session.profile().set_stat(key, number);
+    session.note_stat_written(key, number);
+    return from_state(Json(true));
+}
+
 Answer h_get_achievement(Session& session, const Json& args)
 {
     const int index = session.profile().achievement_index(string_member(args, "pchName"));
@@ -456,6 +481,7 @@ constexpr HandlerEntry kHandlers[] = {
     {"SteamAPI_ISteamUserStats_GetStat0", &h_get_stat},
     {"SteamAPI_ISteamUserStats_SetStat", &h_set_stat},
     {"SteamAPI_ISteamUserStats_SetStat0", &h_set_stat_float},
+    {"SteamAPI_ISteamUserStats_UpdateAvgRateStat", &h_update_avg_rate_stat},
     {"SteamAPI_ISteamUserStats_GetAchievement", &h_get_achievement},
     {"SteamAPI_ISteamUserStats_SetAchievement", &h_set_achievement},
     {"SteamAPI_ISteamUserStats_GetNumAchievements", &h_num_achievements},

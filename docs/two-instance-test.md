@@ -166,6 +166,14 @@ the name of the profile it was launched as. The names come from the run's roster
 than from a lobby, because neither player is in a room by then. That is the leaderboard,
 the async call results and the persona roster all visible in one screen.
 
+The feet those scores are measured in start from the profile, not from zero: the scenario seeds
+each profile with the six stats Spacewar reads (`NumGames`, `NumWins`, `NumLosses`, `FeetTraveled`,
+`MaxFeetTraveled` and `AverageSpeed`), so a client begins a match with the history a Steam account
+would have and the round adds to it. The scenario used to script `SteamAPI_ISteamUserStats_GetStat`
+beside those seeds, and a scripted answer is keyed by call name rather than by stat: it gave every
+stat the same number. The session answers the call by name now, so that entry is gone, and the
+stats screen draws what the profile holds.
+
 The report has a line per board call, which is what a reader checks a run by:
 
 ```

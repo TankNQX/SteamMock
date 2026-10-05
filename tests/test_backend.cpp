@@ -516,6 +516,30 @@ void test_stats()
           out_int(session.handle("SteamAPI_ISteamUserStats_GetStat", name_argument("Deaths")),
                   "pData") == 9);
 
+    // An average rate is a count the game reports with the session it took, and what it reads
+    // back afterwards is the rate for that session.
+    Json rate = name_argument("AverageSpeed");
+    rate["flCountThisSession"] = Json(30.0);
+    rate["dSessionLength"] = Json(10.0);
+    check("an average rate is accepted",
+          steammock::as_bool(
+              session.handle("SteamAPI_ISteamUserStats_UpdateAvgRateStat", rate).ret));
+    check("and the game reads back the rate it reported",
+          out_real(session.handle("SteamAPI_ISteamUserStats_GetStat0",
+                                  name_argument("AverageSpeed")),
+                   "pData") == 3.0);
+
+    Json no_session = name_argument("AverageSpeed");
+    no_session["flCountThisSession"] = Json(30.0);
+    no_session["dSessionLength"] = Json(0.0);
+    check("a rate with no session to divide by is refused",
+          !steammock::as_bool(
+              session.handle("SteamAPI_ISteamUserStats_UpdateAvgRateStat", no_session).ret));
+    check("and that leaves the stat where it was",
+          out_real(session.handle("SteamAPI_ISteamUserStats_GetStat0",
+                                  name_argument("AverageSpeed")),
+                   "pData") == 3.0);
+
     // And the one answer here that is a payload rather than a value: a game asks for its stats
     // and Steam tells it they have arrived. Spacewar's stats screen draws nothing at all -
     // including the inventory that is drawn on it - until one of these has been handed to it.

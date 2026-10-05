@@ -12,7 +12,16 @@
       "ui_language": "english",
       "install_path": "C:\\Program Files (x86)\\Steam",
       "build_id": 4242,
-      "stats": { "Deaths": 7, "PlaytimeMinutes": 42 },
+      "stats": {
+        "Deaths": 7,
+        "PlaytimeMinutes": 42,
+        "NumGames": 12,
+        "NumWins": 7,
+        "NumLosses": 5,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -22,7 +31,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 7 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
@@ -46,7 +54,16 @@
       "steam_id": 76561198000000002,
       "persona_name": "DebugPlayer2",
       "friends": ["default"],
-      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "stats": {
+        "Deaths": 3,
+        "PlaytimeMinutes": 7,
+        "NumGames": 3,
+        "NumWins": 2,
+        "NumLosses": 1,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -56,7 +73,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
@@ -73,7 +89,16 @@
   "third_player": {
       "steam_id": 76561198000000003,
       "persona_name": "DebugPlayer3",
-      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "stats": {
+        "Deaths": 3,
+        "PlaytimeMinutes": 7,
+        "NumGames": 3,
+        "NumWins": 2,
+        "NumLosses": 1,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -83,7 +108,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
@@ -100,7 +124,16 @@
     "fourth_player": {
       "steam_id": 76561198000000004,
       "persona_name": "DebugPlayer4",
-      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "stats": {
+        "Deaths": 3,
+        "PlaytimeMinutes": 7,
+        "NumGames": 3,
+        "NumWins": 2,
+        "NumLosses": 1,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -110,7 +143,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
@@ -127,7 +159,16 @@
     "fifth_player": {
       "steam_id": 76561198000000005,
       "persona_name": "DebugPlayer5",
-      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "stats": {
+        "Deaths": 3,
+        "PlaytimeMinutes": 7,
+        "NumGames": 3,
+        "NumWins": 2,
+        "NumLosses": 1,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -137,7 +178,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
@@ -154,7 +194,16 @@
     "sixth_player": {
       "steam_id": 76561198000000006,
       "persona_name": "DebugPlayer6",
-      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "stats": {
+        "Deaths": 3,
+        "PlaytimeMinutes": 7,
+        "NumGames": 3,
+        "NumWins": 2,
+        "NumLosses": 1,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -164,7 +213,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
@@ -181,7 +229,16 @@
     "seventh_player": {
       "steam_id": 76561198000000007,
       "persona_name": "DebugPlayer7",
-      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "stats": {
+        "Deaths": 3,
+        "PlaytimeMinutes": 7,
+        "NumGames": 3,
+        "NumWins": 2,
+        "NumLosses": 1,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -191,7 +248,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
@@ -208,7 +264,16 @@
     "eighth_player": {
       "steam_id": 76561198000000008,
       "persona_name": "DebugPlayer8",
-      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "stats": {
+        "Deaths": 3,
+        "PlaytimeMinutes": 7,
+        "NumGames": 3,
+        "NumWins": 2,
+        "NumLosses": 1,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -218,7 +283,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
@@ -235,7 +299,16 @@
     "ninth_player": {
       "steam_id": 76561198000000009,
       "persona_name": "DebugPlayer9",
-      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "stats": {
+        "Deaths": 3,
+        "PlaytimeMinutes": 7,
+        "NumGames": 3,
+        "NumWins": 2,
+        "NumLosses": 1,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -245,7 +318,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
@@ -262,7 +334,16 @@
     "tenth_player": {
       "steam_id": 76561198000000010,
       "persona_name": "DebugPlayer10",
-      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "stats": {
+        "Deaths": 3,
+        "PlaytimeMinutes": 7,
+        "NumGames": 3,
+        "NumWins": 2,
+        "NumLosses": 1,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -272,7 +353,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
@@ -289,7 +369,16 @@
     "eleventh_player": {
       "steam_id": 76561198000000011,
       "persona_name": "DebugPlayer11",
-      "stats": { "Deaths": 3, "PlaytimeMinutes": 7 },
+      "stats": {
+        "Deaths": 3,
+        "PlaytimeMinutes": 7,
+        "NumGames": 3,
+        "NumWins": 2,
+        "NumLosses": 1,
+        "FeetTraveled": 4321,
+        "MaxFeetTraveled": 456,
+        "AverageSpeed": 8
+      },
       "achievements": [
         { "name": "ACH_BOOTED", "achieved": true },
         { "name": "ACH_FINISHED", "achieved": false }
@@ -299,7 +388,6 @@
         "SteamAPI_IsSteamRunning": { "ret": true },
         "SteamAPI_RestartAppIfNecessary": { "ret": false },
         "SteamAPI_ISteamUser_BLoggedOn": { "ret": true },
-        "SteamAPI_ISteamUserStats_GetStat": { "ret": true, "out": { "pData": 3 } },
         "SteamAPI_ISteamUtils_IsOverlayEnabled": { "ret": true },
         "SteamAPI_ISteamController_Init": { "ret": true },
         "SteamAPI_ISteamController_Shutdown": { "ret": true },
