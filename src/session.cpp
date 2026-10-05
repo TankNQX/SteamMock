@@ -338,16 +338,29 @@ Answer h_get_stat(Session& session, const Json& args)
     return from_state_out(Json(true), std::move(out));
 }
 
-Answer h_set_stat(Session& session, const Json& args)
+// Both SetStat slots write here: the integer one sends `nData` and the float one `fData`.
+// A stat this harness holds is an integer, so a float write lands as the whole part of the
+// number - which is what the same stat reads back as under either name.
+Answer write_stat(Session& session, const Json& args, const char* value_member)
 {
     // Setting an unknown name is accepted and remembered, so a game can invent a
     // stat locally without the scenario having listed it first.
     const std::string key = string_member(args, "pchName");
-    const Json* value = json_member(args, "nData");
+    const Json* value = json_member(args, value_member);
     const std::int64_t number = value != nullptr ? to_int64(*value, 0) : 0;
     session.profile().set_stat(key, number);
     session.note_stat_written(key, number);
     return from_state(Json(true));
+}
+
+Answer h_set_stat(Session& session, const Json& args)
+{
+    return write_stat(session, args, "nData");
+}
+
+Answer h_set_stat_float(Session& session, const Json& args)
+{
+    return write_stat(session, args, "fData");
 }
 
 Answer h_get_achievement(Session& session, const Json& args)
@@ -434,11 +447,15 @@ constexpr HandlerEntry kHandlers[] = {
     {"SteamAPI_ISteamApps_GetAppBuildId", &h_build_id},
     {"SteamAPI_ISteamUserStats_RequestCurrentStats", &h_request_current_stats},
     {"SteamAPI_ISteamUserStats_StoreStats", &h_true},
-    // The overloads are named after their types only from 1.51 on; every SDK read
-    // here spells the integer one `GetStat`, and it is that flat name the layouts
-    // travel under.
+    // An overloaded method owns one slot per overload, and each slot travels under its own
+    // flat name: the integer slot keeps the method's own, the float one takes `...0` beside
+    // it. Answering only the first would leave every float write and read answered by
+    // nothing, which is what the second slot arrives as. One reader serves both getters,
+    // since both read the same number out of the same stat.
     {"SteamAPI_ISteamUserStats_GetStat", &h_get_stat},
+    {"SteamAPI_ISteamUserStats_GetStat0", &h_get_stat},
     {"SteamAPI_ISteamUserStats_SetStat", &h_set_stat},
+    {"SteamAPI_ISteamUserStats_SetStat0", &h_set_stat_float},
     {"SteamAPI_ISteamUserStats_GetAchievement", &h_get_achievement},
     {"SteamAPI_ISteamUserStats_SetAchievement", &h_set_achievement},
     {"SteamAPI_ISteamUserStats_GetNumAchievements", &h_num_achievements},

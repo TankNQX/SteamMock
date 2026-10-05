@@ -85,6 +85,12 @@ std::int64_t out_int(const Answer& answer, const char* key)
     return value != nullptr ? steammock::as_int64(*value) : 0;
 }
 
+double out_real(const Answer& answer, const char* key)
+{
+    const Json* value = steammock::json_member(answer.out, key);
+    return value != nullptr ? steammock::as_double(*value) : 0.0;
+}
+
 bool has_out(const Answer& answer) { return steammock::carries_out(answer.out); }
 
 // The app id a scenario served a handshake, or a number no profile has when it served
@@ -492,6 +498,23 @@ void test_stats()
     check("an unknown stat is still answered", missing.answered);
     check("an unknown stat fails, like Steam", !steammock::as_bool(missing.ret));
     check("an unknown stat leaves the caller's variable alone", !has_out(missing));
+
+    // The float overloads are their own flat names, and the one that writes sends `fData`
+    // where the integer slot sends `nData`. A stat in this harness is an integer, so the
+    // float write lands as the whole part of the number.
+    Json float_write = name_argument("Deaths");
+    float_write["fData"] = Json(9.5);
+    check("a float write is accepted",
+          steammock::as_bool(
+              session.handle("SteamAPI_ISteamUserStats_SetStat0", float_write).ret));
+
+    const Answer float_read =
+        session.handle("SteamAPI_ISteamUserStats_GetStat0", name_argument("Deaths"));
+    check("the float overload reads the same stat as the integer one",
+          steammock::as_bool(float_read.ret) && out_real(float_read, "pData") == 9.0);
+    check("and the integer overload reads what the float one wrote",
+          out_int(session.handle("SteamAPI_ISteamUserStats_GetStat", name_argument("Deaths")),
+                  "pData") == 9);
 
     // And the one answer here that is a payload rather than a value: a game asks for its stats
     // and Steam tells it they have arrived. Spacewar's stats screen draws nothing at all -

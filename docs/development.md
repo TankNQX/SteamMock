@@ -219,22 +219,25 @@ exported calls as the backend sees them, named after the SDK they came from.
 
 The surface table is annotated from the layouts, which the same run reads: each name records the
 interface that declares it, and how many slots travel under it. The second number is not decoration. A
-C function cannot be overloaded, so when an import leaves two slots sharing one name, every call
-behind that name answers out of the same entry.
+C function cannot be overloaded, so two slots sharing one name answer out of the same entry, and an
+override on that name covers both.
 
-The import tool took a slot's name from the method first, which an overload always has, so `GetStat`'s
-int32 slot and its float slot both came back as `SteamAPI_ISteamUserStats_GetStat`. The getters survive
-that: both variants read the same stat, and the integer comes back through `as_double`. A setter does
-not. The float `SetStat` sends `fData`, the handler looks for `nData`, and a stat the game wrote is left
-at 0. The tool now takes the method's own name only when the signature agrees, and matches the rest by
-the argument kinds, which is what `--selftest` covers.
+A slot's name is the method's own only where the signature agrees with what the SDK's flat header
+declares. The import tool took that name as soon as the header declared it, which an overload always
+has, so `GetStat`'s int32 slot and its float slot both came back as
+`SteamAPI_ISteamUserStats_GetStat` and both then answered out of one entry. The tool now takes the
+method's own name only when the signature agrees and matches the rest by argument kinds, which is what
+`--selftest` covers, and a slot whose name is not the implied one records it as a `{"call": "..."}`
+note on its row.
 
-With the imports this tree was built from, ten names carry more than one slot: nine carry two and
-`SteamAPI_ISteamInventory_SetProperty` carries four. The live view's `config` tab marks those, and an
-override on one covers every slot behind it. A re-import with each SDK ends that: the marks go away
-because each slot travels under the name the SDK's own flat header gave it, `SteamAPI_ISteamUserStats_GetStat0`
-among them. `test_backend` pins the interface each name belongs to rather than the count, since the
-count is a property of the import.
+The imports this tree is built from have been read again with that fix, so every name in the surface
+table carries one slot and the count is 1 wherever it is shown. The float half of an overload is a name
+of its own: `SteamAPI_ISteamUserStats_GetStat0` is the slot whose value arrives as `fData`, and the
+state machine answers both spellings of the stats pair. The getters share one reader, since both read
+the same number out of the same stat. The setters differ, because the float slot sends `fData` where
+the integer one sends `nData`, so a table that knows only the first leaves every float write and read
+answered by nothing. `test_backend` pins the interface each name belongs to rather than the count,
+since a count is a property of the import.
 
 A game notices a missing export at load time, not at call time: Windows resolves the whole import
 table first, so one name the flat API does not cover stops the game before `DllMain`. Compare the
@@ -275,6 +278,10 @@ The counts come from one run's transcript: two clients, one lobby, one match, a 
 leaderboard menu, and the stats screen. `tools/transcript_timeline.py --rig <dir>` reads a transcript
 back, and grouping the `call` field of every record by the interface in each name reproduces these
 numbers.
+
+Both slots of a stats call are answered, and a stat here is an integer, which is the only type the
+scenario and the state file both hold. A write through the float overload therefore lands as the whole
+part of the number, and reads back the same through either slot.
 
 ### What nobody answers yet
 
@@ -442,11 +449,11 @@ difference is written down here because a version string is meant to name one AB
   favour. `STEAMINVENTORY_INTERFACE_V003` is inverted in 1.46 and 1.47 relative to 1.51 and later, and
   `SteamUser021`'s third slot is `InitiateGameConnection` up to 1.51 and
   `InitiateGameConnection_DEPRECATED` after, under the same version string.
-* A slot's *name* is the one the newest generation gave that method and signature, not its own SDK's.
-  1.47 calls the int32 overload of `ISteamUserStats::GetStat` `SteamAPI_ISteamUserStats_GetStat` where
-  every SDK from 1.51 on calls it `SteamAPI_ISteamUserStats_GetStat`, and the IDL the backend answers
-  from uses the newer name. One name per call means a scenario does not have to know which SDK built
-  the game.
+* A slot's *name* is the one the newest SDK read gave that method and signature, not its own SDK's.
+  1.47 spells the int32 overload of `ISteamUserStats::GetStat` `SteamAPI_ISteamUserStats_GetStat` and the
+  float one `..._GetStat0`, where 1.51 and later spell them `..._GetStatInt32` and `..._GetStatFloat`.
+  The name a slot travels under is whichever pair the newest SDK read uses, and one name per call means
+  a scenario does not have to know which SDK built the game.
 * An event's members are in the SDK's order, and that order carries meaning rather than style. The stub
   compiles its own copy of every payload struct from this file and writes it into the game's own
   object, so a member in the wrong place puts one field where the game reads another, and nothing

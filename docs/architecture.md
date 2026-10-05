@@ -352,8 +352,9 @@ it. The file is therefore kept in SQLite's write-ahead log, and
   all, and the transcript says which string it asked for. Importing another generation is one command.
   See [development.md](development.md#interface-layouts).
 * Floating point goes over the wire as JSON numbers. The writer is exact and a reader gets the same
-  double back. The bridge's own hand-rolled parser is the loose end: it keeps integers exact and
-  accumulates fractions digit by digit, so a `float` parameter is rounded through a `double`.
+  double back, so a `float` parameter is rounded through a `double`. Parsing is nlohmann's, with one
+  thing on top of it: a depth limit of 16, because a message nested deeper than that would recurse until
+  the stack gave out, which is what the frame length is meant to catch.
 * One connection per process, serialised calls, and no multiplexing of several games onto one socket.
   A game per connection is simpler and matches how they run.
 * A game that disconnects keeps its session, so the run summary and the transcript stay about the whole
